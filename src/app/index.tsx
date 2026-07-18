@@ -67,6 +67,7 @@ export default function HomeScreen() {
       <View style={styles.footer}>
         <Btn title="History" onPress={() => router.push('/history')} />
         <Btn title="Exercise library" onPress={() => router.push('/exercises')} />
+        <Btn small title="Voice telemetry (dev)" onPress={() => router.push('/dev/telemetry')} />
         <Btn title="Sign out" onPress={() => signOut()} />
       </View>
     </View>

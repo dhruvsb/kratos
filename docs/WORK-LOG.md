@@ -7,6 +7,37 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-07-18 — Phase 2 complete: voice UI, eval harness, telemetry
+
+**Session scope:** Phase 2 only. Finished everything remaining from the previous Phase 2
+session's status table.
+
+**Built:**
+- Eval harness: 50-case synthetic golden set v1 (all 7 spec categories), `eval/run.ts`
+  (per-field + ambiguity-behavior + intent scoring, markdown report), `eval:compare` mode,
+  `eval/README.md`.
+- `scripts/parse-cli.ts` — local pipeline test tool. Deviates from the original spec
+  (which had it hit the deployed edge function): calls Anthropic directly instead, since
+  the deployed function requires a user JWT that's awkward to script. See
+  `PROJECT-SUMMARY-PHASE2.md` §5 for the reasoning.
+- Voice UI: `src/lib/stt.ts` (on-device STT via expo-speech-recognition, tap-to-toggle),
+  `src/data/voice.ts` (parse/confirm/undo/alias-write repository), `VoiceMicButton` +
+  `VoiceConfirmationCard` components, wired into the active-workout screen at both
+  workout and per-exercise level. Failure modes handled: empty STT result, client-side
+  parse timeout, parse error — transcript is never silently lost.
+- `scripts/harvest-eval-cases.ts` — promotes edited/discarded `voice_logs` into draft
+  golden cases.
+- Dev-only telemetry screen (`/dev/telemetry`): acceptance rate, edit rate by field,
+  ambiguity-question rate, p50/p95 latency, cost vs. the ₹2,000/month budget.
+- Schema addition: `ParsedExercise.name` (resolved canonical name), needed by the
+  confirmation card to display something other than the raw spoken phrase.
+- `tsc --noEmit` and `expo export --platform web` both clean.
+
+**Not done / next up:** everything remaining is account/device setup, not code — deploy
+the edge function, apply `0002_voice_logs.sql`, set the `ANTHROPIC_API_KEY` secret (and
+in local `.env`), run the eval baseline for the first time, build a native dev client and
+test the voice flow on a real phone. Full list in `PROJECT-SUMMARY-PHASE2.md` §3.
+
 ## 2026-07-18 — Phase 1 setup verified against real Supabase project
 
 **Session scope:** Phase 1 only. User created their Supabase project and filled `.env`.

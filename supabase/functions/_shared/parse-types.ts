@@ -34,6 +34,9 @@ export type Candidate = z.infer<typeof candidateSchema>;
 export const parsedExerciseSchema = z.object({
   raw: z.string(),
   exercise_id: z.string().nullable(),
+  // Canonical display name, when exercise_id is known (null when unmatched).
+  // The UI shows this, not `raw` — `raw` is kept only for the alias write-back.
+  name: z.string().nullable(),
   resolution: resolutionSchema,
   candidates: z.array(candidateSchema).optional(),
 });

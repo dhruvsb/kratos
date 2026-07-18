@@ -101,6 +101,7 @@ async function buildEntry(
     exercise = {
       raw: raw.exercise_raw ?? context.current_exercise_name ?? '',
       exercise_id: context.current_exercise_id,
+      name: context.current_exercise_name ?? null,
       resolution: 'alias',
     };
   } else if (raw.exercise_raw) {
@@ -115,7 +116,7 @@ async function buildEntry(
   } else {
     // No name spoken and no context to inherit from — the extraction prompt
     // should already have raised an 'exercise' ambiguity for this entry.
-    exercise = { raw: '', exercise_id: null, resolution: 'unmatched', candidates: [] };
+    exercise = { raw: '', exercise_id: null, name: null, resolution: 'unmatched', candidates: [] };
   }
 
   return {

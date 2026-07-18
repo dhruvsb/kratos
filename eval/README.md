@@ -1,0 +1,84 @@
+# Eval harness
+
+Scores the voice-parsing pipeline against a golden set of transcripts with known-correct
+expected output. Runs the **exact same production code path** as the `parse-utterance`
+edge function (`supabase/functions/_shared/pipeline/pipeline.ts`) — a passing eval means
+the real pipeline works, not just that a prompt works in isolation.
+
+## Running it
+
+```
+npm run eval            # score the default model (Haiku 4.5) against eval/golden/v1.jsonl
+npm run eval:compare     # also run the mid-tier model (Sonnet 5); side-by-side accuracy/cost table
+```
+
+Needs `ANTHROPIC_API_KEY` in `.env` (same key used everywhere else). Reports are written
+to `eval/reports/{date}-{model}.md` and also printed to stdout.
+
+## What's scored
+
+- **Field accuracy** — for each golden case, per-entry exact match on `exercise_id`,
+  `weight_kg`, `reps`, `sets_count`, `set_type`. Only fields explicitly present in the
+  case's `expected.entries[]` are checked — an ambiguous case can omit a field entirely to
+  mean "don't check this," since the whole point of that case is that the pipeline
+  shouldn't have produced a confident value for it.
+- **Ambiguity behavior** — did the pipeline ask a clarifying question exactly when the
+  case says it should (`expected.must_ask`)? **Asking is a success state, not a failure
+  state.** The `ambiguous_must_ask` category is reported separately and should be at 100%.
+- **Intent accuracy** — `log_sets` / `correct_last` / `unknown`.
+- **Cost & latency** — per-case and aggregate, using the pricing in
+  `supabase/functions/_shared/pipeline/prices.ts`.
+
+## Golden set v1 — status
+
+`eval/golden/v1.jsonl` is **synthetic**, not the user's real dictation — the original
+Phase 2 plan called for ~40 hand-labeled cases from a real chest-day recording plus 15
+synthetic ones for review. That real recording didn't exist when this v1 set was built, so
+all 50 cases here are synthetic, covering the 7 categories from the spec:
+
+| Category | Cases | What it tests |
+|---|---|---|
+| `simple` | 8 | single set, full info |
+| `multi_set` | 6 | "N sets of ..." |
+| `context_inherit` | 8 | "same weight", "two more", bare "drop set ..." |
+| `ambiguous_must_ask` | 8 | missing fields, transposed numbers, plate math, implausible values — must ask |
+| `exercise_resolution` | 8 | aliases (RDL/OHP), DB vs. barbell variants, one deliberately-unmatched exercise |
+| `hinglish_and_accent` | 6 | Hindi number words, "mein"/"aur"/"wahi" — marked expected-STT-risk |
+| `noise_artifacts` | 6 | typical STT mishears ("wait"→"weight", "ate"→"eight") |
+
+**Next step for the user:** once you've done a few real voice-logged workouts, either
+hand-label a real dictation session the way the original plan intended, or run
+`scripts/harvest-eval-cases.ts` (below) to pull real corrections out of `voice_logs` and
+promote the good ones into `v1.jsonl` (or a `v2.jsonl`). Real usage will surface failure
+modes this synthetic set can't anticipate.
+
+## Adding cases from production (`voice_logs`)
+
+`scripts/harvest-eval-cases.ts` pulls `voice_logs` rows where `outcome` is `'edited'` or
+`'discarded'` (i.e. the pipeline got something wrong) and appends them as **draft** golden
+cases — with `expected` set to the *corrected* values — to `eval/golden/drafts.jsonl`.
+These are drafts on purpose: review each one before promoting it into `v1.jsonl`, since a
+correction in the app doesn't always mean the original parse was wrong (the user might
+have just changed their mind).
+
+```
+npx tsx scripts/harvest-eval-cases.ts
+```
+
+## Model comparison
+
+`npm run eval:compare` runs the full golden set against both `PARSE_MODEL_DEFAULT`
+(Haiku 4.5) and `PARSE_MODEL_MID` (Sonnet 5) — see `prices.ts` — and adds a comparison
+table at the top of the report: field accuracy, ambiguity behavior, intent accuracy,
+average cost per parse, and **cost per 1,000 parses** side by side. Use this to decide
+whether the mid-tier model's accuracy gain (if any) is worth its ~3x cost.
+
+## Changelog
+
+Track iteration here as prompt/pipeline changes are made in response to eval failures —
+one entry per change, with the before/after numbers. Do not accept a change that improves
+one category by regressing `ambiguous_must_ask` behavior.
+
+| Date | Change | Before | After |
+|---|---|---|---|
+| _(none yet — this is the v1 baseline)_ | | | |

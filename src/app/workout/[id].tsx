@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { ExercisePickerModal } from '@/components/ExercisePickerModal';
 import { Btn, ErrorText, Loading } from '@/components/ui';
+import { VoiceMicButton } from '@/components/VoiceMicButton';
 import {
   useAddExerciseToWorkout,
   useAddSet,
@@ -19,6 +20,7 @@ import {
   useFinishWorkout,
   useLastSession,
   useMoveWorkoutExercise,
+  useProfile,
   useRemoveWorkoutExercise,
   useWorkout,
 } from '@/data/hooks';
@@ -36,6 +38,7 @@ const SET_TYPE_LABEL: Record<SetType, string> = {
 export default function ActiveWorkoutScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const workout = useWorkout(id);
+  const profile = useProfile();
   const finish = useFinishWorkout(id!);
   const discard = useDiscardWorkout(id!);
   const addExercise = useAddExerciseToWorkout(id!);
@@ -48,6 +51,7 @@ export default function ActiveWorkoutScreen() {
 
   const detail = workout.data;
   const isFinished = detail.ended_at != null;
+  const sessionExercises = detail.exercises.map((we) => we.exercise.canonical_name);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -58,6 +62,14 @@ export default function ActiveWorkoutScreen() {
           minute: '2-digit',
         })}
       </Text>
+
+      {!isFinished && (
+        <VoiceMicButton
+          workoutId={id!}
+          sessionExercises={sessionExercises}
+          defaultUnit={profile.data?.default_unit ?? 'kg'}
+        />
+      )}
 
       {detail.exercises.length === 0 && (
         <Text style={styles.emptyText}>No exercises yet — add one below.</Text>
@@ -71,6 +83,8 @@ export default function ActiveWorkoutScreen() {
           expanded={expandedId === we.id}
           onToggle={() => setExpandedId(expandedId === we.id ? null : we.id)}
           readOnly={isFinished}
+          sessionExercises={sessionExercises}
+          defaultUnit={profile.data?.default_unit ?? 'kg'}
         />
       ))}
 
@@ -123,12 +137,16 @@ function ExerciseBlock({
   expanded,
   onToggle,
   readOnly,
+  sessionExercises,
+  defaultUnit,
 }: {
   workoutId: string;
   exercise: WorkoutExerciseDetail;
   expanded: boolean;
   onToggle: () => void;
   readOnly: boolean;
+  sessionExercises: string[];
+  defaultUnit: 'kg' | 'lb';
 }) {
   const lastSession = useLastSession(we.exercise_id, workoutId);
   const addSet = useAddSet(workoutId);
@@ -168,6 +186,20 @@ function ExerciseBlock({
 
       {expanded && (
         <View style={styles.blockBody}>
+          {!readOnly && (
+            <VoiceMicButton
+              workoutId={workoutId}
+              currentExerciseId={we.exercise_id}
+              currentExerciseName={we.exercise.canonical_name}
+              lastSet={
+                prevSet?.weight_kg != null && prevSet?.reps != null
+                  ? { weight_kg: prevSet.weight_kg, reps: prevSet.reps, set_type: prevSet.set_type }
+                  : null
+              }
+              sessionExercises={sessionExercises}
+              defaultUnit={defaultUnit}
+            />
+          )}
           {/* This session's sets */}
           {we.sets.map((set) => (
             <View key={set.id} style={styles.setRow}>

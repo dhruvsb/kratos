@@ -102,6 +102,34 @@ export const workoutSetSchema = z.object({
 });
 export type WorkoutSet = z.infer<typeof workoutSetSchema>;
 
+// Phase 2 (voice logging) — mirrors supabase/migrations/0002_voice_logs.sql.
+export const voiceLogOutcomeSchema = z.enum([
+  'accepted',
+  'edited',
+  'answered_question',
+  'discarded',
+]);
+export type VoiceLogOutcome = z.infer<typeof voiceLogOutcomeSchema>;
+
+export const voiceLogSchema = z.object({
+  id: z.string().uuid(),
+  user_id: z.string().uuid(),
+  workout_id: z.string().uuid().nullable(),
+  transcript: z.string(),
+  stt_source: z.string().nullable(),
+  context: z.unknown().nullable(),
+  parsed: z.unknown().nullable(), // a ParseResult (src/types/parse.ts) — loosely typed here
+  model: z.string().nullable(),
+  tokens_in: z.number().int().nullable(),
+  tokens_out: z.number().int().nullable(),
+  latency_ms: z.number().int().nullable(),
+  cost_usd: z.coerce.number().nullable(),
+  outcome: voiceLogOutcomeSchema.nullable(),
+  corrections: z.record(z.string(), z.object({ from: z.unknown(), to: z.unknown() })).nullable(),
+  created_at: z.string(),
+});
+export type VoiceLog = z.infer<typeof voiceLogSchema>;
+
 // Result row of the last_session_sets() SQL function.
 export const lastSessionSetSchema = z.object({
   workout_id: z.string().uuid(),

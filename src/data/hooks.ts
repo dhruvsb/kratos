@@ -10,6 +10,7 @@ import * as auth from './auth';
 import * as exercises from './exercises';
 import * as routines from './routines';
 import * as sets from './sets';
+import * as voice from './voice';
 import * as workouts from './workouts';
 
 export const keys = {
@@ -229,6 +230,62 @@ export function useCreateCustomExercise() {
   return useMutation({
     mutationFn: (input: Parameters<typeof exercises.createCustomExercise>[0]) =>
       exercises.createCustomExercise(input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['exerciseSearch'] }),
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Voice logging (Phase 2)
+// ---------------------------------------------------------------------------
+
+export function useParseVoiceUtterance() {
+  return useMutation({ mutationFn: voice.parseVoiceUtterance });
+}
+
+export function useRecentVoiceLogs(limit = 50) {
+  return useQuery({
+    queryKey: ['voiceLogs', 'recent', limit],
+    queryFn: () => voice.listRecentVoiceLogs(limit),
+  });
+}
+
+export function useVoiceLogsSince(sinceIso: string) {
+  return useQuery({
+    queryKey: ['voiceLogs', 'since', sinceIso],
+    queryFn: () => voice.listVoiceLogsSince(sinceIso),
+  });
+}
+
+export function useConfirmVoiceEntries(workoutId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: Omit<Parameters<typeof voice.confirmVoiceEntries>[0], 'workoutId'>) =>
+      voice.confirmVoiceEntries({ ...input, workoutId }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: keys.workout(workoutId) });
+      qc.invalidateQueries({ queryKey: ['lastSession'] });
+      qc.invalidateQueries({ queryKey: ['exerciseHistory'] });
+    },
+  });
+}
+
+export function useDiscardVoiceLog() {
+  return useMutation({ mutationFn: voice.discardVoiceLog });
+}
+
+export function useUndoVoiceSets(workoutId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: voice.undoVoiceSets,
+    onSuccess: () => qc.invalidateQueries({ queryKey: keys.workout(workoutId) }),
+  });
+}
+
+export function useCreateExerciseAliasFromVoice() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ rawPhrase, exerciseId }: { rawPhrase: string; exerciseId: string }) =>
+      voice.createExerciseAliasFromVoice(rawPhrase, exerciseId),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['exerciseSearch'] }),
   });
 }

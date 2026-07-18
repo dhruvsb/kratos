@@ -38,7 +38,7 @@ export async function resolveExercise(
   const exact = await catalog.exactMatch(raw);
   if (exact) {
     return {
-      exercise: { raw, exercise_id: exact.id, resolution: 'alias' },
+      exercise: { raw, exercise_id: exact.id, name: exact.name, resolution: 'alias' },
       usage: null,
     };
   }
@@ -49,7 +49,7 @@ export async function resolveExercise(
 
   if (candidates.length === 0) {
     return {
-      exercise: { raw, exercise_id: null, resolution: 'unmatched', candidates: [] },
+      exercise: { raw, exercise_id: null, name: null, resolution: 'unmatched', candidates: [] },
       usage: null,
     };
   }
@@ -59,6 +59,7 @@ export async function resolveExercise(
       exercise: {
         raw,
         exercise_id: candidates[0].id,
+        name: candidates[0].name,
         resolution: 'fuzzy',
         candidates,
       },
@@ -94,14 +95,21 @@ export async function resolveExercise(
   });
 
   const picked = (json as { exercise_id: string }).exercise_id;
-  if (picked === 'unmatched' || !candidates.some((c) => c.id === picked)) {
+  const pickedCandidate = candidates.find((c) => c.id === picked);
+  if (picked === 'unmatched' || !pickedCandidate) {
     return {
-      exercise: { raw, exercise_id: null, resolution: 'unmatched', candidates },
+      exercise: { raw, exercise_id: null, name: null, resolution: 'unmatched', candidates },
       usage,
     };
   }
   return {
-    exercise: { raw, exercise_id: picked, resolution: 'llm', candidates },
+    exercise: {
+      raw,
+      exercise_id: picked,
+      name: pickedCandidate.name,
+      resolution: 'llm',
+      candidates,
+    },
     usage,
   };
 }

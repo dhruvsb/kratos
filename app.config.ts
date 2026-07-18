@@ -36,6 +36,15 @@ const config: ExpoConfig = {
         imageWidth: 76,
       },
     ],
+    // On-device STT for voice logging (Phase 2) — needs a config plugin for
+    // the native mic/speech-recognizer permission strings.
+    [
+      'expo-speech-recognition',
+      {
+        microphonePermission: 'Allow RepVoice to use the microphone to log sets by voice.',
+        speechRecognitionPermission: 'Allow RepVoice to use speech recognition to log sets by voice.',
+      },
+    ],
   ],
   experiments: {
     typedRoutes: true,

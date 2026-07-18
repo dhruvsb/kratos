@@ -2,6 +2,12 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
+    // The Deno edge-function code under supabase/functions/_shared imports its
+    // siblings with explicit .ts extensions (Deno requires this). eval/run.ts
+    // and scripts/parse-cli.ts import that same code from the Node/tsx side,
+    // which pulls it into this project's type-check graph — allow the
+    // extension so tsc doesn't choke on Deno's import style.
+    "allowImportingTsExtensions": true,
     "paths": {
       "@/*": [
         "./src/*"

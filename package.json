@@ -48,7 +48,11 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "seed": "tsx scripts/seed-exercises.ts",
-    "test:rls": "tsx scripts/test-rls.ts"
+    "test:rls": "tsx scripts/test-rls.ts",
+    "eval": "tsx eval/run.ts",
+    "eval:compare": "tsx eval/run.ts --compare",
+    "parse-cli": "tsx scripts/parse-cli.ts",
+    "harvest-eval-cases": "tsx scripts/harvest-eval-cases.ts"
   },
   "private": true
 }
