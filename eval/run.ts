@@ -3,11 +3,11 @@
  * (supabase/functions/_shared/pipeline/pipeline.ts) and scores it.
  *
  * Usage:
- *   npm run eval            # score PARSE_MODEL_DEFAULT (Haiku 4.5)
- *   npm run eval:compare    # score PARSE_MODEL_DEFAULT and PARSE_MODEL_MID (Sonnet 5),
+ *   npm run eval            # score PARSE_MODEL_DEFAULT (gpt-4o-mini)
+ *   npm run eval:compare    # score PARSE_MODEL_DEFAULT and PARSE_MODEL_MID (gpt-4o),
  *                           # report accuracy vs cost per 1,000 parses side by side
  *
- * Needs ANTHROPIC_API_KEY in .env. Exercise matching runs against the 25-item
+ * Needs OPENAI_API_KEY in .env. Exercise matching runs against the 25-item
  * fixture in eval/golden/fixtures/exercises.json, not the real seeded library —
  * see eval/README.md for why, and how to point this at real data later.
  */
@@ -21,7 +21,7 @@ import {
   type SetType,
 } from '../supabase/functions/_shared/parse-types';
 import { parseUtterance } from '../supabase/functions/_shared/pipeline/pipeline';
-import { AnthropicLlm } from '../supabase/functions/_shared/pipeline/llm';
+import { OpenAiLlm } from '../supabase/functions/_shared/pipeline/llm';
 import {
   InMemoryCatalog,
   type FixtureExercise,
@@ -115,7 +115,7 @@ async function runCase(
   catalog: InMemoryCatalog
 ): Promise<CaseScore> {
   const context = parseContextSchema.parse(golden.context ?? {});
-  const llm = new AnthropicLlm(model, apiKey);
+  const llm = new OpenAiLlm(model, apiKey);
 
   try {
     const { result, telemetry } = await parseUtterance(golden.transcript, context, {
@@ -324,9 +324,9 @@ function renderReport(summaries: Summary[]): string {
 }
 
 async function main() {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
-    console.error('Missing ANTHROPIC_API_KEY in .env');
+    console.error('Missing OPENAI_API_KEY in .env');
     process.exit(1);
   }
 

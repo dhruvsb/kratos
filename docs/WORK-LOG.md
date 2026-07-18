@@ -7,6 +7,30 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-07-19 — Phase 2: switched LLM provider from Anthropic to OpenAI
+
+**Session scope:** Phase 2 only. User doesn't want to get an Anthropic key right now and
+has an OpenAI key instead.
+
+**Changed:**
+- Added `OpenAiLlm` to `llm.ts` (Chat Completions API, `response_format:
+  {type:'json_schema', strict:true}`), implementing the same `LlmClient` interface.
+  `AnthropicLlm` is untouched and still there, just unused — switching back later is a
+  call-site change, not a rewrite.
+- Repointed `PARSE_MODEL_DEFAULT`/`PARSE_MODEL_MID` and `MODEL_PRICES` in `prices.ts` to
+  OpenAI models. **Could not verify these live** — two WebFetch lookups against OpenAI's
+  pricing/model pages returned inconsistent catalogs, so the model IDs (`gpt-4o-mini`,
+  `gpt-4o`) and prices are carried over from pre-cutoff training knowledge, flagged
+  clearly in-file as needing confirmation at platform.openai.com before trusting cost
+  numbers.
+- Updated the edge function, `parse-cli.ts`, `eval/run.ts`, `.env.example`, and
+  `eval/README.md` to read `OPENAI_API_KEY` instead of `ANTHROPIC_API_KEY`.
+- `npm install openai` (added as a dependency; `@anthropic-ai/sdk` also left in place).
+
+**Not done / next up:** user needs to get their key, confirm the model IDs/pricing are
+still current, and run `npm run eval` for the first time — same outstanding list as
+before, now against OpenAI. See `PROJECT-SUMMARY-PHASE2.md` §3.
+
 ## 2026-07-18 — Phase 2 complete: voice UI, eval harness, telemetry
 
 **Session scope:** Phase 2 only. Finished everything remaining from the previous Phase 2

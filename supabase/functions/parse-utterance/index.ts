@@ -2,11 +2,11 @@
 // POST { transcript, context?, stt_source?, model? } → { voice_log_id, result, telemetry }
 //
 // Deploy:  supabase functions deploy parse-utterance
-// Secrets: supabase secrets set ANTHROPIC_API_KEY=sk-ant-...   (never in the client)
+// Secrets: supabase secrets set OPENAI_API_KEY=sk-...   (never in the client)
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { parseContextSchema } from '../_shared/parse-types.ts';
 import { parseUtterance } from '../_shared/pipeline/pipeline.ts';
-import { AnthropicLlm } from '../_shared/pipeline/llm.ts';
+import { OpenAiLlm } from '../_shared/pipeline/llm.ts';
 import { PARSE_MODEL_DEFAULT, MODEL_PRICES } from '../_shared/pipeline/prices.ts';
 import type {
   CatalogExercise,
@@ -79,9 +79,9 @@ Deno.serve(async (req) => {
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-  const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY');
-  if (!anthropicKey) {
-    return json(500, { error: 'ANTHROPIC_API_KEY secret not configured' });
+  const openAiKey = Deno.env.get('OPENAI_API_KEY');
+  if (!openAiKey) {
+    return json(500, { error: 'OPENAI_API_KEY secret not configured' });
   }
 
   // Auth guard: the client's JWT rides in on the Authorization header; every
@@ -126,7 +126,7 @@ Deno.serve(async (req) => {
     const { result, telemetry } = await parseUtterance(
       transcript,
       contextParsed.data,
-      { llm: new AnthropicLlm(model, anthropicKey), catalog: new DbCatalog(db) }
+      { llm: new OpenAiLlm(model, openAiKey), catalog: new DbCatalog(db) }
     );
 
     const { data: log, error: logError } = await db

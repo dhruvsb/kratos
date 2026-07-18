@@ -8,12 +8,17 @@ the real pipeline works, not just that a prompt works in isolation.
 ## Running it
 
 ```
-npm run eval            # score the default model (Haiku 4.5) against eval/golden/v1.jsonl
-npm run eval:compare     # also run the mid-tier model (Sonnet 5); side-by-side accuracy/cost table
+npm run eval            # score the default model (gpt-4o-mini) against eval/golden/v1.jsonl
+npm run eval:compare     # also run the mid-tier model (gpt-4o); side-by-side accuracy/cost table
 ```
 
-Needs `ANTHROPIC_API_KEY` in `.env` (same key used everywhere else). Reports are written
+Needs `OPENAI_API_KEY` in `.env` (same key used everywhere else). Reports are written
 to `eval/reports/{date}-{model}.md` and also printed to stdout.
+
+⚠️ The exact model IDs and prices in `supabase/functions/_shared/pipeline/prices.ts`
+were unverified when they were set — check them against
+[platform.openai.com/docs/pricing](https://platform.openai.com/docs/pricing) before
+trusting cost numbers from a run.
 
 ## What's scored
 
@@ -68,7 +73,7 @@ npx tsx scripts/harvest-eval-cases.ts
 ## Model comparison
 
 `npm run eval:compare` runs the full golden set against both `PARSE_MODEL_DEFAULT`
-(Haiku 4.5) and `PARSE_MODEL_MID` (Sonnet 5) — see `prices.ts` — and adds a comparison
+(gpt-4o-mini) and `PARSE_MODEL_MID` (gpt-4o) — see `prices.ts` — and adds a comparison
 table at the top of the report: field accuracy, ambiguity behavior, intent accuracy,
 average cost per parse, and **cost per 1,000 parses** side by side. Use this to decide
 whether the mid-tier model's accuracy gain (if any) is worth its ~3x cost.

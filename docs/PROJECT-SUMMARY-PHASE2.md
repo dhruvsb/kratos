@@ -33,7 +33,7 @@ This doc is the living record of what was actually built from it — not a copy 
 | Cost-tracking constants (model IDs, per-token pricing, ₹2,000/mo budget) | ✅ Done |
 | `parse-cli.ts` local test script (runs the real pipeline, no deploy needed) | ✅ Done |
 | Eval golden set v1 (50 synthetic cases, all 7 spec categories) | ✅ Done — **synthetic, not real dictation** (see §4) |
-| Eval runner (`eval/run.ts`) + model-comparison mode (`eval:compare`) | ✅ Done — **never run against the real API yet** (no `ANTHROPIC_API_KEY` set) |
+| Eval runner (`eval/run.ts`) + model-comparison mode (`eval:compare`) | ✅ Done — **never run against the real API yet** (no `OPENAI_API_KEY` set) |
 | `harvest-eval-cases.ts` (promotes real corrections into draft golden cases) | ✅ Done |
 | Voice capture UI: mic button (workout-level + per-exercise), on-device STT, confirmation card, ambiguity chips, unmatched-exercise flow, undo snackbar | ✅ Done — **untested on a real device** (needs a native build, not Expo Go) |
 | Telemetry dev screen (`/dev/telemetry`): acceptance rate, edit rate by field, ambiguity rate, p50/p95 latency, cost vs. budget | ✅ Done |
@@ -43,25 +43,29 @@ This doc is the living record of what was actually built from it — not a copy 
 Everything below needs your accounts/device — none of it is something a future coding
 session can do unattended.
 
-1. **Get an Anthropic API key** (console.anthropic.com) if you don't have one.
-2. **Apply the Phase 2 migration**: run `supabase/migrations/0002_voice_logs.sql` against
+1. **Get an OpenAI API key** (platform.openai.com) if you don't have one.
+2. **Verify the model IDs and prices in `supabase/functions/_shared/pipeline/prices.ts`**
+   against [platform.openai.com/docs/pricing](https://platform.openai.com/docs/pricing) —
+   they were unverified when set (see §5). Update `PARSE_MODEL_DEFAULT`,
+   `PARSE_MODEL_MID`, and their `MODEL_PRICES` entries if they've changed.
+3. **Apply the Phase 2 migration**: run `supabase/migrations/0002_voice_logs.sql` against
    your Supabase project (same way you applied `0001_init.sql`).
-3. **Deploy the edge function and set the secret** (needs the Supabase CLI, not installed
+4. **Deploy the edge function and set the secret** (needs the Supabase CLI, not installed
    in this environment):
    ```
    npm install -g supabase   # or: brew install supabase/tap/supabase
    supabase login
    supabase link --project-ref <your-project-ref>
-   supabase secrets set ANTHROPIC_API_KEY=sk-ant-...
+   supabase secrets set OPENAI_API_KEY=sk-...
    supabase functions deploy parse-utterance
    ```
-4. **Add `ANTHROPIC_API_KEY` to your local `.env` too** — `npm run eval` and
-   `npm run parse-cli` call Anthropic directly (not through the deployed function), so
+5. **Add `OPENAI_API_KEY` to your local `.env` too** — `npm run eval` and
+   `npm run parse-cli` call OpenAI directly (not through the deployed function), so
    they need the key locally for fast iteration without redeploying.
-5. **Run the eval baseline**: `npm run eval` (then `npm run eval:compare` to see if
-   Sonnet 5 is worth the ~3x cost over Haiku 4.5). This has never been run against the
+6. **Run the eval baseline**: `npm run eval` (then `npm run eval:compare` to see if
+   the mid-tier model is worth its extra cost). This has never been run against the
    real API — the numbers in `eval/README.md`'s changelog are still empty.
-6. **Build a native dev client and test on your phone.** The voice UI needs
+7. **Build a native dev client and test on your phone.** The voice UI needs
    `expo-speech-recognition`, a native module — **it will not work in Expo Go.** Run:
    ```
    npx expo prebuild
@@ -69,7 +73,7 @@ session can do unattended.
    ```
    Then do a real workout logging sets by voice, and note every friction moment (per the
    original spec, this feeds back into prompt/pipeline tuning).
-7. **Optional but recommended**: replace/extend `eval/golden/v1.jsonl` with your own real
+8. **Optional but recommended**: replace/extend `eval/golden/v1.jsonl` with your own real
    dictation once you've done a few voice-logged workouts — the current set is entirely
    synthetic (see §4). `npx tsx scripts/harvest-eval-cases.ts` pulls real corrections out
    of `voice_logs` as a starting point.
@@ -108,9 +112,17 @@ answer, which keeps typical cost near a single LLM call.
 
 ## 5. Key decisions & rationale
 
-- **Provider: Anthropic.** Day-to-day parsing uses **Claude Haiku 4.5** (cheap, fast);
-  **Claude Sonnet 5** is the mid-tier model the eval harness benchmarks against, to get a
-  real accuracy-vs-cost number rather than assuming the expensive model is needed.
+- **Provider: OpenAI** (switched from Anthropic on 2026-07-19 — user has an OpenAI key,
+  not an Anthropic one). Day-to-day parsing uses a cheap small model (`PARSE_MODEL_DEFAULT`
+  in `prices.ts`, currently `gpt-4o-mini`); a mid-tier model (`PARSE_MODEL_MID`, currently
+  `gpt-4o`) is what the eval harness benchmarks against, to get a real accuracy-vs-cost
+  number rather than assuming the expensive model is needed. **The exact model IDs and
+  prices are unverified** — they couldn't be confirmed live when this was written (two
+  live lookups returned inconsistent model catalogs), so check
+  [platform.openai.com/docs/pricing](https://platform.openai.com/docs/pricing) before
+  trusting cost numbers or assuming those exact model names still exist. The provider is
+  isolated behind one file (`llm.ts`'s `LlmClient` interface) — `AnthropicLlm` is still
+  there, unused, if you ever want to switch back or run both side by side.
 - **Never silently guess.** Any field a human would have to ask about becomes a short
   clarifying question in the response, not a best-effort value. This was an explicit
   product decision from the spec, not an engineering default.
@@ -118,7 +130,7 @@ answer, which keeps typical cost near a single LLM call.
   candidates retrieved by exact/fuzzy search, or returns "unmatched." This single
   constraint is what makes the exercise-matching step trustworthy.
 - **All LLM calls are server-side only** (Supabase Edge Function). The client never
-  holds an Anthropic API key — same "no secrets in the client" rule as Phase 1.
+  holds an OpenAI API key — same "no secrets in the client" rule as Phase 1.
 - **Weight is always normalized to kg** before being stored (`unit_spoken` is kept
   separately so the original phrasing is never lost) — consistent with Phase 1's
   kg-always rule.
@@ -128,7 +140,7 @@ answer, which keeps typical cost near a single LLM call.
 - **The eval harness runs the same code path as production** (`pipeline.ts` is imported
   by both the Edge Function and the eval runner) — an eval passing does not mean "the
   eval prompt worked," it means "the actual production pipeline worked."
-- **`parse-cli.ts` calls Anthropic directly instead of the deployed function.** The
+- **`parse-cli.ts` calls the LLM provider directly instead of the deployed function.** The
   original spec had the CLI hit the deployed edge function, but that function requires a
   logged-in user's JWT (email OTP), which is awkward to script. Since the CLI's job is
   fast local iteration on parsing logic, it runs the same `pipeline.ts` in-process
@@ -162,15 +174,17 @@ supabase/functions/parse-utterance/
   index.ts                 The Edge Function: auth guard → run the pipeline → log to
                             voice_logs → return { result, telemetry } to the client
   deno.json                npm-package import map (Deno needs this to resolve
-                            zod / @supabase/supabase-js / @anthropic-ai/sdk)
+                            zod / @supabase/supabase-js / @anthropic-ai/sdk / openai)
 
 supabase/functions/_shared/
   parse-types.ts            THE contract: ParseResult, ParseContext, ParsedExercise, and
                             every sub-type as zod schemas. Single source of truth —
                             re-exported for app code via src/types/parse.ts.
   pipeline/
-    llm.ts                  Thin wrapper around the Anthropic SDK — the ONLY file that
-                            imports @anthropic-ai/sdk directly.
+    llm.ts                  Thin wrapper around the LLM provider SDK — the ONLY file that
+                            imports @anthropic-ai/sdk or openai directly. Holds both
+                            OpenAiLlm (active) and AnthropicLlm (unused, kept for an
+                            easy switch back) behind the same LlmClient interface.
     prompts.ts               The two system prompts (extraction, exercise resolution).
     extraction.ts            LLM call #1: transcript → raw entities.
     resolution.ts            Exercise matching: exact → fuzzy → LLM-pick-from-candidates.
@@ -243,6 +257,8 @@ scripts/harvest-eval-cases.ts    Pulls edited/discarded voice_logs into
 - **The eval harness has never been run against the real API.** Don't assume the golden
   set's numbers are known-good — run `npm run eval` first and read the report before
   trusting or changing anything based on "expected" accuracy.
+- **The OpenAI model IDs/prices in `prices.ts` are unverified.** Confirm them at
+  platform.openai.com before trusting the cost dashboard or assuming they're current.
 - **The voice UI has never run on a device.** It typechecks and the bundle builds, but
   `expo-speech-recognition` needs a native build (§3, item 6) — treat the mic/STT/card
   flow as unverified until someone actually taps through it on a phone.

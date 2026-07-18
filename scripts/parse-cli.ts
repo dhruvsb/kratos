@@ -2,7 +2,7 @@
  * Local test script for the voice-parsing pipeline — no deploy needed.
  *
  * Runs the SAME pipeline code the parse-utterance edge function runs
- * (supabase/functions/_shared/pipeline/pipeline.ts), calling Anthropic
+ * (supabase/functions/_shared/pipeline/pipeline.ts), calling OpenAI
  * directly and reading the exercise library straight from Postgres via the
  * service role key (bypasses RLS/auth — this only ever runs on your machine).
  * Falls back to the 25-item fixture catalog if Supabase isn't configured yet.
@@ -11,7 +11,7 @@
  *   npx tsx scripts/parse-cli.ts "incline dumbbell press twenty five kgs ten reps"
  *   npx tsx scripts/parse-cli.ts "same weight, two more reps" \
  *     --context '{"current_exercise_id":"...", "last_set":{"weight_kg":60,"reps":8,"set_type":"normal"}}'
- *   npx tsx scripts/parse-cli.ts "..." --model claude-sonnet-5
+ *   npx tsx scripts/parse-cli.ts "..." --model gpt-4o
  *   npx tsx scripts/parse-cli.ts "..." --fixture   # force the 25-item test fixture
  */
 import { readFileSync } from 'node:fs';
@@ -20,7 +20,7 @@ import { createClient } from '@supabase/supabase-js';
 import { config } from 'dotenv';
 import { parseContextSchema } from '../supabase/functions/_shared/parse-types';
 import { parseUtterance } from '../supabase/functions/_shared/pipeline/pipeline';
-import { AnthropicLlm } from '../supabase/functions/_shared/pipeline/llm';
+import { OpenAiLlm } from '../supabase/functions/_shared/pipeline/llm';
 import { PARSE_MODEL_DEFAULT } from '../supabase/functions/_shared/pipeline/prices';
 import {
   InMemoryCatalog,
@@ -96,9 +96,9 @@ async function main() {
     process.exit(1);
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
-    console.error('Missing ANTHROPIC_API_KEY in .env');
+    console.error('Missing OPENAI_API_KEY in .env');
     process.exit(1);
   }
 
@@ -118,7 +118,7 @@ async function main() {
   }
 
   const context = parseContextSchema.parse(args.context);
-  const llm = new AnthropicLlm(args.model, apiKey);
+  const llm = new OpenAiLlm(args.model, apiKey);
 
   const { result, telemetry } = await parseUtterance(args.transcript, context, { llm, catalog });
 
