@@ -39,17 +39,18 @@ updatable record of what was actually built from it, not a copy of the spec.
 | Exercise library seed script + alias map | ✅ Done (script written, **not yet run**) |
 | All 6 Phase 1 screens | ✅ Done |
 | Hevy import | ❌ **Descoped** — removed from the Phase 1 plan entirely, not just deferred |
-| Typecheck / verify / first commit | ⬜ Not yet done |
+| Typecheck / verify / first commit | ✅ Done (`tsc --noEmit` clean, `expo export` bundles all 9 routes) |
 
-**Nothing has been committed to git yet.** Everything described below exists on disk,
-uncommitted, in a fresh Expo scaffold.
+All Phase 1 code is committed. What's left is entirely account/credential setup and
+actually using the app — nothing further to build until that's done.
 
 ### Things only the user can do (require real credentials/accounts)
 - Create a free Supabase project.
 - Fill in `.env` (copy from `.env.example`) with the project URL + anon key + service role key.
-- Apply `supabase/migrations/0001_init.sql` to that project.
-- Run `npx tsx scripts/seed-exercises.ts` to populate the exercise library.
-- Run `npx tsx scripts/test-rls.ts` to verify the two-account security isolation for real.
+- Apply `supabase/migrations/0001_init.sql` (and `0002_voice_logs.sql`, harmless if Phase 2
+  hasn't started — it only adds a new table) to that project via the SQL Editor.
+- Run `npm run seed` to populate the exercise library.
+- Run `npm run test:rls` to verify the two-account security isolation for real.
 - Actually log workouts in the app (the phase's real done-bar: 4 consecutive real workouts).
 
 ## 4. Key decisions & rationale

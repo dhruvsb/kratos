@@ -7,6 +7,23 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-07-18 — Phase 1 finalization
+
+**Session scope:** Phase 1 only. Closing out everything that doesn't require the
+user's real Supabase credentials.
+
+**Built:**
+- Verification pass: `tsc --noEmit` clean; `npx expo export --platform web` bundles
+  all 9 routes with no errors.
+- Added `npm run seed` and `npm run test:rls` convenience scripts (were long `npx tsx`
+  commands before).
+- Confirmed `0002_voice_logs.sql` (Phase 2, added by the parallel session) is purely
+  additive and doesn't conflict with anything Phase 1 depends on.
+
+**Not done / next up:** everything remaining is account setup + real usage — create
+the Supabase project, fill `.env`, apply the migrations, run seed + RLS test, log 4
+real workouts. See `PROJECT-SUMMARY-PHASE1.md` § 3.
+
 ## 2026-07-18 — Phase 2 backend: parsing pipeline
 
 **Session scope:** Phase 2 only (Phase 1 is being built in a parallel session).

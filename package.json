@@ -46,7 +46,9 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "seed": "tsx scripts/seed-exercises.ts",
+    "test:rls": "tsx scripts/test-rls.ts"
   },
   "private": true
 }
