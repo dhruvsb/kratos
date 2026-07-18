@@ -1,98 +1,92 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
-
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
-  return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
+import { router } from 'expo-router';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { Btn, Empty, ErrorText, Loading } from '@/components/ui';
+import { signOut } from '@/data/auth';
+import { useActiveWorkout, useRoutines, useStartWorkout } from '@/data/hooks';
 
 export default function HomeScreen() {
+  const routines = useRoutines();
+  const activeWorkout = useActiveWorkout();
+  const startWorkout = useStartWorkout();
+
+  function start(routineId?: string) {
+    startWorkout.mutate(routineId, {
+      onSuccess: (workout) => router.push(`/workout/${workout.id}`),
+    });
+  }
+
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
+    <View style={styles.container}>
+      {activeWorkout.data && (
+        <Btn
+          title="▶ Resume workout in progress"
+          onPress={() => router.push(`/workout/${activeWorkout.data!.id}`)}
+        />
+      )}
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
+      <View style={styles.actions}>
+        <Btn
+          title={startWorkout.isPending ? 'Starting…' : 'Start empty workout'}
+          disabled={startWorkout.isPending || !!activeWorkout.data}
+          onPress={() => start()}
+        />
+        <Btn title="New routine" onPress={() => router.push('/routine/new')} />
+      </View>
+      {startWorkout.error != null && <ErrorText error={startWorkout.error} />}
 
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
+      <Text style={styles.sectionTitle}>Routines</Text>
+      {routines.isLoading && <Loading />}
+      {routines.error != null && <ErrorText error={routines.error} />}
+      <FlatList
+        data={routines.data ?? []}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <View style={styles.routineRow}>
+            <View style={styles.routineInfo}>
+              <Text style={styles.routineName}>{item.name}</Text>
+              <Text style={styles.routineMeta}>
+                {item.exercise_count} exercise{item.exercise_count === 1 ? '' : 's'}
+              </Text>
+            </View>
+            <Btn
+              small
+              title="Start"
+              disabled={!!activeWorkout.data || startWorkout.isPending}
+              onPress={() => start(item.id)}
+            />
+            <Btn small title="Edit" onPress={() => router.push(`/routine/${item.id}`)} />
+          </View>
+        )}
+        ListEmptyComponent={
+          !routines.isLoading ? (
+            <Empty text="No routines yet. Create one, or start an empty workout." />
+          ) : null
+        }
+      />
 
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
+      <View style={styles.footer}>
+        <Btn title="History" onPress={() => router.push('/history')} />
+        <Btn title="Exercise library" onPress={() => router.push('/exercises')} />
+        <Btn title="Sign out" onPress={() => signOut()} />
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
+  container: { flex: 1, padding: 16, gap: 12, backgroundColor: '#fff' },
+  actions: { gap: 8 },
+  sectionTitle: { fontSize: 18, color: '#000', marginTop: 8 },
+  routineRow: {
     flexDirection: 'row',
-  },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
     alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
+    gap: 8,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
   },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
-  },
-  title: {
-    textAlign: 'center',
-  },
-  code: {
-    textTransform: 'uppercase',
-  },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
-  },
+  routineInfo: { flex: 1 },
+  routineName: { fontSize: 16, color: '#000' },
+  routineMeta: { fontSize: 12, color: '#666' },
+  footer: { gap: 8, paddingTop: 8 },
 });

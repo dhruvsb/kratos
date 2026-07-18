@@ -1,0 +1,115 @@
+// Hand-written zod schemas mirroring supabase/migrations/0001_init.sql.
+// Single source of truth for row types — import from here everywhere.
+// (Chosen over `supabase gen types` so types exist before a project is provisioned;
+// if the schema changes, update the migration AND this file together.)
+import { z } from 'zod';
+
+export const unitSchema = z.enum(['kg', 'lb']);
+export type Unit = z.infer<typeof unitSchema>;
+
+export const setTypeSchema = z.enum(['warmup', 'normal', 'drop', 'failure']);
+export type SetType = z.infer<typeof setTypeSchema>;
+
+export const loggedViaSchema = z.enum(['manual', 'voice', 'quick_repeat']);
+export type LoggedVia = z.infer<typeof loggedViaSchema>;
+
+export const profileSchema = z.object({
+  user_id: z.string().uuid(),
+  display_name: z.string().nullable(),
+  default_unit: unitSchema,
+  created_at: z.string(),
+});
+export type Profile = z.infer<typeof profileSchema>;
+
+export const exerciseSchema = z.object({
+  id: z.string().uuid(),
+  canonical_name: z.string(),
+  category: z.string().nullable(),
+  equipment: z.string().nullable(),
+  primary_muscle: z.string().nullable(),
+  is_custom: z.boolean(),
+  created_by: z.string().uuid().nullable(),
+  created_at: z.string(),
+});
+export type Exercise = z.infer<typeof exerciseSchema>;
+
+export const exerciseAliasSchema = z.object({
+  id: z.string().uuid(),
+  exercise_id: z.string().uuid(),
+  alias: z.string(),
+  source: z.enum(['seed', 'user', 'llm']),
+  created_at: z.string(),
+});
+export type ExerciseAlias = z.infer<typeof exerciseAliasSchema>;
+
+export const routineSchema = z.object({
+  id: z.string().uuid(),
+  user_id: z.string().uuid(),
+  name: z.string(),
+  notes: z.string().nullable(),
+  position: z.number().int(),
+  archived: z.boolean(),
+  created_at: z.string(),
+});
+export type Routine = z.infer<typeof routineSchema>;
+
+export const routineExerciseSchema = z.object({
+  id: z.string().uuid(),
+  routine_id: z.string().uuid(),
+  exercise_id: z.string().uuid(),
+  position: z.number().int(),
+  target_sets: z.number().int().nullable(),
+  target_reps_low: z.number().int().nullable(),
+  target_reps_high: z.number().int().nullable(),
+  created_at: z.string(),
+});
+export type RoutineExercise = z.infer<typeof routineExerciseSchema>;
+
+export const workoutSchema = z.object({
+  id: z.string().uuid(),
+  user_id: z.string().uuid(),
+  routine_id: z.string().uuid().nullable(),
+  started_at: z.string(),
+  ended_at: z.string().nullable(),
+  notes: z.string().nullable(),
+  external_id: z.string().nullable(),
+  created_at: z.string(),
+});
+export type Workout = z.infer<typeof workoutSchema>;
+
+export const workoutExerciseSchema = z.object({
+  id: z.string().uuid(),
+  workout_id: z.string().uuid(),
+  exercise_id: z.string().uuid(),
+  position: z.number().int(),
+  created_at: z.string(),
+});
+export type WorkoutExercise = z.infer<typeof workoutExerciseSchema>;
+
+export const workoutSetSchema = z.object({
+  id: z.string().uuid(),
+  workout_exercise_id: z.string().uuid(),
+  set_number: z.number().int(),
+  // z.coerce on numeric columns: PostgREST may serialize numeric as string.
+  weight_kg: z.coerce.number().nullable(),
+  reps: z.number().int().nullable(),
+  rpe: z.coerce.number().nullable(),
+  set_type: setTypeSchema,
+  logged_via: loggedViaSchema,
+  raw_transcript: z.string().nullable(),
+  parse_confidence: z.coerce.number().nullable(),
+  created_at: z.string(),
+});
+export type WorkoutSet = z.infer<typeof workoutSetSchema>;
+
+// Result row of the last_session_sets() SQL function.
+export const lastSessionSetSchema = z.object({
+  workout_id: z.string().uuid(),
+  started_at: z.string(),
+  set_number: z.number().int(),
+  weight_kg: z.coerce.number().nullable(),
+  reps: z.number().int().nullable(),
+  rpe: z.coerce.number().nullable(),
+  set_type: setTypeSchema,
+});
+export type LastSessionSet = z.infer<typeof lastSessionSetSchema>;

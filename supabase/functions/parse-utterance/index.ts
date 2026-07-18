@@ -1,0 +1,159 @@
+// parse-utterance edge function: auth-guarded voice-transcript parsing.
+// POST { transcript, context?, stt_source?, model? } → { voice_log_id, result, telemetry }
+//
+// Deploy:  supabase functions deploy parse-utterance
+// Secrets: supabase secrets set ANTHROPIC_API_KEY=sk-ant-...   (never in the client)
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { parseContextSchema } from '../_shared/parse-types.ts';
+import { parseUtterance } from '../_shared/pipeline/pipeline.ts';
+import { AnthropicLlm } from '../_shared/pipeline/llm.ts';
+import { PARSE_MODEL_DEFAULT, MODEL_PRICES } from '../_shared/pipeline/prices.ts';
+import type {
+  CatalogExercise,
+  ExerciseCatalog,
+  ScoredCandidate,
+} from '../_shared/pipeline/resolution.ts';
+
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers':
+    'authorization, x-client-info, apikey, content-type',
+};
+
+function json(status: number, body: unknown): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+  });
+}
+
+// ExerciseCatalog backed by Postgres: exact alias/canonical lookup + the
+// pg_trgm RPC from migration 0002. Runs as the calling user (RLS applies).
+class DbCatalog implements ExerciseCatalog {
+  constructor(private readonly db: SupabaseClient) {}
+
+  async exactMatch(raw: string): Promise<CatalogExercise | null> {
+    const needle = raw.trim().toLowerCase();
+
+    const { data: alias } = await this.db
+      .from('exercise_aliases')
+      .select('exercise_id, exercises(canonical_name)')
+      .ilike('alias', needle)
+      .limit(1)
+      .maybeSingle();
+    if (alias) {
+      const related = alias.exercises as unknown as { canonical_name: string } | null;
+      return { id: alias.exercise_id, name: related?.canonical_name ?? raw };
+    }
+
+    const { data: exercise } = await this.db
+      .from('exercises')
+      .select('id, canonical_name')
+      .ilike('canonical_name', needle)
+      .limit(1)
+      .maybeSingle();
+    if (exercise) return { id: exercise.id, name: exercise.canonical_name };
+
+    return null;
+  }
+
+  async candidates(raw: string, limit: number): Promise<ScoredCandidate[]> {
+    const { data, error } = await this.db.rpc('search_exercise_candidates', {
+      q: raw,
+      max_results: limit,
+    });
+    if (error) throw new Error(`candidate search failed: ${error.message}`);
+    return (data ?? []).map(
+      (row: { exercise_id: string; name: string; score: number }) => ({
+        id: row.exercise_id,
+        name: row.name,
+        score: row.score,
+      })
+    );
+  }
+}
+
+Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS_HEADERS });
+  if (req.method !== 'POST') return json(405, { error: 'POST only' });
+
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+  const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY');
+  if (!anthropicKey) {
+    return json(500, { error: 'ANTHROPIC_API_KEY secret not configured' });
+  }
+
+  // Auth guard: the client's JWT rides in on the Authorization header; every
+  // DB access below runs as that user, so RLS is in force throughout.
+  const authHeader = req.headers.get('Authorization') ?? '';
+  const db = createClient(supabaseUrl, anonKey, {
+    global: { headers: { Authorization: authHeader } },
+  });
+  const {
+    data: { user },
+    error: authError,
+  } = await db.auth.getUser();
+  if (authError || !user) return json(401, { error: 'not authenticated' });
+
+  let body: {
+    transcript?: string;
+    context?: unknown;
+    stt_source?: string;
+    workout_id?: string | null;
+    model?: string;
+  };
+  try {
+    body = await req.json();
+  } catch {
+    return json(400, { error: 'invalid JSON body' });
+  }
+
+  const transcript = (body.transcript ?? '').trim();
+  if (!transcript) return json(400, { error: 'transcript is required' });
+
+  const contextParsed = parseContextSchema.safeParse(body.context ?? {});
+  if (!contextParsed.success) {
+    return json(400, { error: 'invalid context', details: contextParsed.error.issues });
+  }
+
+  // Model is overridable per-request (used by the eval harness in remote
+  // mode), but only to models we have prices for.
+  const model =
+    body.model && MODEL_PRICES[body.model] ? body.model : PARSE_MODEL_DEFAULT;
+
+  try {
+    const { result, telemetry } = await parseUtterance(
+      transcript,
+      contextParsed.data,
+      { llm: new AnthropicLlm(model, anthropicKey), catalog: new DbCatalog(db) }
+    );
+
+    const { data: log, error: logError } = await db
+      .from('voice_logs')
+      .insert({
+        user_id: user.id,
+        workout_id: body.workout_id ?? null,
+        transcript,
+        stt_source: body.stt_source ?? 'unknown',
+        context: contextParsed.data,
+        parsed: result,
+        model: telemetry.model,
+        tokens_in: telemetry.tokens_in,
+        tokens_out: telemetry.tokens_out,
+        latency_ms: telemetry.latency_ms,
+        cost_usd: telemetry.cost_usd,
+      })
+      .select('id')
+      .single();
+    if (logError) console.error('voice_logs insert failed:', logError.message);
+
+    return json(200, { voice_log_id: log?.id ?? null, result, telemetry });
+  } catch (err) {
+    console.error('parse failed:', err);
+    return json(502, {
+      error: 'parse failed',
+      detail: err instanceof Error ? err.message : String(err),
+    });
+  }
+});
