@@ -7,6 +7,19 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-07-18 — Phase 1 setup verified against real Supabase project
+
+**Session scope:** Phase 1 only. User created their Supabase project and filled `.env`.
+
+**Verified (against the live project, not just files on disk):**
+- Migrations applied: all 8 Phase 1 tables present and queryable.
+- Seed ran: 873 exercises, 217 aliases in the DB; `search_exercises` spot-checked
+  with "RDL", "OHP", "incline db" — all resolve correctly.
+- `npm run test:rls` executed for real: all 8 two-account isolation checks passed.
+
+**Not done / next up:** only the human step remains — log 4 consecutive real
+workouts in the app. Nothing left to build for Phase 1.
+
 ## 2026-07-18 — Phase 1 finalization
 
 **Session scope:** Phase 1 only. Closing out everything that doesn't require the

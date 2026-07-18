@@ -44,14 +44,17 @@ updatable record of what was actually built from it, not a copy of the spec.
 All Phase 1 code is committed. What's left is entirely account/credential setup and
 actually using the app — nothing further to build until that's done.
 
-### Things only the user can do (require real credentials/accounts)
-- Create a free Supabase project.
-- Fill in `.env` (copy from `.env.example`) with the project URL + anon key + service role key.
-- Apply `supabase/migrations/0001_init.sql` (and `0002_voice_logs.sql`, harmless if Phase 2
-  hasn't started — it only adds a new table) to that project via the SQL Editor.
-- Run `npm run seed` to populate the exercise library.
-- Run `npm run test:rls` to verify the two-account security isolation for real.
-- Actually log workouts in the app (the phase's real done-bar: 4 consecutive real workouts).
+### Setup checklist — all verified done except the last item
+- ✅ Supabase project created.
+- ✅ `.env` filled in with real project URL + anon key + service role key.
+- ✅ `0001_init.sql` and `0002_voice_logs.sql` applied — all 8 Phase 1 tables confirmed
+  present and queryable.
+- ✅ `npm run seed` run — 873 exercises, 217 aliases confirmed in the DB; spot-checked
+  search("RDL"/"OHP"/"incline db") returns the right exercise as the top hit.
+- ✅ `npm run test:rls` run for real — all 8 isolation checks passed (two throwaway
+  accounts, one truly cannot read/write the other's data).
+- ⬜ **Only remaining item**: actually log 4 consecutive real workouts in the app
+  (`npm start`). That's the phase's real done-bar — nothing left to build for it.
 
 ## 4. Key decisions & rationale
 
