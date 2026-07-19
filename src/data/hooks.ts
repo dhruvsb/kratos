@@ -217,6 +217,15 @@ export function useAddSet(workoutId: string) {
   });
 }
 
+export function useUpdateSet(workoutId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { setId: string; patch: Parameters<typeof sets.updateSet>[1] }) =>
+      sets.updateSet(input.setId, input.patch),
+    onSuccess: () => qc.invalidateQueries({ queryKey: keys.workout(workoutId) }),
+  });
+}
+
 export function useDeleteSet(workoutId: string) {
   const qc = useQueryClient();
   return useMutation({

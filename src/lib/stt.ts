@@ -25,6 +25,137 @@ export interface UseSpeechToText {
   reset: () => void;
 }
 
+// ---------------------------------------------------------------------------
+// Continuous "session mic" — the voice-first model (mockup 2b): during a workout
+// the mic stays open, emitting a final transcript per utterance without a tap
+// per set. Interim text + mic level drive the console's live readout / meter.
+// Kept in this same file so the STT provider seam stays single-source.
+// ---------------------------------------------------------------------------
+export interface UseSessionSpeech {
+  listening: boolean;
+  muted: boolean;
+  /** Live partial transcript for the current utterance. */
+  interim: string;
+  /** 0–1 mic amplitude from `volumechange`, for the level meter. */
+  level: number;
+  error: string | null;
+  start: () => Promise<void>;
+  stop: () => void;
+  setMuted: (muted: boolean) => void;
+}
+
+export function useSessionSpeech(opts: {
+  /** Fired once per finalized utterance segment. */
+  onSegment: (transcript: string) => void;
+  lang?: string;
+}): UseSessionSpeech {
+  const [listening, setListening] = useState(false);
+  const [muted, setMutedState] = useState(false);
+  const [interim, setInterim] = useState('');
+  const [level, setLevel] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+
+  // Refs so the persistent event listeners always see current values.
+  const wantRef = useRef(false);
+  const mutedRef = useRef(false);
+  const onSegmentRef = useRef(opts.onSegment);
+  onSegmentRef.current = opts.onSegment;
+  const lang = opts.lang ?? 'en-IN';
+
+  const begin = useCallback(() => {
+    ExpoSpeechRecognitionModule.start({
+      lang,
+      interimResults: true,
+      continuous: true,
+      maxAlternatives: 1,
+      volumeChangeEventOptions: { enabled: true, intervalMillis: 200 },
+    });
+  }, [lang]);
+
+  useSpeechRecognitionEvent('result', (event) => {
+    if (mutedRef.current) return;
+    const transcript = event.results[0]?.transcript ?? '';
+    if (event.isFinal) {
+      setInterim('');
+      const trimmed = transcript.trim();
+      if (trimmed) onSegmentRef.current(trimmed);
+    } else {
+      setInterim(transcript);
+    }
+  });
+
+  useSpeechRecognitionEvent('volumechange', (event) => {
+    // `value` is a rough dB-ish scale (~ -2 quiet … 10 loud); normalize to 0–1.
+    const raw = (event as { value?: number }).value ?? 0;
+    setLevel(Math.max(0, Math.min(1, (raw + 2) / 12)));
+  });
+
+  useSpeechRecognitionEvent('end', () => {
+    // Continuous recognizers still stop on long silence / OS limits — restart
+    // ourselves as long as the session still wants the mic open.
+    if (wantRef.current && !mutedRef.current) {
+      try {
+        begin();
+      } catch {
+        setListening(false);
+      }
+    } else {
+      setListening(false);
+    }
+  });
+
+  useSpeechRecognitionEvent('error', (event) => {
+    // 'no-speech' just means a quiet gap; keep the session alive.
+    if (event.error === 'no-speech') return;
+    setError(event.message || event.error || "didn't catch that");
+  });
+
+  useEffect(() => {
+    return () => {
+      wantRef.current = false;
+      if (listening) ExpoSpeechRecognitionModule.abort();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const start = useCallback(async () => {
+    setError(null);
+    const permission = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+    if (!permission.granted) {
+      setError('Microphone/speech permission denied');
+      return;
+    }
+    wantRef.current = true;
+    setListening(true);
+    begin();
+  }, [begin]);
+
+  const stop = useCallback(() => {
+    wantRef.current = false;
+    setListening(false);
+    setInterim('');
+    setLevel(0);
+    ExpoSpeechRecognitionModule.stop();
+  }, []);
+
+  const setMuted = useCallback(
+    (next: boolean) => {
+      mutedRef.current = next;
+      setMutedState(next);
+      if (next) {
+        setInterim('');
+        setLevel(0);
+        ExpoSpeechRecognitionModule.stop();
+      } else if (wantRef.current) {
+        begin();
+      }
+    },
+    [begin]
+  );
+
+  return { listening, muted, interim, level, error, start, stop, setMuted };
+}
+
 export function useSpeechToText(): UseSpeechToText {
   const [state, setState] = useState<SttState>('idle');
   const [interimTranscript, setInterimTranscript] = useState('');
