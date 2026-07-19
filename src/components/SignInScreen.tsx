@@ -10,6 +10,7 @@ export function SignInScreen() {
   const [stage, setStage] = useState<'email' | 'code'>('email');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
+  const isValidCode = /^\d{6,10}$/.test(code);
 
   async function run(fn: () => Promise<void>) {
     setBusy(true);
@@ -55,19 +56,19 @@ export function SignInScreen() {
         </>
       ) : (
         <>
-          <Text style={styles.label}>Enter the 6-digit code sent to {email}</Text>
+          <Text style={styles.label}>Enter the code sent to {email}</Text>
           <TextInput
             style={styles.input}
             value={code}
-            onChangeText={setCode}
+            onChangeText={(value) => setCode(value.replace(/\D/g, ''))}
             keyboardType="number-pad"
-            maxLength={6}
-            placeholder="123456"
+            maxLength={10}
+            placeholder="Verification code"
             placeholderTextColor="#999"
           />
           <Btn
             title={busy ? 'Verifying…' : 'Verify'}
-            disabled={busy || code.length !== 6}
+            disabled={busy || !isValidCode}
             onPress={() => run(() => verifyOtp(email.trim(), code.trim()))}
           />
           <Btn title="Use a different email" onPress={() => setStage('email')} />

@@ -15,7 +15,7 @@ export function onAuthStateChange(callback: (session: Session | null) => void) {
   return () => data.subscription.unsubscribe();
 }
 
-/** Sends a 6-digit OTP code to the email. Creates the account on first sign-in. */
+/** Sends the project's configured email OTP. Creates the account on first sign-in. */
 export async function sendOtp(email: string): Promise<void> {
   const { error } = await supabase.auth.signInWithOtp({
     email,

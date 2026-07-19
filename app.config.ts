@@ -11,6 +11,7 @@ const config: ExpoConfig = {
   scheme: 'repvoice',
   userInterfaceStyle: 'automatic',
   ios: {
+    bundleIdentifier: 'com.dhruvshah.repvoice',
     icon: './assets/expo.icon',
   },
   android: {

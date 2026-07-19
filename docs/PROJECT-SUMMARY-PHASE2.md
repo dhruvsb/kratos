@@ -20,61 +20,51 @@ This doc is the living record of what was actually built from it — not a copy 
 
 ## 2. Current status
 
-**All of Phase 2's code is written.** What's left is entirely account/device setup — see
-§3 below — plus the accuracy work an eval baseline unlocks (running it, then iterating).
+**The original Phase 2 tap-to-log flow is written and its backend is deployed.** A native
+iPhone development client is installed and launches, but authenticated manual/voice
+workflows have not yet been completed end-to-end. The separate voice-first redesign is
+still paused mid-implementation; see the top entries in `WORK-LOG.md`.
 
 | Build step | Status |
 |---|---|
 | `ParseResult` / `ParseContext` schemas (shared contract) | ✅ Done |
 | Extraction prompt (LLM call #1: transcript → raw entities) | ✅ Done |
 | Exercise resolution (alias → trigram → LLM pick-from-candidates) | ✅ Done |
-| `parse-utterance` Edge Function (auth-guarded, calls the pipeline, logs telemetry) | ✅ Done — **not deployed yet** |
-| `voice_logs` migration + `search_exercise_candidates` SQL function | ✅ Done — **not applied yet** |
+| `parse-utterance` Edge Function (auth-guarded, calls the pipeline, logs telemetry) | ✅ Deployed to `amonovkkjohvlkjlfsit`; unauthenticated probe correctly returns 401 |
+| `voice_logs` migration + `search_exercise_candidates` SQL function | ✅ Applied and verified live |
 | Cost-tracking constants (model IDs, per-token pricing, ₹2,000/mo budget) | ✅ Done |
 | `parse-cli.ts` local test script (runs the real pipeline, no deploy needed) | ✅ Done |
 | Eval golden set v1 (50 synthetic cases, all 7 spec categories) | ✅ Done — **synthetic, not real dictation** (see §4) |
-| Eval runner (`eval/run.ts`) + model-comparison mode (`eval:compare`) | ✅ Done — **never run against the real API yet** (no `OPENAI_API_KEY` set) |
+| Eval runner (`eval/run.ts`) + model-comparison mode (`eval:compare`) | ✅ Done — **first real baseline still not run** |
 | Model wired to `gpt-5.6-luna` (default) / `gpt-5.6-terra` (compare), prices verified | ✅ Done (2026-07-19) |
 | `harvest-eval-cases.ts` (promotes real corrections into draft golden cases) | ✅ Done |
-| Voice capture UI: mic button (workout-level + per-exercise), on-device STT, confirmation card, ambiguity chips, unmatched-exercise flow, undo snackbar | ✅ Done — **untested on a real device** (needs a native build, not Expo Go) |
+| Native Expo development client | ✅ Built, signed, installed, trusted, and launches on iPhone 15 |
+| Voice capture UI: mic button (workout-level + per-exercise), on-device STT, confirmation card, ambiguity chips, unmatched-exercise flow, undo snackbar | ✅ Built — **on-device voice workflow not yet exercised because first login is still pending** |
 | Telemetry dev screen (`/dev/telemetry`): acceptance rate, edit rate by field, ambiguity rate, p50/p95 latency, cost vs. budget | ✅ Done |
 
-## 3. What only you can do from here
+## 3. Deployment completed and remaining validation
 
-Everything below needs your accounts/device — none of it is something a future coding
-session can do unattended.
-
-1. **Get an OpenAI API key** (platform.openai.com) if you don't have one — this is the
-   only thing standing between the code and a working parse. The model is already wired
-   to `gpt-5.6-luna` with verified pricing; nothing else in the config needs touching.
+1. ✅ **OpenAI API key configured** in local `.env` and as the hosted Supabase Function
+   secret. Never expose either value in documentation or client code.
 2. ~~Verify the model IDs and prices~~ — **done 2026-07-19.** `PARSE_MODEL_DEFAULT` =
    `gpt-5.6-luna` ($1/$6 per 1M tok), `PARSE_MODEL_MID` = `gpt-5.6-terra` ($2.50/$15),
    both confirmed against platform.openai.com. Only revisit if OpenAI changes prices.
-3. **Apply the Phase 2 migration**: run `supabase/migrations/0002_voice_logs.sql` against
-   your Supabase project (same way you applied `0001_init.sql`).
-4. **Deploy the edge function and set the secret** (needs the Supabase CLI, not installed
-   in this environment):
-   ```
-   npm install -g supabase   # or: brew install supabase/tap/supabase
-   supabase login
-   supabase link --project-ref <your-project-ref>
-   supabase secrets set OPENAI_API_KEY=sk-...
-   supabase functions deploy parse-utterance
-   ```
-5. **Add `OPENAI_API_KEY` to your local `.env` too** — `npm run eval` and
-   `npm run parse-cli` call OpenAI directly (not through the deployed function), so
-   they need the key locally for fast iteration without redeploying.
+3. ✅ **Phase 2 migration applied**: `voice_logs` and
+   `search_exercise_candidates` were queried successfully on the live project.
+4. ✅ **Edge Function deployed** with Supabase CLI to project
+   `amonovkkjohvlkjlfsit`; its auth guard was verified by a reachable HTTP 401 response
+   without a user JWT.
+5. ✅ **Local API configuration present** for `eval`/`parse-cli`.
 6. **Run the eval baseline**: `npm run eval` (then `npm run eval:compare` to see if
    the mid-tier model is worth its extra cost). This has never been run against the
    real API — the numbers in `eval/README.md`'s changelog are still empty.
-7. **Build a native dev client and test on your phone.** The voice UI needs
-   `expo-speech-recognition`, a native module — **it will not work in Expo Go.** Run:
+7. ✅ **Native dev client built and installed.** `expo-dev-client@~57.0.7` is installed,
+   `com.dhruvshah.repvoice` is the iOS bundle ID, and the app launches on the physical
+   iPhone. **Still required:** complete OTP login, then do a real workout logging sets
+   by voice and note every friction point. Run Metro with:
+   ```bash
+   PATH="/opt/homebrew/opt/node@22/bin:$PATH" npx expo start --dev-client
    ```
-   npx expo prebuild
-   npx expo run:ios     # or: npx expo run:android
-   ```
-   Then do a real workout logging sets by voice, and note every friction moment (per the
-   original spec, this feeds back into prompt/pipeline tuning).
 8. **Optional but recommended**: replace/extend `eval/golden/v1.jsonl` with your own real
    dictation once you've done a few voice-logged workouts — the current set is entirely
    synthetic (see §4). `npx tsx scripts/harvest-eval-cases.ts` pulls real corrections out
@@ -261,9 +251,9 @@ scripts/harvest-eval-cases.ts    Pulls edited/discarded voice_logs into
 - **The OpenAI model IDs/prices in `prices.ts` were verified 2026-07-19** (`gpt-5.6-luna`
   $1/$6, `gpt-5.6-terra` $2.50/$15). Re-confirm at platform.openai.com only if you suspect
   a pricing change.
-- **The voice UI has never run on a device.** It typechecks and the bundle builds, but
-  `expo-speech-recognition` needs a native build (§3, item 6) — treat the mic/STT/card
-  flow as unverified until someone actually taps through it on a phone.
+- **The native app now runs on the device, but the voice workflow is still unverified.**
+  First login is pending after fixing the client to accept Supabase's 8-digit OTP. Treat
+  mic/STT/parse/confirm as unverified until the smoke test in `WORK-LOG.md` is completed.
 - **`voice_logs` migration depends on Phase 1's schema** (`workouts`, `exercises`,
   `exercise_aliases` from `0001_init.sql`) — apply `0001` before `0002`.
 - **If you swap STT providers** (on-device → cloud), the only file that should need to

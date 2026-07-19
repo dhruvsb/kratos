@@ -7,6 +7,152 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-07-19 — Live iPhone development environment, Supabase deployment, and email OTP setup
+
+**Session scope:** Take the existing Phase 1 + Phase 2 implementation from
+"written but not deployed/device-tested" to a locally installed development build on
+the user's physical iPhone 15, verify the live Supabase backend, deploy the voice Edge
+Function, and make the hosted email-auth flow usable for on-device testing.
+
+### Current end state
+
+- The live Supabase project is linked and healthy:
+  - project ref: `amonovkkjohvlkjlfsit`
+  - project name: `dsooseven@gmail.com's Project`
+  - organization: `ql` (`fgamompxagwefcekbmfw`)
+  - region: `ap-southeast-1`
+- `.env` contains the real Supabase URL, anon key, service-role key, and OpenAI key.
+  Values are intentionally not recorded here. Only the Supabase URL and anon key are
+  exposed to the Expo client through `app.config.ts`; service-role/OpenAI credentials
+  remain server/local-tool credentials.
+- Phase 2 database prerequisites were verified against the live project:
+  `voice_logs` is queryable and `search_exercise_candidates` executes successfully.
+  Therefore `0002_voice_logs.sql` is applied, in addition to the already-verified Phase
+  1 schema/seed/RLS setup.
+- Supabase CLI was installed and the project linked. The `parse-utterance` Edge
+  Function was deployed successfully, including its shared pipeline modules. The
+  OpenAI secret was set in the hosted project. A direct unauthenticated probe returns
+  HTTP 401 `not authenticated`, which proves the function exists and is reachable while
+  preserving its required JWT guard.
+- A native Expo development build now exists on the user's physical iPhone 15. The app
+  compiles, installs, is trusted by iOS, launches, connects far enough to render the
+  RepVoice sign-in screen, and is ready for JavaScript updates through Metro.
+- Hosted Supabase Auth now uses temporary Gmail custom SMTP for development. The
+  `Magic link or OTP` template was changed from `{{ .ConfirmationURL }}` to
+  `{{ .Token }}` and successfully delivered an 8-digit OTP. This Gmail sender is a
+  development-only choice; replace it with a dedicated SMTP provider and verified
+  RepVoice-owned sending domain before inviting external users.
+- Login has **not yet been confirmed end-to-end** after the OTP-length client fix. The
+  immediate next action is to reload the development client, enter the latest 8-digit
+  OTP, and verify that the authenticated app shell opens.
+
+### Native/Expo environment completed
+
+- Installed and selected full Xcode at
+  `/Applications/Xcode.app/Contents/Developer` (Xcode 26.6, build 17F113), replacing
+  the Command-Line-Tools-only setup.
+- Installed CocoaPods 1.17.0. Expo prebuild completed and CocoaPods integrated all
+  native dependencies.
+- Installed Node 22.23.1 because React Native 0.86 / Metro 0.84 explicitly support
+  Node `^20.19.4 || ^22.13.0 || ^24.3.0 || >=25`; the previously selected odd-numbered
+  Node 23 line is outside that engine range. The machine's default shell may still
+  resolve `/opt/homebrew/bin/node` to Node 23, so use this prefix for Expo commands:
+  ```bash
+  PATH="/opt/homebrew/opt/node@22/bin:$PATH"
+  ```
+- Added `expo-dev-client@~57.0.7` to `package.json`/`package-lock.json`. This is required
+  because `expo-speech-recognition` is a native module/config plugin and the app cannot
+  exercise its real voice path in Expo Go.
+- Expo's native generation changed the package scripts to:
+  - `npm run ios` → `expo run:ios`
+  - `npm run android` → `expo run:android`
+- Added the stable iOS bundle identifier `com.dhruvshah.repvoice` in
+  `app.config.ts`. This avoids Expo's anonymous bundle-ID prompt path and is the ID used
+  by the generated Xcode target and installed app.
+- `npx expo run:ios --device` generated the ignored `ios/` directory, completed
+  prebuild/Pods/Xcode compilation, installed RepVoice on `Dhruv's iPhone`, and selected
+  the user's Xcode-managed Personal Team provisioning profile and Apple Development
+  certificate. The user trusted that developer profile under iOS Settings and the app
+  can launch.
+- The generated `ios/` tree remains intentionally ignored by the repository's existing
+  `/ios` rule. Native configuration should continue to be sourced from
+  `app.config.ts` + config plugins unless the project explicitly decides to commit
+  native projects later.
+
+### Authentication implementation changes
+
+- Supabase's current hosted dashboard requires custom SMTP before authentication email
+  subjects/bodies can be edited. For this private test environment, Gmail SMTP was
+  configured using a Google App Password; no Gmail password or app password is stored
+  in the repository or this log.
+- The hosted `Magic link or OTP` email now renders `{{ .Token }}`. The project's Auth
+  configuration currently emits an 8-digit token, despite older app copy assuming six.
+- Updated `src/components/SignInScreen.tsx` so email OTP length follows Supabase's
+  supported configurable range rather than a hardcoded value:
+  - accepts numeric codes from 6 through 10 digits (`/^\d{6,10}$/`)
+  - strips non-digit input
+  - raises `maxLength` from 6 to 10
+  - enables Verify only for a valid 6–10 digit code
+  - changes the label/placeholder to length-neutral copy
+- Updated the stale `src/data/auth.ts` comment so it describes the project's configured
+  OTP instead of claiming the service always sends six digits.
+- This auth change is JavaScript-only and does not require a native rebuild; Metro/Fast
+  Refresh or a manual reload is enough.
+
+### Verification completed
+
+- `npx expo-doctor`: **20/20 checks passed** after adding the development client.
+- `npx tsc --noEmit`: clean after the configurable OTP change.
+- Xcode native build: completed and installed on the physical device.
+- Physical-device discovery: iPhone 15 detected by Apple's CoreDevice tools and Expo.
+- Supabase Phase 2 schema: `voice_logs` table and candidate-search RPC verified live.
+- Edge Function: deployed and reachable; unauthenticated request correctly rejected.
+- SMTP/template: real 8-digit OTP delivered through the temporary Gmail sender.
+
+### Exact pickup point for the next agent/session
+
+1. Start Metro from the project root with the supported Node version:
+   ```bash
+   PATH="/opt/homebrew/opt/node@22/bin:$PATH" npx expo start --dev-client
+   ```
+2. Open RepVoice on the iPhone, reload if needed, enter a newly requested 8-digit OTP,
+   and verify successful navigation from `SignInScreen` into the signed-in app.
+3. Run the Phase 1 smoke test on-device: start empty workout → add Bench Press → add a
+   manual set → finish workout → confirm it appears in History/last-session recall.
+4. Run the current Phase 2 voice smoke test: start a workout → tap `Voice log` → allow
+   Microphone and Speech Recognition → say “bench press sixty kilograms for eight
+   reps” → inspect/edit the confirmation card → Confirm → verify a voice-tagged set →
+   finish and inspect History. Record any STT/parse/UI issue before changing prompts.
+5. Inspect `voice_logs`/the telemetry route after the voice attempt. Then run
+   `npm run eval` for the still-missing first real OpenAI baseline; run
+   `npm run eval:compare` only after the baseline result is understood.
+6. Continue the paused voice-first redesign from the preceding work-log entry. The
+   active workout route still uses the older exercise-card UI and `VoiceMicButton`;
+   `CorrectionDrawer`, `VoiceConsole`, `FloorMode`, rest timer, supported query answer,
+   and the `workout/[id].tsx` rewire remain unfinished.
+7. Before any external-user testing, replace temporary Gmail SMTP with a dedicated
+   provider (for example Resend/Postmark/SES) and a verified sender such as
+   `login@auth.<repvoice-domain>`. Do not ship personal Gmail as the production sender.
+
+### Operational commands
+
+```bash
+# Normal JavaScript iteration after the native client is installed
+PATH="/opt/homebrew/opt/node@22/bin:$PATH" npx expo start --dev-client
+
+# Rebuild only after native dependency/config-plugin/app-config changes
+PATH="/opt/homebrew/opt/node@22/bin:$PATH" npx expo run:ios --device
+
+# Static verification
+PATH="/opt/homebrew/opt/node@22/bin:$PATH" npx expo-doctor
+PATH="/opt/homebrew/opt/node@22/bin:$PATH" npx tsc --noEmit
+```
+
+**Working-tree note:** setup currently leaves intentional uncommitted changes in
+`app.config.ts`, `package.json`, `package-lock.json`, `src/components/SignInScreen.tsx`,
+and `src/data/auth.ts`. `supabase/.temp/` is Supabase CLI link metadata and is currently
+untracked. Preserve these changes; do not reset them when starting the next session.
+
 ## 2026-07-19 — Voice-first redesign (IN PROGRESS, paused mid-session)
 
 **Session scope:** Implement the Claude Design mockup "RepVoice Voice-First"

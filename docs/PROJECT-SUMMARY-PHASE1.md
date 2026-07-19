@@ -23,8 +23,8 @@ updatable record of what was actually built from it, not a copy of the spec.
 ## 2. Stack
 
 - **Expo SDK 57** (React Native), TypeScript, Expo Router — file-based routes under `src/app/`.
-- **Supabase**: Postgres + Auth (email OTP). Edge Functions reserved for Phase 2 (LLM calls
-  must be server-side — no API keys in the client, ever).
+- **Supabase**: Postgres + Auth (configurable-length email OTP). Edge Functions are used
+  by Phase 2; LLM calls must remain server-side and API keys must never be placed in the client.
 - **@tanstack/react-query** for all server state, layered over hand-written repository functions.
 - **zod** schemas as the single source of truth for row types (not auto-generated —
   written by hand so types exist even before a Supabase project is created).
@@ -34,15 +34,18 @@ updatable record of what was actually built from it, not a copy of the spec.
 | Build step | Status |
 |---|---|
 | App scaffold, env config, conventions doc | ✅ Done |
-| Database schema + Row Level Security | ✅ Done (migration written, **not yet applied**) |
+| Database schema + Row Level Security | ✅ Done and verified live |
 | Data access layer (`src/data/`) | ✅ Done |
-| Exercise library seed script + alias map | ✅ Done (script written, **not yet run**) |
+| Exercise library seed script + alias map | ✅ Done and seeded live (873 exercises, 217 aliases) |
 | All 6 Phase 1 screens | ✅ Done |
 | Hevy import | ❌ **Descoped** — removed from the Phase 1 plan entirely, not just deferred |
-| Typecheck / verify / first commit | ✅ Done (`tsc --noEmit` clean, `expo export` bundles all 9 routes) |
+| Native iPhone development client | ✅ Built, signed, installed, trusted, and launches to sign-in |
+| Email OTP delivery | ✅ Temporary Gmail SMTP + `{{ .Token }}` template; 8-digit delivery verified |
+| Typecheck / verify | ✅ Done (`tsc --noEmit` clean; `expo-doctor` 20/20) |
 
-All Phase 1 code is committed. What's left is entirely account/credential setup and
-actually using the app — nothing further to build until that's done.
+The Phase 1 backbone is built and its backend is verified. The current working tree has
+intentional uncommitted iOS/dev-client/auth setup changes documented in `WORK-LOG.md`.
+What's left is completing first login and actually exercising the workflows on-device.
 
 ### Setup checklist — all verified done except the last item
 - ✅ Supabase project created.
@@ -53,17 +56,21 @@ actually using the app — nothing further to build until that's done.
   search("RDL"/"OHP"/"incline db") returns the right exercise as the top hit.
 - ✅ `npm run test:rls` run for real — all 8 isolation checks passed (two throwaway
   accounts, one truly cannot read/write the other's data).
-- ⬜ **Only remaining item**: actually log 4 consecutive real workouts in the app
-  (`npm start`). That's the phase's real done-bar — nothing left to build for it.
+- ✅ Native development build installed on the user's iPhone 15; Expo Go is not used.
+- ✅ Temporary custom Gmail SMTP configured and an 8-digit OTP delivered.
+- ⬜ Complete the first OTP verification after the client was updated to accept
+  Supabase's configurable 6–10 digit codes.
+- ⬜ Log 4 consecutive real workouts on-device. That's the phase's real done-bar.
 
 ## 4. Key decisions & rationale
 
 - **App name**: "RepVoice" — placeholder, trivial to rename (just `app.config.ts` + package name).
 - **Weight stored in kg always** (`numeric(6,2)`). Unit conversion is display-only,
   driven by `profiles.default_unit`. Never store lb.
-- **Frontend is deliberately unstyled**: default fonts, black/white/grey, no component
-  library. `src/theme/tokens.ts` is an empty placeholder for a future design pass —
-  don't add colors or styling without being explicitly asked.
+- **Phase 1 screens are deliberately minimal**: the original logging and history surfaces use
+  plain React Native components so the workflow can be validated first. The later voice-first
+  Home surface has its own tokenized visual treatment, but the broader redesign remains paused
+  until on-device workflows are validated.
 - **All DB access goes through `src/data/` repositories** — screens never import the
   Supabase client directly. This is a hard rule (see `CLAUDE.md`), meant to keep an AI
   agent from spaghetti-coding data access directly into screens later.
@@ -100,7 +107,8 @@ src/app/                 Expo Router screens (file path = route)
   exercise/[id].tsx       Full history of one exercise, grouped by workout, paginated
 
 src/components/
-  SignInScreen.tsx        Email OTP sign-in (two-stage: email → 6-digit code)
+  SignInScreen.tsx        Email OTP sign-in (two-stage: email → configurable 6–10
+                          digit numeric code)
   ExercisePickerModal.tsx Searchable picker used by routine editor + active workout;
                           includes inline "create custom exercise" form
   ui.tsx                  Tiny unstyled primitives: Btn, Loading, Empty, ErrorText
@@ -118,7 +126,7 @@ src/data/                 THE repository layer — only place that talks to Supa
 src/lib/supabase.ts       The one place the Supabase client is constructed
 src/types/db.ts           zod schemas + inferred TS types for every table — import
                           row types from here everywhere, never redefine them
-src/theme/tokens.ts       Empty placeholder for future design phase
+src/theme/tokens.ts       Shared visual tokens used by the voice-first surfaces
 
 supabase/migrations/0001_init.sql   Full schema: tables, indexes, RLS policies,
                                      profile-on-signup trigger, two SQL functions
@@ -150,8 +158,10 @@ Two SQL functions do the heavy lifting server-side (avoids N+1 queries from the 
 - Don't re-derive conventions from scratch — they're in `CLAUDE.md` (hard rules) and
   section 4 above (rationale). Read both before proposing a different pattern.
 - If extending the schema, add to a **new** migration file, don't edit `0001_init.sql`.
-- If the Supabase project doesn't exist yet when you pick this up, data-dependent work
-  (seeding, RLS test, actually running the app against real data) is still blocked —
-  check `.env` for real (non-placeholder) values first.
-- Voice/LLM logging (Phase 2) is intentionally not started. The schema and repository
-  layer were shaped to make that addition non-disruptive — see section 4.
+- The live Supabase project, migrations, seed, and RLS verification are complete. Do not
+  recreate or reseed them blindly; inspect the current project and work log first.
+- Run the installed native client with Node 22 via
+  `PATH="/opt/homebrew/opt/node@22/bin:$PATH" npx expo start --dev-client`.
+- Temporary Gmail SMTP is for private testing only. Replace it with a dedicated provider
+  and verified RepVoice-owned sending domain before external-user testing.
+- Phase 2 voice logging exists and is deployed; see `PROJECT-SUMMARY-PHASE2.md`.
