@@ -3,7 +3,7 @@
 
 -- Every voice interaction is logged here, INCLUDING corrections — the app is
 -- its own eval-data factory (scripts/harvest-eval-cases.ts reads this table).
-create table public.voice_logs (
+create table if not exists public.voice_logs (
   id          uuid primary key default gen_random_uuid(),
   user_id     uuid not null references auth.users (id) on delete cascade,
   workout_id  uuid references public.workouts (id) on delete set null,
@@ -22,15 +22,18 @@ create table public.voice_logs (
   created_at  timestamptz not null default now()
 );
 
-create index voice_logs_user_created_idx on public.voice_logs (user_id, created_at desc);
-create index voice_logs_outcome_idx on public.voice_logs (outcome) where outcome is not null;
+create index if not exists voice_logs_user_created_idx on public.voice_logs (user_id, created_at desc);
+create index if not exists voice_logs_outcome_idx on public.voice_logs (outcome) where outcome is not null;
 
 alter table public.voice_logs enable row level security;
 
+drop policy if exists voice_logs_select_own on public.voice_logs;
 create policy voice_logs_select_own on public.voice_logs
   for select using (user_id = auth.uid());
+drop policy if exists voice_logs_insert_own on public.voice_logs;
 create policy voice_logs_insert_own on public.voice_logs
   for insert with check (user_id = auth.uid());
+drop policy if exists voice_logs_update_own on public.voice_logs;
 create policy voice_logs_update_own on public.voice_logs
   for update using (user_id = auth.uid()) with check (user_id = auth.uid());
 

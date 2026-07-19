@@ -11,7 +11,7 @@
  *   npx tsx scripts/parse-cli.ts "incline dumbbell press twenty five kgs ten reps"
  *   npx tsx scripts/parse-cli.ts "same weight, two more reps" \
  *     --context '{"current_exercise_id":"...", "last_set":{"weight_kg":60,"reps":8,"set_type":"normal"}}'
- *   npx tsx scripts/parse-cli.ts "..." --model gpt-4o
+ *   npx tsx scripts/parse-cli.ts "..." --model gpt-5.6-terra
  *   npx tsx scripts/parse-cli.ts "..." --fixture   # force the 25-item test fixture
  */
 import { readFileSync } from 'node:fs';

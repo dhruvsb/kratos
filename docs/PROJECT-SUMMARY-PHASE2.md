@@ -34,6 +34,7 @@ This doc is the living record of what was actually built from it — not a copy 
 | `parse-cli.ts` local test script (runs the real pipeline, no deploy needed) | ✅ Done |
 | Eval golden set v1 (50 synthetic cases, all 7 spec categories) | ✅ Done — **synthetic, not real dictation** (see §4) |
 | Eval runner (`eval/run.ts`) + model-comparison mode (`eval:compare`) | ✅ Done — **never run against the real API yet** (no `OPENAI_API_KEY` set) |
+| Model wired to `gpt-5.6-luna` (default) / `gpt-5.6-terra` (compare), prices verified | ✅ Done (2026-07-19) |
 | `harvest-eval-cases.ts` (promotes real corrections into draft golden cases) | ✅ Done |
 | Voice capture UI: mic button (workout-level + per-exercise), on-device STT, confirmation card, ambiguity chips, unmatched-exercise flow, undo snackbar | ✅ Done — **untested on a real device** (needs a native build, not Expo Go) |
 | Telemetry dev screen (`/dev/telemetry`): acceptance rate, edit rate by field, ambiguity rate, p50/p95 latency, cost vs. budget | ✅ Done |
@@ -43,11 +44,12 @@ This doc is the living record of what was actually built from it — not a copy 
 Everything below needs your accounts/device — none of it is something a future coding
 session can do unattended.
 
-1. **Get an OpenAI API key** (platform.openai.com) if you don't have one.
-2. **Verify the model IDs and prices in `supabase/functions/_shared/pipeline/prices.ts`**
-   against [platform.openai.com/docs/pricing](https://platform.openai.com/docs/pricing) —
-   they were unverified when set (see §5). Update `PARSE_MODEL_DEFAULT`,
-   `PARSE_MODEL_MID`, and their `MODEL_PRICES` entries if they've changed.
+1. **Get an OpenAI API key** (platform.openai.com) if you don't have one — this is the
+   only thing standing between the code and a working parse. The model is already wired
+   to `gpt-5.6-luna` with verified pricing; nothing else in the config needs touching.
+2. ~~Verify the model IDs and prices~~ — **done 2026-07-19.** `PARSE_MODEL_DEFAULT` =
+   `gpt-5.6-luna` ($1/$6 per 1M tok), `PARSE_MODEL_MID` = `gpt-5.6-terra` ($2.50/$15),
+   both confirmed against platform.openai.com. Only revisit if OpenAI changes prices.
 3. **Apply the Phase 2 migration**: run `supabase/migrations/0002_voice_logs.sql` against
    your Supabase project (same way you applied `0001_init.sql`).
 4. **Deploy the edge function and set the secret** (needs the Supabase CLI, not installed
@@ -112,17 +114,16 @@ answer, which keeps typical cost near a single LLM call.
 
 ## 5. Key decisions & rationale
 
-- **Provider: OpenAI** (switched from Anthropic on 2026-07-19 — user has an OpenAI key,
-  not an Anthropic one). Day-to-day parsing uses a cheap small model (`PARSE_MODEL_DEFAULT`
-  in `prices.ts`, currently `gpt-4o-mini`); a mid-tier model (`PARSE_MODEL_MID`, currently
-  `gpt-4o`) is what the eval harness benchmarks against, to get a real accuracy-vs-cost
-  number rather than assuming the expensive model is needed. **The exact model IDs and
-  prices are unverified** — they couldn't be confirmed live when this was written (two
-  live lookups returned inconsistent model catalogs), so check
-  [platform.openai.com/docs/pricing](https://platform.openai.com/docs/pricing) before
-  trusting cost numbers or assuming those exact model names still exist. The provider is
-  isolated behind one file (`llm.ts`'s `LlmClient` interface) — `AnthropicLlm` is still
-  there, unused, if you ever want to switch back or run both side by side.
+- **Provider: OpenAI, GPT-5.6 family** (switched from Anthropic on 2026-07-19 — user has an
+  OpenAI key, not an Anthropic one). Day-to-day parsing uses `gpt-5.6-luna`
+  (`PARSE_MODEL_DEFAULT` in `prices.ts` — the cheap $1/$6-per-1M high-volume tier); the
+  mid tier `gpt-5.6-terra` (`PARSE_MODEL_MID`, $2.50/$15) is what the eval harness
+  benchmarks against, to get a real accuracy-vs-cost number rather than assuming the
+  pricier model is needed. **Model IDs and prices were verified live on 2026-07-19**
+  against platform.openai.com / developers.openai.com (the GPT-5.6 family went GA
+  2026-07-09) — re-check there only if OpenAI changes pricing. The provider is isolated
+  behind one file (`llm.ts`'s `LlmClient` interface) — `AnthropicLlm` is still there,
+  unused, if you ever want to switch back or run both side by side.
 - **Never silently guess.** Any field a human would have to ask about becomes a short
   clarifying question in the response, not a best-effort value. This was an explicit
   product decision from the spec, not an engineering default.
@@ -257,8 +258,9 @@ scripts/harvest-eval-cases.ts    Pulls edited/discarded voice_logs into
 - **The eval harness has never been run against the real API.** Don't assume the golden
   set's numbers are known-good — run `npm run eval` first and read the report before
   trusting or changing anything based on "expected" accuracy.
-- **The OpenAI model IDs/prices in `prices.ts` are unverified.** Confirm them at
-  platform.openai.com before trusting the cost dashboard or assuming they're current.
+- **The OpenAI model IDs/prices in `prices.ts` were verified 2026-07-19** (`gpt-5.6-luna`
+  $1/$6, `gpt-5.6-terra` $2.50/$15). Re-confirm at platform.openai.com only if you suspect
+  a pricing change.
 - **The voice UI has never run on a device.** It typechecks and the bundle builds, but
   `expo-speech-recognition` needs a native build (§3, item 6) — treat the mic/STT/card
   flow as unverified until someone actually taps through it on a phone.

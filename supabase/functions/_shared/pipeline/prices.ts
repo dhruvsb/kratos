@@ -2,19 +2,15 @@
 // Prices are USD per 1M tokens. Update here (only here) when prices change;
 // the eval report and the telemetry screen both compute cost from this table.
 //
-// ⚠️ PROVIDER: OpenAI (switched from Anthropic on 2026-07-19 — user has an
-// OpenAI key, not an Anthropic one). See docs/PROJECT-SUMMARY-PHASE2.md §5.
-//
-// ⚠️ VERIFY BEFORE TRUSTING THE COST DASHBOARD: the two OpenAI model IDs and
-// their prices below could not be confirmed live when this was written —
-// check https://platform.openai.com/docs/pricing and https://platform.openai.com/docs/models
-// and correct PARSE_MODEL_DEFAULT / PARSE_MODEL_MID and their MODEL_PRICES
-// entries below if they've changed. Until you do, cost tracking may be wrong
-// even though parsing itself works fine.
+// PROVIDER: OpenAI, GPT-5.6 family (GA 2026-07-09). Day-to-day parsing uses
+// Luna (cheap, high-volume tier); the eval harness benchmarks it against Terra
+// (mid tier) via `npm run eval:compare` to get a real accuracy-vs-cost number.
+// Model IDs and prices below were verified against platform.openai.com /
+// developers.openai.com pricing on 2026-07-19 — re-check there if they drift.
 
-export const PARSE_MODEL_DEFAULT = 'gpt-4o-mini';
+export const PARSE_MODEL_DEFAULT = 'gpt-5.6-luna';
 // Mid-tier model of the same provider, used by `npm run eval:compare`.
-export const PARSE_MODEL_MID = 'gpt-4o';
+export const PARSE_MODEL_MID = 'gpt-5.6-terra';
 
 export interface ModelPrice {
   inputUsdPerMTok: number;
@@ -22,9 +18,9 @@ export interface ModelPrice {
 }
 
 export const MODEL_PRICES: Record<string, ModelPrice> = {
-  // ⚠️ Unverified as of 2026-07-19 — confirm at platform.openai.com/docs/pricing.
-  'gpt-4o-mini': { inputUsdPerMTok: 0.15, outputUsdPerMTok: 0.6 },
-  'gpt-4o': { inputUsdPerMTok: 2.5, outputUsdPerMTok: 10.0 },
+  // OpenAI GPT-5.6 family — verified 2026-07-19 (platform.openai.com/docs/pricing).
+  'gpt-5.6-luna': { inputUsdPerMTok: 1.0, outputUsdPerMTok: 6.0 },
+  'gpt-5.6-terra': { inputUsdPerMTok: 2.5, outputUsdPerMTok: 15.0 },
   // Kept in case you switch back to Anthropic later — see llm.ts (AnthropicLlm
   // is still there, unused, behind the same LlmClient interface).
   'claude-haiku-4-5': { inputUsdPerMTok: 1.0, outputUsdPerMTok: 5.0 },

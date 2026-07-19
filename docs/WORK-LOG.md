@@ -7,6 +7,34 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-07-19 — Pin model to gpt-5.6-luna + full functional audit
+
+**Session scope:** Verify everything required for the app to function is built (frontend/
+design/UI and QA excluded — user's domain), and finish wiring the specific OpenAI model.
+
+**Audit result:** All Phase 1 + Phase 2 code is complete and `tsc --noEmit` is clean. No
+stubs or TODOs anywhere except `src/theme/tokens.ts` (intentionally deferred to the design
+phase). The only remaining work is account/device setup that requires the user's own
+credentials/CLI (apply `0002_voice_logs.sql`, deploy the edge function + set the
+`OPENAI_API_KEY` secret, run the eval baseline, native dev-client build) — none of it
+doable unattended here; `supabase`/`deno` CLIs are not installed in this env.
+
+**Changed:**
+- Pinned `PARSE_MODEL_DEFAULT` = `gpt-5.6-luna`, `PARSE_MODEL_MID` = `gpt-5.6-terra` in
+  `prices.ts` (were the old placeholder `gpt-4o-mini`/`gpt-4o`). **Verified live** against
+  platform.openai.com / developers.openai.com: GPT-5.6 family GA 2026-07-09, Luna $1/$6
+  per 1M in/out, Terra $2.50/$15. Updated `MODEL_PRICES` accordingly and dropped the
+  "unverified" warnings the file/docs carried.
+- Confirmed the code's API surface matches GPT-5.6: Chat Completions with
+  `response_format:{type:'json_schema',strict:true}` + `max_completion_tokens` — no code
+  change needed in `llm.ts`.
+- Refreshed stale `gpt-4o*` references in `eval/run.ts` and `scripts/parse-cli.ts` usage
+  comments; updated `PROJECT-SUMMARY-PHASE2.md` §2/§3/§5/§7.
+
+**Not done / next up:** unchanged from below — the user sets `OPENAI_API_KEY` (local `.env`
++ Supabase secret) and does the deploy/migrate/eval/native-build steps. See
+`PROJECT-SUMMARY-PHASE2.md` §3.
+
 ## 2026-07-19 — Phase 2: switched LLM provider from Anthropic to OpenAI
 
 **Session scope:** Phase 2 only. User doesn't want to get an Anthropic key right now and

@@ -3,8 +3,8 @@
  * (supabase/functions/_shared/pipeline/pipeline.ts) and scores it.
  *
  * Usage:
- *   npm run eval            # score PARSE_MODEL_DEFAULT (gpt-4o-mini)
- *   npm run eval:compare    # score PARSE_MODEL_DEFAULT and PARSE_MODEL_MID (gpt-4o),
+ *   npm run eval            # score PARSE_MODEL_DEFAULT (gpt-5.6-luna)
+ *   npm run eval:compare    # score PARSE_MODEL_DEFAULT and PARSE_MODEL_MID (gpt-5.6-terra),
  *                           # report accuracy vs cost per 1,000 parses side by side
  *
  * Needs OPENAI_API_KEY in .env. Exercise matching runs against the 25-item
