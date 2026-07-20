@@ -5,6 +5,7 @@
 Workout logging app. Phase 1 = manual tracker backbone. Phase 2 adds voice/LLM logging. Phase 3 TBD.
 
 **Before doing anything else, read the knowledge base in `docs/`:**
+- [`docs/PRODUCT-PRINCIPLES.md`](docs/PRODUCT-PRINCIPLES.md) — **the standing priorities behind every decision** (showcase-first purpose, sleek + minimal-touch UI, instant speed). Read this first; when a request would compromise a priority, flag it before implementing.
 - [`docs/PROJECT-SUMMARY-PHASE1.md`](docs/PROJECT-SUMMARY-PHASE1.md) — manual tracker: what's built, decided, left
 - [`docs/PROJECT-SUMMARY-PHASE2.md`](docs/PROJECT-SUMMARY-PHASE2.md) — voice/LLM pipeline: same, for Phase 2
 - [`docs/WORK-LOG.md`](docs/WORK-LOG.md) — dated history of what happened each session
