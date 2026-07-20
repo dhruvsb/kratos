@@ -5,7 +5,8 @@ import type { VoiceParseResponse } from '@/data/voice';
 import { STT_STRATEGY, useSpeechToText } from '@/lib/stt';
 import { parseContextSchema, type Unit } from '@/types/parse';
 import type { SetType } from '@/types/db';
-import { Btn } from './ui';
+import { color, font, radius, space } from '@/theme/tokens';
+import { KeyCap } from './voice/primitives';
 import { VoiceConfirmationCard } from './VoiceConfirmationCard';
 
 // Give up waiting on the edge function after this long — the request keeps
@@ -96,9 +97,9 @@ export function VoiceMicButton({
 
   return (
     <View style={styles.row}>
-      <Btn
-        small
-        title={stt.state === 'listening' ? '⏹ Stop' : '🎤 Voice log'}
+      <KeyCap
+        label={stt.state === 'listening' ? 'STOP' : 'VOICE LOG'}
+        tone={stt.state === 'listening' ? 'warn' : 'accent'}
         onPress={stt.toggle}
       />
       {stt.state === 'listening' && (
@@ -113,38 +114,47 @@ export function VoiceMicButton({
       {banner?.kind === 'empty' && (
         <View style={styles.banner}>
           <Text style={styles.bannerText}>Didn't catch that.</Text>
-          <Btn small title="Retry" onPress={stt.toggle} />
+          <KeyCap label="RETRY" size="sm" onPress={stt.toggle} />
         </View>
       )}
       {banner?.kind === 'timeout' && (
         <View style={styles.banner}>
           <Text style={styles.bannerText}>Taking a while — "{banner.transcript}"</Text>
-          <Btn small title="Retry" onPress={() => runParse(banner.transcript)} />
+          <KeyCap label="RETRY" size="sm" onPress={() => runParse(banner.transcript)} />
         </View>
       )}
       {banner?.kind === 'error' && (
         <View style={styles.banner}>
           <Text style={styles.bannerText}>
-            Couldn't parse "{banner.transcript}" — log it manually below, or retry.
+            Couldn't parse "{banner.transcript}" — tap retry, or fix it from the tape.
           </Text>
-          <Btn small title="Retry" onPress={() => runParse(banner.transcript)} />
+          <KeyCap label="RETRY" size="sm" onPress={() => runParse(banner.transcript)} />
         </View>
       )}
 
-      <VoiceConfirmationCard
-        visible={card != null}
-        workoutId={workoutId}
-        transcript={card?.transcript ?? ''}
-        response={card?.response ?? null}
-        onClose={() => setCard(null)}
-      />
+      {card != null && (
+        <VoiceConfirmationCard
+          workoutId={workoutId}
+          transcript={card.transcript}
+          response={card.response}
+          autoCommit
+          onClose={() => setCard(null)}
+        />
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  row: { gap: 6 },
-  interim: { color: '#666', fontStyle: 'italic', fontSize: 13 },
-  banner: { gap: 4 },
-  bannerText: { color: '#666', fontSize: 13 },
+  row: { gap: space.sm },
+  interim: { fontFamily: font.num, color: color.t2, fontStyle: 'italic', fontSize: 13 },
+  banner: {
+    gap: space.xs,
+    backgroundColor: color.s1,
+    borderWidth: 1,
+    borderColor: color.line2,
+    borderRadius: radius.card,
+    padding: space.sm,
+  },
+  bannerText: { fontFamily: font.num, color: color.t2, fontSize: 13 },
 });

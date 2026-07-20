@@ -116,21 +116,23 @@ export default function HomeScreen() {
         )}
 
         <View style={styles.talkWrap}>
-          <Pressable
-            onPress={() => {
-              if (activeWorkout.data) {
-                router.push(`/workout/${activeWorkout.data.id}`);
-                return;
-              }
-              setVoiceHint(null);
-              void stt.toggle();
-            }}
-            style={[styles.talkRing, listening && styles.talkRingActive]}
-          >
-            <LevelMeter animating={listening} height={26} style={{ width: 60 }} />
-            <Text style={styles.talkLabel}>{listening ? 'LISTENING' : 'TALK'}</Text>
-            <View style={styles.talkUnderline} />
-          </Pressable>
+          <View style={styles.talkOuterRing}>
+            <Pressable
+              onPress={() => {
+                if (activeWorkout.data) {
+                  router.push(`/workout/${activeWorkout.data.id}`);
+                  return;
+                }
+                setVoiceHint(null);
+                void stt.toggle();
+              }}
+              style={[styles.talkRing, listening && styles.talkRingActive]}
+            >
+              <LevelMeter animating={listening} height={26} style={{ width: 60 }} />
+              <Text style={styles.talkLabel}>{listening ? 'LISTENING' : 'TALK'}</Text>
+              <View style={styles.talkUnderline} />
+            </Pressable>
+          </View>
           <Text style={styles.talkHint}>
             {listening
               ? stt.interimTranscript || 'listening…'
@@ -214,6 +216,15 @@ const styles = StyleSheet.create({
   resumeText: { fontFamily: font.numSemibold, fontSize: 11, color: color.acc },
 
   talkWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.xl, minHeight: 320 },
+  talkOuterRing: {
+    width: 206,
+    height: 206,
+    borderRadius: 103,
+    borderWidth: 1,
+    borderColor: color.acc14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   talkRing: {
     width: 190,
     height: 190,

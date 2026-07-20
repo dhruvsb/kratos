@@ -39,8 +39,9 @@ still paused mid-implementation; see the top entries in `WORK-LOG.md`.
 | Model wired to `gpt-5.6-luna` (default) / `gpt-5.6-terra` (compare), prices verified | ✅ Done (2026-07-19) |
 | `harvest-eval-cases.ts` (promotes real corrections into draft golden cases) | ✅ Done |
 | Native Expo development client | ✅ Built, signed, installed, trusted, and launches on iPhone 15 |
-| Voice capture UI: mic button (workout-level + per-exercise), on-device STT, confirmation card, ambiguity chips, unmatched-exercise flow, undo snackbar | ✅ Built — **on-device voice workflow not yet exercised because first login is still pending** |
+| Voice capture UI: mic button, on-device STT, confirmation card, ambiguity chips, unmatched-exercise flow, undo snackbar | ✅ Built — **on-device voice workflow not yet exercised because first login is still pending** |
 | Telemetry dev screen (`/dev/telemetry`): acceptance rate, edit rate by field, ambiguity rate, p50/p95 latency, cost vs. budget | ✅ Done |
+| Voice-first v2 redesign (Home, Voice console, Floor mode resting/PR, Correction drawer) | ✅ Built 2026-07-20, see §8 — History/Settings screens still Phase 1 unstyled |
 
 ## 3. Deployment completed and remaining validation
 
@@ -258,3 +259,52 @@ scripts/harvest-eval-cases.ts    Pulls edited/discarded voice_logs into
   `exercise_aliases` from `0001_init.sql`) — apply `0001` before `0002`.
 - **If you swap STT providers** (on-device → cloud), the only file that should need to
   change is `src/lib/stt.ts` — its `useSpeechToText()` interface is the seam.
+
+## 8. Voice-first v2 redesign (2026-07-20)
+
+Implemented the 5-screen mockup `RepVoice Voice-First.dc.html` (Claude Design project
+`94a04f7d-7d08-41bc-a9c9-e0b31092bb93`), explicitly labeled "v2" — a cyan/quantum-black
+palette. A prior session had already built `src/theme/tokens.ts` +
+`components/voice/primitives.tsx`/`TabBar.tsx`/Home screen against an **earlier amber**
+mockup iteration; the palette in `tokens.ts` was corrected to v2's cyan values (`acc:
+#4FD8FF`, `bg: #020609`) rather than kept — confirmed with the user before doing so.
+
+**Built:**
+- **Home** (`src/app/index.tsx`): unchanged structure, added the 206px outer glow ring
+  around the 190px TALK ring per v2's markup.
+- **Voice console** (`src/app/workout/[id].tsx`): full restyle of the active-workout
+  screen — elapsed timer + session totals header, exercise-chip selector row (replaces
+  the old per-exercise accordion), a session-tape `InsetWell` (tap a row to edit),
+  bottom transport bar (`LedDigits` + `LevelMeter` + FLOOR key).
+- **Correction drawer** (`components/VoiceConfirmationCard.tsx`): restyled from a plain
+  white `Modal` into the bottom-sheet drawer look (`KeyCap` weight/rep steppers, drag
+  handle). Widened to serve two entry points: a mis-parsed HEARD result (`response`
+  prop, original logic unchanged) and a tapped tape row (new `editSet` prop → calls
+  the existing `useUpdateSet`/`useDeleteSet` hooks instead of the confirm-entries path).
+  Also gained the auto-commit **HEARD panel**: when a parse is confident (no
+  ambiguities, every exercise resolved) and `autoCommit` is set, it renders inline as
+  a `DrainBar`-countdown card and confirms itself after `timing.commitHoldMs` unless
+  tapped to cancel — falls back to the full sheet otherwise.
+- **Floor mode** (`components/voice/FloorMode.tsx`, new): full-screen overlay with a
+  Resting sub-state (rest countdown off `timing.restDefaultSec`, NEXT/LAST/SET summary)
+  and a PR sub-state (thermal/heat styling, triggered when a newly-logged set beats the
+  best weight/reps found in `useLastSession`'s history for that exercise, auto-returns
+  to Resting after `timing.prMomentMs`). Entered via the console's FLOOR key or by
+  laying the phone face-up and still (`expo-sensors` `Accelerometer`, already a
+  dependency); exits on pickup (z-axis gravity drop) or a tap.
+
+**Scope cuts (intentional, not silently dropped):**
+- Auto-commit cancel is tap-only, not spoken ("say no to cancel" per the mockup) — the
+  current `useSpeechToText()` hook doesn't support listening while `speak()`/earcons
+  play concurrently; would need a bigger STT-hook change.
+- The mockup's "PLATES ⊞" plate-calculator button in the correction drawer was not
+  built — no spec exists yet for the actual plate math, so it was omitted rather than
+  shipped as a dead control.
+- History/Settings screens are untouched (still Phase 1's plain black-on-white UI) —
+  they weren't part of this mockup; see the screen inventory from the session that
+  requested this redesign.
+
+**Not yet done:** manual on-device verification of the full Home → console → floor-mode
+→ correction-drawer loop (blocked on the same pending first-login as the rest of Phase 2,
+per §3). Verified so far: `tsc --noEmit` clean, `expo export --platform web` bundles all
+10 routes with no errors.

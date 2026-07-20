@@ -2,8 +2,9 @@
 //
 // This is the design phase that Phases 1–3 deferred (the file used to be an empty
 // placeholder). Every value here is lifted 1:1 from the Claude Design mockup
-// "RepVoice Voice-First.dc.html" so screens read the same numbers the mockup did.
-// Rule from that mockup's agent notes: never hardcode a value that has a token.
+// "RepVoice Voice-First.dc.html" (v2 — cyan/quantum-black reskin) so screens read the
+// same numbers the mockup did. Rule from that mockup's agent notes: never hardcode a
+// value that has a token.
 //
 // Font FAMILY NAMES only live here (plain strings) so this file stays cheap to
 // import; the actual font *files* are loaded by src/theme/fonts.ts.
@@ -23,50 +24,56 @@ export const font = {
 
 export const color = {
   // Base canvas + surfaces (--s0/s1/s2/sin + body bg)
-  bg: '#100E0C',
-  s0: '#151210',
-  s1: '#1E1A16',
-  s2: '#282219',
-  sin: '#0D0B09', // recessed / inset well
+  bg: '#020609',
+  s0: '#070C11',
+  s1: '#0C1319',
+  s2: '#131E27',
+  sin: '#010406', // recessed / inset well
   // Panel / note-card surfaces used in the mockup's annotations + phones
-  panel: '#17140F',
-  panelBorder: '#35302A',
-  sectionLine: '#2A2520',
+  panel: '#0C1319',
+  panelBorder: 'rgba(150,205,255,0.18)',
+  sectionLine: 'rgba(150,205,255,0.09)',
 
-  // Hairlines (--line / --line2): warm off-white at low alpha
-  line: 'rgba(255,235,205,0.08)',
-  line2: 'rgba(255,235,205,0.16)',
-  tick: 'rgba(255,235,205,0.10)',
+  // Hairlines (--line / --line2): cool cyan-tinted off-white at low alpha
+  line: 'rgba(150,205,255,0.09)',
+  line2: 'rgba(150,205,255,0.18)',
+  tick: 'rgba(150,205,255,0.14)',
 
   // Text ramp (--t1/t2/t3) + a couple of in-between greys the mockup uses
-  t1: '#F3EDE3',
-  t2: '#A79D8D',
-  t3: '#6E6558',
-  t2b: '#8C8375',
-  t1b: '#C9BFAF',
+  t1: '#EAF3F9',
+  t2: '#8DA2B2',
+  t3: '#55636E',
+  t2b: '#A0B3C2',
+  t1b: '#C7DCE6',
 
-  // Accent = amber LED (--acc + derivatives). Accent is only ever border /
+  // Accent = electric cyan LED (--acc + derivatives). Accent is only ever border /
   // underline / glow — never a fill (agent-notes hard rule).
-  acc: '#FFAB1F',
-  accHi: '#FFC45C',
-  accInk: '#1A1305',
-  acc07: 'rgba(255,171,31,0.07)',
-  acc14: 'rgba(255,171,31,0.14)',
-  acc35: 'rgba(255,171,31,0.35)',
-  acc05: 'rgba(255,171,31,0.05)',
-  acc06: 'rgba(255,171,31,0.06)',
+  acc: '#4FD8FF',
+  accHi: '#9CE9FF',
+  accInk: '#03141A',
+  acc07: 'rgba(79,216,255,0.07)',
+  acc14: 'rgba(79,216,255,0.14)',
+  acc35: 'rgba(79,216,255,0.35)',
+  acc05: 'rgba(79,216,255,0.05)',
+  acc06: 'rgba(79,216,255,0.06)',
 
-  ok: '#8FC97E',
-  warn: '#E06A45',
+  ok: '#5FE3B0',
+  warn: '#FF5647',
 
-  // Level-meter segment ramp (cold → warm) from the mockup's meterBars data.
-  meterCold: '#3A342C',
-  meterMid: '#5E574D',
-  meterHot: '#FFAB1F',
+  // Heat — PR moment only, never used elsewhere in the system.
+  hot: '#FF8A3C',
+  hot2: '#FF5647',
+  hotGlow: 'rgba(255,138,60,0.5)',
+
+  // Level-meter segment ramp (cold → hot-cyan) from the mockup's meterBars data.
+  meterCold: '#17222B',
+  meterMid: '#1E2C36',
+  meterHigh: '#2B3A45',
+  meterHot: '#4FD8FF',
 
   // Tag chip borders used in the annotation cards.
-  tagOkBorder: '#3E4A38',
-  tagNeutralBorder: '#4A443C',
+  tagOkBorder: '#2B3A45',
+  tagNeutralBorder: 'rgba(150,205,255,0.18)',
 } as const;
 
 export const radius = {
@@ -116,6 +123,14 @@ export const shadow = {
     shadowOffset: { width: 0, height: 0 },
     elevation: 0,
   },
+  // Thermal glow for the PR moment — the one place shadow color goes warm.
+  glowHot: {
+    shadowColor: color.hot,
+    shadowOpacity: 0.5,
+    shadowRadius: 30,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 0,
+  },
 } as const;
 
 // Letter-spacing presets (the mockup leans on wide tracking for LED labels).
@@ -140,6 +155,7 @@ export const timing = {
   echoEarconMs: 160, // earcon max length
   floorEnterMs: 2000, // face-up + stationary hold before floor mode
   floorGyroThreshold: 0.6, // |gravity.z| above this ≈ lying flat, face up
+  prMomentMs: 6000, // how long the PR floor-mode screen holds before resting
 } as const;
 
 // Back-compat shape for any code importing the old `tokens` object.

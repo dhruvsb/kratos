@@ -7,6 +7,40 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-07-20 — Voice-first v2 redesign: console, floor mode, correction drawer
+
+**Session scope:** Implement the 5-screen Claude Design mockup `RepVoice Voice-First.dc.html`
+(project `94a04f7d-7d08-41bc-a9c9-e0b31092bb93`, labeled "v2"). Home was already
+partially restyled in a prior session against an amber palette from an earlier mockup
+iteration; confirmed with the user to replace it with v2's cyan/quantum-black palette
+rather than keep both.
+
+**Built:**
+- Corrected `src/theme/tokens.ts`'s `color` object from amber to v2's cyan values.
+- Home (`src/app/index.tsx`): added the 206px outer glow ring.
+- Voice console (`src/app/workout/[id].tsx`): full restyle — header timer/totals,
+  exercise-chip selector, session-tape `InsetWell`, bottom transport bar with a FLOOR
+  key.
+- Correction drawer (`components/VoiceConfirmationCard.tsx`): bottom-sheet restyle,
+  widened to also accept a tapped tape row (`editSet` prop, uses existing
+  `useUpdateSet`/`useDeleteSet`), and added the auto-commit HEARD panel (confident
+  parses drain and self-confirm via `timing.commitHoldMs`, tap-to-cancel).
+- Floor mode (`components/voice/FloorMode.tsx`, new): Resting + PR sub-states,
+  `expo-sensors` Accelerometer for face-up auto-entry/pickup-exit, PR detection against
+  `useLastSession` history.
+- `docs/PROJECT-SUMMARY-PHASE2.md` §8 has the full breakdown, including intentional
+  scope cuts (tap-only auto-commit cancel, no plate-calculator button).
+
+**Verified:** `npx tsc --noEmit` clean; `npx expo export --platform web` bundles all 10
+routes with no errors.
+
+**Not done / next up:** on-device manual walkthrough of the full loop (Home → console →
+floor mode → correction drawer) — blocked on the same pending first-login as the rest of
+Phase 2. History/Settings screens remain the old Phase 1 unstyled UI; out of scope for
+this mockup.
+
+---
+
 ## 2026-07-19 — Live iPhone development environment, Supabase deployment, and email OTP setup
 
 **Session scope:** Take the existing Phase 1 + Phase 2 implementation from
