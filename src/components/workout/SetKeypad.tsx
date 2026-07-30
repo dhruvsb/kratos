@@ -298,7 +298,7 @@ const styles = StyleSheet.create({
     marginTop: space.md,
   },
   logBtnOff: { borderColor: color.line2 },
-  logText: { fontFamily: font.uiSemibold, fontSize: 11, letterSpacing: tracking.label, color: color.acc },
+  logText: { fontFamily: font.uiMedium, fontSize: 11, letterSpacing: tracking.label, color: color.acc },
 
   footNote: {
     flexDirection: 'row',

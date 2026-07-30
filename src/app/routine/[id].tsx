@@ -128,7 +128,7 @@ export default function RoutineEditorScreen() {
 
         <View style={styles.exHeadRow}>
           <Text style={styles.label}>EXERCISES · ORDER = WORKOUT ORDER</Text>
-          <Text style={styles.labelDim}>SETS × REPS</Text>
+          <Text style={styles.labelDim}>TARGETS · OPTIONAL</Text>
         </View>
 
         {items.length === 0 && (
@@ -138,7 +138,11 @@ export default function RoutineEditorScreen() {
         {items.map((item, index) => (
           <View key={`${item.exercise.id}-${index}`} style={styles.itemRow}>
             <Text style={styles.itemNum}>{index + 1}</Text>
-            <View style={{ flex: 1 }}>
+            <Pressable
+              style={({ pressed }) => [{ flex: 1 }, pressed && { opacity: 0.6 }]}
+              onPress={() => router.push(`/exercise/${item.exercise.id}`)}
+              hitSlop={6}
+            >
               <Text style={styles.itemName} numberOfLines={1}>
                 {item.exercise.canonical_name}
               </Text>
@@ -147,38 +151,47 @@ export default function RoutineEditorScreen() {
                   .filter(Boolean)
                   .join(' · ')
                   .toUpperCase() || 'EXERCISE'}
+                {'  ›'}
               </Text>
-            </View>
+            </Pressable>
             <View style={styles.targets}>
-              <TextInput
-                style={styles.tInput}
-                value={item.target_sets}
-                onChangeText={(t) => patchItem(index, { target_sets: t })}
-                keyboardType="number-pad"
-                placeholder="—"
-                placeholderTextColor={color.t3}
-                selectionColor={color.acc}
-              />
-              <Text style={styles.tSep}>×</Text>
-              <TextInput
-                style={styles.tInput}
-                value={item.target_reps_low}
-                onChangeText={(t) => patchItem(index, { target_reps_low: t })}
-                keyboardType="number-pad"
-                placeholder="—"
-                placeholderTextColor={color.t3}
-                selectionColor={color.acc}
-              />
-              <Text style={styles.tSep}>–</Text>
-              <TextInput
-                style={styles.tInput}
-                value={item.target_reps_high}
-                onChangeText={(t) => patchItem(index, { target_reps_high: t })}
-                keyboardType="number-pad"
-                placeholder="—"
-                placeholderTextColor={color.t3}
-                selectionColor={color.acc}
-              />
+              <View style={styles.targetCol}>
+                <TextInput
+                  style={styles.tInput}
+                  value={item.target_sets}
+                  onChangeText={(t) => patchItem(index, { target_sets: t })}
+                  keyboardType="number-pad"
+                  placeholder="—"
+                  placeholderTextColor={color.t3}
+                  selectionColor={color.acc}
+                />
+                <Text style={styles.tCap}>SETS</Text>
+              </View>
+              <Text style={styles.tSepTop}>×</Text>
+              <View style={styles.targetCol}>
+                <View style={styles.repPair}>
+                  <TextInput
+                    style={styles.tInput}
+                    value={item.target_reps_low}
+                    onChangeText={(t) => patchItem(index, { target_reps_low: t })}
+                    keyboardType="number-pad"
+                    placeholder="—"
+                    placeholderTextColor={color.t3}
+                    selectionColor={color.acc}
+                  />
+                  <Text style={styles.tSep}>–</Text>
+                  <TextInput
+                    style={styles.tInput}
+                    value={item.target_reps_high}
+                    onChangeText={(t) => patchItem(index, { target_reps_high: t })}
+                    keyboardType="number-pad"
+                    placeholder="—"
+                    placeholderTextColor={color.t3}
+                    selectionColor={color.acc}
+                  />
+                </View>
+                <Text style={styles.tCap}>REPS</Text>
+              </View>
             </View>
             <View style={styles.rowBtns}>
               <Pressable onPress={() => move(index, -1)} hitSlop={6}><Text style={styles.rowBtn}>↑</Text></Pressable>
@@ -195,7 +208,9 @@ export default function RoutineEditorScreen() {
         </Pressable>
 
         <Text style={styles.note}>
-          Targets are optional. Leave them blank and the workout screen just shows what you did last time.
+          Targets are optional — just sets and a rep range. You’ll enter the actual weight while
+          logging the workout, not here. Leave targets blank and the workout screen simply shows
+          what you did last time.
         </Text>
 
         {error != null && <ErrorText error={error} />}
@@ -231,14 +246,14 @@ export default function RoutineEditorScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.bg },
-  content: { paddingHorizontal: space.xl, paddingBottom: space.xxl, gap: 0 },
+  content: { paddingHorizontal: space.xxl, paddingBottom: space.xxl, gap: 0 },
   topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
   navLink: { fontFamily: font.numSemibold, fontSize: 9.5, letterSpacing: tracking.label, color: color.t3 },
 
   label: { fontFamily: font.numSemibold, fontSize: 8, letterSpacing: tracking.wide, color: color.t3, marginTop: space.xl },
   labelDim: { fontFamily: font.numSemibold, fontSize: 8, letterSpacing: 0.6, color: color.t3, marginTop: space.xl },
   nameInput: {
-    fontFamily: font.uiBold,
+    fontFamily: font.uiSemibold,
     fontSize: 19,
     color: color.t1,
     paddingVertical: space.sm,
@@ -253,14 +268,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: space.sm,
-    paddingVertical: 14,
+    paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: color.line,
   },
   itemNum: { fontFamily: font.numSemibold, fontSize: 9.5, color: color.t3, width: 16 },
-  itemName: { fontFamily: font.uiSemibold, fontSize: 13, color: color.t1 },
-  itemMeta: { fontFamily: font.num, fontSize: 9, letterSpacing: 0.6, color: color.t3, marginTop: 4 },
-  targets: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  itemName: { fontFamily: font.uiMedium, fontSize: 13, color: color.t1 },
+  itemMeta: { fontFamily: font.num, fontSize: 9, letterSpacing: 0.6, color: color.t3, marginTop: 6 },
+  targets: { flexDirection: 'row', alignItems: 'flex-start', gap: 4 },
+  targetCol: { alignItems: 'center' },
+  repPair: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  tCap: { fontFamily: font.numSemibold, fontSize: 7, letterSpacing: 0.5, color: color.t3, marginTop: 4 },
+  tSepTop: { fontFamily: font.num, fontSize: 11, color: color.t3, marginTop: 5 },
   tInput: {
     width: 26,
     fontFamily: font.numSemibold,
@@ -286,12 +305,12 @@ const styles = StyleSheet.create({
     marginTop: space.xl,
   },
   addExText: { fontFamily: font.numSemibold, fontSize: 10.5, letterSpacing: tracking.label, color: color.acc },
-  note: { fontFamily: font.num, fontSize: 10.5, lineHeight: 17, color: color.t3, marginTop: space.lg },
+  note: { fontFamily: font.num, fontSize: 10.5, lineHeight: 18, color: color.t3, marginTop: space.lg },
 
   footer: {
     flexDirection: 'row',
     gap: space.sm,
-    paddingHorizontal: space.xl,
+    paddingHorizontal: space.xxl,
     paddingTop: space.md,
     borderTopWidth: 1,
     borderTopColor: color.line,
@@ -308,7 +327,7 @@ const styles = StyleSheet.create({
     ...shadow.glowSm,
   },
   saveOff: { borderColor: color.line2, ...({ shadowOpacity: 0 } as object) },
-  saveText: { fontFamily: font.uiSemibold, fontSize: 11, letterSpacing: tracking.label, color: color.acc },
+  saveText: { fontFamily: font.uiMedium, fontSize: 11, letterSpacing: tracking.label, color: color.acc },
   cancel: {
     width: 96,
     height: 50,

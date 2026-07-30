@@ -25,9 +25,10 @@ changes what's built or decided — don't let the docs drift from reality.
   supersedes the old "frontend is intentionally unstyled / black-white-grey only" rule.)
   `src/theme/tokens.ts` is fully populated and is the **single source of truth for every
   color, font, radius, spacing, and shadow** — never hardcode a value that has a token, and
-  never introduce a color/font outside the token set. Fonts are Space Grotesk (UI) + IBM
-  Plex Mono (numbers). The reference designs live in `docs/design/` (`RepVoice-Manual.dc.html`
-  is what's implemented; the voice-first canvas is kept for Phase 2).
+  never introduce a color/font outside the token set. Fonts are Instrument Sans (UI) + Geist
+  Mono (numbers) — the "type option 01" refresh (2026-07-31). The reference designs live in
+  `docs/design/` (`RepVoice-Manual.dc.html` is what's implemented; the voice-first canvas is
+  kept for Phase 2).
 - **All DB access goes through `src/data/` repository modules.** Screens and components
   never import `src/lib/supabase.ts` directly — auth is also wrapped, in `src/data/auth.ts`.
 - Security model is **Postgres RLS** (`user_id = auth.uid()`, child tables via join).

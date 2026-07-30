@@ -192,7 +192,7 @@ export function SignInScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.bg },
   body: { flex: 1, justifyContent: 'center', paddingHorizontal: 30 },
-  logo: { fontFamily: font.uiBold, fontSize: 26, color: color.t1, letterSpacing: 0.4 },
+  logo: { fontFamily: font.uiSemibold, fontSize: 26, color: color.t1, letterSpacing: 0.4 },
   lede: {
     fontFamily: font.num,
     fontSize: 11.5,
@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
     marginTop: 26,
   },
   ctaOff: { borderColor: color.line2, backgroundColor: color.s0 },
-  ctaText: { fontFamily: font.uiSemibold, fontSize: 11, letterSpacing: tracking.label, color: color.acc },
+  ctaText: { fontFamily: font.uiMedium, fontSize: 11, letterSpacing: tracking.label, color: color.acc },
 
   sentTo: { fontFamily: font.num, fontSize: 11.5, color: color.t3, marginTop: 11 },
   boxRow: { flexDirection: 'row', gap: 7, marginTop: 16 },
@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
   boxDigit: { fontFamily: font.numBold, fontSize: 20, color: color.t1 },
   hiddenInput: { position: 'absolute', width: 1, height: 1, opacity: 0 },
 
-  codeHint: { fontFamily: font.num, fontSize: 10.5, lineHeight: 17, color: color.t3, marginTop: 12 },
+  codeHint: { fontFamily: font.num, fontSize: 10.5, lineHeight: 18, color: color.t3, marginTop: 12 },
   codeFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -259,5 +259,5 @@ const styles = StyleSheet.create({
   footerLink: { fontFamily: font.numSemibold, fontSize: 10, letterSpacing: tracking.label, color: color.acc },
   footerLinkDim: { fontFamily: font.numSemibold, fontSize: 10, letterSpacing: tracking.label, color: color.t3 },
 
-  error: { fontFamily: font.num, fontSize: 11, lineHeight: 17, color: color.warn, marginTop: 18 },
+  error: { fontFamily: font.num, fontSize: 11, lineHeight: 18, color: color.warn, marginTop: 18 },
 });

@@ -14,12 +14,14 @@ import * as voice from './voice';
 import * as workouts from './workouts';
 import type { WorkoutDetail } from './workouts';
 import type { WorkoutSet } from '@/types/db';
+import type { BodyRegion } from '@/lib/muscles';
 
 export const keys = {
   profile: ['profile'] as const,
   routines: (includeArchived: boolean) => ['routines', includeArchived] as const,
   routine: (id: string) => ['routine', id] as const,
-  exerciseSearch: (q: string) => ['exerciseSearch', q] as const,
+  exerciseSearch: (q: string, region?: string | null) =>
+    ['exerciseSearch', q, region ?? null] as const,
   exercise: (id: string) => ['exercise', id] as const,
   activeWorkout: ['activeWorkout'] as const,
   workout: (id: string) => ['workout', id] as const,
@@ -74,11 +76,11 @@ export function useRoutine(id: string | undefined) {
   });
 }
 
-export function useExerciseSearch(query: string) {
+export function useExerciseSearch(query: string, region?: BodyRegion | null) {
   return useQuery({
-    queryKey: keys.exerciseSearch(query),
-    queryFn: () => exercises.searchExercises(query),
-    placeholderData: (prev) => prev, // keep old results while typing
+    queryKey: keys.exerciseSearch(query, region),
+    queryFn: () => exercises.searchExercises(query, region),
+    placeholderData: (prev) => prev, // keep old results while typing / switching region
   });
 }
 

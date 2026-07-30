@@ -7,6 +7,61 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-07-31 — Type refresh: "option 01" (Instrument Sans + Geist Mono) across all screens
+
+Implemented the updated `RepVoice Manual.dc.html` from the Claude Design project — the
+"type option 01" pass. Two structural changes plus spacing polish, all driven through the
+token system so screens barely moved.
+
+**Fonts.** UI family Space Grotesk → **Instrument Sans**; number family IBM Plex Mono →
+**Geist Mono**. Installed `@expo-google-fonts/instrument-sans` + `@expo-google-fonts/geist-mono`,
+swapped the loads in `src/theme/fonts.ts` and the family strings in `src/theme/tokens.ts`
+(`font.*` keys unchanged, so every screen picked up the new families for free — all raw
+family strings live only in `tokens.ts`).
+
+**Weight drop.** Instrument Sans reads heavier than Space Grotesk, so every UI weight steps
+down one: titles 700→600 (`font.uiBold`→`font.uiSemibold`), names/buttons 600→500
+(`font.uiSemibold`→`font.uiMedium`). Mono readouts keep their weight (`font.num*` untouched)
+so the numbers still carry. Applied as a uniform token rename across all 18 screens +
+components (voice components included, to keep the type system consistent).
+
+**Spacing opened up.** Screen insets 20→24 (`paddingHorizontal: space.xl`→`space.xxl`, the
+design's 24px); list/set rows +2px (14→16, 15→17, set-grid 11→13; the inline `gridActions`
+row deliberately left at 14); +2 air between a list name and its meta line; caption leading
+17→18.
+
+Verified: `tsc --noEmit` clean, `expo export --platform web` bundles all 13 routes, and a
+web render of the sign-in screen confirms both families load (Instrument Sans logo, Geist
+Mono body). Not yet run on device.
+
+---
+
+## 2026-07-31 — Muscle-group filter (#4) + per-workout muscle split (#6)
+
+Two FEEDBACK-LOG items that share the exercise muscle metadata (migration 0004's
+`primary_muscles[]` / `secondary_muscles[]` / `body_region[]`), no schema change needed.
+
+**#4 — muscle filter chips.** A horizontal body-region chip row (the 6 `BODY_REGIONS` from
+`src/lib/muscles.ts`) now sits above the results in **both** `ExercisePickerModal.tsx` and the
+library screen `src/app/exercises.tsx`. Tapping a chip toggles it (single-select). Plumbing:
+`searchExercises(query, region?)` gains an optional region — with no query it lists that region
+via a new `listExercisesByRegion()` (`.contains('body_region', [region])`); with a query it filters
+the ranked trigram matches by `body_region`. `useExerciseSearch(query, region?)` and the
+`exerciseSearch` query key carry the region. Chips styled on-theme (pill, accent border/tint when
+active — accent stays border-only).
+
+**#6 — per-workout muscle split.** The workout **detail** screen (`src/app/history/[id].tsx`) now
+shows a Hevy-style "MUSCLE SPLIT" section under the meta line: body regions with % bars, heaviest
+first. Computed purely from the workout already in the cache (no extra query) via a new pure helper
+`src/lib/muscleSplit.ts` — each set adds `PRIMARY_WEIGHT` to its exercise's primary regions and
+`SECONDARY_WEIGHT` (0.5) to secondary, normalized to shares. Rendered by a new presentational
+`src/components/MuscleSplit.tsx` (monochrome LED bars — no accent fill).
+
+`tsc` clean; web export bundles all routes. Not run on device. (Built alongside a parallel session
+editing the routine editor / settings / workout screens — those files untouched here.)
+
+---
+
 ## 2026-07-30 (session 5) — Wire weekly goal into the calendar tally
 
 After merging the calendar (screen 12) and Entry & edges (13–18) branches, closed the one open

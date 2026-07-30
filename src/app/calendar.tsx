@@ -302,10 +302,10 @@ export default function CalendarScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.bg },
-  content: { paddingHorizontal: space.xl, paddingBottom: space.xxl },
+  content: { paddingHorizontal: space.xxl, paddingBottom: space.xxl },
 
   head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
-  title: { fontFamily: font.uiBold, fontSize: 22, color: color.t1 },
+  title: { fontFamily: font.uiSemibold, fontSize: 22, color: color.t1 },
   nav: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   navArrow: { fontFamily: font.numSemibold, fontSize: 15, color: color.t3, paddingHorizontal: 2 },
   navArrowOff: { color: color.line2 },
@@ -369,5 +369,5 @@ const styles = StyleSheet.create({
   barsAxis: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 9 },
   axisLabel: { fontFamily: font.num, fontSize: 9, letterSpacing: 0.6, color: color.t3 },
 
-  note: { fontFamily: font.num, fontSize: 10.5, lineHeight: 17, color: color.t3, marginTop: space.xxl },
+  note: { fontFamily: font.num, fontSize: 10.5, lineHeight: 18, color: color.t3, marginTop: space.xxl },
 });

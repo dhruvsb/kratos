@@ -25,7 +25,7 @@ import { useSettings } from '@/data/settings';
 import type { LastSessionSet } from '@/types/db';
 import type { SetType, Unit } from '@/types/db';
 import { formatSet, formatWeight } from '@/lib/units';
-import { color, font, radius, space, timing, tracking } from '@/theme/tokens';
+import { color, font, radius, space, tracking } from '@/theme/tokens';
 
 /** PREV cell: a lone em-dash when there's no matching last-session set (mockup 15),
  *  not "— × —" — no fake number to beat on a lift's first day. */
@@ -56,8 +56,6 @@ export default function ActiveWorkoutScreen() {
   const settings = useSettings();
   const unit: Unit = profile.data?.default_unit ?? 'kg';
   const prefillEnabled = settings.data?.prefillFromLastSession ?? true;
-  const restSec = settings.data?.defaultRestSec ?? timing.restDefaultSec;
-  const autoStartRest = settings.data?.autoStartRest ?? true;
 
   const addExercise = useAddExerciseToWorkout(id!);
   const addSet = useAddSet(id!);
@@ -70,12 +68,11 @@ export default function ActiveWorkoutScreen() {
   const [activeExerciseId, setActiveExerciseId] = useState<string | null>(null);
   const [keypad, setKeypad] = useState<KeypadState | null>(null);
   const [now, setNow] = useState(Date.now());
-  const [restEndsAt, setRestEndsAt] = useState<number | null>(null);
 
   const detail = workout.data;
   const isFinished = detail?.ended_at != null;
 
-  // One ticking clock drives both the elapsed timer and the rest countdown.
+  // A one-second clock drives the elapsed-time readout in the header.
   useEffect(() => {
     if (isFinished) return;
     const t = setInterval(() => setNow(Date.now()), 1000);
@@ -125,9 +122,6 @@ export default function ActiveWorkoutScreen() {
     );
   }
 
-  const restLeft = restEndsAt != null ? (restEndsAt - now) / 1000 : 0;
-  if (restEndsAt != null && restLeft <= 0) setRestEndsAt(null);
-
   const logged = activeExercise?.sets ?? [];
   const nextSetNumber = logged.length + 1;
   const noHistory = lastSets.length === 0; // first time on this lift (mockup 15)
@@ -138,12 +132,6 @@ export default function ActiveWorkoutScreen() {
   const prefillKg = prefillEnabled ? lastForNext?.weight_kg ?? prevInSession?.weight_kg ?? null : null;
   const prefillReps = prefillEnabled ? lastForNext?.reps ?? prevInSession?.reps ?? null : null;
 
-  function startRest() {
-    if (!autoStartRest) return;
-    setRestEndsAt(Date.now() + restSec * 1000);
-    setNow(Date.now());
-  }
-
   function logPending() {
     if (!activeExercise) return;
     if (prefillReps == null) {
@@ -151,7 +139,6 @@ export default function ActiveWorkoutScreen() {
       openAdd('normal');
       return;
     }
-    startRest();
     addSet.mutate({
       workoutExerciseId: activeExercise.id,
       set: { weight_kg: prefillKg, reps: prefillReps, set_type: 'normal' },
@@ -173,7 +160,6 @@ export default function ActiveWorkoutScreen() {
     if (keypad.mode === 'edit' && keypad.setId) {
       updateSet.mutate({ setId: keypad.setId, patch: { weight_kg: weightKg, reps } });
     } else {
-      startRest();
       addSet.mutate({
         workoutExerciseId: activeExercise.id,
         set: { weight_kg: weightKg, reps, set_type: keypad.setType },
@@ -375,21 +361,6 @@ export default function ActiveWorkoutScreen() {
         </ScrollView>
       )}
 
-      {/* Rest bar */}
-      {restEndsAt != null && !isFinished && (
-        <View style={styles.restBar}>
-          <Text style={styles.restLabel}>REST</Text>
-          <Text style={styles.restTime}>{fmtClock(restLeft)}</Text>
-          <View style={styles.restTrack} />
-          <Pressable onPress={() => setRestEndsAt((e) => (e ?? Date.now()) + 30000)} hitSlop={8}>
-            <Text style={styles.restAct}>+30s</Text>
-          </Pressable>
-          <Pressable onPress={() => setRestEndsAt(null)} hitSlop={8}>
-            <Text style={[styles.restAct, { color: color.acc }]}>SKIP</Text>
-          </Pressable>
-        </View>
-      )}
-
       {/* Footer */}
       {!isFinished && (
         <View style={[styles.footer, { paddingBottom: insets.bottom + space.md }]}>
@@ -485,7 +456,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: space.lg,
     paddingBottom: space.md,
   },
-  title: { fontFamily: font.uiBold, fontSize: 19, color: color.t1, marginTop: 6 },
+  title: { fontFamily: font.uiSemibold, fontSize: 19, color: color.t1, marginTop: 6 },
   timer: { fontFamily: font.numSemibold, fontSize: 15, color: color.acc, textShadowColor: color.acc14, textShadowRadius: 8 },
   meta: { fontFamily: font.numSemibold, fontSize: 9, letterSpacing: tracking.label, color: color.t3, marginTop: 4 },
 
@@ -513,12 +484,12 @@ const styles = StyleSheet.create({
   chipAddText: { fontFamily: font.numSemibold, fontSize: 9.5, letterSpacing: tracking.label, color: color.t2 },
 
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: space.xl },
-  emptyTitle: { fontFamily: font.uiSemibold, fontSize: 17, color: color.t1 },
+  emptyTitle: { fontFamily: font.uiMedium, fontSize: 17, color: color.t1 },
   emptyBody: { fontFamily: font.num, fontSize: 12, color: color.t3, marginTop: space.sm, textAlign: 'center' },
 
   body: { paddingHorizontal: space.lg, paddingBottom: space.xl },
   exHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: space.md },
-  exName: { fontFamily: font.uiBold, fontSize: 18, color: color.t1, flex: 1 },
+  exName: { fontFamily: font.uiSemibold, fontSize: 18, color: color.t1, flex: 1 },
   exPos: { fontFamily: font.numSemibold, fontSize: 9.5, letterSpacing: tracking.label, color: color.t3, marginTop: 4 },
   exSubRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginTop: 9 },
   exMuscle: { fontFamily: font.numSemibold, fontSize: 10, letterSpacing: tracking.label, color: color.t2 },
@@ -535,7 +506,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    paddingVertical: 11,
+    paddingVertical: 13,
     paddingLeft: 12,
     paddingRight: 8,
     borderBottomWidth: 1,
@@ -579,21 +550,6 @@ const styles = StyleSheet.create({
   gridActions: { flexDirection: 'row', gap: 22, paddingVertical: 14, paddingHorizontal: 12 },
   actAcc: { fontFamily: font.numSemibold, fontSize: 10.5, letterSpacing: tracking.label, color: color.acc },
   actDim: { fontFamily: font.numSemibold, fontSize: 10.5, letterSpacing: tracking.label, color: color.t3 },
-
-  restBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space.md,
-    paddingHorizontal: space.lg,
-    paddingVertical: space.md,
-    borderTopWidth: 1,
-    borderTopColor: color.line2,
-    backgroundColor: color.sin,
-  },
-  restLabel: { fontFamily: font.numSemibold, fontSize: 10, letterSpacing: tracking.label, color: color.t3 },
-  restTime: { fontFamily: font.numBold, fontSize: 20, color: color.acc, textShadowColor: color.acc14, textShadowRadius: 8 },
-  restTrack: { flex: 1, height: 1, backgroundColor: color.line },
-  restAct: { fontFamily: font.numSemibold, fontSize: 10, letterSpacing: 0.6, color: color.t2 },
 
   footer: { paddingHorizontal: space.lg, paddingTop: space.sm, gap: space.sm },
   navRow: { flexDirection: 'row', gap: space.sm, alignItems: 'stretch' },

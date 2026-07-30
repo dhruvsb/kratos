@@ -101,9 +101,9 @@ function Tile({ label, value, unit }: { label: string; value: string; unit?: str
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.bg },
-  content: { paddingHorizontal: space.xl, paddingBottom: space.xxl },
+  content: { paddingHorizontal: space.xxl, paddingBottom: space.xxl },
   saved: { fontFamily: font.numSemibold, fontSize: 9, letterSpacing: tracking.wide, color: color.ok },
-  title: { fontFamily: font.uiBold, fontSize: 22, color: color.t1, marginTop: space.md },
+  title: { fontFamily: font.uiSemibold, fontSize: 22, color: color.t1, marginTop: space.md },
   when: { fontFamily: font.numSemibold, fontSize: 10.5, letterSpacing: 0.8, color: color.t3, marginTop: 7 },
 
   statRow: {
@@ -129,11 +129,11 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: color.line,
   },
-  exName: { fontFamily: font.uiSemibold, fontSize: 13, color: color.t2, flex: 1 },
+  exName: { fontFamily: font.uiMedium, fontSize: 13, color: color.t2, flex: 1 },
   exMeta: { fontFamily: font.numSemibold, fontSize: 10.5, letterSpacing: 0.4, color: color.t3 },
   hint: { fontFamily: font.num, fontSize: 12, color: color.t3, paddingTop: space.md },
 
-  footer: { paddingHorizontal: space.xl, paddingTop: space.md },
+  footer: { paddingHorizontal: space.xxl, paddingTop: space.md },
   doneWrap: {
     height: 52,
     borderRadius: radius.ctl + 1,
@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
     ...shadow.glowSm,
   },
   done: {
-    fontFamily: font.uiSemibold,
+    fontFamily: font.uiMedium,
     fontSize: 11,
     letterSpacing: tracking.label,
     color: color.acc,

@@ -5,6 +5,7 @@ import { useMemo } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ErrorText, Loading } from '@/components/ui';
+import { TabBar } from '@/components/voice/TabBar';
 import { useWorkoutList } from '@/data/hooks';
 import type { WorkoutListItem } from '@/data/workouts';
 import { color, font, space, tracking } from '@/theme/tokens';
@@ -68,6 +69,7 @@ export default function HistoryScreen() {
 
       <FlatList
         data={rows}
+        style={{ flex: 1 }}
         keyExtractor={(item) => item.key}
         contentContainerStyle={styles.content}
         onEndReached={() => {
@@ -102,6 +104,16 @@ export default function HistoryScreen() {
           list.isFetchingNextPage ? <Text style={styles.loadingMore}>LOADING…</Text> : null
         }
       />
+
+      <TabBar
+        active="history"
+        tabs={[
+          { key: 'home', label: 'HOME', onPress: () => router.push('/') },
+          { key: 'calendar', label: 'CALENDAR', onPress: () => router.push('/calendar') },
+          { key: 'history', label: 'HISTORY' },
+          { key: 'settings', label: 'SETTINGS', onPress: () => router.push('/settings') },
+        ]}
+      />
     </View>
   );
 }
@@ -120,20 +132,20 @@ function Stat({ label, value, unit }: { label: string; value: string; unit?: str
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.bg },
-  head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', paddingHorizontal: space.xl },
-  title: { fontFamily: font.uiBold, fontSize: 22, color: color.t1 },
+  head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', paddingHorizontal: space.xxl },
+  title: { fontFamily: font.uiSemibold, fontSize: 22, color: color.t1 },
   count: { fontFamily: font.numSemibold, fontSize: 9.5, letterSpacing: tracking.label, color: color.t3 },
 
-  statRow: { flexDirection: 'row', gap: space.xxl, paddingHorizontal: space.xl, paddingTop: space.lg },
+  statRow: { flexDirection: 'row', gap: space.xxl, paddingHorizontal: space.xxl, paddingTop: space.lg },
   statLabel: { fontFamily: font.numSemibold, fontSize: 8, letterSpacing: tracking.wide, color: color.t3 },
   statValue: { fontFamily: font.numBold, fontSize: 21, color: color.t1, marginTop: 7 },
   statUnit: { fontFamily: font.num, fontSize: 11, color: color.t3 },
 
-  content: { paddingHorizontal: space.xl, paddingTop: space.xl, paddingBottom: space.xxl },
+  content: { paddingHorizontal: space.xxl, paddingTop: space.xl, paddingBottom: space.xxl },
   monthLabel: { fontFamily: font.numSemibold, fontSize: 8, letterSpacing: tracking.wide, color: color.t3, paddingBottom: 4, paddingTop: space.md },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: color.line },
-  rowName: { fontFamily: font.uiSemibold, fontSize: 14, color: color.t1 },
-  rowMeta: { fontFamily: font.num, fontSize: 9.5, letterSpacing: 0.6, color: color.t3, marginTop: 5 },
+  rowName: { fontFamily: font.uiMedium, fontSize: 14, color: color.t1 },
+  rowMeta: { fontFamily: font.num, fontSize: 9.5, letterSpacing: 0.6, color: color.t3, marginTop: 7 },
   rowSets: { fontFamily: font.numBold, fontSize: 14, color: color.t2 },
   rowSetsLabel: { fontFamily: font.num, fontSize: 8, letterSpacing: 0.6, color: color.t3, marginTop: 3 },
 

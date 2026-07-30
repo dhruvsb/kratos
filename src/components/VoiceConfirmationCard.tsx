@@ -578,7 +578,7 @@ const styles = StyleSheet.create({
     marginBottom: space.xs,
   },
   sheetHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  sheetTitle: { fontFamily: font.uiBold, fontSize: 14, color: color.t1, letterSpacing: tracking.label },
+  sheetTitle: { fontFamily: font.uiSemibold, fontSize: 14, color: color.t1, letterSpacing: tracking.label },
   deleteLabel: { fontFamily: font.numSemibold, fontSize: 10, letterSpacing: tracking.label, color: color.hot2 },
 
   entryCard: {
@@ -589,7 +589,7 @@ const styles = StyleSheet.create({
     gap: space.sm,
   },
   exerciseRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  exerciseName: { fontFamily: font.uiBold, fontSize: 15, color: color.t1, flex: 1 },
+  exerciseName: { fontFamily: font.uiSemibold, fontSize: 15, color: color.t1, flex: 1 },
   tapHint: { fontFamily: font.numSemibold, fontSize: 9, letterSpacing: tracking.label, color: color.t3 },
   unmatchedNote: { fontFamily: font.num, fontSize: 12, color: color.t2 },
 

@@ -14,13 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TabBar } from '@/components/voice/TabBar';
 import { getSession, signOut } from '@/data/auth';
 import { useProfile, useUpdateProfile, useWorkoutList } from '@/data/hooks';
-import {
-  GOAL_PRESETS,
-  REST_PRESETS,
-  formatRest,
-  useSettings,
-  useUpdateSettings,
-} from '@/data/settings';
+import { GOAL_PRESETS, useSettings, useUpdateSettings } from '@/data/settings';
 import type { WorkoutListItem } from '@/data/workouts';
 import { color, font, radius, space, tracking } from '@/theme/tokens';
 
@@ -95,20 +89,6 @@ export default function SettingsScreen() {
               value: unit.toUpperCase(),
               onPress: () =>
                 updateProfile.mutate({ default_unit: unit === 'kg' ? 'lb' : 'kg' }),
-            },
-            {
-              label: 'Default rest',
-              note: 'countdown after each logged set',
-              value: formatRest(s.defaultRestSec),
-              onPress: () =>
-                updateSettings.mutate({ defaultRestSec: next(REST_PRESETS, s.defaultRestSec) }),
-            },
-            {
-              label: 'Auto-start rest on ✓',
-              note: 'begin the timer when a set is checked',
-              value: s.autoStartRest ? 'ON' : 'OFF',
-              tone: s.autoStartRest ? 'on' : 'default',
-              onPress: () => updateSettings.mutate({ autoStartRest: !s.autoStartRest }),
             },
             {
               label: 'Pre-fill from last session',
@@ -219,8 +199,8 @@ export default function SettingsScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.bg },
-  content: { paddingHorizontal: space.xl, paddingBottom: space.xl },
-  title: { fontFamily: font.uiBold, fontSize: 22, color: color.t1 },
+  content: { paddingHorizontal: space.xxl, paddingBottom: space.xl },
+  title: { fontFamily: font.uiSemibold, fontSize: 22, color: color.t1 },
   email: { fontFamily: font.numSemibold, fontSize: 9.5, letterSpacing: 0.8, color: color.t3, marginTop: 7 },
 
   group: { marginTop: space.xxl + 2 },
@@ -230,19 +210,19 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     gap: space.md,
-    paddingVertical: 15,
+    paddingVertical: 17,
     borderBottomWidth: 1,
     borderBottomColor: color.line,
   },
   rowPressed: { backgroundColor: color.acc06 },
-  rowLabel: { fontFamily: font.uiSemibold, fontSize: 14, color: color.t1 },
+  rowLabel: { fontFamily: font.uiMedium, fontSize: 14, color: color.t1 },
   rowNote: { fontFamily: font.num, fontSize: 9.5, color: color.t3, marginTop: 5 },
   rowValue: { fontFamily: font.numSemibold, fontSize: 10, letterSpacing: tracking.label, color: color.t2 },
 
   footer: {
     fontFamily: font.num,
     fontSize: 9.5,
-    lineHeight: 17,
+    lineHeight: 18,
     letterSpacing: 0.4,
     color: color.t3,
     marginTop: space.xxl + 2,

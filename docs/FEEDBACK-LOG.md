@@ -86,6 +86,11 @@ it already exists:** `primary_muscles[]`, `secondary_muscles[]`, `body_region[]`
 **Fix:** add a horizontal chip row (body region or primary muscle) above the results in both
 `ExercisePickerModal.tsx` and `exercises.tsx`; filter client-side on `primary_muscles`. Chips from a
 fixed taxonomy (`src/lib/muscles.ts`). (M)
+**Done (2026-07-31):** body-region chip row (6 `BODY_REGIONS`) added above the results in both
+`ExercisePickerModal.tsx` and `exercises.tsx`; single-select toggle. `searchExercises(query, region?)`
++ `listExercisesByRegion()` back it (region list via `.contains('body_region', …)`, query results
+filtered by region). Server-side region list rather than client filter so all matches show, not just
+the first page.
 
 ### 5. Can't scroll the exercise list 🔁 High — needs live repro
 **User:** "Somehow I can't scroll down the exercise list."
@@ -110,6 +115,10 @@ by muscle; count `primary_muscles` fully and `secondary_muscles` at a reduced fa
 normalize to 100%, render the labeled bars. (M)
 **Metadata question (answered):** current arrays are **sufficient** for a v1 split. Optional
 enhancement later: a per-exercise muscle-weighting map for finer accuracy; not required now.
+**Done (2026-07-31):** "MUSCLE SPLIT" section on `history/[id].tsx` (under the meta line) — body-region
+% bars, heaviest first. Pure helper `src/lib/muscleSplit.ts` (primary ×1, secondary ×0.5, normalized)
++ presentational `src/components/MuscleSplit.tsx`. Computed from the workout already in cache, no extra
+query. v1 splits at the **body-region** level (6 groups) rather than individual muscles.
 
 ### 7. Routine editor — unclear where weight / reps / sets go ✅ High
 **User:** "Selected Deadlift in a new routine 'Back'. I don't know where to put weight, reps, sets.

@@ -387,9 +387,9 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.bg },
-  content: { paddingHorizontal: space.xl, paddingBottom: space.xl, flexGrow: 1 },
+  content: { paddingHorizontal: space.xxl, paddingBottom: space.xl, flexGrow: 1 },
   topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
-  logo: { fontFamily: font.uiBold, fontSize: 24, color: color.t1 },
+  logo: { fontFamily: font.uiSemibold, fontSize: 24, color: color.t1 },
   date: { fontFamily: font.numSemibold, fontSize: 10, letterSpacing: tracking.label, color: color.t3 },
 
   week: { flexDirection: 'row', gap: 5, marginTop: space.xl },
@@ -415,7 +415,7 @@ const styles = StyleSheet.create({
     gap: space.md,
     marginTop: space.md,
   },
-  resumeName: { fontFamily: font.uiBold, fontSize: 21, color: color.t1, flex: 1 },
+  resumeName: { fontFamily: font.uiSemibold, fontSize: 21, color: color.t1, flex: 1 },
   resumeClock: { fontFamily: font.numBold, fontSize: 17, color: color.t2 },
   resumeMeta: { fontFamily: font.numSemibold, fontSize: 9.5, letterSpacing: 0.7, color: color.t3, marginTop: 8 },
   resumeBtns: { flexDirection: 'row', gap: space.sm, marginTop: space.lg },
@@ -430,7 +430,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.ctl,
     ...shadow.glowSm,
   },
-  resumeMainText: { fontFamily: font.uiSemibold, fontSize: 11, letterSpacing: tracking.label, color: color.acc },
+  resumeMainText: { fontFamily: font.uiMedium, fontSize: 11, letterSpacing: tracking.label, color: color.acc },
   resumeSecondary: {
     width: 118,
     height: 48,
@@ -452,7 +452,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: space.md,
-    paddingVertical: 15,
+    paddingVertical: 17,
     borderBottomWidth: 1,
     borderBottomColor: color.line,
   },
@@ -460,7 +460,7 @@ const styles = StyleSheet.create({
 
   // First run (mockup 14)
   firstRun: { marginTop: space.xl, flex: 1 },
-  frTitle: { fontFamily: font.uiBold, fontSize: 25, lineHeight: 34, color: color.t1 },
+  frTitle: { fontFamily: font.uiSemibold, fontSize: 25, lineHeight: 34, color: color.t1 },
   frBody: { fontFamily: font.num, fontSize: 11.5, lineHeight: 20, color: color.t2, marginTop: space.lg, maxWidth: 300 },
   frPrimary: {
     height: 54,
@@ -473,7 +473,7 @@ const styles = StyleSheet.create({
     marginTop: space.xl + 4,
     ...shadow.glowSm,
   },
-  frPrimaryText: { fontFamily: font.uiSemibold, fontSize: 11.5, letterSpacing: tracking.label, color: color.acc },
+  frPrimaryText: { fontFamily: font.uiMedium, fontSize: 11.5, letterSpacing: tracking.label, color: color.acc },
   frSecondary: {
     height: 50,
     alignItems: 'center',
@@ -484,14 +484,14 @@ const styles = StyleSheet.create({
     marginTop: space.sm + 2,
   },
   frSecondaryText: { fontFamily: font.numSemibold, fontSize: 10.5, letterSpacing: tracking.label, color: color.t2 },
-  frHint: { fontFamily: font.num, fontSize: 10.5, lineHeight: 17, color: color.t3, marginTop: 14, textAlign: 'center' },
+  frHint: { fontFamily: font.num, fontSize: 10.5, lineHeight: 18, color: color.t3, marginTop: 14, textAlign: 'center' },
 
   frTemplates: { marginTop: space.xxl + 4, borderTopWidth: 1, borderTopColor: color.line, paddingTop: space.lg },
   frTemplatesHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
   frBrowse: { fontFamily: font.numSemibold, fontSize: 9.5, letterSpacing: 0.6, color: color.acc },
   frCards: { flexDirection: 'row', gap: space.sm, marginTop: space.md },
   frCard: { flex: 1, borderWidth: 1, borderColor: color.line2, borderStyle: 'dashed', borderRadius: radius.ctl + 2, padding: 13 },
-  frCardName: { fontFamily: font.uiSemibold, fontSize: 12.5, color: color.t2 },
+  frCardName: { fontFamily: font.uiMedium, fontSize: 12.5, color: color.t2 },
   frCardMeta: { fontFamily: font.numSemibold, fontSize: 9, letterSpacing: 0.8, color: color.t3, marginTop: 5 },
 
   // Up next (mockup 01)
@@ -504,7 +504,7 @@ const styles = StyleSheet.create({
     padding: space.xl,
   },
   upHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: space.md },
-  upName: { fontFamily: font.uiBold, fontSize: 21, color: color.t1, flex: 1 },
+  upName: { fontFamily: font.uiSemibold, fontSize: 21, color: color.t1, flex: 1 },
   upAgo: { fontFamily: font.numSemibold, fontSize: 9.5, letterSpacing: 0.8, color: color.t3 },
   upMeta: { fontFamily: font.numSemibold, fontSize: 10.5, letterSpacing: tracking.label, color: color.t2, marginTop: 9 },
   startBtn: {
@@ -518,7 +518,7 @@ const styles = StyleSheet.create({
     marginTop: space.lg,
     ...shadow.glowSm,
   },
-  startText: { fontFamily: font.uiSemibold, fontSize: 12, letterSpacing: tracking.label, color: color.acc },
+  startText: { fontFamily: font.uiMedium, fontSize: 12, letterSpacing: tracking.label, color: color.acc },
 
   loading: { fontFamily: font.numSemibold, fontSize: 11, color: color.t3, marginTop: space.md },
 
@@ -526,12 +526,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: space.md,
-    paddingVertical: 15,
+    paddingVertical: 17,
     borderBottomWidth: 1,
     borderBottomColor: color.line,
   },
-  rowName: { fontFamily: font.uiSemibold, fontSize: 14, color: color.t1 },
-  rowMeta: { fontFamily: font.num, fontSize: 9.5, letterSpacing: 0.6, color: color.t3, marginTop: 5 },
+  rowName: { fontFamily: font.uiMedium, fontSize: 14, color: color.t1 },
+  rowMeta: { fontFamily: font.num, fontSize: 9.5, letterSpacing: 0.6, color: color.t3, marginTop: 7 },
   rowEdit: { fontFamily: font.numSemibold, fontSize: 9, letterSpacing: tracking.label, color: color.t3 },
   rowStart: { fontFamily: font.numSemibold, fontSize: 10, letterSpacing: tracking.label, color: color.t2 },
 

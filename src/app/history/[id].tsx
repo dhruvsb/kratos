@@ -8,10 +8,12 @@ import { useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Empty, ErrorText, Loading } from '@/components/ui';
+import { MuscleSplit } from '@/components/MuscleSplit';
 import { SetKeypad } from '@/components/workout/SetKeypad';
 import { useDeleteSet, useDeleteWorkout, useProfile, useUpdateSet, useWorkout } from '@/data/hooks';
 import type { WorkoutSet, Unit } from '@/types/db';
 import { formatSet, formatWeight } from '@/lib/units';
+import { muscleSplit } from '@/lib/muscleSplit';
 import { color, font, space, tracking } from '@/theme/tokens';
 
 type EditState = {
@@ -54,6 +56,14 @@ export default function WorkoutDetailScreen() {
     .join(' · ')
     .toUpperCase();
 
+  const split = muscleSplit(
+    detail.exercises.map((we) => ({
+      primaryMuscles: we.exercise.primary_muscles ?? [],
+      secondaryMuscles: we.exercise.secondary_muscles ?? [],
+      setCount: we.sets.length,
+    }))
+  );
+
   function confirmDeleteWorkout() {
     setEdit(null);
     Alert.alert('Delete this workout?', 'The whole session and every set in it are removed.', [
@@ -77,6 +87,12 @@ export default function WorkoutDetailScreen() {
         </Text>
         <Text style={styles.meta}>{meta}</Text>
         {detail.notes ? <Text style={styles.notes}>{detail.notes}</Text> : null}
+
+        {split.length > 0 && (
+          <View style={styles.split}>
+            <MuscleSplit regions={split} />
+          </View>
+        )}
 
         {detail.exercises.length === 0 ? (
           <Empty text="No exercises in this workout." />
@@ -151,11 +167,12 @@ export default function WorkoutDetailScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.bg },
-  content: { paddingHorizontal: space.xl, paddingBottom: space.xxl },
+  content: { paddingHorizontal: space.xxl, paddingBottom: space.xxl },
   back: { fontFamily: font.numSemibold, fontSize: 9.5, letterSpacing: tracking.label, color: color.t3 },
-  title: { fontFamily: font.uiBold, fontSize: 21, color: color.t1, marginTop: space.lg },
+  title: { fontFamily: font.uiSemibold, fontSize: 21, color: color.t1, marginTop: space.lg },
   meta: { fontFamily: font.numSemibold, fontSize: 10.5, letterSpacing: 0.8, color: color.t2, marginTop: 7 },
   editHint: { fontFamily: font.num, fontSize: 10, letterSpacing: 0.4, color: color.t3, marginTop: space.md },
+  split: { marginTop: space.xl, paddingTop: space.lg, borderTopWidth: 1, borderTopColor: color.line },
   notes: {
     fontFamily: font.num,
     fontSize: 11.5,

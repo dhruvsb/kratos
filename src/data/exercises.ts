@@ -1,19 +1,40 @@
 import { supabase } from '@/lib/supabase';
 import type { Exercise, ExerciseModality } from '@/types/db';
-import { deriveBodyRegion } from '@/lib/muscles';
+import { deriveBodyRegion, type BodyRegion } from '@/lib/muscles';
 import { requireUserId } from './auth';
 
 /**
  * Search by canonical name + aliases + trigram similarity, ranked.
  * Backed by the search_exercises() SQL function (one round-trip).
+ *
+ * An optional `region` (a 6-way body-region rollup) narrows results: with no
+ * query it lists that region's exercises; with a query it filters the ranked
+ * matches down to the region (trigram search doesn't take a region argument).
  */
-export async function searchExercises(query: string, limit = 30): Promise<Exercise[]> {
+export async function searchExercises(
+  query: string,
+  region?: BodyRegion | null,
+  limit = 30
+): Promise<Exercise[]> {
   const q = query.trim();
-  if (!q) return listExercises(limit);
+  if (!q) return region ? listExercisesByRegion(region, limit) : listExercises(limit);
   const { data, error } = await supabase.rpc('search_exercises', {
     q,
     max_results: limit,
   });
+  if (error) throw error;
+  const results = (data ?? []) as Exercise[];
+  return region ? results.filter((e) => e.body_region?.includes(region)) : results;
+}
+
+/** Exercises whose body-region rollup contains `region`, name-sorted. */
+export async function listExercisesByRegion(region: BodyRegion, limit = 60): Promise<Exercise[]> {
+  const { data, error } = await supabase
+    .from('exercises')
+    .select('*')
+    .contains('body_region', [region])
+    .order('canonical_name')
+    .limit(limit);
   if (error) throw error;
   return (data ?? []) as Exercise[];
 }

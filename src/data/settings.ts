@@ -1,4 +1,4 @@
-// Local logging preferences (mockup 18 — "Settings"). These four knobs are pure
+// Local logging preferences (mockup 18 — "Settings"). These knobs are pure
 // client behaviour, so they live in AsyncStorage rather than the profiles row: no
 // migration, no shared-schema edit, and the screen works the moment it's opened.
 // Weight *unit* is the one setting that stays on profiles (it's read all over the
@@ -11,10 +11,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 export type AppSettings = {
-  /** Rest countdown started after a set is logged, in seconds. */
-  defaultRestSec: number;
-  /** Auto-start the rest timer when a set is checked off. */
-  autoStartRest: boolean;
   /** Pre-fill the pending set row from last session (mockup 04). Off ⇒ blank rows
    *  every set (mockup 15's blank-field treatment for every lift, not just new ones). */
   prefillFromLastSession: boolean;
@@ -23,8 +19,6 @@ export type AppSettings = {
 };
 
 export const DEFAULT_SETTINGS: AppSettings = {
-  defaultRestSec: 120,
-  autoStartRest: true,
   prefillFromLastSession: true,
   weeklyGoal: 5,
 };
@@ -32,8 +26,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
 const STORAGE_KEY = 'repvoice.settings.v1';
 const SETTINGS_KEY = ['settings'] as const;
 
-/** Rest-timer presets offered by the Settings picker (seconds). */
-export const REST_PRESETS = [60, 90, 120, 150, 180, 240] as const;
 /** Weekly-goal presets offered by the Settings picker (sessions/week). */
 export const GOAL_PRESETS = [3, 4, 5, 6] as const;
 
@@ -51,12 +43,6 @@ async function loadSettings(): Promise<AppSettings> {
 async function saveSettings(next: AppSettings): Promise<AppSettings> {
   await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next));
   return next;
-}
-
-export function formatRest(secs: number): string {
-  const m = Math.floor(secs / 60);
-  const s = secs % 60;
-  return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
 /** Reads once and caches for the session; never stale (only this app mutates it). */

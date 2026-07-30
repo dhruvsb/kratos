@@ -1,12 +1,14 @@
 // Exercise picker (mockup 03) — a dark search sheet shared by the routine editor
 // and mid-workout. Canonical names + aliases + fuzzy match, with an inline
-// "create custom exercise" when nothing fits. RECENT/muscle filter tabs are
-// deferred until usage data backs them (tracked in docs).
+// "create custom exercise" when nothing fits. A body-region chip row narrows the
+// list by muscle group (all 6 regions from the exercise metadata); it composes
+// with search — with a query typed, it filters the ranked matches.
 import { useState } from 'react';
 import {
   FlatList,
   Modal,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -14,6 +16,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCreateCustomExercise, useExerciseSearch } from '@/data/hooks';
+import { BODY_REGIONS, type BodyRegion } from '@/lib/muscles';
 import type { Exercise } from '@/types/db';
 import { color, font, radius, space, tracking } from '@/theme/tokens';
 
@@ -28,14 +31,16 @@ export function ExercisePickerModal({
 }) {
   const insets = useSafeAreaInsets();
   const [query, setQuery] = useState('');
+  const [region, setRegion] = useState<BodyRegion | null>(null);
   const [creating, setCreating] = useState(false);
   const [customMuscle, setCustomMuscle] = useState('');
   const [customEquipment, setCustomEquipment] = useState('');
-  const search = useExerciseSearch(query);
+  const search = useExerciseSearch(query, region);
   const createCustom = useCreateCustomExercise();
 
   function pick(exercise: Exercise) {
     setQuery('');
+    setRegion(null);
     setCreating(false);
     setCustomMuscle('');
     setCustomEquipment('');
@@ -70,6 +75,29 @@ export function ExercisePickerModal({
           </Text>
         </View>
 
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          style={styles.chipRow}
+          contentContainerStyle={styles.chipRowContent}
+        >
+          {BODY_REGIONS.map((r) => {
+            const active = region === r;
+            return (
+              <Pressable
+                key={r}
+                style={[styles.chip, active && styles.chipActive]}
+                onPress={() => setRegion(active ? null : r)}
+              >
+                <Text style={[styles.chipText, active && styles.chipTextActive]}>
+                  {r.toUpperCase()}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+
         <FlatList
           data={results}
           keyExtractor={(item) => item.id}
@@ -93,8 +121,10 @@ export function ExercisePickerModal({
               <Text style={styles.hint}>SEARCHING…</Text>
             ) : query.trim() ? (
               <Text style={styles.hint}>No matches — create it below.</Text>
+            ) : region ? (
+              <Text style={styles.hint}>No {region.toLowerCase()} exercises.</Text>
             ) : (
-              <Text style={styles.hint}>Type to search exercises.</Text>
+              <Text style={styles.hint}>Type to search, or pick a muscle group.</Text>
             )
           }
         />
@@ -159,7 +189,7 @@ const styles = StyleSheet.create({
     borderTopColor: color.line2,
     borderTopLeftRadius: radius.sheet,
     borderTopRightRadius: radius.sheet,
-    paddingHorizontal: space.xl,
+    paddingHorizontal: space.xxl,
     paddingTop: space.md,
   },
   handle: { width: 34, height: 3, borderRadius: 2, backgroundColor: color.line2, alignSelf: 'center', marginBottom: space.lg },
@@ -176,8 +206,23 @@ const styles = StyleSheet.create({
   input: { flex: 1, fontFamily: font.numMedium, fontSize: 15, color: color.t1, padding: 0 },
   count: { fontFamily: font.numSemibold, fontSize: 9, letterSpacing: 0.6, color: color.t3 },
 
+  chipRow: { flexGrow: 0, marginTop: space.md, marginHorizontal: -space.xl },
+  chipRowContent: { gap: space.sm, paddingHorizontal: space.xxl },
+  chip: {
+    paddingHorizontal: space.md,
+    height: 30,
+    justifyContent: 'center',
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: color.line2,
+    backgroundColor: color.s0,
+  },
+  chipActive: { borderColor: color.acc35, backgroundColor: color.acc07 },
+  chipText: { fontFamily: font.numSemibold, fontSize: 9.5, letterSpacing: tracking.label, color: color.t3 },
+  chipTextActive: { color: color.acc },
+
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: space.md, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: color.line },
-  rowName: { fontFamily: font.uiSemibold, fontSize: 13.5, color: color.t1, flex: 1 },
+  rowName: { fontFamily: font.uiMedium, fontSize: 13.5, color: color.t1, flex: 1 },
   rowMeta: { fontFamily: font.num, fontSize: 9, letterSpacing: 0.6, color: color.t3 },
   hint: { fontFamily: font.num, fontSize: 12, color: color.t3, paddingVertical: space.lg },
 
@@ -203,6 +248,6 @@ const styles = StyleSheet.create({
     borderColor: color.acc35,
     borderRadius: radius.ctl,
   },
-  createBtnText: { fontFamily: font.uiSemibold, fontSize: 11, letterSpacing: tracking.label, color: color.acc },
+  createBtnText: { fontFamily: font.uiMedium, fontSize: 11, letterSpacing: tracking.label, color: color.acc },
   err: { fontFamily: font.num, fontSize: 11, color: color.warn },
 });

@@ -10,7 +10,10 @@ codebase or a huge prior conversation.
 > issues**) *and* append a dated entry to [`WORK-LOG.md`](./WORK-LOG.md). This file is the
 > snapshot; `WORK-LOG.md` is the full history. Keep this file short.
 
-**Last updated:** 2026-07-30 — two parallel session-4 branches, now merged: **calendar view**
+**Last updated:** 2026-07-31 — **type refresh "option 01"**: UI font Space Grotesk → **Instrument
+Sans**, numbers IBM Plex Mono → **Geist Mono**; every UI weight steps down one (titles 600, names
+500) while mono keeps its weight; spacing opened up (24px insets, +2px rows, looser captions). All
+via the token system — see WORK-LOG. Prior: session-4 branches, now merged: **calendar view**
 (mockup-12 "five a week" `/calendar` + `data/calendar.ts`, wired into Home's tab bar) and **"Entry &
 edges" screens 13–18** (sign-in, first-run, resume, no-history grid, fix-a-set, real Settings + a
 local AsyncStorage settings store). Both static-verified, not on device. Prior: session 3 exercise
@@ -100,7 +103,7 @@ optimistic** (instant ✓, rollback on error) · ✅ **kg/lb unit toggle** in Se
 | **Med** | `sets.set_number` has no `UNIQUE(workout_exercise_id, set_number)`; computed client-side (max+1) → race-prone dupes. **More relevant now** that manual logging is the primary write path. | `0001_init.sql`, `src/data/sets.ts` |
 | Med | No way to **remove an exercise** added by mistake mid-workout — `useRemoveWorkoutExercise` exists but isn't wired into the set-grid screen (potential dead-end: add wrong exercise, can't undo) | `src/app/workout/[id].tsx` |
 | Med | `db.ts` `z.coerce` numeric guards are dead — repos `return data as X`, never `.parse()`; a numeric-as-string would make `weight_kg` a string | `src/data/*`, `src/types/db.ts` |
-| Low | Picker RECENT/muscle **filter tabs** deferred (need usage data) — picker is search + create-custom only | `src/components/ExercisePickerModal.tsx` |
+| ~~Low~~ | ✅ **Done 2026-07-31** — body-region **muscle filter** chip row added to the picker *and* the library (`exercises.tsx`); `searchExercises(query, region?)` + `listExercisesByRegion()`. (RECENT tab still deferred.) Also new: per-workout **muscle split** on `history/[id].tsx` (`lib/muscleSplit.ts` + `components/MuscleSplit.tsx`). | `ExercisePickerModal.tsx` |
 | Low | Finish summary omits the "NEW BESTS" callout (needs per-exercise all-time baseline; omitted, not faked) | `src/app/finish/[id].tsx` |
 | Low | Routine editor uses ↑/↓ reorder, not drag | `src/app/routine/[id].tsx` |
 | Low | Fresh account = empty Home/History/Progress; a `scripts/seed-demo-workouts.ts` would make screenshots (esp. the progress chart + week strip) look alive | `scripts/` |

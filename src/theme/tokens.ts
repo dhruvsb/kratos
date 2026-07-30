@@ -6,20 +6,25 @@
 // same numbers the mockup did. Rule from that mockup's agent notes: never hardcode a
 // value that has a token.
 //
+// Type option 01 (RepVoice Manual, all 18 screens): Instrument Sans carries every UI
+// name/heading, Geist Mono every numeral. Instrument Sans reads heavier than the old
+// Space Grotesk, so UI text steps down one weight (titles land on 600, names on 500);
+// the mono readouts keep their weight so the numbers still carry.
+//
 // Font FAMILY NAMES only live here (plain strings) so this file stays cheap to
 // import; the actual font *files* are loaded by src/theme/fonts.ts.
 
 export const font = {
-  // f-ui — Space Grotesk (UI / labels / headings)
-  ui: 'SpaceGrotesk_400Regular',
-  uiMedium: 'SpaceGrotesk_500Medium',
-  uiSemibold: 'SpaceGrotesk_600SemiBold',
-  uiBold: 'SpaceGrotesk_700Bold',
-  // f-num — IBM Plex Mono (every metric / number / mono label)
-  num: 'IBMPlexMono_400Regular',
-  numMedium: 'IBMPlexMono_500Medium',
-  numSemibold: 'IBMPlexMono_600SemiBold',
-  numBold: 'IBMPlexMono_700Bold',
+  // f-ui — Instrument Sans (UI / labels / headings)
+  ui: 'InstrumentSans_400Regular',
+  uiMedium: 'InstrumentSans_500Medium',
+  uiSemibold: 'InstrumentSans_600SemiBold',
+  uiBold: 'InstrumentSans_700Bold',
+  // f-num — Geist Mono (every metric / number / mono label)
+  num: 'GeistMono_400Regular',
+  numMedium: 'GeistMono_500Medium',
+  numSemibold: 'GeistMono_600SemiBold',
+  numBold: 'GeistMono_700Bold',
 } as const;
 
 export const color = {

@@ -169,9 +169,9 @@ export default function ExerciseProgressScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.bg },
-  content: { paddingHorizontal: space.xl, paddingBottom: space.xxl },
+  content: { paddingHorizontal: space.xxl, paddingBottom: space.xxl },
   back: { fontFamily: font.numSemibold, fontSize: 9.5, letterSpacing: tracking.label, color: color.t3 },
-  title: { fontFamily: font.uiBold, fontSize: 21, color: color.t1, marginTop: space.lg },
+  title: { fontFamily: font.uiSemibold, fontSize: 21, color: color.t1, marginTop: space.lg },
   sub: { fontFamily: font.numSemibold, fontSize: 9.5, letterSpacing: tracking.label, color: color.t3, marginTop: 7 },
 
   statRow: { flexDirection: 'row', gap: 28, marginTop: space.xl },
