@@ -1,6 +1,7 @@
-// Bottom nav from the Home mockup (2e): HOME · HISTORY · SETTINGS, active tab
-// carries the LED underline. Only voice-first screens were restyled this pass,
-// so SETTINGS has no destination yet and stays inert (it reads as dim anyway).
+// Bottom nav from the Home mockups: HOME · CALENDAR · HISTORY · SETTINGS, active
+// tab carries the LED underline. Presentational only — each caller passes its own
+// onPress per tab (SETTINGS now routes to /settings, mockup 18). A tab with no
+// onPress is the active/no-op one and reads dim.
 import { Pressable, Text, View } from 'react-native';
 import { color, font, radius, shadow } from '@/theme/tokens';
 

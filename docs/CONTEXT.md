@@ -10,9 +10,11 @@ codebase or a huge prior conversation.
 > issues**) *and* append a dated entry to [`WORK-LOG.md`](./WORK-LOG.md). This file is the
 > snapshot; `WORK-LOG.md` is the full history. Keep this file short.
 
-**Last updated:** 2026-07-30 (session 4 — **calendar view**: added mockup-12 "five a week"
-Calendar screen (`/calendar`) + `data/calendar.ts`, wired into Home's tab bar. Static-verified,
-not on device. Prior: session 3 exercise directory rebuild — migrations 0003 & 0004 live. See WORK-LOG).
+**Last updated:** 2026-07-30 — two parallel session-4 branches, now merged: **calendar view**
+(mockup-12 "five a week" `/calendar` + `data/calendar.ts`, wired into Home's tab bar) and **"Entry &
+edges" screens 13–18** (sign-in, first-run, resume, no-history grid, fix-a-set, real Settings + a
+local AsyncStorage settings store). Both static-verified, not on device. Prior: session 3 exercise
+directory rebuild — migrations 0003 & 0004 live. See WORK-LOG.
 
 ---
 
@@ -49,6 +51,7 @@ logging via an LLM pipeline, **3** TBD (PRs/charts).
 | Phase 1 backbone (schema, RLS, repos) | ✅ Built; backend verified live (**150 curated exercises** / 156 aliases seeded; RLS test passed) |
 | **Exercise directory — curated + rich metadata** | ✅ **Rebuilt this session**: replaced the 873 free-exercise-db import with a curated 150-set carrying `primary_muscles[]`, `secondary_muscles[]`, `body_region[]` rollup, `mechanic`, `modality`. Source of truth: `scripts/data/exercises-curated.json` (regen via `scripts/build-curated-exercises.py`). Muscle taxonomy in `src/lib/muscles.ts`. |
 | **Manual-first UI — all 12 `RepVoice Manual` screens** | ✅ Built (dark LED theme); **not yet run on device** |
+| **"Entry & edges" screens 13–18** | ✅ **Built session 4**: 13 sign-in (LED, 6-box code) · 14 first-run + 16 resume (Home states) · 15 no-history grid · 17 fix-a-set from history + delete-workout · 18 real Settings screen. New local settings store `src/data/settings.ts` (AsyncStorage; drives pre-fill/rest/weekly-goal). 4-tab nav (HOME·CALENDAR·HISTORY·SETTINGS). Static-verified only. |
 | ↳ Manual set logging (grid + keypad) — *the core, previously missing* | ✅ Built (`workout/[id]`, `components/workout/SetKeypad`, `lib/units`) |
 | ↳ Home / routine editor / picker / history / past workout / exercise progress / library / finish | ✅ Built / restyled dark |
 | ↳ **Calendar (mockup 12, "five a week")** | ✅ **Built this session** — `src/app/calendar.tsx` + `src/data/calendar.ts` (finished-workout days → week card / month grid / streak stats / 12-week bars); wired into Home tab bar. `WEEK_GOAL` hardcoded to 5. |
@@ -76,6 +79,10 @@ Static checks currently green: `tsc --noEmit` clean; `expo export --platform web
       right against real workout days.
 - [ ] *(Phase 2, when voice resumes)* Apply migration `0003` to the live DB; run `npm run eval`.
 - [ ] Replace temporary Gmail SMTP with a dedicated provider before any external-user testing.
+- [ ] **Wire `useSettings().weeklyGoal` into the Calendar tally** — screens 13–18 landed a Settings
+      "Weekly goal" pref (`src/data/settings.ts`), but `calendar.tsx` still hardcodes `WEEK_GOAL = 5`.
+      Read the setting so the two agree. (If a longer OTP length is ever configured, also bump
+      `CODE_LEN` in `SignInScreen.tsx`.)
 
 ## Open issues / backlog (from the 2026-07-30 QA pass)
 

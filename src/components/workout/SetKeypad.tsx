@@ -33,6 +33,9 @@ export type SetKeypadProps = {
   mode?: 'add' | 'edit';
   onLog: (weightKg: number | null, reps: number) => void;
   onDelete?: () => void;
+  /** Edit mode only: "wrong day entirely" — delete the whole workout. Kept visually
+   *  apart from SAVE / DELETE SET so it can't be hit by muscle memory (mockup 17). */
+  onDeleteWorkout?: () => void;
   onClose: () => void;
 };
 
@@ -183,6 +186,15 @@ export function SetKeypad(props: SetKeypadProps) {
             </Pressable>
           )}
         </View>
+
+        {props.mode === 'edit' && props.onDeleteWorkout && (
+          <View style={styles.deleteWorkoutRow}>
+            <Text style={styles.deleteWorkoutHint}>Wrong day entirely?</Text>
+            <Pressable onPress={props.onDeleteWorkout} hitSlop={8}>
+              <Text style={styles.deleteWorkoutText}>DELETE WORKOUT</Text>
+            </Pressable>
+          </View>
+        )}
       </View>
     </Modal>
   );
@@ -297,4 +309,16 @@ const styles = StyleSheet.create({
   },
   plateText: { fontFamily: font.num, fontSize: 9.5, letterSpacing: 0.6, color: color.t3 },
   deleteText: { fontFamily: font.numSemibold, fontSize: 9.5, letterSpacing: tracking.label, color: color.warn },
+
+  deleteWorkoutRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: space.md,
+    paddingTop: space.md,
+    borderTopWidth: 1,
+    borderTopColor: color.line,
+  },
+  deleteWorkoutHint: { fontFamily: font.num, fontSize: 10.5, color: color.t3 },
+  deleteWorkoutText: { fontFamily: font.numSemibold, fontSize: 9.5, letterSpacing: tracking.label, color: color.warn },
 });

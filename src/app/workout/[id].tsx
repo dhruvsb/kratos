@@ -21,10 +21,17 @@ import {
   useUpdateSet,
   useWorkout,
 } from '@/data/hooks';
+import { useSettings } from '@/data/settings';
 import type { LastSessionSet } from '@/types/db';
 import type { SetType, Unit } from '@/types/db';
 import { formatSet, formatWeight } from '@/lib/units';
 import { color, font, radius, space, timing, tracking } from '@/theme/tokens';
+
+/** PREV cell: a lone em-dash when there's no matching last-session set (mockup 15),
+ *  not "— × —" — no fake number to beat on a lift's first day. */
+function prevLabel(set: LastSessionSet | undefined, unit: Unit): string {
+  return set ? formatSet(set.weight_kg, set.reps, unit) : '—';
+}
 
 type KeypadState = {
   mode: 'add' | 'edit';
@@ -46,7 +53,11 @@ export default function ActiveWorkoutScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const workout = useWorkout(id);
   const profile = useProfile();
+  const settings = useSettings();
   const unit: Unit = profile.data?.default_unit ?? 'kg';
+  const prefillEnabled = settings.data?.prefillFromLastSession ?? true;
+  const restSec = settings.data?.defaultRestSec ?? timing.restDefaultSec;
+  const autoStartRest = settings.data?.autoStartRest ?? true;
 
   const addExercise = useAddExerciseToWorkout(id!);
   const addSet = useAddSet(id!);
@@ -119,13 +130,17 @@ export default function ActiveWorkoutScreen() {
 
   const logged = activeExercise?.sets ?? [];
   const nextSetNumber = logged.length + 1;
+  const noHistory = lastSets.length === 0; // first time on this lift (mockup 15)
   const lastForNext = lastSets[logged.length];
   const prevInSession = logged[logged.length - 1];
-  const prefillKg = lastForNext?.weight_kg ?? prevInSession?.weight_kg ?? null;
-  const prefillReps = lastForNext?.reps ?? prevInSession?.reps ?? null;
+  // "Pre-fill from last session" (Settings) gates the pending row: off ⇒ blank
+  // fields every set, the same treatment a brand-new lift gets (mockup 15).
+  const prefillKg = prefillEnabled ? lastForNext?.weight_kg ?? prevInSession?.weight_kg ?? null : null;
+  const prefillReps = prefillEnabled ? lastForNext?.reps ?? prevInSession?.reps ?? null : null;
 
   function startRest() {
-    setRestEndsAt(Date.now() + timing.restDefaultSec * 1000);
+    if (!autoStartRest) return;
+    setRestEndsAt(Date.now() + restSec * 1000);
     setNow(Date.now());
   }
 
@@ -264,8 +279,10 @@ export default function ActiveWorkoutScreen() {
                 .join(' · ')
                 .toUpperCase() || 'EXERCISE'}
             </Text>
-            {topLast && (
+            {topLast ? (
               <Text style={styles.exLast}>LAST {formatSet(topLast.weight_kg, topLast.reps, unit)}</Text>
+            ) : (
+              <Text style={styles.exLast}>NO PREVIOUS SETS</Text>
             )}
           </View>
 
@@ -296,7 +313,7 @@ export default function ActiveWorkoutScreen() {
                 }
               >
                 <Text style={[styles.rNum, styles.cNum]}>{s.set_type === 'warmup' ? 'W' : i + 1}</Text>
-                <Text style={[styles.rPrev, styles.cPrev]}>{formatSet(lastSets[i]?.weight_kg, lastSets[i]?.reps, unit)}</Text>
+                <Text style={[styles.rPrev, styles.cPrev]}>{prevLabel(lastSets[i], unit)}</Text>
                 <View style={[styles.cField, styles.cellDone]}>
                   <Text style={styles.valDone}>{formatWeight(s.weight_kg, unit)}</Text>
                 </View>
@@ -313,9 +330,7 @@ export default function ActiveWorkoutScreen() {
             {!isFinished && (
               <View style={[styles.row, { borderBottomWidth: 0, backgroundColor: color.acc06 }]}>
                 <Text style={[styles.rNum, styles.cNum, { color: color.acc }]}>{nextSetNumber}</Text>
-                <Text style={[styles.rPrev, styles.cPrev]}>
-                  {formatSet(lastForNext?.weight_kg, lastForNext?.reps, unit)}
-                </Text>
+                <Text style={[styles.rPrev, styles.cPrev]}>{prevLabel(lastForNext, unit)}</Text>
                 <Pressable style={[styles.cField, styles.cellActive]} onPress={() => openAdd('normal')}>
                   <Text style={[styles.valActive, prefillKg == null && { color: color.t3 }]}>
                     {formatWeight(prefillKg, unit)}
@@ -346,6 +361,17 @@ export default function ActiveWorkoutScreen() {
               </View>
             )}
           </InsetWell>
+
+          {noHistory && !isFinished && (
+            <View style={styles.firstNote}>
+              <View style={styles.firstNoteBar} />
+              <Text style={styles.firstNoteText}>
+                {prefillEnabled
+                  ? 'First time on this lift. Enter a working weight — every set after today arrives pre-filled from it.'
+                  : 'First time on this lift. Enter your weight and reps for each set.'}
+              </Text>
+            </View>
+          )}
         </ScrollView>
       )}
 
@@ -422,6 +448,14 @@ export default function ActiveWorkoutScreen() {
               ? () => {
                   deleteSet.mutate(keypad.setId!);
                   setKeypad(null);
+                }
+              : undefined
+          }
+          onDeleteWorkout={
+            keypad.mode === 'edit'
+              ? () => {
+                  setKeypad(null);
+                  confirmDiscard();
                 }
               : undefined
           }
@@ -529,6 +563,18 @@ const styles = StyleSheet.create({
     borderRadius: radius.key,
   },
   checkActive: { fontFamily: font.numSemibold, fontSize: 15, color: color.acc },
+
+  firstNote: {
+    flexDirection: 'row',
+    gap: space.md,
+    marginTop: space.lg,
+    padding: 13,
+    borderWidth: 1,
+    borderColor: color.line2,
+    borderRadius: radius.ctl + 1,
+  },
+  firstNoteBar: { width: 2, backgroundColor: color.acc35, borderRadius: 1 },
+  firstNoteText: { flex: 1, fontFamily: font.num, fontSize: 10.5, lineHeight: 18, color: color.t2 },
 
   gridActions: { flexDirection: 'row', gap: 22, paddingVertical: 14, paddingHorizontal: 12 },
   actAcc: { fontFamily: font.numSemibold, fontSize: 10.5, letterSpacing: tracking.label, color: color.acc },

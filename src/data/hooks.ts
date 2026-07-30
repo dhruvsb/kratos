@@ -203,6 +203,23 @@ export function useDiscardWorkout(workoutId: string) {
   });
 }
 
+/** Delete a *finished* workout from history (mockup 17 — "wrong day entirely").
+ *  Same underlying delete as discard, but reconciles the history + progress caches
+ *  a finished session feeds instead of the active-workout slot. */
+export function useDeleteWorkout(workoutId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => workouts.discardWorkout(workoutId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: keys.workoutList });
+      qc.invalidateQueries({ queryKey: keys.activeWorkout });
+      qc.removeQueries({ queryKey: keys.workout(workoutId) });
+      qc.invalidateQueries({ queryKey: ['lastSession'] });
+      qc.invalidateQueries({ queryKey: ['exerciseHistory'] });
+    },
+  });
+}
+
 export function useAddExerciseToWorkout(workoutId: string) {
   const qc = useQueryClient();
   return useMutation({
