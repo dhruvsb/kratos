@@ -7,6 +7,41 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-07-31 — Local-first: persist the React Query cache (instant cold start)
+
+First of the three "snappier / faster to load / fewer taps" ideas. The data layer was
+network-gated on every cold start and screen mount (memory-only cache, `staleTime: 0`).
+Made it **local-first**: the query cache now persists to disk, so launch paints last-known
+data immediately, then revalidates in the background.
+
+- **`src/lib/queryClient.ts`** (new, single source like `supabase.ts`) — the `QueryClient` +
+  an AsyncStorage persister. `gcTime = maxAge = 7d` (gcTime must be ≥ maxAge or an inactive
+  query is evicted before it can be restored), a global `staleTime` floor of 60s, a
+  `CACHE_BUSTER` to discard stale-shaped caches on a schema change, and `resetQueryCache()`.
+- **`src/app/_layout.tsx`** — `QueryClientProvider` → **`PersistQueryClientProvider`**; a new
+  **`BootGate`** holds the native splash on `useIsRestoring` so first paint already shows
+  hydrated data (no skeleton→data flash). It can't strand the splash — `useIsRestoring`
+  resolves to false even if restore errors. The auth handler now **wipes the cache on
+  `SIGNED_OUT` / account-switch** (`resetQueryCache`) so one user's data can't hydrate into
+  another's; a plain `TOKEN_REFRESHED` (same user id) falls through untouched.
+- **`src/data/auth.ts`** — `onAuthStateChange` now forwards the `AuthChangeEvent`.
+- **`src/data/hooks.ts`** — explicit `staleTime` tiers (profile 30m · routines 5m · exercise
+  60m · search 5m · activeWorkout 30s · workout 60s · list/lastSession/history 5m). Safe
+  because every mutation already invalidates the keys it touches, and invalidation refetches
+  regardless of `staleTime` — so this only suppresses redundant passive refetch-on-mount
+  (the refetch-flash on navigation), never our own writes.
+- **Deps:** `@tanstack/react-query-persist-client` + `@tanstack/query-async-storage-persister`
+  (both pinned `5.101.2` to match core). Pure JS — **no dev-client rebuild needed**.
+
+**QA:** `tsc` clean; `expo export` bundles all 15 routes (its static render exercises the full
+`PersistQueryClientProvider → BootGate` tree); the freshly-built web bundle boots in-browser
+with **zero console errors** and no splash strand (reaches sign-in); a Node harness driving the
+real persist packages with this exact config proves **save→restore** (incl. the nested workout
+tree), **buster-mismatch discard**, and **maxAge-expiry discard** (5/5 pass). Not yet watched
+hydrating real data on a warm relaunch on device (needs an authed session; JS-only ⇒ no rebuild).
+
+---
+
 ## 2026-07-31 — Hevy CSV export (in-app, round-trips with import)
 
 Symmetric partner to the import: a real **file export** replacing the old summary-only share.

@@ -1,6 +1,6 @@
 // Auth + profile access. Screens use these (or the hooks) — never the supabase
 // client directly.
-import type { Session } from '@supabase/supabase-js';
+import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import type { Profile, Unit } from '@/types/db';
 
@@ -10,8 +10,12 @@ export async function getSession(): Promise<Session | null> {
   return data.session;
 }
 
-export function onAuthStateChange(callback: (session: Session | null) => void) {
-  const { data } = supabase.auth.onAuthStateChange((_event, session) => callback(session));
+// The event is forwarded so callers can tell a real sign-out / account switch
+// (which must clear the persisted cache) apart from a silent token refresh.
+export function onAuthStateChange(
+  callback: (session: Session | null, event: AuthChangeEvent) => void
+) {
+  const { data } = supabase.auth.onAuthStateChange((event, session) => callback(session, event));
   return () => data.subscription.unsubscribe();
 }
 

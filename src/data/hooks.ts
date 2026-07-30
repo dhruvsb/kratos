@@ -34,12 +34,32 @@ export const keys = {
 
 const PAGE_SIZE = 20;
 
+// staleTime tiers (paired with the on-disk persist cache in src/lib/queryClient).
+// Every mutation below invalidates the keys it touches, and invalidation refetches
+// regardless of staleTime — so a longer staleTime never hides our *own* writes. It
+// only suppresses redundant passive refetch-on-mount, which is what lets a screen
+// re-open instantly off the warm cache. This is a single-device app, so external
+// (multi-device) staleness isn't a concern; freshness is tiered by how volatile
+// each thing is.
+const MINUTE = 60 * 1000;
+const STALE = {
+  profile: 30 * MINUTE, // only the unit toggle changes it, and that's optimistic
+  routines: 5 * MINUTE, // edits invalidate
+  exercise: 60 * MINUTE, // exercise metadata is effectively static
+  exerciseSearch: 5 * MINUTE, // directory is near-static; new customs invalidate
+  activeWorkout: 30 * 1000, // cheap pointer; keep it fairly fresh
+  workout: MINUTE, // set writes invalidate; this just stops the remount refetch-flash
+  workoutList: 5 * MINUTE, // finishing / deleting a workout invalidates
+  lastSession: 5 * MINUTE, // doesn't change mid-workout
+  exerciseHistory: 5 * MINUTE, // finishing / deleting invalidates
+} as const;
+
 // ---------------------------------------------------------------------------
 // Queries
 // ---------------------------------------------------------------------------
 
 export function useProfile() {
-  return useQuery({ queryKey: keys.profile, queryFn: auth.getProfile });
+  return useQuery({ queryKey: keys.profile, queryFn: auth.getProfile, staleTime: STALE.profile });
 }
 
 export function useUpdateProfile() {
@@ -66,6 +86,7 @@ export function useRoutines(includeArchived = false) {
   return useQuery({
     queryKey: keys.routines(includeArchived),
     queryFn: () => routines.listRoutines(includeArchived),
+    staleTime: STALE.routines,
   });
 }
 
@@ -74,6 +95,7 @@ export function useRoutine(id: string | undefined) {
     queryKey: keys.routine(id ?? ''),
     queryFn: () => routines.getRoutine(id!),
     enabled: !!id,
+    staleTime: STALE.routines,
   });
 }
 
@@ -82,6 +104,7 @@ export function useExerciseSearch(query: string, region?: BodyRegion | null) {
     queryKey: keys.exerciseSearch(query, region),
     queryFn: () => exercises.searchExercises(query, region),
     placeholderData: (prev) => prev, // keep old results while typing / switching region
+    staleTime: STALE.exerciseSearch,
   });
 }
 
@@ -90,11 +113,16 @@ export function useExercise(id: string | undefined) {
     queryKey: keys.exercise(id ?? ''),
     queryFn: () => exercises.getExercise(id!),
     enabled: !!id,
+    staleTime: STALE.exercise,
   });
 }
 
 export function useActiveWorkout() {
-  return useQuery({ queryKey: keys.activeWorkout, queryFn: workouts.getActiveWorkout });
+  return useQuery({
+    queryKey: keys.activeWorkout,
+    queryFn: workouts.getActiveWorkout,
+    staleTime: STALE.activeWorkout,
+  });
 }
 
 export function useWorkout(id: string | undefined) {
@@ -102,6 +130,7 @@ export function useWorkout(id: string | undefined) {
     queryKey: keys.workout(id ?? ''),
     queryFn: () => workouts.getWorkout(id!),
     enabled: !!id,
+    staleTime: STALE.workout,
   });
 }
 
@@ -112,6 +141,7 @@ export function useWorkoutList() {
     initialPageParam: 0,
     getNextPageParam: (lastPage, pages) =>
       lastPage.length < PAGE_SIZE ? undefined : pages.length,
+    staleTime: STALE.workoutList,
   });
 }
 
@@ -120,7 +150,7 @@ export function useLastSession(exerciseId: string, excludeWorkoutId?: string) {
   return useQuery({
     queryKey: keys.lastSession(exerciseId, excludeWorkoutId),
     queryFn: () => workouts.getLastSession(exerciseId, excludeWorkoutId),
-    staleTime: 5 * 60 * 1000, // doesn't change mid-workout
+    staleTime: STALE.lastSession,
   });
 }
 
@@ -133,6 +163,7 @@ export function useExerciseHistory(exerciseId: string | undefined) {
     getNextPageParam: (lastPage, pages) =>
       lastPage.length < PAGE_SIZE ? undefined : pages.length,
     enabled: !!exerciseId,
+    staleTime: STALE.exerciseHistory,
   });
 }
 

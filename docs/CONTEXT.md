@@ -10,7 +10,12 @@ codebase or a huge prior conversation.
 > issues**) *and* append a dated entry to [`WORK-LOG.md`](./WORK-LOG.md). This file is the
 > snapshot; `WORK-LOG.md` is the full history. Keep this file short.
 
-**Last updated:** 2026-07-31 — **Hevy CSV import + export (in-app)**. Import (Settings → DATA → “Import
+**Last updated:** 2026-07-31 — **Local-first: persisted React Query cache (instant cold start)**. The
+query cache now persists to AsyncStorage (`src/lib/queryClient.ts`); `_layout` uses
+`PersistQueryClientProvider` + a `BootGate` that holds the splash on cache-restore so first paint shows
+hydrated data, and wipes the cache on sign-out/account-switch. `staleTime` tiered in `hooks.ts`. New deps
+are pure-JS ⇒ **no dev-client rebuild**. `tsc` + web-export green; save→restore proven by a Node harness;
+on-device warm-relaunch check pending. Prior same day: **Hevy CSV import + export (in-app)**. Import (Settings → DATA → “Import
 from Hevy”) previews then writes real history through the repo layer, idempotent via
 `workouts.external_id`; export (“Export workouts”) shares a Hevy-compatible `.csv` file that round-trips
 back through the importer (verified exact on the real data). New native deps (`expo-document-picker`,
@@ -60,6 +65,7 @@ logging via an LLM pipeline, **3** TBD (PRs/charts).
 | Area | Status |
 |---|---|
 | Phase 1 backbone (schema, RLS, repos) | ✅ Built; backend verified live (**150 curated exercises** / 156 aliases seeded; RLS test passed) |
+| **Local-first cache (persisted React Query)** | ✅ **Built 2026-07-31** — cold start hydrates last-known data from AsyncStorage (`src/lib/queryClient.ts`), revalidates in background; `staleTime` tiered; cache wiped on sign-out/account-switch. Pure-JS deps ⇒ no rebuild. On-device warm-relaunch check pending. |
 | **Exercise directory — curated + rich metadata** | ✅ **Rebuilt this session**: replaced the 873 free-exercise-db import with a curated 150-set carrying `primary_muscles[]`, `secondary_muscles[]`, `body_region[]` rollup, `mechanic`, `modality`. Source of truth: `scripts/data/exercises-curated.json` (regen via `scripts/build-curated-exercises.py`). Muscle taxonomy in `src/lib/muscles.ts`. |
 | **Manual-first UI — all 12 `RepVoice Manual` screens** | ✅ Built (dark LED theme); **now renders on the iOS simulator** (first run 2026-07-31 — Home, History, routines all render; full manual-loop walkthrough still pending) |
 | **"Entry & edges" screens 13–18** | ✅ **Built session 4**: 13 sign-in (LED, 6-box code) · 14 first-run + 16 resume (Home states) · 15 no-history grid · 17 fix-a-set from history + delete-workout · 18 real Settings screen. New local settings store `src/data/settings.ts` (AsyncStorage; drives pre-fill/rest/weekly-goal). 4-tab nav (HOME·CALENDAR·HISTORY·SETTINGS). Static-verified only. |
@@ -75,12 +81,15 @@ logging via an LLM pipeline, **3** TBD (PRs/charts).
 | Migration `0003_alias_write_policy.sql` | ✅ **Applied this session** (was committed-but-unapplied; Phase 2 alias write-back policy now live) |
 | Migration `0004_exercise_metadata.sql` | ✅ Applied — exercises table restructured (muscle arrays + body_region + mechanic + modality; dropped `primary_muscle`/`category`) |
 
-Static checks currently green: `tsc --noEmit` clean; `expo export --platform web` bundles all 13 routes;
+Static checks currently green: `tsc --noEmit` clean; `expo export --platform web` bundles all 15 routes;
 `expo run:ios` builds + launches on the simulator. **Feedback pass (`FEEDBACK-LOG.md`): 6 of 9 done** —
 ✅ #1 #2 #4 #6 #7 #9 · ⬜ #3 #5 #8.
 
 ## Pending actions (owner: user / next session)
 
+- [ ] **Verify warm-relaunch hydration on device** (the one unproven bit of the persisted cache):
+      with data present, kill + relaunch — Home/History should paint instantly from disk (no
+      spinner), then quietly refresh. JS-only change ⇒ no rebuild, just `expo start --dev-client`.
 - [ ] **Walk the full manual loop on the simulator** (app already runs + is signed in): Home →
       start a routine → add exercise → log a set via ✓ and via the keypad → edit a set → finish →
       see it in History → open an exercise's progress. Home/History/routines already render;
