@@ -1,7 +1,8 @@
 // Sign in (mockup 13) — the one screen every stranger sees, so it never breaks
 // character: dark LED theme, no password. Stage one takes an email and mails a
-// six-digit code; stage two is the same screen with a segmented code field that
-// auto-advances and verifies on the sixth digit. On success the auth listener in
+// code; stage two is the same screen with a segmented code field that
+// auto-advances and verifies on the last digit (CODE_LEN must match the Supabase
+// project's configured email-OTP length). On success the auth listener in
 // _layout swaps to the app.
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -18,7 +19,7 @@ import { Caret } from '@/components/workout/Caret';
 import { sendOtp, verifyOtp } from '@/data/auth';
 import { color, font, radius, space, tracking } from '@/theme/tokens';
 
-const CODE_LEN = 6; // project mails a six-digit code (mockup 13)
+const CODE_LEN = 8; // must match the Supabase project's email-OTP length (currently 8 digits)
 
 export function SignInScreen() {
   const insets = useSafeAreaInsets();
@@ -81,7 +82,7 @@ export function SignInScreen() {
           REPVOICE<Text style={{ color: color.acc }}>.</Text>
         </Text>
         <Text style={styles.lede}>
-          No password. We email a six-digit code — after that the app stays signed in.
+          No password. We email a code — after that the app stays signed in.
         </Text>
 
         {stage === 'email' ? (
@@ -161,7 +162,7 @@ export function SignInScreen() {
             </Pressable>
 
             <Text style={styles.codeHint}>
-              {busy ? 'Verifying…' : 'Auto-advances and verifies on the sixth digit.'}
+              {busy ? 'Verifying…' : 'Auto-advances and verifies on the last digit.'}
             </Text>
 
             <View style={styles.codeFooter}>

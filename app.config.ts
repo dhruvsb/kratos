@@ -13,6 +13,12 @@ const config: ExpoConfig = {
   ios: {
     bundleIdentifier: 'com.dhruvshah.repvoice',
     icon: './assets/expo.icon',
+    infoPlist: {
+      // react-native-screens requires this YES to let a native screen set the
+      // status-bar style (we set statusBarStyle: 'light' on the Stack in _layout).
+      // Expo defaults it to NO, which makes RNS throw a fatal red-screen assertion.
+      UIViewControllerBasedStatusBarAppearance: true,
+    },
   },
   android: {
     adaptiveIcon: {
