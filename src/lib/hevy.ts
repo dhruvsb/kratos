@@ -223,3 +223,65 @@ export function parseHevyCsv(text: string): HevyParseResult {
   if (workouts.length === 0) throw new Error('No workouts found in the file.');
   return { workouts, totalSets };
 }
+
+// --- serialize (export) ------------------------------------------------------
+// The inverse of the parser: emit a Hevy-format CSV so an export round-trips back
+// through parseHevyCsv (and is importable into Hevy itself). Column order matches
+// the header the parser expects.
+const HEVY_HEADER =
+  'title,start_time,end_time,description,exercise_title,superset_id,exercise_notes,' +
+  'set_index,set_type,weight_kg,reps,distance_km,duration_seconds,rpe';
+
+const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/** ISO → "26 Jul 2026, 10:36" in device-local time (the format the parser reads). */
+export function formatHevyDate(iso: string): string {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getDate()} ${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()}, ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function hevySetTypeLabel(t: SetType): string {
+  return t === 'drop' ? 'dropset' : t; // warmup / normal / failure pass through
+}
+
+// Quote a field iff it contains a comma, quote, or newline; double embedded quotes.
+function csvField(value: string | number | null): string {
+  if (value == null) return '';
+  const s = String(value);
+  return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+export type ExportWorkout = Pick<HevyWorkout, 'title' | 'description' | 'startedAt' | 'endedAt' | 'exercises'>;
+
+/** Serialize workouts to a Hevy-compatible CSV string (one row per set). */
+export function serializeHevyCsv(workouts: ExportWorkout[]): string {
+  const lines = [HEVY_HEADER];
+  for (const w of workouts) {
+    const start = formatHevyDate(w.startedAt);
+    const end = w.endedAt ? formatHevyDate(w.endedAt) : '';
+    for (const ex of w.exercises) {
+      ex.sets.forEach((s, i) => {
+        lines.push(
+          [
+            csvField(w.title),
+            csvField(start),
+            csvField(end),
+            csvField(w.description),
+            csvField(ex.title),
+            '', // superset_id — not modelled
+            '', // exercise_notes — not modelled
+            i, // set_index (0-based, Hevy-style)
+            csvField(hevySetTypeLabel(s.setType)),
+            csvField(s.weightKg),
+            csvField(s.reps),
+            csvField(s.distanceKm),
+            csvField(s.durationSeconds),
+            csvField(s.rpe),
+          ].join(',')
+        );
+      });
+    }
+  }
+  return lines.join('\n');
+}

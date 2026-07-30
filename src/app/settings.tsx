@@ -9,13 +9,12 @@
 // device-local (src/data/settings.ts).
 import { router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
-import { Alert, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TabBar } from '@/components/voice/TabBar';
 import { getSession, signOut } from '@/data/auth';
-import { useProfile, useUpdateProfile, useWorkoutList } from '@/data/hooks';
+import { useProfile, useUpdateProfile } from '@/data/hooks';
 import { GOAL_PRESETS, useSettings, useUpdateSettings } from '@/data/settings';
-import type { WorkoutListItem } from '@/data/workouts';
 import { color, font, radius, space, tracking } from '@/theme/tokens';
 
 function next<T>(list: readonly T[], current: T): T {
@@ -37,7 +36,6 @@ export default function SettingsScreen() {
   const updateProfile = useUpdateProfile();
   const settings = useSettings();
   const updateSettings = useUpdateSettings();
-  const history = useWorkoutList();
   const sessionEmail = useQuery({
     queryKey: ['sessionEmail'],
     queryFn: () => getSession().then((s) => s?.user.email ?? null),
@@ -52,30 +50,6 @@ export default function SettingsScreen() {
       { text: 'Cancel', style: 'cancel' },
       { text: 'Sign out', style: 'destructive', onPress: () => signOut() },
     ]);
-  }
-
-  async function exportCsv() {
-    const rows: WorkoutListItem[] = history.data?.pages.flat() ?? [];
-    if (rows.length === 0) {
-      Alert.alert('Nothing to export', 'Log a workout first, then export.');
-      return;
-    }
-    const header = 'date,routine,exercises,sets';
-    const body = rows
-      .map((w) => {
-        const date = new Date(w.started_at).toISOString().slice(0, 10);
-        const routine = (w.routine_name ?? 'Empty workout').replace(/"/g, '""');
-        return `${date},"${routine}",${w.exercise_count},${w.set_count}`;
-      })
-      .join('\n');
-    try {
-      await Share.share({
-        title: 'RepVoice workouts',
-        message: `${header}\n${body}`,
-      });
-    } catch {
-      // User dismissed the share sheet — nothing to do.
-    }
   }
 
   const groups: { title: string; rows: Row[] }[] = s
@@ -123,9 +97,9 @@ export default function SettingsScreen() {
             },
             {
               label: 'Export workouts',
-              note: 'CSV via the share sheet',
+              note: 'Hevy-compatible CSV file',
               value: 'EXPORT',
-              onPress: exportCsv,
+              onPress: () => router.push('/export'),
             },
           ],
         },

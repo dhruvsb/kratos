@@ -7,6 +7,28 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-07-31 — Hevy CSV export (in-app, round-trips with import)
+
+Symmetric partner to the import: a real **file export** replacing the old summary-only share.
+
+- **`src/lib/hevy.ts`** — added `serializeHevyCsv()` (+ `formatHevyDate`, reverse `set_type` map,
+  RFC-4180 quoting), the exact inverse of the parser. Same 14-column header, so an export re-imports
+  cleanly and loads into Hevy.
+- **`src/data/export.ts`** — `buildHevyExport()`: one query for all finished workouts (nested
+  exercises+sets, RLS-scoped), mapped to Hevy rows → `{ csv, workoutCount, setCount, dateRange }`.
+  DB-only; file/share stay in the screen.
+- **`src/app/export.tsx`** — summary → **share as a `.csv` file** via `expo-sharing`
+  (`expo-file-system` `File`/`Paths` writes to cache). Settings → DATA → “Export workouts” now pushes
+  here; the old inline 4-column `Share.share({message})` summary (+ its `Share`/`useWorkoutList`
+  imports) is removed.
+
+**New native dep:** `expo-sharing` (~57.0.8) — folds into the same pending dev-client rebuild as the
+import deps. Verified: `tsc` clean, `expo export` bundles `/export`, and a **serialize→re-parse
+round-trip on the real data is exact** (13 workouts / 239 sets, 0 set-field mismatches, `external_id`
+preserved ⇒ export→import is idempotent). Not yet run on device.
+
+---
+
 ## 2026-07-31 — Hevy CSV import (in-app)
 
 Built an **in-app import** that reconstructs history from a Hevy "Export Data" CSV — the fastest way
