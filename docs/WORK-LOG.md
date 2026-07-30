@@ -7,6 +7,38 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-07-31 — Hevy CSV import (in-app)
+
+Built an **in-app import** that reconstructs history from a Hevy "Export Data" CSV — the fastest way
+to make History / Calendar / progress screens come alive with real data (also softens the
+`seed-demo-workouts` backlog item). Surface + unknown-exercise behaviour chosen by the user:
+**in-app screen** + **auto-create custom for anything unmatched** (nothing dropped).
+
+- **`src/lib/hevy.ts`** — pure parser (no DB): RFC-4180 CSV tokenizer, groups one-row-per-set into
+  workouts→exercises→sets, parses Hevy's `"26 Jul 2026, 10:36"` timestamps (device-local), maps
+  `set_type` (`dropset`→`drop`), infers modality for customs. Weights are already kg → no conversion.
+  Each workout gets a stable `external_id` (`hevy:<startedAt>|<title>`) → **idempotent re-import**.
+- **`src/data/import.ts`** — resolver + writer through the repo layer (RLS applies). Matching is
+  **correctness-first**: exact name/alias → equipment-qualified recombination → bare base, but a
+  bare-base hit is **rejected when the canonical names a conflicting equipment** (so `Shrug (Dumbbell)`
+  → `Dumbbell Shrug`, never `Barbell Shrug`; `Bicep Curl (Dumbbell)` / `Chest Fly (Machine)` fall
+  through to safe customs rather than mapping to the wrong variant). `buildImportPlan` previews
+  (new-vs-skipped workouts, matched-vs-custom counts, date range) with **zero writes**;
+  `commitImportPlan` creates customs then batch-inserts. `logged_via` is `'manual'` (enum has no
+  `import`; `external_id != null` already flags imported rows).
+- **`src/app/import.tsx`** — pick (expo-document-picker) → read (expo-file-system `File.text()`) →
+  **preview** → commit, LED-themed to match Settings. Wired into **Settings → DATA → “Import from
+  Hevy”**. `useCommitImport()` in `hooks.ts` invalidates the cache wholesale on success.
+
+**New native deps:** `expo-document-picker` + `expo-file-system` (~57.0.1) → **a dev-client rebuild
+is required** (`expo run:ios`) before this runs on device. Verified: `tsc` clean, `expo export`
+bundles `/import`, and the parser+matcher run against the real `workout_data.csv` (13 workouts, 239
+sets, 20 matched / 21 custom, every match defensible). **Not yet run on device** (needs the rebuild +
+a signed-in session hitting live Supabase). The parser is deliberately DB-free so a future
+`scripts/import-hevy.ts` is a thin wrapper.
+
+---
+
 ## 2026-07-31 — First on-device (simulator) run + feedback pass #1/#2/#7/#9 + parallel-work reconcile
 
 **Milestone: the manual UI rendered on a simulator for the first time** (iPhone 17, iOS sim, via

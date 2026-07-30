@@ -10,7 +10,11 @@ codebase or a huge prior conversation.
 > issues**) *and* append a dated entry to [`WORK-LOG.md`](./WORK-LOG.md). This file is the
 > snapshot; `WORK-LOG.md` is the full history. Keep this file short.
 
-**Last updated:** 2026-07-31 — **first on-device (simulator) run of the manual UI** + a QA-feedback
+**Last updated:** 2026-07-31 — **Hevy CSV import (in-app)** added: Settings → DATA → “Import from Hevy”
+picks a Hevy export, previews (new-vs-skipped workouts, matched-vs-custom exercises), and writes real
+history through the repo layer; idempotent via `workouts.external_id`. New native deps
+(`expo-document-picker` + `expo-file-system`) ⇒ **dev-client rebuild required**; static-verified, not
+yet run on device. See WORK-LOG. Prior same day: **first on-device (simulator) run of the manual UI** + a QA-feedback
 pass. Cleared two blockers (8-digit OTP + status-bar red-screen; `36696fd`) and closed feedback items
 **#1 nav · #2 rest-timer · #4 filter · #6 muscle split · #7 routine labels · #9 progress-from-routine**
 (see [`FEEDBACK-LOG.md`](./FEEDBACK-LOG.md)); four parallel sessions' work combined + checkpointed in
@@ -61,6 +65,7 @@ logging via an LLM pipeline, **3** TBD (PRs/charts).
 | ↳ Manual set logging (grid + keypad) — *the core, previously missing* | ✅ Built (`workout/[id]`, `components/workout/SetKeypad`, `lib/units`) |
 | ↳ Home / routine editor / picker / history / past workout / exercise progress / library / finish | ✅ Built / restyled dark |
 | ↳ **Calendar (mockup 12, "five a week")** | ✅ **Built this session** — `src/app/calendar.tsx` + `src/data/calendar.ts` (finished-workout days → week card / month grid / streak stats / 12-week bars); wired into Home tab bar. Weekly goal driven by Settings (`useSettings().weeklyGoal`, default 5). |
+| **Hevy CSV import (in-app)** | ✅ **Built this session** — `src/lib/hevy.ts` (pure parser) + `src/data/import.ts` (correctness-first exercise matcher; auto-creates customs for unmatched) + `src/app/import.tsx` (pick→preview→commit) + Settings row. Idempotent (`external_id`). Static-verified against the real export (13 workouts / 239 sets); **needs a dev-client rebuild** for the new native deps, not yet run on device. |
 | Two-theme white/dark patchwork | ✅ **Resolved** — every screen is now dark; `_layout` header config dropped |
 | Phase 2 voice pipeline (extraction → resolution → kg) | ✅ Built; edge fn deployed + auth-guarded; **unwired from manual UI** (returns later) |
 | Native iOS dev client on physical iPhone 15 | ✅ Installed, launches to sign-in |
@@ -79,6 +84,10 @@ Static checks currently green: `tsc --noEmit` clean; `expo export --platform web
       start a routine → add exercise → log a set via ✓ and via the keypad → edit a set → finish →
       see it in History → open an exercise's progress. Home/History/routines already render;
       the *logging* path (keypad, grid, finish, progress chart) is still unproven on-device.
+- [ ] **Rebuild the dev client** (`expo run:ios`) to pick up `expo-document-picker` +
+      `expo-file-system`, then **run the Hevy import** end-to-end (Settings → DATA → Import from Hevy →
+      pick `workout_data.csv` → confirm the preview → import) and check History / Calendar / an
+      exercise's progress light up with the imported data.
 - [ ] **Verify a real OTP sign-in from scratch** (sign out → enter email → 8-digit code). This
       session used a persisted session, so the end-to-end auth flow itself is still unconfirmed.
 - [ ] **Create + save a routine** on device (name, add exercises, targets, save) and confirm

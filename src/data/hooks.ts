@@ -8,6 +8,7 @@ import {
 } from '@tanstack/react-query';
 import * as auth from './auth';
 import * as exercises from './exercises';
+import * as importer from './import';
 import * as routines from './routines';
 import * as sets from './sets';
 import * as voice from './voice';
@@ -219,6 +220,16 @@ export function useDeleteWorkout(workoutId: string) {
       qc.invalidateQueries({ queryKey: ['lastSession'] });
       qc.invalidateQueries({ queryKey: ['exerciseHistory'] });
     },
+  });
+}
+
+/** Commit a Hevy import plan. Touches history, calendar, progress and the
+ *  exercise directory (customs), so it invalidates the cache wholesale. */
+export function useCommitImport() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (plan: importer.ImportPlan) => importer.commitImportPlan(plan),
+    onSuccess: () => qc.invalidateQueries(),
   });
 }
 

@@ -116,6 +116,12 @@ export default function SettingsScreen() {
               onPress: () => router.push('/exercises'),
             },
             {
+              label: 'Import from Hevy',
+              note: 'build history from a Hevy CSV',
+              value: 'IMPORT',
+              onPress: () => router.push('/import'),
+            },
+            {
               label: 'Export workouts',
               note: 'CSV via the share sheet',
               value: 'EXPORT',
