@@ -308,3 +308,26 @@ mockup iteration; the palette in `tokens.ts` was corrected to v2's cyan values (
 → correction-drawer loop (blocked on the same pending first-login as the rest of Phase 2,
 per §3). Verified so far: `tsc --noEmit` clean, `expo export --platform web` bundles all
 10 routes with no errors.
+
+## 9. QA fix cluster (2026-07-30)
+
+A full-codebase QA pass fixed four high-impact defects; see `WORK-LOG.md` (2026-07-30) for
+the complete finding list and rationale. Standing facts a future session must know:
+
+- **Fonts are now actually loaded.** `_layout.tsx` calls `useAppFonts()` and holds the
+  `expo-splash-screen` splash until fonts + the first session check resolve. Before this,
+  `useAppFonts()` was dead and every `font.*` fell back to the system font. Don't unwire it.
+- **Header theming is per-screen.** `index` and `workout/[id]` set `headerShown:false` +
+  dark `contentStyle` + `statusBarStyle:'light'`; the Phase-1 screens keep the white header
+  (`statusBarStyle:'dark'`). Both dark screens now use `useSafeAreaInsets()` for top padding
+  (there's no header to provide it). If you restyle the remaining Phase-1 screens dark, flip
+  their header/status-bar handling too.
+- **Undo works via a `committed` flag** in `VoiceConfirmationCard` — the component stays
+  mounted (sheet hidden) through the 10s window instead of unmounting on confirm. The undo
+  snackbar's absolute position (anchored to the mic row) is functional but not yet polished
+  to a true bottom-floating pill.
+- **New migration `0003_alias_write_policy.sql` — NOT YET APPLIED.** It lets authenticated
+  users write `source in ('user','llm')` aliases onto any exercise they can see (seeded
+  included), unblocking the voice alias write-back (AC #5). Apply it (`supabase db push` /
+  SQL editor) before relying on alias learning; until then `createExerciseAliasFromVoice`
+  still throws for seeded exercises.

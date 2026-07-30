@@ -7,6 +7,69 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-07-30 — Full-codebase QA pass + high-impact fix cluster
+
+**Session scope:** Read the whole codebase, flag done/remaining, run static QA, then fix
+the highest-impact issues found. No on-device run happened (first login still pending), so
+everything below is verified by `tsc --noEmit` + `expo export --platform web` + reasoning,
+not a device walkthrough.
+
+**QA findings (full list handed to the user; the ones fixed this session are starred):**
+- ★ **Custom fonts never loaded.** `useAppFonts()` existed but was called nowhere, so every
+  `font.*` family silently fell back to the system font — the whole LED/mono identity was
+  not rendering.
+- ★ **White nav headers over the dark voice-first screens.** `_layout.tsx` set a white
+  header + white `contentStyle` and never hid the header, so Home/console rendered under a
+  white title bar with a white transition flash.
+- ★ **Undo snackbar unreachable.** `VoiceConfirmationCard.handleConfirm()` called `onClose()`
+  right after `setUndoIds()`, and `onClose` unmounts the component in `VoiceMicButton`
+  (`setCard(null)`), so the documented 10-second undo never rendered on the voice path.
+- ★ **Voice alias write-back RLS-blocked for seeded exercises.** 0001's `aliases write own
+  custom` INSERT policy required `is_custom=true AND created_by=auth.uid()`, but corrections
+  almost always map to a seeded exercise, so `createExerciseAliasFromVoice` threw (AC #5
+  silently broken).
+- (Not fixed this session — reported for later) two-theme white/dark patchwork on the
+  Phase-1 screens; `set_number` has no UNIQUE (client-computed, race-prone); `db.ts`'s
+  `z.coerce` guards are dead because repos never `.parse()`; model IDs `gpt-5.6-luna/terra`
+  unverifiable + eval never run; floor-mode auto-exit fires on manual FLOOR-key entry when
+  the phone isn't flat; floor-mode PR celebration effectively unreachable in current wiring;
+  dev telemetry reachable in 2 taps; default Expo icon/splash; dead code
+  (`useVoiceSession.ts`, `useSessionSpeech`, `floorSensor.ts`); telemetry queries never
+  invalidated; `addExerciseToWorkout` doesn't dedupe; `eval/README.md` stale `gpt-4o` refs.
+
+**Fixed this session:**
+- **Fonts + first paint** (`_layout.tsx`): wired `useAppFonts()`, held the native splash via
+  `expo-splash-screen` until fonts **and** the first session check resolve (falls through on
+  font error so it can't strand). No white spinner, no unstyled-font flash.
+- **Headers / theme** (`_layout.tsx`): `headerShown:false` + dark `contentStyle` on `index`
+  and `workout/[id]` only (the Phase-1 white screens keep their white header, which matches
+  their content); per-screen `statusBarStyle` (`light` on the two dark screens, `dark`
+  elsewhere / on sign-in); collapsed the two auth branches under one `SafeAreaProvider` +
+  `QueryClientProvider`.
+- **Safe area** (`index.tsx`, `workout/[id].tsx`): now that those headers are gone, added
+  `useSafeAreaInsets()` top padding (replaced the workout screen's guessed `paddingTop:
+  space.xxl`) so content clears the notch / Dynamic Island.
+- **Undo** (`VoiceConfirmationCard.tsx`): added a `committed` state — on confirm the sheet
+  closes (`Modal visible={visible && !committed}`) but the component stays mounted so the
+  snackbar runs its window; it dismisses (`onClose`) when the window elapses, on UNDO, or
+  when a new parse arrives (reset in the `response` effect). Guarded `handleConfirm` against
+  the auto-commit drain double-firing.
+- **Alias RLS** (`supabase/migrations/0003_alias_write_policy.sql`, new): replaced the
+  narrow policy with `aliases write visible` — an authenticated user may insert a
+  `source in ('user','llm')` alias onto any exercise they can SELECT (seeded or own custom).
+  `'seed'` stays reserved for the service-role seed script. Idempotent. **NOT YET APPLIED**
+  to the live project — run `supabase db push` (or paste it into the SQL editor).
+
+**Verified:** `npx tsc --noEmit` clean; `npx expo export --platform web` bundles all 10
+routes; the Space Grotesk / IBM Plex Mono TTFs now appear in the web export (they were
+tree-shaken out before the wiring).
+
+**Not done / next up:** apply `0003` to the live DB; the same pending on-device first-login
+walkthrough (now the way to actually see the fonts + dark headers render); the unfixed
+findings listed above.
+
+---
+
 ## 2026-07-20 — Voice-first v2 redesign: console, floor mode, correction drawer
 
 **Session scope:** Implement the 5-screen Claude Design mockup `RepVoice Voice-First.dc.html`

@@ -7,6 +7,7 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ExercisePickerModal } from '@/components/ExercisePickerModal';
 import { VoiceConfirmationCard, type EditableSet } from '@/components/VoiceConfirmationCard';
 import { VoiceMicButton } from '@/components/VoiceMicButton';
@@ -37,6 +38,7 @@ function formatElapsed(startedAt: string): string {
 }
 
 export default function ActiveWorkoutScreen() {
+  const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const workout = useWorkout(id);
   const profile = useProfile();
@@ -101,7 +103,7 @@ export default function ActiveWorkoutScreen() {
   const prevSet = activeExercise?.sets[activeExercise.sets.length - 1];
 
   return (
-    <View style={styles.screen}>
+    <View style={[styles.screen, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <View>
           <StatusPip label={isFinished ? 'FINISHED' : 'LISTENING'} on={!isFinished} />
@@ -261,7 +263,7 @@ function toEditableSet(row: TapeRow): EditableSet {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: color.bg, paddingTop: space.xxl },
+  screen: { flex: 1, backgroundColor: color.bg },
   loadingScreen: { flex: 1, backgroundColor: color.bg, alignItems: 'center', justifyContent: 'center' },
   loadingText: { fontFamily: font.numSemibold, fontSize: 12, letterSpacing: tracking.label, color: color.t3 },
   errorText: { fontFamily: font.num, fontSize: 12, color: color.warn, padding: space.md },

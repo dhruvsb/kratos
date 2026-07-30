@@ -11,6 +11,7 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActionSheetIOS, Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LevelMeter, StatusPip } from '@/components/voice/primitives';
 import { TabBar } from '@/components/voice/TabBar';
 import { signOut } from '@/data/auth';
@@ -32,6 +33,7 @@ function matchRoutine(transcript: string, routines: RoutineWithCount[]): Routine
 }
 
 export default function HomeScreen() {
+  const insets = useSafeAreaInsets();
   const routines = useRoutines();
   const activeWorkout = useActiveWorkout();
   const startWorkout = useStartWorkout();
@@ -97,7 +99,7 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={[styles.content, { paddingTop: insets.top + space.xl }]}>
         <View style={styles.topRow}>
           <Text style={styles.logo}>
             REPVOICE<Text style={{ color: color.acc }}>.</Text>

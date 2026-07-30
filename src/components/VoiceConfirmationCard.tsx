@@ -89,6 +89,10 @@ export function VoiceConfirmationCard({
   const [correctedExerciseAt, setCorrectedExerciseAt] = useState<Set<number>>(new Set());
   const [pickerForEntry, setPickerForEntry] = useState<number | null>(null);
   const [undoIds, setUndoIds] = useState<string[] | null>(null);
+  // Once a parse is committed we keep this component mounted (sheet closed) so
+  // the undo snackbar can live out its window — closing only when it elapses,
+  // is undone, or a new parse arrives. Unmounting here is what used to eat undo.
+  const [committed, setCommitted] = useState(false);
 
   const confirm = useConfirmVoiceEntries(workoutId);
   const discard = useDiscardVoiceLog();
@@ -109,6 +113,9 @@ export function VoiceConfirmationCard({
     setOriginal(editable);
     setAnsweredAmbiguities(new Set());
     setCorrectedExerciseAt(new Set());
+    // A fresh parse replaces any prior committed/undo state on this instance.
+    setCommitted(false);
+    setUndoIds(null);
   }, [response]);
 
   useEffect(() => {
@@ -120,8 +127,14 @@ export function VoiceConfirmationCard({
 
   useEffect(() => {
     if (undoIds == null) return;
-    const t = setTimeout(() => setUndoIds(null), UNDO_WINDOW_MS);
+    const t = setTimeout(() => {
+      setUndoIds(null);
+      onClose();
+    }, UNDO_WINDOW_MS);
     return () => clearTimeout(t);
+    // onClose is a stable dismiss callback; re-subscribing on its identity would
+    // reset the undo window on every parent re-render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [undoIds]);
 
   const result = response?.result ?? null;
@@ -154,7 +167,7 @@ export function VoiceConfirmationCard({
 
   if (!visible) return null;
 
-  if (isHeard && !drainCancelled) {
+  if (isHeard && !drainCancelled && !committed) {
     return (
       <View style={styles.heardPanel}>
         <View style={styles.heardHeader}>
@@ -207,6 +220,7 @@ export function VoiceConfirmationCard({
 
   async function handleConfirm() {
     if (!response || !result) return;
+    if (committed || confirm.isPending) return; // guard the auto-commit drain + taps
     const corrections: Record<string, { from: unknown; to: unknown }> = {};
     entries.forEach((e, i) => {
       const orig = original[i];
@@ -240,15 +254,24 @@ export function VoiceConfirmationCard({
       })),
     });
 
-    for (const entryIndex of correctedExerciseAt) {
-      const entry = entries[entryIndex];
-      if (entry?.exerciseId) {
-        await createAlias.mutateAsync({ rawPhrase: entry.raw, exerciseId: entry.exerciseId });
+    // Alias write-back is best-effort — the sets are already committed above, so
+    // a failed "learn this phrase" (e.g. migration 0003 not yet applied) must not
+    // block the commit or the undo window.
+    try {
+      for (const entryIndex of correctedExerciseAt) {
+        const entry = entries[entryIndex];
+        if (entry?.exerciseId) {
+          await createAlias.mutateAsync({ rawPhrase: entry.raw, exerciseId: entry.exerciseId });
+        }
       }
+    } catch {
+      /* non-critical: alias learning can fail without affecting the logged set */
     }
 
+    // Close the sheet but stay mounted: the snackbar drives the undo window and
+    // dismisses us (onClose) when it elapses, is undone, or a new parse lands.
+    setCommitted(true);
     setUndoIds(createdSetIds);
-    onClose();
   }
 
   function handleDiscard() {
@@ -259,6 +282,7 @@ export function VoiceConfirmationCard({
   function handleUndo() {
     if (undoIds) undoSets.mutate(undoIds);
     setUndoIds(null);
+    onClose();
   }
 
   async function handleSaveEdit() {
@@ -278,7 +302,7 @@ export function VoiceConfirmationCard({
 
   return (
     <>
-      <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+      <Modal visible={visible && !committed} animationType="slide" transparent onRequestClose={onClose}>
         <View style={styles.backdrop}>
           <Pressable style={styles.backdropTap} onPress={onClose} />
           <View style={styles.sheet}>
