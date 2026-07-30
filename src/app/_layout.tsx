@@ -46,38 +46,16 @@ export default function RootLayout() {
     <SafeAreaProvider initialMetrics={initialWindowMetrics}>
       <QueryClientProvider client={queryClient}>
         {session ? (
+          // Every screen is now the dark LED theme and draws its own header +
+          // safe-area (back links live in-screen), so the native header stays off
+          // and first paint is dark end-to-end.
           <Stack
             screenOptions={{
-              // Phase-1 screens are still the plain white UI, so their header
-              // stays white; the dark voice-first screens hide it (below).
-              statusBarStyle: 'dark',
-              headerTintColor: '#000',
-              headerStyle: { backgroundColor: '#fff' },
-              contentStyle: { backgroundColor: '#fff' },
+              headerShown: false,
+              statusBarStyle: 'light',
+              contentStyle: { backgroundColor: color.bg },
             }}
-          >
-            <Stack.Screen
-              name="index"
-              options={{
-                headerShown: false,
-                statusBarStyle: 'light',
-                contentStyle: { backgroundColor: color.bg },
-              }}
-            />
-            <Stack.Screen
-              name="workout/[id]"
-              options={{
-                headerShown: false,
-                statusBarStyle: 'light',
-                contentStyle: { backgroundColor: color.bg },
-              }}
-            />
-            <Stack.Screen name="routine/[id]" options={{ title: 'Routine' }} />
-            <Stack.Screen name="history/index" options={{ title: 'History' }} />
-            <Stack.Screen name="history/[id]" options={{ title: 'Workout detail' }} />
-            <Stack.Screen name="exercises" options={{ title: 'Exercise library' }} />
-            <Stack.Screen name="exercise/[id]" options={{ title: 'Exercise history' }} />
-          </Stack>
+          />
         ) : (
           <>
             <StatusBar style="dark" />

@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#05080A;color:#E7EFF4;font-family:'Space Grotesk',sans-serif;
+--bg:#05080A;--s0:#080C10;--s1:#0D1318;--sin:#04070A;
+--line:rgba(150,205,255,.07);--line2:rgba(150,205,255,.14);
+--t1:#E7EFF4;--t2:#8798A5;--t3:#4E5A64;
+--acc:#4FD8FF;
+--acc-06:color-mix(in oklab,var(--acc) 6%,transparent);
+--acc-14:color-mix(in oklab,var(--acc) 14%,transparent);
+--acc-30:color-mix(in oklab,var(--acc) 30%,transparent);
+--hot:#FF8A3C;--warn:#FF5647;--ok:#5FE3B0;
+--f-num:'IBM Plex Mono',monospace;--f-ui:'Space Grotesk',sans-serif;
+--key:#101820;--tick:repeating-linear-gradient(90deg,rgba(150,205,255,.16) 0 1px,transparent 1px 8px);
+}
+a{color:#4FD8FF;text-decoration:none}a:hover{color:#9CE9FF}
+@keyframes led{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes heat{0%{background-position:0% 50%}100%{background-position:100% 50%}}
+</style>
+</helmet>
+
+<div style="--acc:{{ accentVar }};padding:0 0 90px">
+
+<div style="padding:44px 56px 22px;display:flex;align-items:flex-end;justify-content:space-between;gap:30px;flex-wrap:wrap;border-bottom:1px solid var(--line)">
+  <div>
+    <div style="display:flex;align-items:center;gap:11px">
+      <div style="width:7px;height:7px;border-radius:50%;background:var(--acc);animation:led 2.4s ease-in-out infinite"></div>
+      <div style="font:700 22px/1 var(--f-ui);letter-spacing:.03em">REPVOICE<span style="color:var(--acc)">.</span></div>
+      <div style="font:600 9px var(--f-num);letter-spacing:.22em;color:var(--t3);margin-left:6px">VOICE-FIRST · v3 · 14 SCREENS</div>
+    </div>
+    <div style="margin-top:11px;font:11.5px/1.7 var(--f-num);color:var(--t2);max-width:680px;text-wrap:pretty">A listening instrument. Every route in the app, one dark language: hairlines instead of cards, mono numerals, accent reserved for what is live right now. Heat appears once — on a PR.</div>
+  </div>
+  <div style="font:10.5px/1.8 var(--f-num);color:var(--t3);text-align:right">
+    <div>BASE <span style="color:var(--t2)">#05080A</span></div>
+    <div>LIVE <span style="color:var(--acc)">accent</span> · only when listening</div>
+    <div>HEAT <span style="color:var(--hot)">#FF8A3C</span> · PR only</div>
+  </div>
+</div>
+
+<div style="display:flex;flex-wrap:wrap;gap:40px 44px;padding:40px 56px 0;align-items:flex-start">
+
+  <div style="flex:0 0 100%;display:flex;align-items:baseline;gap:16px">
+    <span style="font:600 9px var(--f-num);letter-spacing:.32em;color:var(--t2)">SESSION</span>
+    <div style="flex:1;height:1px;background:var(--line)"></div>
+    <span style="font:600 9px var(--f-num);letter-spacing:.14em;color:var(--t3)">01—05</span>
+  </div>
+
+  <!-- 01 HOME -->
+  <div id="s-home" style="display:flex;flex-direction:column;gap:12px;scroll-margin-top:20px">
+    <div style="display:flex;align-items:baseline;gap:10px"><span style="font:600 10px var(--f-num);color:var(--t3)">01</span><span style="font:600 10px var(--f-num);letter-spacing:.2em;color:var(--t2)">HOME</span></div>
+    <div data-screen-label="01 Home" style="width:384px;flex:none;background:var(--s0);border:1px solid var(--line2);border-radius:40px;overflow:hidden;font-family:var(--f-ui);color:var(--t1);display:flex;flex-direction:column;min-height:832px;box-shadow:0 30px 70px -34px #000">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;padding:38px 24px 0">
+        <div style="font:700 22px var(--f-ui);letter-spacing:.02em">REPVOICE<span style="color:var(--acc)">.</span></div>
+        <div style="font:600 10px var(--f-num);letter-spacing:.16em;color:var(--t3)">SAT 19 JUL</div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center">
+        <div style="position:relative;width:198px;height:198px;display:flex;align-items:center;justify-content:center">
+          <div style="position:absolute;inset:0;border-radius:50%;border:1px solid var(--acc-14)"></div>
+          <div style="width:180px;height:180px;border-radius:50%;background:var(--sin);border:1px solid var(--acc-30);box-shadow:inset 0 4px 18px rgba(0,0,0,.7);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px">
+            <div style="display:flex;gap:3px;align-items:flex-end;height:26px">
+              <sc-for list="{{ ringBars }}" as="b" hint-placeholder-count="7"><div style="width:4px;height:{{ b.h }};background:var(--acc);opacity:{{ b.o }};border-radius:1px"></div></sc-for>
+            </div>
+            <div style="font:700 14px var(--f-num);letter-spacing:.22em">TALK</div>
+          </div>
+        </div>
+        <div style="margin-top:28px;font:500 12.5px/1.9 var(--f-num);color:var(--t2);text-align:center">"start push day" · "start empty"<br><span style="color:var(--t3)">or press a routine below</span></div>
+      </div>
+      <div style="padding:0 20px 16px;display:flex;flex-direction:column;gap:10px">
+        <div style="font:600 8px var(--f-num);letter-spacing:.26em;color:var(--t3)">OR PRESS</div>
+        <div style="display:flex;gap:8px">
+          <sc-for list="{{ routines }}" as="r" hint-placeholder-count="3">
+            <div style="flex:1;background:var(--s1);border:1px solid var(--line2);border-radius:12px;padding:13px 13px 14px"><div style="font:700 13px var(--f-ui)">{{ r.name }}</div><div style="font:9px var(--f-num);letter-spacing:.1em;color:var(--t3);margin-top:5px">{{ r.meta }}</div></div>
+          </sc-for>
+        </div>
+        <div style="font:500 11px var(--f-num);color:var(--acc)">+ new routine</div>
+      </div>
+      <div style="display:flex;border-top:1px solid var(--line);padding:14px 0 30px">
+        <div style="flex:1;text-align:center"><div style="font:700 11px var(--f-num);letter-spacing:.14em;color:var(--acc)">HOME</div><div style="width:16px;height:1px;background:var(--acc);margin:6px auto 0"></div></div>
+        <div style="flex:1;text-align:center;font:600 11px var(--f-num);letter-spacing:.14em;color:var(--t3)">HISTORY</div>
+        <div style="flex:1;text-align:center;font:600 11px var(--f-num);letter-spacing:.14em;color:var(--t3)">SETTINGS</div>
+      </div>
+    </div>
+    <sc-if value="{{ showCaptions }}" hint-placeholder-val="{{ true }}"><div style="max-width:384px;font:10.5px/1.6 var(--f-num);color:var(--t3)">One speaker-grille ring. Say a routine or press one of three. Zero-tap start.</div></sc-if>
+  </div>
+
+  <!-- 02 VOICE CONSOLE -->
+  <div id="s-console" style="display:flex;flex-direction:column;gap:12px;scroll-margin-top:20px">
+    <div style="display:flex;align-items:baseline;gap:10px"><span style="font:600 10px var(--f-num);color:var(--t3)">02</span><span style="font:600 10px var(--f-num);letter-spacing:.2em;color:var(--t2)">VOICE CONSOLE</span></div>
+    <div data-screen-label="02 Voice console" style="width:384px;flex:none;background:var(--s0);border:1px solid var(--line2);border-radius:40px;overflow:hidden;font-family:var(--f-ui);color:var(--t1);display:flex;flex-direction:column;min-height:832px;box-shadow:0 30px 70px -34px #000">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;padding:38px 22px 0">
+        <div>
+          <div style="display:flex;align-items:center;gap:7px"><div style="width:6px;height:6px;border-radius:50%;background:var(--acc);animation:led 2.4s ease-in-out infinite"></div><span style="font:600 9px var(--f-num);letter-spacing:.24em;color:var(--acc)">LISTENING</span></div>
+          <div style="font:700 19px var(--f-ui);margin-top:5px">Push · A</div>
+        </div>
+        <div style="text-align:right"><div style="font:600 15px var(--f-num);color:var(--acc)">42:18</div><div style="font:600 9px var(--f-num);letter-spacing:.12em;color:var(--t3);margin-top:4px">7 SETS · 4,120 KG</div></div>
+      </div>
+      <div style="display:flex;gap:7px;padding:16px 22px 0">
+        <div style="padding:7px 11px;border:1px solid var(--acc-30);border-radius:8px;font:600 9.5px var(--f-num);letter-spacing:.1em;color:var(--acc)">BENCH</div>
+        <div style="padding:7px 11px;border:1px solid var(--line2);border-radius:8px;font:600 9.5px var(--f-num);letter-spacing:.1em;color:var(--t3)">OHP</div>
+        <div style="padding:7px 11px;border:1px dashed var(--line2);border-radius:8px;font:600 9.5px var(--f-num);letter-spacing:.1em;color:var(--t3)">+ ADD</div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;padding:0 14px">
+        <div style="font:600 8px var(--f-num);letter-spacing:.26em;color:var(--t3);padding:0 8px 9px">SESSION TAPE</div>
+        <div style="display:flex;flex-direction:column;background:var(--sin);border:1px solid var(--line);border-radius:12px 12px 0 0;overflow:hidden">
+          <sc-for list="{{ tape }}" as="row" hint-placeholder-count="5">
+            <div style="display:grid;grid-template-columns:42px 1fr 96px 22px;gap:8px;align-items:baseline;padding:11px 15px;border-bottom:1px dashed var(--line);opacity:{{ row.fade }}">
+              <span style="font:600 9.5px var(--f-num);color:var(--t3)">{{ row.time }}</span>
+              <span style="font:600 11.5px var(--f-num);letter-spacing:.06em;color:var(--t2)">{{ row.ex }}</span>
+              <span style="font:700 16px var(--f-num);color:{{ row.numColor }};text-align:right;white-space:nowrap">{{ row.val }}</span>
+              <span style="font:600 9px var(--f-num);color:{{ row.flagColor }};text-align:right">{{ row.flag }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="background:var(--sin);border:1px solid var(--acc-30);padding:15px 16px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:600 8px var(--f-num);letter-spacing:.26em;color:var(--acc)">HEARD</span><span style="font:600 8px var(--f-num);letter-spacing:.1em;color:var(--t3)">96% · gpt-5.6</span></div>
+          <div style="font:500 15px var(--f-num);color:var(--t2);margin-top:8px">"bench eighty for eight"</div>
+          <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:13px">
+            <sc-for list="{{ chips }}" as="c" hint-placeholder-count="3"><div style="padding:6px 10px;border:1px solid var(--acc-30);border-radius:6px;font:700 12.5px var(--f-num);color:var(--acc)">{{ c }}</div></sc-for>
+          </div>
+          <div style="margin-top:15px;height:1px;background:var(--acc-14)"><div style="width:62%;height:1px;background:var(--acc)"></div></div>
+          <div style="display:flex;justify-content:space-between;margin-top:8px"><span style="font:600 8.5px var(--f-num);letter-spacing:.12em;color:var(--t3)">COMMITTING · SAY "NO" TO CANCEL</span><span style="font:600 8.5px var(--f-num);color:var(--t3)">0.5s</span></div>
+        </div>
+      </div>
+      <div style="background:var(--sin);border-top:1px solid var(--line2);padding:13px 16px;display:flex;align-items:center;gap:14px">
+        <div style="position:relative;font:700 30px var(--f-num);letter-spacing:.03em"><span style="position:absolute;inset:0;color:var(--acc-06)">88:88</span><span style="position:relative;color:var(--acc)">01:24</span></div>
+        <div style="flex:1;display:flex;gap:2.5px;align-items:flex-end;height:26px">
+          <sc-for list="{{ meterBars }}" as="b" hint-placeholder-count="16"><div style="flex:1;height:{{ b.h }};background:{{ b.c }};border-radius:1px"></div></sc-for>
+        </div>
+        <div style="padding:7px 11px;background:var(--key);border:1px solid var(--line2);border-radius:8px;font:600 9.5px var(--f-num);letter-spacing:.08em;color:var(--t2)">FLOOR ⤢</div>
+      </div>
+      <div style="display:flex;gap:8px;padding:14px 16px 30px">
+        <div style="flex:1;height:46px;display:grid;place-items:center;background:var(--key);border:1px solid var(--acc-30);border-radius:10px;font:600 11px var(--f-ui);letter-spacing:.12em;color:var(--acc)">FINISH WORKOUT</div>
+        <div style="width:104px;height:46px;display:grid;place-items:center;border:1px solid var(--line2);border-radius:10px;font:600 10px var(--f-num);letter-spacing:.1em;color:var(--t3)">DISCARD</div>
+      </div>
+    </div>
+    <sc-if value="{{ showCaptions }}" hint-placeholder-val="{{ true }}"><div style="max-width:384px;font:10.5px/1.6 var(--f-num);color:var(--t3)">In-hand. Sets append to a flight-recorder tape; the HEARD panel auto-commits — no confirm button on the happy path.</div></sc-if>
+  </div>
+
+  <!-- 03 FLOOR MODE -->
+  <div id="s-floor" style="display:flex;flex-direction:column;gap:12px;scroll-margin-top:20px">
+    <div style="display:flex;align-items:baseline;gap:10px"><span style="font:600 10px var(--f-num);color:var(--t3)">03</span><span style="font:600 10px var(--f-num);letter-spacing:.2em;color:var(--t2)">FLOOR MODE · RESTING</span></div>
+    <div data-screen-label="03 Floor mode" style="width:384px;flex:none;background:var(--s0);border:1px solid var(--line2);border-radius:40px;overflow:hidden;font-family:var(--f-ui);color:var(--t1);display:flex;flex-direction:column;min-height:832px;box-shadow:0 30px 70px -34px #000">
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative">
+        <div style="position:absolute;top:38px;left:0;right:0;display:flex;justify-content:center;gap:9px;align-items:center"><div style="width:6px;height:6px;border-radius:50%;background:var(--acc);animation:led 2.4s ease-in-out infinite"></div><span style="font:600 10px var(--f-num);letter-spacing:.3em;color:var(--acc)">LISTENING</span></div>
+        <div style="font:600 14px var(--f-num);letter-spacing:.36em;color:var(--t3)">REST</div>
+        <div style="position:relative;margin-top:14px;font:700 146px/1 var(--f-num);letter-spacing:-.02em"><span style="position:absolute;inset:0;color:var(--acc-06)">8:88</span><span style="position:relative;color:var(--acc)">1:24</span></div>
+        <div style="width:196px;height:2px;background:var(--tick);margin-top:34px"></div>
+        <div style="display:flex;gap:30px;margin-top:30px;text-align:center">
+          <div><div style="font:600 9.5px var(--f-num);letter-spacing:.2em;color:var(--t3)">NEXT</div><div style="font:700 24px var(--f-num);margin-top:8px">BENCH</div></div>
+          <div style="width:1px;background:var(--line)"></div>
+          <div><div style="font:600 9.5px var(--f-num);letter-spacing:.2em;color:var(--t3)">LAST</div><div style="font:700 24px var(--f-num);color:var(--t2);margin-top:8px">80×8</div></div>
+          <div style="width:1px;background:var(--line)"></div>
+          <div><div style="font:600 9.5px var(--f-num);letter-spacing:.2em;color:var(--t3)">SET</div><div style="font:700 24px var(--f-num);margin-top:8px">4<span style="color:var(--t3)">/4</span></div></div>
+        </div>
+        <div style="position:absolute;bottom:44px;left:0;right:0;display:flex;justify-content:center;gap:2.5px;align-items:flex-end;height:18px;padding:0 122px">
+          <sc-for list="{{ meterBars }}" as="b" hint-placeholder-count="16"><div style="flex:1;height:{{ b.h }};background:{{ b.c }};border-radius:1px;opacity:.6"></div></sc-for>
+        </div>
+      </div>
+    </div>
+    <sc-if value="{{ showCaptions }}" hint-placeholder-val="{{ true }}"><div style="max-width:384px;font:10.5px/1.6 var(--f-num);color:var(--t3)">Phone face-up on the floor, two metres away. One state, LED-sized digits, no touch targets.</div></sc-if>
+  </div>
+
+  <!-- 04 PR -->
+  <div id="s-pr" style="display:flex;flex-direction:column;gap:12px;scroll-margin-top:20px">
+    <div style="display:flex;align-items:baseline;gap:10px"><span style="font:600 10px var(--f-num);color:var(--t3)">04</span><span style="font:600 10px var(--f-num);letter-spacing:.2em;color:var(--t2)">FLOOR MODE · PR</span></div>
+    <div data-screen-label="04 PR moment" style="width:384px;flex:none;background:var(--s0);border:1px solid {{ prBorder }};border-radius:40px;overflow:hidden;font-family:var(--f-ui);color:var(--t1);display:flex;flex-direction:column;min-height:832px;box-shadow:0 30px 70px -34px #000">
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden">
+        <div style="position:absolute;inset:0;background:{{ prBg }};background-size:200% 200%;animation:heat 7s ease-in-out infinite alternate"></div>
+        <div style="position:absolute;top:38px;left:0;right:0;text-align:center;font:700 10px var(--f-num);letter-spacing:.34em;color:{{ prAccent }}">NEW PR</div>
+        <div style="position:relative;font:600 14px var(--f-num);letter-spacing:.3em;color:var(--t2)">BENCH</div>
+        <div style="position:relative;font:700 120px/1 var(--f-num);letter-spacing:-.03em;margin-top:12px">85.0</div>
+        <div style="position:relative;font:700 34px var(--f-num);color:{{ prAccent }};margin-top:6px">× 8</div>
+        <div style="position:relative;width:170px;height:1px;background:{{ prAccent }};margin-top:34px"></div>
+        <div style="position:relative;font:600 11.5px var(--f-num);letter-spacing:.18em;color:var(--t2);margin-top:24px">82.5 → 85.0 · +2.5 KG</div>
+        <div style="position:relative;font:600 11.5px var(--f-num);letter-spacing:.16em;color:var(--t3);margin-top:9px">SET 4 OF 4 · REST 2:00</div>
+        <div style="position:absolute;bottom:44px;left:0;right:0;text-align:center;font:600 10.5px var(--f-num);letter-spacing:.16em;color:var(--t3)">SAY "UNDO" · 6s</div>
+      </div>
+    </div>
+    <sc-if value="{{ showCaptions }}" hint-placeholder-val="{{ true }}"><div style="max-width:384px;font:10.5px/1.6 var(--f-num);color:var(--t3)">The only warm screen in the app. Thermal bloom, rising earcon, spoken callout — works eyes-free.</div></sc-if>
+  </div>
+
+  <!-- 05 CORRECTION -->
+  <div id="s-fix" style="display:flex;flex-direction:column;gap:12px;scroll-margin-top:20px">
+    <div style="display:flex;align-items:baseline;gap:10px"><span style="font:600 10px var(--f-num);color:var(--t3)">05</span><span style="font:600 10px var(--f-num);letter-spacing:.2em;color:var(--t2)">CORRECTION DRAWER</span></div>
+    <div data-screen-label="05 Correction drawer" style="width:384px;flex:none;background:var(--s0);border:1px solid var(--line2);border-radius:40px;overflow:hidden;font-family:var(--f-ui);color:var(--t1);display:flex;flex-direction:column;min-height:832px;box-shadow:0 30px 70px -34px #000">
+      <div style="flex:1;opacity:.28;display:flex;flex-direction:column;padding:38px 16px 0">
+        <div style="display:flex;justify-content:space-between;padding:0 8px 16px"><span style="font:700 19px var(--f-ui)">Push · A</span><span style="font:600 14px var(--f-num);color:var(--acc)">44:07</span></div>
+        <div style="background:var(--sin);border:1px solid var(--line);border-radius:12px">
+          <div style="display:grid;grid-template-columns:42px 1fr 96px 22px;gap:8px;padding:11px 15px;font:600 11.5px var(--f-num);color:var(--t2);border-bottom:1px dashed var(--line)"><span style="color:var(--t3);font-size:9.5px">42:31</span><span>BENCH</span><span style="font-size:16px;font-weight:700;color:var(--t1);text-align:right">82.5×8</span><span style="color:var(--acc);font-size:9px;text-align:right">▲</span></div>
+          <div style="display:grid;grid-template-columns:42px 1fr 96px 22px;gap:8px;padding:11px 15px;font:600 11.5px var(--f-num);color:var(--t2)"><span style="color:var(--t3);font-size:9.5px">43:10</span><span>OHP</span><span style="font-size:16px;font-weight:700;text-align:right">40.0×10</span><span></span></div>
+        </div>
+      </div>
+      <div style="background:var(--s1);border-top:1px solid var(--line2);border-radius:22px 22px 0 0;padding:12px 18px 30px">
+        <div style="width:34px;height:3px;background:var(--line2);border-radius:2px;margin:0 auto 16px"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <div><span style="font:700 15px var(--f-ui)">Bench · set 5</span><span style="font:600 9.5px var(--f-num);color:var(--t3);margin-left:9px">HEARD 43:55</span></div>
+          <span style="font:600 9.5px var(--f-num);letter-spacing:.1em;color:var(--warn)">DELETE</span>
+        </div>
+        <div style="background:var(--sin);border:1px solid var(--line2);border-radius:12px;padding:15px;display:flex;flex-direction:column;gap:13px">
+          <div style="display:flex;align-items:center;gap:8px"><div style="width:46px;height:46px;display:grid;place-items:center;background:var(--key);border:1px solid var(--line2);border-radius:9px;font:600 19px var(--f-num)">−</div><div style="flex:1;text-align:center"><span style="font:700 31px var(--f-num);letter-spacing:-.02em">80.0</span><span style="font:600 9.5px var(--f-num);color:var(--t3);margin-left:6px">KG</span></div><div style="width:46px;height:46px;display:grid;place-items:center;background:var(--key);border:1px solid var(--line2);border-radius:9px;font:600 19px var(--f-num)">+</div></div>
+          <div style="height:1px;background:var(--line)"></div>
+          <div style="display:flex;align-items:center;gap:8px"><div style="width:38px;height:38px;display:grid;place-items:center;background:var(--key);border:1px solid var(--line2);border-radius:8px;font:600 16px var(--f-num)">−</div><div style="flex:1;text-align:center"><span style="font:700 23px var(--f-num)">8</span><span style="font:600 9px var(--f-num);color:var(--t3);margin-left:6px">REPS</span></div><div style="width:38px;height:38px;display:grid;place-items:center;background:var(--key);border:1px solid var(--line2);border-radius:8px;font:600 16px var(--f-num)">+</div></div>
+        </div>
+        <div style="display:flex;gap:7px;margin-top:14px">
+          <div style="flex:1;text-align:center;padding:9px 0;border:1px solid var(--acc-30);border-radius:8px;font:600 9.5px var(--f-num);letter-spacing:.12em;color:var(--acc)">NORMAL</div>
+          <div style="flex:1;text-align:center;padding:9px 0;border:1px solid var(--line2);border-radius:8px;font:600 9.5px var(--f-num);letter-spacing:.12em;color:var(--t3)">WARMUP</div>
+          <div style="flex:1;text-align:center;padding:9px 0;border:1px solid var(--line2);border-radius:8px;font:600 9.5px var(--f-num);letter-spacing:.12em;color:var(--t3)">DROP</div>
+        </div>
+        <div style="height:48px;display:grid;place-items:center;background:var(--key);border:1px solid var(--acc-30);border-radius:10px;font:600 11px var(--f-ui);letter-spacing:.14em;color:var(--acc);margin-top:12px">SAVE</div>
+      </div>
+    </div>
+    <sc-if value="{{ showCaptions }}" hint-placeholder-val="{{ true }}"><div style="max-width:384px;font:10.5px/1.6 var(--f-num);color:var(--t3)">Tap a tape row to fix a mis-heard set. All the touch machinery lives here — the 5% path.</div></sc-if>
+  </div>
+
+  <div style="flex:0 0 100%;display:flex;align-items:baseline;gap:16px;padding-top:14px">
+    <span style="font:600 9px var(--f-num);letter-spacing:.32em;color:var(--t2)">REVIEW</span>
+    <div style="flex:1;height:1px;background:var(--line)"></div>
+    <span style="font:600 9px var(--f-num);letter-spacing:.14em;color:var(--t3)">06—09</span>
+  </div>
+
+  <!-- 06 HISTORY -->
+  <div id="s-history" style="display:flex;flex-direction:column;gap:12px;scroll-margin-top:20px">
+    <div style="display:flex;align-items:baseline;gap:10px"><span style="font:600 10px var(--f-num);color:var(--t3)">06</span><span style="font:600 10px var(--f-num);letter-spacing:.2em;color:var(--t2)">HISTORY</span></div>
+    <div data-screen-label="06 History" style="width:384px;flex:none;background:var(--s0);border:1px solid var(--line2);border-radius:40px;overflow:hidden;font-family:var(--f-ui);color:var(--t1);display:flex;flex-direction:column;min-height:832px;box-shadow:0 30px 70px -34px #000">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;padding:38px 22px 0">
+        <div style="font:700 22px var(--f-ui)">History</div>
+        <div style="font:600 9.5px var(--f-num);letter-spacing:.14em;color:var(--t3)">41 WORKOUTS · 12 WEEKS</div>
+      </div>
+      <div style="display:flex;gap:26px;padding:24px 22px 0">
+        <div><div style="font:600 8px var(--f-num);letter-spacing:.24em;color:var(--t3)">THIS WEEK</div><div style="font:700 21px var(--f-num);margin-top:7px">4</div></div>
+        <div><div style="font:600 8px var(--f-num);letter-spacing:.24em;color:var(--t3)">VOLUME</div><div style="font:700 21px var(--f-num);margin-top:7px">18.2<span style="font-size:11px;color:var(--t3)">T</span></div></div>
+        <div><div style="font:600 8px var(--f-num);letter-spacing:.24em;color:var(--t3)">VOICE-LOGGED</div><div style="font:700 21px var(--f-num);color:var(--acc);margin-top:7px">91<span style="font-size:11px;color:var(--t3)">%</span></div></div>
+      </div>
+      <div style="flex:1;padding:26px 22px 0;display:flex;flex-direction:column">
+        <div style="font:600 8px var(--f-num);letter-spacing:.26em;color:var(--t3);padding-bottom:4px">JULY 2026</div>
+        <sc-for list="{{ historyRows }}" as="w" hint-placeholder-count="7">
+          <div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:baseline;padding:14px 0;border-bottom:1px solid var(--line)">
+            <div><div style="font:600 13.5px var(--f-ui);color:{{ w.nameColor }}">{{ w.name }}</div><div style="font:9.5px var(--f-num);letter-spacing:.08em;color:var(--t3);margin-top:5px">{{ w.date }} · {{ w.meta }}</div></div>
+            <div style="text-align:right"><div style="font:700 14px var(--f-num);color:var(--t2)">{{ w.sets }}</div><div style="font:9px var(--f-num);color:var(--t3);margin-top:5px">{{ w.dur }}</div></div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="display:flex;border-top:1px solid var(--line);padding:14px 0 30px">
+        <div style="flex:1;text-align:center;font:600 11px var(--f-num);letter-spacing:.14em;color:var(--t3)">HOME</div>
+        <div style="flex:1;text-align:center"><div style="font:700 11px var(--f-num);letter-spacing:.14em;color:var(--acc)">HISTORY</div><div style="width:16px;height:1px;background:var(--acc);margin:6px auto 0"></div></div>
+        <div style="flex:1;text-align:center;font:600 11px var(--f-num);letter-spacing:.14em;color:var(--t3)">SETTINGS</div>
+      </div>
+    </div>
+    <sc-if value="{{ showCaptions }}" hint-placeholder-val="{{ true }}"><div style="max-width:384px;font:10.5px/1.6 var(--f-num);color:var(--t3)">Infinite list, newest first. Three numbers at the top answer "am I still showing up?".</div></sc-if>
+  </div>
+
+  <!-- 07 WORKOUT DETAIL -->
+  <div id="s-workout" style="display:flex;flex-direction:column;gap:12px;scroll-margin-top:20px">
+    <div style="display:flex;align-items:baseline;gap:10px"><span style="font:600 10px var(--f-num);color:var(--t3)">07</span><span style="font:600 10px var(--f-num);letter-spacing:.2em;color:var(--t2)">PAST WORKOUT</span></div>
+    <div data-screen-label="07 Past workout" style="width:384px;flex:none;background:var(--s0);border:1px solid var(--line2);border-radius:40px;overflow:hidden;font-family:var(--f-ui);color:var(--t1);display:flex;flex-direction:column;min-height:832px;box-shadow:0 30px 70px -34px #000">
+      <div style="padding:38px 22px 0">
+        <div style="font:600 9.5px var(--f-num);letter-spacing:.16em;color:var(--t3)">← HISTORY</div>
+        <div style="font:700 21px var(--f-ui);margin-top:18px">Thu 17 July</div>
+        <div style="font:600 10.5px var(--f-num);letter-spacing:.1em;color:var(--t2);margin-top:7px">PUSH · A · 47 MIN · 5,340 KG</div>
+        <div style="font:400 11.5px/1.6 var(--f-num);color:var(--t3);margin-top:12px;padding-left:11px;border-left:1px solid var(--line2)">left shoulder cranky on the third set, dropped the weight</div>
+      </div>
+      <div style="flex:1;padding:26px 22px 30px;display:flex;flex-direction:column;gap:22px">
+        <sc-for list="{{ workoutBlocks }}" as="b" hint-placeholder-count="3">
+          <div style="display:flex;flex-direction:column;gap:2px">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;padding-bottom:8px;border-bottom:1px solid var(--line2)">
+              <span style="font:600 12px var(--f-num);letter-spacing:.1em;color:var(--t1)">{{ b.name }}</span>
+              <span style="font:600 9px var(--f-num);letter-spacing:.1em;color:var(--t3)">{{ b.top }}</span>
+            </div>
+            <sc-for list="{{ b.sets }}" as="s" hint-placeholder-count="3">
+              <div style="display:grid;grid-template-columns:20px 1fr auto;gap:10px;align-items:baseline;padding:8px 0;border-bottom:1px dashed var(--line)">
+                <span style="font:600 9.5px var(--f-num);color:var(--t3)">{{ s.n }}</span>
+                <span style="font:700 15px var(--f-num);color:{{ s.color }}">{{ s.val }}</span>
+                <span style="font:600 9px var(--f-num);letter-spacing:.1em;color:{{ s.tagColor }}">{{ s.tag }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    <sc-if value="{{ showCaptions }}" hint-placeholder-val="{{ true }}"><div style="max-width:384px;font:10.5px/1.6 var(--f-num);color:var(--t3)">Read-only. Same tape typography as the live console, so a past session reads like the one you just did.</div></sc-if>
+  </div>
+
+  <!-- 08 EXERCISE -->
+  <div id="s-exercise" style="display:flex;flex-direction:column;gap:12px;scroll-margin-top:20px">
+    <div style="display:flex;align-items:baseline;gap:10px"><span style="font:600 10px var(--f-num);color:var(--t3)">08</span><span style="font:600 10px var(--f-num);letter-spacing:.2em;color:var(--t2)">EXERCISE HISTORY</span></div>
+    <div data-screen-label="08 Exercise history" style="width:384px;flex:none;background:var(--s0);border:1px solid var(--line2);border-radius:40px;overflow:hidden;font-family:var(--f-ui);color:var(--t1);display:flex;flex-direction:column;min-height:832px;box-shadow:0 30px 70px -34px #000">
+      <div style="padding:38px 22px 0">
+        <div style="font:600 9.5px var(--f-num);letter-spacing:.16em;color:var(--t3)">← LIBRARY</div>
+        <div style="font:700 21px var(--f-ui);margin-top:18px">Barbell bench press</div>
+        <div style="font:600 9.5px var(--f-num);letter-spacing:.14em;color:var(--t3);margin-top:7px">CHEST · BARBELL</div>
+      </div>
+      <div style="display:flex;gap:28px;padding:24px 22px 0">
+        <div><div style="font:600 8px var(--f-num);letter-spacing:.24em;color:var(--t3)">BEST</div><div style="font:700 20px var(--f-num);margin-top:7px">85<span style="font-size:11px;color:var(--t3)">×8</span></div></div>
+        <div><div style="font:600 8px var(--f-num);letter-spacing:.24em;color:var(--t3)">SESSIONS</div><div style="font:700 20px var(--f-num);margin-top:7px">24</div></div>
+        <div><div style="font:600 8px var(--f-num);letter-spacing:.24em;color:var(--t3)">LAST</div><div style="font:700 20px var(--f-num);color:var(--t2);margin-top:7px">3D</div></div>
+      </div>
+      <div style="padding:28px 22px 0">
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:600 8px var(--f-num);letter-spacing:.26em;color:var(--t3)">TOP SET · 12 WEEKS</span><span style="font:600 8px var(--f-num);color:var(--t3)">70 — 85 KG</span></div>
+        <div style="display:flex;align-items:flex-end;gap:5px;height:88px;margin-top:14px;border-bottom:1px solid var(--line)">
+          <sc-for list="{{ chartBars }}" as="c" hint-placeholder-count="12"><div style="flex:1;height:{{ c.h }};background:{{ c.bg }};border-top:1px solid {{ c.top }}"></div></sc-for>
+        </div>
+      </div>
+      <div style="flex:1;padding:26px 22px 30px;display:flex;flex-direction:column">
+        <div style="font:600 8px var(--f-num);letter-spacing:.26em;color:var(--t3);padding-bottom:6px">EVERY SESSION</div>
+        <sc-for list="{{ exSessions }}" as="s" hint-placeholder-count="4">
+          <div style="display:grid;grid-template-columns:64px 1fr auto;gap:10px;align-items:baseline;padding:13px 0;border-bottom:1px solid var(--line)">
+            <span style="font:600 9.5px var(--f-num);letter-spacing:.06em;color:var(--t3)">{{ s.date }}</span>
+            <span style="font:600 12.5px var(--f-num);color:var(--t2)">{{ s.sets }}</span>
+            <span style="font:600 9px var(--f-num);letter-spacing:.1em;color:{{ s.tagColor }}">{{ s.tag }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    <sc-if value="{{ showCaptions }}" hint-placeholder-val="{{ true }}"><div style="max-width:384px;font:10.5px/1.6 var(--f-num);color:var(--t3)">One exercise, every set you ever did. The column chart is top-set weight — the only chart in the app.</div></sc-if>
+  </div>
+
+  <!-- 09 LIBRARY -->
+  <div id="s-library" style="display:flex;flex-direction:column;gap:12px;scroll-margin-top:20px">
+    <div style="display:flex;align-items:baseline;gap:10px"><span style="font:600 10px var(--f-num);color:var(--t3)">09</span><span style="font:600 10px var(--f-num);letter-spacing:.2em;color:var(--t2)">EXERCISE LIBRARY</span></div>
+    <div data-screen-label="09 Exercise library" style="width:384px;flex:none;background:var(--s0);border:1px solid var(--line2);border-radius:40px;overflow:hidden;font-family:var(--f-ui);color:var(--t1);display:flex;flex-direction:column;min-height:832px;box-shadow:0 30px 70px -34px #000">
+      <div style="padding:38px 22px 0">
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><div style="font:700 21px var(--f-ui)">Library</div><div style="font:600 9.5px var(--f-num);letter-spacing:.14em;color:var(--t3)">873 EXERCISES</div></div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:20px;padding-bottom:11px;border-bottom:1px solid var(--acc-30)">
+          <span style="font:600 11px var(--f-num);color:var(--acc)">/</span>
+          <span style="font:500 15px var(--f-num);color:var(--t1)">bench</span>
+          <span style="width:1px;height:15px;background:var(--acc);animation:led 1.1s steps(1) infinite"></span>
+          <span style="margin-left:auto;font:600 9px var(--f-num);letter-spacing:.1em;color:var(--t3)">14 MATCHES</span>
+        </div>
+      </div>
+      <div style="flex:1;padding:6px 22px 30px;display:flex;flex-direction:column">
+        <sc-for list="{{ libRows }}" as="e" hint-placeholder-count="9">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:14px 0;border-bottom:1px solid var(--line)">
+            <div><div style="font:600 13.5px var(--f-ui);color:var(--t1)">{{ e.name }}</div><div style="font:9.5px var(--f-num);letter-spacing:.1em;color:var(--t3);margin-top:5px">{{ e.meta }}</div></div>
+            <div style="font:600 9px var(--f-num);letter-spacing:.1em;color:{{ e.tagColor }};white-space:nowrap">{{ e.tag }}</div>
+          </div>
+        </sc-for>
+        <div style="margin-top:20px;font:500 11px var(--f-num);color:var(--acc)">+ create "bench" as custom exercise</div>
+      </div>
+    </div>
+    <sc-if value="{{ showCaptions }}" hint-placeholder-val="{{ true }}"><div style="max-width:384px;font:10.5px/1.6 var(--f-num);color:var(--t3)">Search-first, 873 seeded names plus 217 spoken aliases. Aliases are what the voice parser resolves against.</div></sc-if>
+  </div>
+
+  <div style="flex:0 0 100%;display:flex;align-items:baseline;gap:16px;padding-top:14px">
+    <span style="font:600 9px var(--f-num);letter-spacing:.32em;color:var(--t2)">SETUP &amp; SYSTEM</span>
+    <div style="flex:1;height:1px;background:var(--line)"></div>
+    <span style="font:600 9px var(--f-num);letter-spacing:.14em;color:var(--t3)">10—14</span>
+  </div>
+
+  <!-- 10 SIGN IN -->
+  <div id="s-signin" style="display:flex;flex-direction:column;gap:12px;scroll-margin-top:20px">
+    <div style="display:flex;align-items:baseline;gap:10px"><span style="font:600 10px var(--f-num);color:var(--t3)">10</span><span style="font:600 10px var(--f-num);letter-spacing:.2em;color:var(--t2)">SIGN IN · EMAIL OTP</span></div>
+    <div data-screen-label="10 Sign in" style="width:384px;flex:none;background:var(--s0);border:1px solid var(--line2);border-radius:40px;overflow:hidden;font-family:var(--f-ui);color:var(--t1);display:flex;flex-direction:column;min-height:832px;box-shadow:0 30px 70px -34px #000">
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 30px">
+        <div style="display:flex;align-items:center;gap:11px">
+          <div style="width:7px;height:7px;border-radius:50%;background:var(--acc);animation:led 2.4s ease-in-out infinite"></div>
+          <div style="font:700 24px var(--f-ui);letter-spacing:.02em">REPVOICE<span style="color:var(--acc)">.</span></div>
+        </div>
+        <div style="font:11.5px/1.7 var(--f-num);color:var(--t3);margin-top:14px;max-width:250px">No password. We email a six-digit code; the app stays signed in after that.</div>
+        <div style="font:600 8px var(--f-num);letter-spacing:.26em;color:var(--t3);margin-top:44px">EMAIL</div>
+        <div style="display:flex;align-items:center;gap:9px;margin-top:11px;padding-bottom:12px;border-bottom:1px solid var(--acc-30)">
+          <span style="font:500 16px var(--f-num);color:var(--t1)">dhruv@</span><span style="font:500 16px var(--f-num);color:var(--t2)">example.com</span>
+          <span style="width:1px;height:17px;background:var(--acc);animation:led 1.1s steps(1) infinite"></span>
+        </div>
+        <div style="height:50px;display:grid;place-items:center;background:var(--key);border:1px solid var(--acc-30);border-radius:10px;font:600 11px var(--f-ui);letter-spacing:.14em;color:var(--acc);margin-top:26px">SEND CODE</div>
+        <div style="font:600 9.5px var(--f-num);letter-spacing:.12em;color:var(--t3);margin-top:22px;text-align:center">MIC PERMISSION IS ASKED ON THE FIRST SET, NOT HERE</div>
+      </div>
+    </div>
+    <sc-if value="{{ showCaptions }}" hint-placeholder-val="{{ true }}"><div style="max-width:384px;font:10.5px/1.6 var(--f-num);color:var(--t3)">First screen a stranger sees. Was plain white — now the same instrument, so the app never breaks character.</div></sc-if>
+  </div>
+
+  <!-- 11 ROUTINE EDITOR -->
+  <div id="s-routine" style="display:flex;flex-direction:column;gap:12px;scroll-margin-top:20px">
+    <div style="display:flex;align-items:baseline;gap:10px"><span style="font:600 10px var(--f-num);color:var(--t3)">11</span><span style="font:600 10px var(--f-num);letter-spacing:.2em;color:var(--t2)">ROUTINE EDITOR</span></div>
+    <div data-screen-label="11 Routine editor" style="width:384px;flex:none;background:var(--s0);border:1px solid var(--line2);border-radius:40px;overflow:hidden;font-family:var(--f-ui);color:var(--t1);display:flex;flex-direction:column;min-height:832px;box-shadow:0 30px 70px -34px #000">
+      <div style="padding:38px 22px 0">
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:600 9.5px var(--f-num);letter-spacing:.16em;color:var(--t3)">← HOME</span><span style="font:600 9.5px var(--f-num);letter-spacing:.12em;color:var(--t3)">ARCHIVE</span></div>
+        <div style="font:600 8px var(--f-num);letter-spacing:.26em;color:var(--t3);margin-top:24px">ROUTINE NAME</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:10px;padding-bottom:11px;border-bottom:1px solid var(--acc-30)">
+          <span style="font:700 19px var(--f-ui)">Push · A</span>
+          <span style="width:1px;height:18px;background:var(--acc);animation:led 1.1s steps(1) infinite"></span>
+        </div>
+      </div>
+      <div style="flex:1;padding:26px 22px 0;display:flex;flex-direction:column">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;padding-bottom:4px"><span style="font:600 8px var(--f-num);letter-spacing:.26em;color:var(--t3)">EXERCISES · ORDER = WORKOUT ORDER</span><span style="font:600 8px var(--f-num);color:var(--t3)">SETS × REPS</span></div>
+        <sc-for list="{{ routineItems }}" as="r" hint-placeholder-count="5">
+          <div style="display:grid;grid-template-columns:18px 1fr 74px 46px;gap:9px;align-items:center;padding:14px 0;border-bottom:1px solid var(--line)">
+            <span style="font:600 9.5px var(--f-num);color:var(--t3)">{{ r.n }}</span>
+            <span style="font:600 13px var(--f-ui);color:var(--t1)">{{ r.name }}</span>
+            <span style="font:700 12.5px var(--f-num);color:var(--t2);text-align:right">{{ r.target }}</span>
+            <span style="font:600 12px var(--f-num);color:var(--t3);text-align:right;letter-spacing:.14em">⇅ ✕</span>
+          </div>
+        </sc-for>
+        <div style="margin-top:18px;font:500 11px var(--f-num);color:var(--acc)">+ add exercise</div>
+      </div>
+      <div style="padding:18px 22px 30px;display:flex;gap:8px">
+        <div style="flex:1;height:48px;display:grid;place-items:center;background:var(--key);border:1px solid var(--acc-30);border-radius:10px;font:600 11px var(--f-ui);letter-spacing:.14em;color:var(--acc)">SAVE ROUTINE</div>
+        <div style="width:96px;height:48px;display:grid;place-items:center;border:1px solid var(--line2);border-radius:10px;font:600 10px var(--f-num);letter-spacing:.1em;color:var(--t3)">CANCEL</div>
+      </div>
+    </div>
+    <sc-if value="{{ showCaptions }}" hint-placeholder-val="{{ true }}"><div style="max-width:384px;font:10.5px/1.6 var(--f-num);color:var(--t3)">Targets are optional — a routine is really just an ordered list of names for the parser to expect.</div></sc-if>
+  </div>
+
+  <!-- 12 PICKER -->
+  <div id="s-picker" style="display:flex;flex-direction:column;gap:12px;scroll-margin-top:20px">
+    <div style="display:flex;align-items:baseline;gap:10px"><span style="font:600 10px var(--f-num);color:var(--t3)">12</span><span style="font:600 10px var(--f-num);letter-spacing:.2em;color:var(--t2)">EXERCISE PICKER</span></div>
+    <div data-screen-label="12 Exercise picker" style="width:384px;flex:none;background:var(--s0);border:1px solid var(--line2);border-radius:40px;overflow:hidden;font-family:var(--f-ui);color:var(--t1);display:flex;flex-direction:column;min-height:832px;box-shadow:0 30px 70px -34px #000">
+      <div style="flex:1;opacity:.24;padding:38px 22px 0">
+        <div style="font:700 19px var(--f-ui)">Push · A</div>
+        <div style="margin-top:20px;display:flex;flex-direction:column">
+          <div style="display:grid;grid-template-columns:18px 1fr 70px;gap:9px;padding:13px 0;border-bottom:1px solid var(--line);font:600 12.5px var(--f-ui)"><span style="font:600 9.5px var(--f-num);color:var(--t3)">1</span><span>Barbell bench press</span><span style="font:700 12px var(--f-num);color:var(--t2);text-align:right">4 × 6–8</span></div>
+          <div style="display:grid;grid-template-columns:18px 1fr 70px;gap:9px;padding:13px 0;border-bottom:1px solid var(--line);font:600 12.5px var(--f-ui)"><span style="font:600 9.5px var(--f-num);color:var(--t3)">2</span><span>Overhead press</span><span style="font:700 12px var(--f-num);color:var(--t2);text-align:right">3 × 8–10</span></div>
+        </div>
+      </div>
+      <div style="background:var(--s1);border-top:1px solid var(--line2);border-radius:22px 22px 0 0;padding:12px 20px 30px;display:flex;flex-direction:column">
+        <div style="width:34px;height:3px;background:var(--line2);border-radius:2px;margin:0 auto 16px"></div>
+        <div style="display:flex;align-items:center;gap:9px;padding-bottom:11px;border-bottom:1px solid var(--acc-30)">
+          <span style="font:600 11px var(--f-num);color:var(--acc)">/</span>
+          <span style="font:500 15px var(--f-num)">incline</span>
+          <span style="width:1px;height:15px;background:var(--acc);animation:led 1.1s steps(1) infinite"></span>
+          <span style="margin-left:auto;font:600 9px var(--f-num);letter-spacing:.1em;color:var(--t3)">6 MATCHES</span>
+        </div>
+        <sc-for list="{{ pickerRows }}" as="p" hint-placeholder-count="6">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:13px 0;border-bottom:1px solid var(--line)">
+            <span style="font:600 13px var(--f-ui);color:var(--t1)">{{ p.name }}</span>
+            <span style="font:9.5px var(--f-num);letter-spacing:.1em;color:var(--t3)">{{ p.meta }}</span>
+          </div>
+        </sc-for>
+        <div style="margin-top:18px;font:500 11px var(--f-num);color:var(--acc)">+ create "incline" as custom exercise</div>
+      </div>
+    </div>
+    <sc-if value="{{ showCaptions }}" hint-placeholder-val="{{ true }}"><div style="max-width:384px;font:10.5px/1.6 var(--f-num);color:var(--t3)">Same sheet from the routine editor and mid-workout. Typing is the fallback path; saying the name is the default.</div></sc-if>
+  </div>
+
+  <!-- 13 SETTINGS -->
+  <div id="s-settings" style="display:flex;flex-direction:column;gap:12px;scroll-margin-top:20px">
+    <div style="display:flex;align-items:baseline;gap:10px"><span style="font:600 10px var(--f-num);color:var(--t3)">13</span><span style="font:600 10px var(--f-num);letter-spacing:.2em;color:var(--t2)">SETTINGS SHEET</span></div>
+    <div data-screen-label="13 Settings" style="width:384px;flex:none;background:var(--s0);border:1px solid var(--line2);border-radius:40px;overflow:hidden;font-family:var(--f-ui);color:var(--t1);display:flex;flex-direction:column;min-height:832px;box-shadow:0 30px 70px -34px #000">
+      <div style="flex:1;opacity:.22;display:flex;flex-direction:column;align-items:center;justify-content:center">
+        <div style="width:180px;height:180px;border-radius:50%;background:var(--sin);border:1px solid var(--line2)"></div>
+        <div style="margin-top:26px;font:500 12.5px var(--f-num);color:var(--t2)">"start push day"</div>
+      </div>
+      <div style="background:var(--s1);border-top:1px solid var(--line2);border-radius:22px 22px 0 0;padding:12px 22px 30px">
+        <div style="width:34px;height:3px;background:var(--line2);border-radius:2px;margin:0 auto 18px"></div>
+        <div style="font:600 8px var(--f-num);letter-spacing:.26em;color:var(--t3)">SETTINGS</div>
+        <sc-for list="{{ settingsRows }}" as="s" hint-placeholder-count="5">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;padding:16px 0;border-bottom:1px solid var(--line)">
+            <span style="font:600 13.5px var(--f-ui);color:{{ s.color }}">{{ s.label }}</span>
+            <span style="font:600 10px var(--f-num);letter-spacing:.1em;color:var(--t3)">{{ s.value }}</span>
+          </div>
+        </sc-for>
+        <div style="font:9.5px var(--f-num);letter-spacing:.12em;color:var(--t3);margin-top:20px">REPVOICE v3 · BUILD 41 · KG ONLY, ALWAYS</div>
+      </div>
+    </div>
+    <sc-if value="{{ showCaptions }}" hint-placeholder-val="{{ true }}"><div style="max-width:384px;font:10.5px/1.6 var(--f-num);color:var(--t3)">Replaces the OS action sheet. Kilograms are stated, not offered — one unit is a product decision.</div></sc-if>
+  </div>
+
+  <!-- 14 TELEMETRY -->
+  <div id="s-telemetry" style="display:flex;flex-direction:column;gap:12px;scroll-margin-top:20px">
+    <div style="display:flex;align-items:baseline;gap:10px"><span style="font:600 10px var(--f-num);color:var(--t3)">14</span><span style="font:600 10px var(--f-num);letter-spacing:.2em;color:var(--t2)">VOICE TELEMETRY · DEV</span></div>
+    <div data-screen-label="14 Voice telemetry" style="width:384px;flex:none;background:var(--s0);border:1px solid var(--line2);border-radius:40px;overflow:hidden;font-family:var(--f-ui);color:var(--t1);display:flex;flex-direction:column;min-height:832px;box-shadow:0 30px 70px -34px #000">
+      <div style="padding:38px 22px 0">
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:600 9.5px var(--f-num);letter-spacing:.16em;color:var(--t3)">← SETTINGS</span><span style="font:600 9px var(--f-num);letter-spacing:.14em;color:var(--hot)">DEV ONLY</span></div>
+        <div style="font:700 21px var(--f-ui);margin-top:18px">Voice telemetry</div>
+        <div style="font:600 9.5px var(--f-num);letter-spacing:.12em;color:var(--t3);margin-top:7px">JULY 2026 · 214 UTTERANCES</div>
+      </div>
+      <div style="padding:26px 22px 0;display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line)">
+        <sc-for list="{{ telemetryCards }}" as="c" hint-placeholder-count="6">
+          <div style="background:var(--s0);padding:15px 14px">
+            <div style="font:600 8px var(--f-num);letter-spacing:.2em;color:var(--t3)">{{ c.label }}</div>
+            <div style="font:700 22px var(--f-num);color:{{ c.color }};margin-top:8px">{{ c.value }}</div>
+            <div style="font:9px var(--f-num);color:var(--t3);margin-top:6px">{{ c.sub }}</div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="padding:26px 22px 0">
+        <div style="font:600 8px var(--f-num);letter-spacing:.26em;color:var(--t3)">MOST-EDITED FIELDS</div>
+        <div style="display:flex;flex-direction:column;gap:9px;margin-top:12px">
+          <sc-for list="{{ editedFields }}" as="f" hint-placeholder-count="3">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="width:70px;font:600 10px var(--f-num);color:var(--t2)">{{ f.name }}</span>
+              <div style="flex:1;height:1px;background:var(--line)"><div style="width:{{ f.w }};height:1px;background:var(--acc)"></div></div>
+              <span style="font:600 10px var(--f-num);color:var(--t3)">{{ f.count }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="flex:1;padding:26px 22px 30px">
+        <div style="font:600 8px var(--f-num);letter-spacing:.26em;color:var(--t3)">LAST UTTERANCES</div>
+        <sc-for list="{{ logRows }}" as="l" hint-placeholder-count="4">
+          <div style="padding:13px 0;border-bottom:1px solid var(--line)">
+            <div style="font:500 12px var(--f-num);color:var(--t2)">{{ l.text }}</div>
+            <div style="font:9px var(--f-num);letter-spacing:.08em;color:var(--t3);margin-top:6px">{{ l.meta }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    <sc-if value="{{ showCaptions }}" hint-placeholder-val="{{ true }}"><div style="max-width:384px;font:10.5px/1.6 var(--f-num);color:var(--t3)">Hidden behind Settings. Acceptance rate and cost-per-workout are the two numbers that decide if voice ships.</div></sc-if>
+  </div>
+
+</div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1500,&quot;height&quot;:950},&quot;accent&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#4FD8FF&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;#4FD8FF&quot;,&quot;#A3E635&quot;,&quot;#FF8A3C&quot;,&quot;#C4B5FD&quot;],&quot;section&quot;:&quot;Instrument&quot;},&quot;thermalPR&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Instrument&quot;},&quot;showCaptions&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Layout&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const thermalPR = this.props.thermalPR ?? true;
+    const showCaptions = this.props.showCaptions ?? true;
+    const prAccent = thermalPR ? "#FF8A3C" : "var(--acc)";
+    return {
+      showCaptions,
+      prAccent,
+      accentVar: this.props.accent ?? "#4FD8FF",
+      prBorder: thermalPR ? "rgba(255,138,60,.42)" : "var(--acc-30)",
+      prBg: thermalPR
+        ? "radial-gradient(ellipse 78% 52% at 50% 42%,rgba(255,138,60,.15),rgba(255,86,71,.04) 46%,transparent 72%)"
+        : "radial-gradient(ellipse 78% 52% at 50% 42%,var(--acc-14),transparent 70%)",
+      ringBars: [
+        {h:"11px",o:.7},{h:"20px",o:1},{h:"8px",o:.6},{h:"16px",o:.9},{h:"24px",o:1},{h:"13px",o:.8},{h:"9px",o:.65}
+      ],
+      routines: [
+        {name:"Push · A", meta:"5 EX · 3D AGO"},
+        {name:"Pull · B", meta:"6 EX · 5D AGO"},
+        {name:"Legs · C", meta:"4 EX · YESTERDAY"}
+      ],
+      chips: ["BENCH","80.0 KG","× 8"],
+      tape: [
+        {time:"41:02", ex:"BENCH", val:"80.0×8", flag:"", numColor:"var(--t2)", flagColor:"var(--t3)", fade:.4},
+        {time:"41:48", ex:"BENCH", val:"80.0×8", flag:"", numColor:"var(--t2)", flagColor:"var(--t3)", fade:.58},
+        {time:"42:31", ex:"BENCH", val:"82.5×8", flag:"▲", numColor:"var(--t1)", flagColor:"var(--acc)", fade:.8},
+        {time:"43:10", ex:"OHP", val:"40.0×10", flag:"", numColor:"var(--t2)", flagColor:"var(--t3)", fade:.9},
+        {time:"43:55", ex:"OHP", val:"40.0×10", flag:"✓", numColor:"var(--t1)", flagColor:"var(--ok)", fade:1}
+      ],
+      meterBars: [
+        {h:"18%",c:"#141D24"},{h:"32%",c:"#1A252D"},{h:"52%",c:"#27333C"},{h:"78%",c:"var(--acc)"},{h:"100%",c:"var(--acc)"},{h:"68%",c:"var(--acc)"},{h:"88%",c:"var(--acc)"},{h:"46%",c:"#27333C"},{h:"62%",c:"var(--acc)"},{h:"38%",c:"#1A252D"},{h:"28%",c:"#141D24"},{h:"42%",c:"#27333C"},{h:"24%",c:"#141D24"},{h:"17%",c:"#141D24"},{h:"21%",c:"#141D24"},{h:"14%",c:"#141D24"}
+      ],
+      historyRows: [
+        {name:"Push · A", date:"SAT 19 JUL", meta:"5 EXERCISES", sets:"18", dur:"47 MIN", nameColor:"var(--t1)"},
+        {name:"Legs · C", date:"FRI 18 JUL", meta:"4 EXERCISES", sets:"15", dur:"52 MIN", nameColor:"var(--t1)"},
+        {name:"Push · A", date:"THU 17 JUL", meta:"5 EXERCISES", sets:"18", dur:"47 MIN", nameColor:"var(--t1)"},
+        {name:"Pull · B", date:"TUE 15 JUL", meta:"6 EXERCISES", sets:"21", dur:"58 MIN", nameColor:"var(--t1)"},
+        {name:"Empty workout", date:"SUN 13 JUL", meta:"2 EXERCISES", sets:"6", dur:"19 MIN", nameColor:"var(--t2)"},
+        {name:"Push · A", date:"SAT 12 JUL", meta:"5 EXERCISES", sets:"17", dur:"44 MIN", nameColor:"var(--t1)"},
+        {name:"Pull · B", date:"THU 10 JUL", meta:"6 EXERCISES", sets:"20", dur:"55 MIN", nameColor:"var(--t1)"}
+      ],
+      workoutBlocks: [
+        {name:"BARBELL BENCH PRESS", top:"TOP 82.5", sets:[
+          {n:"1", val:"60.0 × 10", tag:"WARMUP", color:"var(--t2)", tagColor:"var(--t3)"},
+          {n:"2", val:"80.0 × 8", tag:"", color:"var(--t1)", tagColor:"var(--t3)"},
+          {n:"3", val:"82.5 × 8", tag:"▲ PR", color:"var(--t1)", tagColor:"var(--acc)"},
+          {n:"4", val:"75.0 × 8", tag:"DROP", color:"var(--t2)", tagColor:"var(--t3)"}
+        ]},
+        {name:"OVERHEAD PRESS", top:"TOP 40.0", sets:[
+          {n:"1", val:"40.0 × 10", tag:"", color:"var(--t1)", tagColor:"var(--t3)"},
+          {n:"2", val:"40.0 × 10", tag:"", color:"var(--t1)", tagColor:"var(--t3)"},
+          {n:"3", val:"40.0 × 8", tag:"", color:"var(--t2)", tagColor:"var(--t3)"}
+        ]},
+        {name:"CABLE LATERAL RAISE", top:"TOP 12.5", sets:[
+          {n:"1", val:"12.5 × 15", tag:"", color:"var(--t1)", tagColor:"var(--t3)"},
+          {n:"2", val:"12.5 × 14", tag:"", color:"var(--t2)", tagColor:"var(--t3)"}
+        ]}
+      ],
+      chartBars: [
+        {h:"38%",bg:"var(--s1)",top:"var(--line2)"},
+        {h:"44%",bg:"var(--s1)",top:"var(--line2)"},
+        {h:"42%",bg:"var(--s1)",top:"var(--line2)"},
+        {h:"52%",bg:"var(--s1)",top:"var(--line2)"},
+        {h:"58%",bg:"var(--s1)",top:"var(--line2)"},
+        {h:"55%",bg:"var(--s1)",top:"var(--line2)"},
+        {h:"66%",bg:"var(--s1)",top:"var(--line2)"},
+        {h:"72%",bg:"var(--s1)",top:"var(--line2)"},
+        {h:"70%",bg:"var(--s1)",top:"var(--line2)"},
+        {h:"84%",bg:"var(--s1)",top:"var(--line2)"},
+        {h:"88%",bg:"var(--acc-06)",top:"var(--acc-30)"},
+        {h:"100%",bg:"var(--acc-14)",top:"var(--acc)"}
+      ],
+      exSessions: [
+        {date:"SAT 19 JUL", sets:"60×10 · 80×8 · 85×8 · 75×8", tag:"▲ PR", tagColor:"var(--acc)"},
+        {date:"THU 17 JUL", sets:"60×10 · 80×8 · 82.5×8 · 75×8", tag:"", tagColor:"var(--t3)"},
+        {date:"SAT 12 JUL", sets:"60×10 · 80×8 · 80×8 · 72.5×8", tag:"", tagColor:"var(--t3)"},
+        {date:"WED 09 JUL", sets:"57.5×10 · 77.5×8 · 80×7", tag:"", tagColor:"var(--t3)"}
+      ],
+      libRows: [
+        {name:"Barbell bench press", meta:"CHEST · BARBELL", tag:"24 SESSIONS", tagColor:"var(--t3)"},
+        {name:"Incline bench press", meta:"CHEST · BARBELL", tag:"11 SESSIONS", tagColor:"var(--t3)"},
+        {name:"Dumbbell bench press", meta:"CHEST · DUMBBELL", tag:"6 SESSIONS", tagColor:"var(--t3)"},
+        {name:"Close-grip bench press", meta:"TRICEPS · BARBELL", tag:"2 SESSIONS", tagColor:"var(--t3)"},
+        {name:"Smith machine bench", meta:"CHEST · MACHINE", tag:"", tagColor:"var(--t3)"},
+        {name:"Bench dip", meta:"TRICEPS · BODYWEIGHT", tag:"", tagColor:"var(--t3)"},
+        {name:"Floor press", meta:"CHEST · BARBELL", tag:"ALIAS: BENCH ON FLOOR", tagColor:"var(--t3)"},
+        {name:"Paused bench press", meta:"CHEST · BARBELL", tag:"CUSTOM", tagColor:"var(--acc)"},
+        {name:"Reverse-grip bench", meta:"CHEST · BARBELL", tag:"", tagColor:"var(--t3)"}
+      ],
+      routineItems: [
+        {n:"1", name:"Barbell bench press", target:"4 × 6–8"},
+        {n:"2", name:"Overhead press", target:"3 × 8–10"},
+        {n:"3", name:"Incline dumbbell press", target:"3 × 10–12"},
+        {n:"4", name:"Cable lateral raise", target:"3 × 15"},
+        {n:"5", name:"Rope triceps extension", target:"— "}
+      ],
+      pickerRows: [
+        {name:"Incline bench press", meta:"CHEST · BARBELL"},
+        {name:"Incline dumbbell press", meta:"CHEST · DUMBBELL"},
+        {name:"Incline dumbbell fly", meta:"CHEST · DUMBBELL"},
+        {name:"Incline machine press", meta:"CHEST · MACHINE"},
+        {name:"Incline row", meta:"BACK · DUMBBELL"},
+        {name:"Reverse incline curl", meta:"BICEPS · DUMBBELL"}
+      ],
+      settingsRows: [
+        {label:"Exercise library", value:"873", color:"var(--t1)"},
+        {label:"Units", value:"KG · FIXED", color:"var(--t1)"},
+        {label:"Voice feedback", value:"SPEAK + EARCON", color:"var(--t1)"},
+        {label:"Floor mode", value:"AUTO ON FLAT", color:"var(--t1)"},
+        {label:"Voice telemetry", value:"DEV", color:"var(--t2)"},
+        {label:"Sign out", value:"dhruv@…", color:"var(--warn)"}
+      ],
+      telemetryCards: [
+        {label:"ACCEPTED, NO EDIT", value:"87%", sub:"168 / 193 responded", color:"var(--t1)"},
+        {label:"ASKED A QUESTION", value:"6%", sub:"13 / 214 utterances", color:"var(--t1)"},
+        {label:"P50 LATENCY", value:"940ms", sub:"speech end → chips", color:"var(--t1)"},
+        {label:"P95 LATENCY", value:"2.1s", sub:"target under 2.5s", color:"var(--t1)"},
+        {label:"COST / WORKOUT", value:"$0.0031", sub:"over 41 workouts", color:"var(--t1)"},
+        {label:"PROJECTED JULY", value:"₹142", sub:"budget ₹400", color:"var(--ok)"}
+      ],
+      editedFields: [
+        {name:"weightKg", w:"64%", count:"27"},
+        {name:"reps", w:"38%", count:"16"},
+        {name:"exercise", w:"19%", count:"8"}
+      ],
+      logRows: [
+        {text:"\"bench eighty for eight\"", meta:"ACCEPTED · 880ms · $0.00014"},
+        {text:"\"same again\"", meta:"ACCEPTED · 610ms · $0.00009"},
+        {text:"\"forty by ten on the shoulder press\"", meta:"EDITED · reps · 1.2s · $0.00016"},
+        {text:"\"no scratch that\"", meta:"DISCARDED · 540ms · $0.00008"}
+      ]
+    };
+  }
+}
+
+</script>
+</body>
+</html>

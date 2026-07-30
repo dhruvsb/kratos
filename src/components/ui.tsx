@@ -1,30 +1,39 @@
-// Tiny unstyled primitives. Black/white/grey only — restyled in a future
-// design phase via src/theme/tokens.ts.
+// Shared primitives, on the LED-instrument theme (tokens.ts). Restyled from the
+// old black/white placeholders during the manual-first design pass — every
+// Phase-1 screen that leans on Btn/Loading/Empty/ErrorText darkens with this file.
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { color, font, radius, space, tracking } from '@/theme/tokens';
 
 export function Btn({
   title,
   onPress,
   disabled,
   small,
+  tone = 'neutral',
 }: {
   title: string;
   onPress: () => void;
   disabled?: boolean;
   small?: boolean;
+  tone?: 'neutral' | 'accent' | 'warn';
 }) {
+  const border = tone === 'accent' ? color.acc35 : color.line2;
+  const text = tone === 'accent' ? color.acc : tone === 'warn' ? color.warn : color.t2;
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled}
       style={({ pressed }) => [
         styles.btn,
+        { borderColor: border },
         small && styles.btnSmall,
         pressed && styles.btnPressed,
         disabled && styles.btnDisabled,
       ]}
     >
-      <Text style={[styles.btnText, small && styles.btnTextSmall]}>{title}</Text>
+      <Text style={[styles.btnText, { color: disabled ? color.t3 : text }, small && styles.btnTextSmall]}>
+        {title}
+      </Text>
     </Pressable>
   );
 }
@@ -32,7 +41,7 @@ export function Btn({
 export function Loading() {
   return (
     <View style={styles.center}>
-      <ActivityIndicator color="#000" />
+      <ActivityIndicator color={color.acc} />
     </View>
   );
 }
@@ -47,24 +56,25 @@ export function Empty({ text }: { text: string }) {
 
 export function ErrorText({ error }: { error: unknown }) {
   const message = error instanceof Error ? error.message : String(error);
-  return <Text style={styles.errorText}>Error: {message}</Text>;
+  return <Text style={styles.errorText}>{message}</Text>;
 }
 
 const styles = StyleSheet.create({
   btn: {
     borderWidth: 1,
-    borderColor: '#000',
-    paddingVertical: 10,
-    paddingHorizontal: 14,
+    borderRadius: radius.ctl,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     alignItems: 'center',
-    backgroundColor: '#fff',
+    justifyContent: 'center',
+    backgroundColor: color.s2,
   },
-  btnSmall: { paddingVertical: 4, paddingHorizontal: 8 },
-  btnPressed: { backgroundColor: '#ddd' },
-  btnDisabled: { borderColor: '#999', backgroundColor: '#eee' },
-  btnText: { color: '#000', fontSize: 16 },
-  btnTextSmall: { fontSize: 13 },
-  center: { padding: 24, alignItems: 'center' },
-  emptyText: { color: '#666' },
-  errorText: { color: '#000', padding: 12, fontStyle: 'italic' },
+  btnSmall: { paddingVertical: 6, paddingHorizontal: 11, borderRadius: radius.keySm },
+  btnPressed: { backgroundColor: color.s1 },
+  btnDisabled: { borderColor: color.line, backgroundColor: color.s0 },
+  btnText: { fontFamily: font.numSemibold, fontSize: 12, letterSpacing: tracking.label },
+  btnTextSmall: { fontSize: 10 },
+  center: { padding: space.xxl, alignItems: 'center' },
+  emptyText: { fontFamily: font.num, fontSize: 12, color: color.t3 },
+  errorText: { fontFamily: font.num, fontSize: 12, color: color.warn, padding: space.md },
 });

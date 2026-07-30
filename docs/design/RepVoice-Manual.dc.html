@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#05080A;color:#E7EFF4;font-family:'Space Grotesk',sans-serif;
+--bg:#05080A;--s0:#080C10;--s1:#0D1318;--sin:#04070A;
+--line:rgba(150,205,255,.07);--line2:rgba(150,205,255,.14);
+--t1:#E7EFF4;--t2:#8798A5;--t3:#4E5A64;
+--acc:#4FD8FF;
+--acc-06:color-mix(in oklab,var(--acc) 6%,transparent);
+--acc-14:color-mix(in oklab,var(--acc) 14%,transparent);
+--acc-30:color-mix(in oklab,var(--acc) 30%,transparent);
+--hot:#FF8A3C;--warn:#FF5647;--ok:#5FE3B0;
+--f-num:'IBM Plex Mono',monospace;--f-ui:'Space Grotesk',sans-serif;
+--key:#101820;
+}
+a{color:#4FD8FF;text-decoration:none}a:hover{color:#9CE9FF}
+@keyframes led{0%,100%{opacity:1}50%{opacity:.35}}
+</style>
+</helmet>
+
+<div style="--acc:{{ accentVar }};padding:0 0 90px">
+
+<div style="padding:44px 56px 22px;display:flex;align-items:flex-end;justify-content:space-between;gap:30px;flex-wrap:wrap;border-bottom:1px solid var(--line)">
+  <div>
+    <div style="display:flex;align-items:center;gap:11px">
+      <div style="font:700 22px/1 var(--f-ui);letter-spacing:.03em">REPVOICE<span style="color:var(--acc)">.</span></div>
+      <div style="font:600 9px var(--f-num);letter-spacing:.22em;color:var(--t3);margin-left:4px">MANUAL-FIRST · PHASE 1 · 11 SCREENS</div>
+    </div>
+    <div style="margin-top:11px;font:11.5px/1.7 var(--f-num);color:var(--t2);max-width:700px;text-wrap:pretty">Thumb-only logging, no microphone anywhere. One day's loop: make a routine → start it → log weight × reps set by set → see what you lifted last time. The voice layer drops in later on top of the same set grid — <a href="RepVoice Voice-First v3.dc.html">v3 voice designs</a> are kept as-is.</div>
+  </div>
+  <div style="font:10.5px/1.8 var(--f-num);color:var(--t3);text-align:right">
+    <div>ENTRY <span style="color:var(--t2)">prefill last session · tap ✓</span></div>
+    <div>ADJUST <span style="color:var(--t2)">keypad + 2.5 steps</span></div>
+    <div>LIVE <span style="color:var(--acc)">accent</span> · current set only</div>
+  </div>
+</div>
+
+<div style="display:flex;flex-wrap:wrap;gap:40px 44px;padding:40px 56px 0;align-items:flex-start">
+
+  <div style="flex:0 0 100%;display:flex;align-items:baseline;gap:16px">
+    <span style="font:600 9px var(--f-num);letter-spacing:.32em;color:var(--t2)">SET UP</span>
+    <div style="flex:1;height:1px;background:var(--line)"></div>
+    <span style="font:600 9px var(--f-num);letter-spacing:.14em;color:var(--t3)">01—03</span>
+  </div>
+
+  <!-- 01 HOME -->
+  <div id="m-home" style="display:flex;flex-direction:column;gap:12px;scroll-margin-top:20px">
+    <div style="display:flex;align-items:baseline;gap:10px"><span style="font:600 10px var(--f-num);color:var(--t3)">01</span><span style="font:600 10px var(--f-num);letter-spacing:.2em;color:var(--t2)">HOME · ROUTINES</span></div>
+    <div data-screen-label="01 Home" style="width:384px;flex:none;background:var(--s0);border:1px solid var(--line2);border-radius:40px;overflow:hidden;font-family:var(--f-ui);color:var(--t1);display:flex;flex-direction:column;min-height:832px;box-shadow:0 30px 70px -34px #000">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;padding:38px 22px 0">
+        <div style="font:700 22px var(--f-ui);letter-spacing:.02em">REPVOICE<span style="color:var(--acc)">.</span></div>
+        <div style="font:600 10px var(--f-num);letter-spacing:.16em;color:var(--t3)">SAT 19 JUL</div>
+      </div>
+      <div style="display:flex;gap:5px;padding:22px 22px 0">
+        <sc-for list="{{ weekStrip }}" as="d" hint-placeholder-count="7">
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px">
+            <div style="font:600 8px var(--f-num);color:var(--t3)">{{ d.day }}</div>
+            <div style="width:100%;height:3px;background:{{ d.bg }}"></div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="padding:30px 22px 0">
+        <div style="font:600 8px var(--f-num);letter-spacing:.26em;color:var(--t3)">UP NEXT IN ROTATION</div>
+        <div style="border:1px solid var(--acc-30);border-radius:16px;background:var(--s1);padding:20px;margin-top:12px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline">
+            <div style="font:700 21px var(--f-ui)">Push · A</div>
+            <div style="font:600 9.5px var(--f-num);letter-spacing:.12em;color:var(--t3)">3 DAYS AGO</div>
+          </div>
+          <div style="font:600 10.5px var(--f-num);letter-spacing:.1em;color:var(--t2);margin-top:9px">5 EXERCISES · 18 SETS LAST TIME</div>
+          <div style="height:52px;display:grid;place-items:center;background:var(--key);border:1px solid var(--acc-30);border-radius:11px;font:600 12px var(--f-ui);letter-spacing:.14em;color:var(--acc);margin-top:18px">START WORKOUT</div>
+        </div>
+      </div>
+      <div style="flex:1;padding:30px 22px 0;display:flex;flex-direction:column">
+        <div style="font:600 8px var(--f-num);letter-spacing:.26em;color:var(--t3);padding-bottom:4px">ALL ROUTINES</div>
+        <sc-for list="{{ routinesList }}" as="r" hint-placeholder-count="4">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:15px 0;border-bottom:1px solid var(--line)">
+            <div><div style="font:600 13.5px var(--f-ui)">{{ r.name }}</div><div style="font:9.5px var(--f-num);letter-spacing:.1em;color:var(--t3);margin-top:5px">{{ r.meta }}</div></div>
+            <div style="font:600 10px var(--f-num);letter-spacing:.12em;color:var(--t2)">START →</div>
+          </div>
+        </sc-for>
+        <div style="display:flex;gap:8px;margin-top:20px">
+          <div style="flex:1;height:44px;display:grid;place-items:center;border:1px dashed var(--line2);border-radius:10px;font:600 10.5px var(--f-num);letter-spacing:.12em;color:var(--t2)">+ NEW ROUTINE</div>
+          <div style="flex:1;height:44px;display:grid;place-items:center;border:1px solid var(--line2);border-radius:10px;font:600 10.5px var(--f-num);letter-spacing:.12em;color:var(--t3)">EMPTY WORKOUT</div>
+        </div>
+      </div>
+      <div style="display:flex;border-top:1px solid var(--line);padding:14px 0 30px;margin-top:26px">
+        <div style="flex:1;text-align:center"><div style="font:700 11px var(--f-num);letter-spacing:.14em;color:var(--acc)">HOME</div><div style="width:16px;height:1px;background:var(--acc);margin:6px auto 0"></div></div>
+        <div style="flex:1;text-align:center;font:600 11px var(--f-num);letter-spacing:.14em;color:var(--t3)">HISTORY</div>
+        <div style="flex:1;text-align:center;font:600 11px var(--f-num);letter-spacing:.14em;color:var(--t3)">SETTINGS</div>
+      </div>
+    </div>
+    <sc-if value="{{ showCaptions }}" hint-placeholder-val="{{ true }}"><div style="max-width:384px;font:10.5px/1.6 var(--f-num);color:var(--t3)">One tap to the workout you're most likely doing. The week strip is the only "streak" — marks, not a score.</div></sc-if>
+  </div>
+
+  <!-- 02 ROUTINE EDITOR -->
+  <div id="m-routine" style="display:flex;flex-direction:column;gap:12px;scroll-margin-top:20px">
+    <div style="display:flex;align-items:baseline;gap:10px"><span style="font:600 10px var(--f-num);color:var(--t3)">02</span><span style="font:600 10px var(--f-num);letter-spacing:.2em;color:var(--t2)">NEW ROUTINE</span></div>
+    <div data-screen-label="02 New routine" style="width:384px;flex:none;background:var(--s0);border:1px solid var(--line2);border-radius:40px;overflow:hidden;font-family:var(--f-ui);color:var(--t1);display:flex;flex-direction:column;min-height:832px;box-shadow:0 30px 70px -34px #000">
+      <div style="padding:38px 22px 0">
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:600 9.5px var(--f-num);letter-spacing:.16em;color:var(--t3)">← HOME</span><span style="font:600 9.5px var(--f-num);letter-spacing:.12em;color:var(--t3)">DUPLICATE</span></div>
+        <div style="font:600 8px var(--f-num);letter-spacing:.26em;color:var(--t3);margin-top:24px">ROUTINE NAME</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:10px;padding-bottom:11px;border-bottom:1px solid var(--acc-30)">
+          <span style="font:700 19px var(--f-ui)">Push · A</span>
+          <span style="width:1px;height:18px;background:var(--acc);animation:led 1.1s steps(1) infinite"></span>
+        </div>
+      </div>
+      <div style="flex:1;padding:26px 22px 0;display:flex;flex-direction:column">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;padding-bottom:4px"><span style="font:600 8px var(--f-num);letter-spacing:.26em;color:var(--t3)">EXERCISES · DRAG TO REORDER</span><span style="font:600 8px var(--f-num);color:var(--t3)">SETS × REPS</span></div>
+        <sc-for list="{{ routineItems }}" as="r" hint-placeholder-count="5">
+          <div style="display:grid;grid-template-columns:16px 1fr 78px 40px;gap:9px;align-items:center;padding:15px 0;border-bottom:1px solid var(--line)">
+            <span style="font:600 9.5px var(--f-num);color:var(--t3)">{{ r.n }}</span>
+            <div><div style="font:600 13px var(--f-ui)">{{ r.name }}</div><div style="font:9px var(--f-num);letter-spacing:.1em;color:var(--t3);margin-top:4px">{{ r.meta }}</div></div>
+            <span style="font:700 12.5px var(--f-num);color:{{ r.targetColor }};text-align:right">{{ r.target }}</span>
+            <span style="font:600 12px var(--f-num);color:var(--t3);text-align:right;letter-spacing:.16em">⇅ ✕</span>
+          </div>
+        </sc-for>
+        <div style="height:46px;display:grid;place-items:center;border:1px dashed var(--acc-30);border-radius:10px;font:600 10.5px var(--f-num);letter-spacing:.12em;color:var(--acc);margin-top:20px">+ ADD EXERCISE</div>
+        <div style="font:10.5px/1.6 var(--f-num);color:var(--t3);margin-top:16px">Targets are optional. Leave them blank and the workout screen just shows what you did last time.</div>
+      </div>
+      <div style="padding:18px 22px 30px;display:flex;gap:8px">
+        <div style="flex:1;height:50px;display:grid;place-items:center;background:var(--key);border:1px solid var(--acc-30);border-radius:11px;font:600 11px var(--f-ui);letter-spacing:.14em;color:var(--acc)">SAVE ROUTINE</div>
+        <div style="width:96px;height:50px;display:grid;place-items:center;border:1px solid var(--line2);border-radius:11px;font:600 10px var(--f-num);letter-spacing:.1em;color:var(--t3)">CANCEL</div>
+      </div>
+    </div>
+    <sc-if value="{{ showCaptions }}" hint-placeholder-val="{{ true }}"><div style="max-width:384px;font:10.5px/1.6 var(--f-num);color:var(--t3)">Name, ordered exercises, optional targets. Same screen edits an existing routine.</div></sc-if>
+  </div>
+
+  <!-- 03 PICKER -->
+  <div id="m-picker" style="display:flex;flex-direction:column;gap:12px;scroll-margin-top:20px">
+    <div style="display:flex;align-items:baseline;gap:10px"><span style="font:600 10px var(--f-num);color:var(--t3)">03</span><span style="font:600 10px var(--f-num);letter-spacing:.2em;color:var(--t2)">EXERCISE PICKER</span></div>
+    <div data-screen-label="03 Exercise picker" style="width:384px;flex:none;background:var(--s0);border:1px solid var(--line2);border-radius:40px;overflow:hidden;font-family:var(--f-ui);color:var(--t1);display:flex;flex-direction:column;min-height:832px;box-shadow:0 30px 70px -34px #000">
+      <div style="flex:1;opacity:.22;padding:38px 22px 0">
+        <div style="font:700 19px var(--f-ui)">Push · A</div>
+        <div style="margin-top:20px;display:flex;flex-direction:column">
+          <div style="display:grid;grid-template-columns:16px 1fr 70px;gap:9px;padding:14px 0;border-bottom:1px solid var(--line);font:600 12.5px var(--f-ui)"><span style="font:600 9.5px var(--f-num);color:var(--t3)">1</span><span>Barbell bench press</span><span style="font:700 12px var(--f-num);color:var(--t2);text-align:right">4 × 6–8</span></div>
+          <div style="display:grid;grid-template-columns:16px 1fr 70px;gap:9px;padding:14px 0;border-bottom:1px solid var(--line);font:600 12.5px var(--f-ui)"><span style="font:600 9.5px var(--f-num);color:var(--t3)">2</span><span>Overhead press</span><span style="font:700 12px var(--f-num);color:var(--t2);text-align:right">3 × 8–10</span></div>
+        </div>
+      </div>
+      <div style="background:var(--s1);border-top:1px solid var(--line2);border-radius:22px 22px 0 0;padding:12px 20px 30px;display:flex;flex-direction:column">
+        <div style="width:34px;height:3px;background:var(--line2);border-radius:2px;margin:0 auto 16px"></div>
+        <div style="display:flex;align-items:center;gap:9px;padding-bottom:11px;border-bottom:1px solid var(--acc-30)">
+          <span style="font:600 11px var(--f-num);color:var(--acc)">/</span>
+          <span style="font:500 15px var(--f-num)">incline</span>
+          <span style="width:1px;height:15px;background:var(--acc);animation:led 1.1s steps(1) infinite"></span>
+          <span style="margin-left:auto;font:600 9px var(--f-num);letter-spacing:.1em;color:var(--t3)">6 OF 873</span>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:14px">
+          <div style="padding:7px 11px;border:1px solid var(--acc-30);border-radius:7px;font:600 9px var(--f-num);letter-spacing:.1em;color:var(--acc)">ALL</div>
+          <div style="padding:7px 11px;border:1px solid var(--line2);border-radius:7px;font:600 9px var(--f-num);letter-spacing:.1em;color:var(--t3)">CHEST</div>
+          <div style="padding:7px 11px;border:1px solid var(--line2);border-radius:7px;font:600 9px var(--f-num);letter-spacing:.1em;color:var(--t3)">RECENT</div>
+          <div style="padding:7px 11px;border:1px solid var(--line2);border-radius:7px;font:600 9px var(--f-num);letter-spacing:.1em;color:var(--t3)">CUSTOM</div>
+        </div>
+        <sc-for list="{{ pickerRows }}" as="p" hint-placeholder-count="6">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:14px 0;border-bottom:1px solid var(--line)">
+            <span style="font:600 13px var(--f-ui);color:var(--t1)">{{ p.name }}</span>
+            <span style="font:9.5px var(--f-num);letter-spacing:.1em;color:var(--t3)">{{ p.meta }}</span>
+          </div>
+        </sc-for>
+        <div style="margin-top:18px;font:500 11px var(--f-num);color:var(--acc)">+ create "incline" as custom exercise</div>
+      </div>
+    </div>
+    <sc-if value="{{ showCaptions }}" hint-placeholder-val="{{ true }}"><div style="max-width:384px;font:10.5px/1.6 var(--f-num);color:var(--t3)">Same sheet from the routine editor and mid-workout. RECENT is the tab that actually gets used.</div></sc-if>
+  </div>
+
+  <div style="flex:0 0 100%;display:flex;align-items:baseline;gap:16px;padding-top:14px">
+    <span style="font:600 9px var(--f-num);letter-spacing:.32em;color:var(--t2)">LOG A WORKOUT</span>
+    <div style="flex:1;height:1px;background:var(--line)"></div>
+    <span style="font:600 9px var(--f-num);letter-spacing:.14em;color:var(--t3)">04—07</span>
+  </div>
+
+  <!-- 04 ACTIVE WORKOUT -->
+  <div id="m-log" style="display:flex;flex-direction:column;gap:12px;scroll-margin-top:20px">
+    <div style="display:flex;align-items:baseline;gap:10px"><span style="font:600 10px var(--f-num);color:var(--t3)">04</span><span style="font:600 10px var(--f-num);letter-spacing:.2em;color:var(--acc)">ACTIVE WORKOUT · THE CORE</span></div>
+    <div data-screen-label="04 Active workout" style="width:384px;flex:none;background:var(--s0);border:1px solid var(--line2);border-radius:40px;overflow:hidden;font-family:var(--f-ui);color:var(--t1);display:flex;flex-direction:column;min-height:832px;box-shadow:0 30px 70px -34px #000">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;padding:38px 22px 0">
+        <div>
+          <div style="font:600 9px var(--f-num);letter-spacing:.24em;color:var(--acc)">IN PROGRESS</div>
+          <div style="font:700 19px var(--f-ui);margin-top:6px">Push · A</div>
+        </div>
+        <div style="text-align:right"><div style="font:600 15px var(--f-num);color:var(--acc)">42:18</div><div style="font:600 9px var(--f-num);letter-spacing:.12em;color:var(--t3);margin-top:4px">7 SETS · 4,120 KG</div></div>
+      </div>
+      <div style="display:flex;gap:6px;padding:18px 22px 0;align-items:center">
+        <sc-for list="{{ exerciseChips }}" as="c" hint-placeholder-count="5">
+          <div style="flex:1;text-align:center;padding:8px 0;border:1px solid {{ c.border }};border-radius:7px;font:600 9.5px var(--f-num);color:{{ c.color }}">{{ c.n }}</div>
+        </sc-for>
+      </div>
+      <div style="padding:24px 22px 0">
+        <div style="display:flex;justify-content:space-between;align-items:baseline">
+          <div style="font:700 18px var(--f-ui)">Barbell bench press</div>
+          <div style="font:600 9.5px var(--f-num);letter-spacing:.1em;color:var(--t3)">3 OF 5</div>
+        </div>
+        <div style="display:flex;gap:14px;margin-top:9px">
+          <span style="font:600 10px var(--f-num);letter-spacing:.1em;color:var(--t2)">TARGET 4 × 6–8</span>
+          <span style="font:600 10px var(--f-num);letter-spacing:.1em;color:var(--t3)">LAST 82.5 × 8</span>
+        </div>
+      </div>
+      <div style="padding:20px 16px 0">
+        <div style="display:grid;grid-template-columns:24px 66px 1fr 1fr 40px;gap:8px;padding:0 6px 9px;font:600 8px var(--f-num);letter-spacing:.2em;color:var(--t3)">
+          <span>#</span><span>PREV</span><span style="text-align:center">KG</span><span style="text-align:center">REPS</span><span></span>
+        </div>
+        <div style="background:var(--sin);border:1px solid var(--line);border-radius:12px;overflow:hidden">
+          <sc-for list="{{ setRows }}" as="s" hint-placeholder-count="4">
+            <div style="display:grid;grid-template-columns:24px 66px 1fr 1fr 40px;gap:8px;align-items:center;padding:13px 8px 13px 12px;border-bottom:1px solid var(--line);background:{{ s.rowBg }}">
+              <span style="font:600 10px var(--f-num);color:var(--t3)">{{ s.n }}</span>
+              <span style="font:600 10px var(--f-num);color:var(--t3)">{{ s.prev }}</span>
+              <div style="height:38px;display:grid;place-items:center;border:1px solid {{ s.fieldBorder }};border-radius:8px;background:{{ s.fieldBg }};font:700 17px var(--f-num);color:{{ s.valColor }}">{{ s.kg }}</div>
+              <div style="height:38px;display:grid;place-items:center;border:1px solid {{ s.fieldBorder }};border-radius:8px;background:{{ s.fieldBg }};font:700 17px var(--f-num);color:{{ s.valColor }}">{{ s.reps }}</div>
+              <div style="height:38px;display:grid;place-items:center;border:1px solid {{ s.checkBorder }};border-radius:8px;font:600 15px var(--f-num);color:{{ s.checkColor }}">{{ s.check }}</div>
+            </div>
+          </sc-for>
+          <div style="display:flex;gap:22px;padding:14px 12px">
+            <span style="font:600 10.5px var(--f-num);letter-spacing:.12em;color:var(--acc)">+ ADD SET</span>
+            <span style="font:600 10.5px var(--f-num);letter-spacing:.12em;color:var(--t3)">+ WARMUP</span>
+            <span style="font:600 10.5px var(--f-num);letter-spacing:.12em;color:var(--t3)">NOTE</span>
+          </div>
+        </div>
+      </div>
+      <div style="flex:1"></div>
+      <div style="border-top:1px solid var(--line2);background:var(--sin);padding:14px 16px;display:flex;align-items:center;gap:12px">
+        <div style="font:600 10px var(--f-num);letter-spacing:.16em;color:var(--t3)">REST</div>
+        <div style="font:700 22px var(--f-num);color:var(--t2)">2:00</div>
+        <div style="flex:1;height:1px;background:var(--line)"></div>
+        <div style="font:600 10px var(--f-num);letter-spacing:.12em;color:var(--t3)">AUTO-START</div>
+      </div>
+      <div style="display:flex;gap:8px;padding:14px 16px 30px">
+        <div style="width:104px;height:48px;display:grid;place-items:center;border:1px solid var(--line2);border-radius:10px;font:600 10px var(--f-num);letter-spacing:.1em;color:var(--t2)">← PREV</div>
+        <div style="flex:1;height:48px;display:grid;place-items:center;background:var(--key);border:1px solid var(--acc-30);border-radius:10px;font:600 11px var(--f-ui);letter-spacing:.12em;color:var(--acc)">NEXT EXERCISE →</div>
+      </div>
+    </div>
+    <sc-if value="{{ showCaptions }}" hint-placeholder-val="{{ true }}"><div style="max-width:384px;font:10.5px/1.6 var(--f-num);color:var(--t3)">Every row arrives pre-filled from last session — if you repeat, logging a set is one tap on ✓. PREV is always in eyeshot so you know what to beat.</div></sc-if>
+  </div>
+
+  <!-- 05 KEYPAD -->
+  <div id="m-keypad" style="display:flex;flex-direction:column;gap:12px;scroll-margin-top:20px">
+    <div style="display:flex;align-items:baseline;gap:10px"><span style="font:600 10px var(--f-num);color:var(--t3)">05</span><span style="font:600 10px var(--f-num);letter-spacing:.2em;color:var(--t2)">SET ENTRY · KEYPAD</span></div>
+    <div data-screen-label="05 Set entry" style="width:384px;flex:none;background:var(--s0);border:1px solid var(--line2);border-radius:40px;overflow:hidden;font-family:var(--f-ui);color:var(--t1);display:flex;flex-direction:column;min-height:832px;box-shadow:0 30px 70px -34px #000">
+      <div style="flex:1;opacity:.2;padding:38px 22px 0">
+        <div style="display:flex;justify-content:space-between;align-items:flex-end"><div style="font:700 19px var(--f-ui)">Push · A</div><div style="font:600 15px var(--f-num);color:var(--t2)">42:18</div></div>
+        <div style="font:700 18px var(--f-ui);margin-top:26px">Barbell bench press</div>
+        <div style="margin-top:16px;display:flex;flex-direction:column;gap:10px">
+          <div style="display:grid;grid-template-columns:24px 1fr 1fr;gap:8px;font:700 16px var(--f-num);color:var(--t2)"><span style="font-size:10px">1</span><span style="text-align:center">60.0</span><span style="text-align:center">10</span></div>
+          <div style="display:grid;grid-template-columns:24px 1fr 1fr;gap:8px;font:700 16px var(--f-num);color:var(--t2)"><span style="font-size:10px">2</span><span style="text-align:center">80.0</span><span style="text-align:center">8</span></div>
+        </div>
+      </div>
+      <div style="background:var(--s1);border-top:1px solid var(--line2);border-radius:22px 22px 0 0;padding:14px 18px 30px">
+        <div style="width:34px;height:3px;background:var(--line2);border-radius:2px;margin:0 auto 16px"></div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline">
+          <span style="font:600 10.5px var(--f-num);letter-spacing:.14em;color:var(--t2)">BENCH · SET 3</span>
+          <span style="font:600 9.5px var(--f-num);letter-spacing:.1em;color:var(--t3)">LAST 82.5 × 8</span>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:14px">
+          <div style="flex:1;border:1px solid var(--acc);border-radius:11px;background:var(--sin);padding:12px 14px">
+            <div style="font:600 8px var(--f-num);letter-spacing:.2em;color:var(--acc)">KG</div>
+            <div style="display:flex;align-items:baseline;gap:3px;margin-top:6px"><span style="font:700 30px var(--f-num);color:var(--t1)">85.0</span><span style="width:1px;height:24px;background:var(--acc);animation:led 1.1s steps(1) infinite"></span></div>
+          </div>
+          <div style="flex:1;border:1px solid var(--line2);border-radius:11px;padding:12px 14px">
+            <div style="font:600 8px var(--f-num);letter-spacing:.2em;color:var(--t3)">REPS</div>
+            <div style="font:700 30px var(--f-num);color:var(--t2);margin-top:6px">8</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:7px;margin-top:12px">
+          <sc-for list="{{ quickSteps }}" as="q" hint-placeholder-count="4">
+            <div style="flex:1;text-align:center;padding:9px 0;border:1px solid var(--line2);border-radius:8px;font:600 10px var(--f-num);color:var(--t2)">{{ q }}</div>
+          </sc-for>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:12px">
+          <sc-for list="{{ keypad }}" as="k" hint-placeholder-count="12">
+            <div style="height:52px;display:grid;place-items:center;background:var(--key);border:1px solid var(--line2);border-radius:10px;font:600 21px var(--f-num);color:{{ k.color }}">{{ k.label }}</div>
+          </sc-for>
+        </div>
+        <div style="height:52px;display:grid;place-items:center;background:var(--key);border:1px solid var(--acc-30);border-radius:11px;font:600 11px var(--f-ui);letter-spacing:.14em;color:var(--acc);margin-top:12px">LOG SET</div>
+        <div style="text-align:center;font:9.5px var(--f-num);letter-spacing:.1em;color:var(--t3);margin-top:14px">PLATES PER SIDE · 20 + 15 + 2.5</div>
+      </div>
+    </div>
+    <sc-if value="{{ showCaptions }}" hint-placeholder-val="{{ true }}"><div style="max-width:384px;font:10.5px/1.6 var(--f-num);color:var(--t3)">Tap a number to open this. ±2.5 covers most sessions without the keypad at all; plate math is shown, never asked for.</div></sc-if>
+  </div>
+
+  <!-- 06 REST -->
+  <div id="m-rest" style="display:flex;flex-direction:column;gap:12px;scroll-margin-top:20px">
+    <div style="display:flex;align-items:baseline;gap:10px"><span style="font:600 10px var(--f-num);color:var(--t3)">06</span><span style="font:600 10px var(--f-num);letter-spacing:.2em;color:var(--t2)">BETWEEN SETS</span></div>
+    <div data-screen-label="06 Rest" style="width:384px;flex:none;background:var(--s0);border:1px solid var(--line2);border-radius:40px;overflow:hidden;font-family:var(--f-ui);color:var(--t1);display:flex;flex-direction:column;min-height:832px;box-shadow:0 30px 70px -34px #000">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;padding:38px 22px 0">
+        <div style="font:700 19px var(--f-ui)">Push · A</div>
+        <div style="font:600 15px var(--f-num);color:var(--t2)">44:02</div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 22px">
+        <div style="font:600 13px var(--f-num);letter-spacing:.36em;color:var(--t3)">REST</div>
+        <div style="font:700 132px/1 var(--f-num);letter-spacing:-.03em;color:var(--acc);margin-top:16px">1:24</div>
+        <div style="width:100%;height:1px;background:var(--line);margin-top:34px"><div style="width:44%;height:1px;background:var(--acc)"></div></div>
+        <div style="display:flex;gap:9px;margin-top:26px;width:100%">
+          <div style="flex:1;height:44px;display:grid;place-items:center;border:1px solid var(--line2);border-radius:10px;font:600 10px var(--f-num);letter-spacing:.1em;color:var(--t2)">+30s</div>
+          <div style="flex:1;height:44px;display:grid;place-items:center;border:1px solid var(--line2);border-radius:10px;font:600 10px var(--f-num);letter-spacing:.1em;color:var(--t2)">−30s</div>
+          <div style="flex:1;height:44px;display:grid;place-items:center;border:1px solid var(--acc-30);border-radius:10px;font:600 10px var(--f-num);letter-spacing:.1em;color:var(--acc)">SKIP</div>
+        </div>
+      </div>
+      <div style="padding:0 22px 30px">
+        <div style="border-top:1px solid var(--line);padding-top:18px">
+          <div style="font:600 8px var(--f-num);letter-spacing:.26em;color:var(--t3)">JUST LOGGED</div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:11px">
+            <span style="font:700 19px var(--f-num)">85.0 × 8</span>
+            <span style="font:600 10px var(--f-num);letter-spacing:.12em;color:var(--acc)">▲ BEST · UNDO</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:22px;padding-top:16px;border-top:1px solid var(--line)">
+            <div><div style="font:600 8px var(--f-num);letter-spacing:.26em;color:var(--t3)">UP NEXT</div><div style="font:600 13.5px var(--f-ui);margin-top:8px">Bench · set 4 of 4</div></div>
+            <div style="font:700 16px var(--f-num);color:var(--t2)">85.0 × 8</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <sc-if value="{{ showCaptions }}" hint-placeholder-val="{{ true }}"><div style="max-width:384px;font:10.5px/1.6 var(--f-num);color:var(--t3)">Auto-starts on ✓, readable at arm's length on a bench. Undo lives here, where a mistyped set is still fresh.</div></sc-if>
+  </div>
+
+  <!-- 07 FINISH -->
+  <div id="m-finish" style="display:flex;flex-direction:column;gap:12px;scroll-margin-top:20px">
+    <div style="display:flex;align-items:baseline;gap:10px"><span style="font:600 10px var(--f-num);color:var(--t3)">07</span><span style="font:600 10px var(--f-num);letter-spacing:.2em;color:var(--t2)">FINISH · SUMMARY</span></div>
+    <div data-screen-label="07 Finish summary" style="width:384px;flex:none;background:var(--s0);border:1px solid var(--line2);border-radius:40px;overflow:hidden;font-family:var(--f-ui);color:var(--t1);display:flex;flex-direction:column;min-height:832px;box-shadow:0 30px 70px -34px #000">
+      <div style="padding:38px 22px 0">
+        <div style="font:600 9px var(--f-num);letter-spacing:.26em;color:var(--ok)">WORKOUT SAVED</div>
+        <div style="font:700 22px var(--f-ui);margin-top:10px">Push · A</div>
+        <div style="font:600 10.5px var(--f-num);letter-spacing:.1em;color:var(--t3);margin-top:7px">SAT 19 JUL · 9:41 — 10:28</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--line);margin:26px 0 0">
+        <sc-for list="{{ summaryStats }}" as="s" hint-placeholder-count="3">
+          <div style="background:var(--s0);padding:18px 16px">
+            <div style="font:600 8px var(--f-num);letter-spacing:.2em;color:var(--t3)">{{ s.label }}</div>
+            <div style="font:700 23px var(--f-num);color:{{ s.color }};margin-top:9px">{{ s.value }}</div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="padding:26px 22px 0">
+        <div style="font:600 8px var(--f-num);letter-spacing:.26em;color:var(--acc)">NEW BESTS</div>
+        <sc-for list="{{ summaryPRs }}" as="p" hint-placeholder-count="2">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;padding:14px 0;border-bottom:1px solid var(--line)">
+            <span style="font:600 13px var(--f-ui)">{{ p.name }}</span>
+            <span style="font:700 14px var(--f-num);color:var(--acc)">{{ p.val }}</span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="flex:1;padding:26px 22px 0">
+        <div style="font:600 8px var(--f-num);letter-spacing:.26em;color:var(--t3)">SESSION</div>
+        <sc-for list="{{ summaryBlocks }}" as="b" hint-placeholder-count="5">
+          <div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:baseline;padding:13px 0;border-bottom:1px solid var(--line)">
+            <span style="font:600 12.5px var(--f-ui);color:var(--t2)">{{ b.name }}</span>
+            <span style="font:600 11.5px var(--f-num);color:var(--t3)">{{ b.sets }}</span>
+          </div>
+        </sc-for>
+        <div style="margin-top:20px;padding:13px 14px;border:1px dashed var(--line2);border-radius:10px;font:11px var(--f-num);color:var(--t3)">+ add a note about this session</div>
+      </div>
+      <div style="padding:22px 22px 30px">
+        <div style="height:50px;display:grid;place-items:center;background:var(--key);border:1px solid var(--acc-30);border-radius:11px;font:600 11px var(--f-ui);letter-spacing:.14em;color:var(--acc)">DONE</div>
+      </div>
+    </div>
+    <sc-if value="{{ showCaptions }}" hint-placeholder-val="{{ true }}"><div style="max-width:384px;font:10.5px/1.6 var(--f-num);color:var(--t3)">The payoff screen the current build skips — finishing drops you straight home. Bests are called out once, here.</div></sc-if>
+  </div>
+
+  <div style="flex:0 0 100%;display:flex;align-items:baseline;gap:16px;padding-top:14px">
+    <span style="font:600 9px var(--f-num);letter-spacing:.32em;color:var(--t2)">LOOK BACK</span>
+    <div style="flex:1;height:1px;background:var(--line)"></div>
+    <span style="font:600 9px var(--f-num);letter-spacing:.14em;color:var(--t3)">08—11</span>
+  </div>
+
+  <!-- 08 HISTORY -->
+  <div id="m-history" style="display:flex;flex-direction:column;gap:12px;scroll-margin-top:20px">
+    <div style="display:flex;align-items:baseline;gap:10px"><span style="font:600 10px var(--f-num);color:var(--t3)">08</span><span style="font:600 10px var(--f-num);letter-spacing:.2em;color:var(--t2)">HISTORY</span></div>
+    <div data-screen-label="08 History" style="width:384px;flex:none;background:var(--s0);border:1px solid var(--line2);border-radius:40px;overflow:hidden;font-family:var(--f-ui);color:var(--t1);display:flex;flex-direction:column;min-height:832px;box-shadow:0 30px 70px -34px #000">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;padding:38px 22px 0">
+        <div style="font:700 22px var(--f-ui)">History</div>
+        <div style="font:600 9.5px var(--f-num);letter-spacing:.14em;color:var(--t3)">41 WORKOUTS</div>
+      </div>
+      <div style="display:flex;gap:26px;padding:24px 22px 0">
+        <div><div style="font:600 8px var(--f-num);letter-spacing:.24em;color:var(--t3)">THIS WEEK</div><div style="font:700 21px var(--f-num);margin-top:7px">4</div></div>
+        <div><div style="font:600 8px var(--f-num);letter-spacing:.24em;color:var(--t3)">VOLUME</div><div style="font:700 21px var(--f-num);margin-top:7px">18.2<span style="font-size:11px;color:var(--t3)">T</span></div></div>
+        <div><div style="font:600 8px var(--f-num);letter-spacing:.24em;color:var(--t3)">AVG SESSION</div><div style="font:700 21px var(--f-num);color:var(--t2);margin-top:7px">48<span style="font-size:11px;color:var(--t3)">MIN</span></div></div>
+      </div>
+      <div style="flex:1;padding:26px 22px 0;display:flex;flex-direction:column">
+        <div style="font:600 8px var(--f-num);letter-spacing:.26em;color:var(--t3);padding-bottom:4px">JULY 2026</div>
+        <sc-for list="{{ historyRows }}" as="w" hint-placeholder-count="7">
+          <div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:baseline;padding:14px 0;border-bottom:1px solid var(--line)">
+            <div><div style="font:600 13.5px var(--f-ui);color:{{ w.nameColor }}">{{ w.name }}</div><div style="font:9.5px var(--f-num);letter-spacing:.08em;color:var(--t3);margin-top:5px">{{ w.date }} · {{ w.meta }}</div></div>
+            <div style="text-align:right"><div style="font:700 14px var(--f-num);color:var(--t2)">{{ w.sets }}</div><div style="font:9px var(--f-num);color:var(--t3);margin-top:5px">{{ w.dur }}</div></div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="display:flex;border-top:1px solid var(--line);padding:14px 0 30px">
+        <div style="flex:1;text-align:center;font:600 11px var(--f-num);letter-spacing:.14em;color:var(--t3)">HOME</div>
+        <div style="flex:1;text-align:center"><div style="font:700 11px var(--f-num);letter-spacing:.14em;color:var(--acc)">HISTORY</div><div style="width:16px;height:1px;background:var(--acc);margin:6px auto 0"></div></div>
+        <div style="flex:1;text-align:center;font:600 11px var(--f-num);letter-spacing:.14em;color:var(--t3)">SETTINGS</div>
+      </div>
+    </div>
+    <sc-if value="{{ showCaptions }}" hint-placeholder-val="{{ true }}"><div style="max-width:384px;font:10.5px/1.6 var(--f-num);color:var(--t3)">Newest first, infinite. Three numbers answer "am I still showing up?".</div></sc-if>
+  </div>
+
+  <!-- 09 PAST WORKOUT -->
+  <div id="m-workout" style="display:flex;flex-direction:column;gap:12px;scroll-margin-top:20px">
+    <div style="display:flex;align-items:baseline;gap:10px"><span style="font:600 10px var(--f-num);color:var(--t3)">09</span><span style="font:600 10px var(--f-num);letter-spacing:.2em;color:var(--t2)">PAST WORKOUT</span></div>
+    <div data-screen-label="09 Past workout" style="width:384px;flex:none;background:var(--s0);border:1px solid var(--line2);border-radius:40px;overflow:hidden;font-family:var(--f-ui);color:var(--t1);display:flex;flex-direction:column;min-height:832px;box-shadow:0 30px 70px -34px #000">
+      <div style="padding:38px 22px 0">
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:600 9.5px var(--f-num);letter-spacing:.16em;color:var(--t3)">← HISTORY</span><span style="font:600 9.5px var(--f-num);letter-spacing:.12em;color:var(--t3)">EDIT</span></div>
+        <div style="font:700 21px var(--f-ui);margin-top:18px">Thu 17 July</div>
+        <div style="font:600 10.5px var(--f-num);letter-spacing:.1em;color:var(--t2);margin-top:7px">PUSH · A · 47 MIN · 5,340 KG</div>
+        <div style="font:400 11.5px/1.6 var(--f-num);color:var(--t3);margin-top:12px;padding-left:11px;border-left:1px solid var(--line2)">left shoulder cranky on the third set, dropped the weight</div>
+      </div>
+      <div style="flex:1;padding:26px 22px 30px;display:flex;flex-direction:column;gap:22px">
+        <sc-for list="{{ workoutBlocks }}" as="b" hint-placeholder-count="3">
+          <div style="display:flex;flex-direction:column;gap:2px">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;padding-bottom:8px;border-bottom:1px solid var(--line2)">
+              <span style="font:600 12px var(--f-num);letter-spacing:.1em;color:var(--t1)">{{ b.name }}</span>
+              <span style="font:600 9px var(--f-num);letter-spacing:.1em;color:var(--t3)">{{ b.top }}</span>
+            </div>
+            <sc-for list="{{ b.sets }}" as="s" hint-placeholder-count="3">
+              <div style="display:grid;grid-template-columns:20px 1fr auto;gap:10px;align-items:baseline;padding:8px 0;border-bottom:1px dashed var(--line)">
+                <span style="font:600 9.5px var(--f-num);color:var(--t3)">{{ s.n }}</span>
+                <span style="font:700 15px var(--f-num);color:{{ s.color }}">{{ s.val }}</span>
+                <span style="font:600 9px var(--f-num);letter-spacing:.1em;color:{{ s.tagColor }}">{{ s.tag }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    <sc-if value="{{ showCaptions }}" hint-placeholder-val="{{ true }}"><div style="max-width:384px;font:10.5px/1.6 var(--f-num);color:var(--t3)">Read-only by default, editable if you fat-fingered a number. Same typography as the live set grid.</div></sc-if>
+  </div>
+
+  <!-- 10 EXERCISE HISTORY -->
+  <div id="m-exercise" style="display:flex;flex-direction:column;gap:12px;scroll-margin-top:20px">
+    <div style="display:flex;align-items:baseline;gap:10px"><span style="font:600 10px var(--f-num);color:var(--t3)">10</span><span style="font:600 10px var(--f-num);letter-spacing:.2em;color:var(--t2)">EXERCISE PROGRESS</span></div>
+    <div data-screen-label="10 Exercise progress" style="width:384px;flex:none;background:var(--s0);border:1px solid var(--line2);border-radius:40px;overflow:hidden;font-family:var(--f-ui);color:var(--t1);display:flex;flex-direction:column;min-height:832px;box-shadow:0 30px 70px -34px #000">
+      <div style="padding:38px 22px 0">
+        <div style="font:600 9.5px var(--f-num);letter-spacing:.16em;color:var(--t3)">← LIBRARY</div>
+        <div style="font:700 21px var(--f-ui);margin-top:18px">Barbell bench press</div>
+        <div style="font:600 9.5px var(--f-num);letter-spacing:.14em;color:var(--t3);margin-top:7px">CHEST · BARBELL</div>
+      </div>
+      <div style="display:flex;gap:28px;padding:24px 22px 0">
+        <div><div style="font:600 8px var(--f-num);letter-spacing:.24em;color:var(--t3)">BEST</div><div style="font:700 20px var(--f-num);margin-top:7px">85<span style="font-size:11px;color:var(--t3)">×8</span></div></div>
+        <div><div style="font:600 8px var(--f-num);letter-spacing:.24em;color:var(--t3)">SESSIONS</div><div style="font:700 20px var(--f-num);margin-top:7px">24</div></div>
+        <div><div style="font:600 8px var(--f-num);letter-spacing:.24em;color:var(--t3)">LAST</div><div style="font:700 20px var(--f-num);color:var(--t2);margin-top:7px">3D</div></div>
+      </div>
+      <div style="padding:28px 22px 0">
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:600 8px var(--f-num);letter-spacing:.26em;color:var(--t3)">TOP SET · 12 WEEKS</span><span style="font:600 8px var(--f-num);color:var(--t3)">70 — 85 KG</span></div>
+        <div style="display:flex;align-items:flex-end;gap:5px;height:88px;margin-top:14px;border-bottom:1px solid var(--line)">
+          <sc-for list="{{ chartBars }}" as="c" hint-placeholder-count="12"><div style="flex:1;height:{{ c.h }};background:{{ c.bg }};border-top:1px solid {{ c.top }}"></div></sc-for>
+        </div>
+      </div>
+      <div style="flex:1;padding:26px 22px 30px;display:flex;flex-direction:column">
+        <div style="font:600 8px var(--f-num);letter-spacing:.26em;color:var(--t3);padding-bottom:6px">EVERY SESSION</div>
+        <sc-for list="{{ exSessions }}" as="s" hint-placeholder-count="4">
+          <div style="display:grid;grid-template-columns:64px 1fr auto;gap:10px;align-items:baseline;padding:13px 0;border-bottom:1px solid var(--line)">
+            <span style="font:600 9.5px var(--f-num);letter-spacing:.06em;color:var(--t3)">{{ s.date }}</span>
+            <span style="font:600 12.5px var(--f-num);color:var(--t2)">{{ s.sets }}</span>
+            <span style="font:600 9px var(--f-num);letter-spacing:.1em;color:{{ s.tagColor }}">{{ s.tag }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    <sc-if value="{{ showCaptions }}" hint-placeholder-val="{{ true }}"><div style="max-width:384px;font:10.5px/1.6 var(--f-num);color:var(--t3)">The "am I getting stronger" screen. Reachable from the library, a past workout, or the exercise title mid-set.</div></sc-if>
+  </div>
+
+  <!-- 11 LIBRARY -->
+  <div id="m-library" style="display:flex;flex-direction:column;gap:12px;scroll-margin-top:20px">
+    <div style="display:flex;align-items:baseline;gap:10px"><span style="font:600 10px var(--f-num);color:var(--t3)">11</span><span style="font:600 10px var(--f-num);letter-spacing:.2em;color:var(--t2)">EXERCISE LIBRARY</span></div>
+    <div data-screen-label="11 Library" style="width:384px;flex:none;background:var(--s0);border:1px solid var(--line2);border-radius:40px;overflow:hidden;font-family:var(--f-ui);color:var(--t1);display:flex;flex-direction:column;min-height:832px;box-shadow:0 30px 70px -34px #000">
+      <div style="padding:38px 22px 0">
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><div style="font:700 21px var(--f-ui)">Library</div><div style="font:600 9.5px var(--f-num);letter-spacing:.14em;color:var(--t3)">873 EXERCISES</div></div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:20px;padding-bottom:11px;border-bottom:1px solid var(--acc-30)">
+          <span style="font:600 11px var(--f-num);color:var(--acc)">/</span>
+          <span style="font:500 15px var(--f-num);color:var(--t1)">bench</span>
+          <span style="width:1px;height:15px;background:var(--acc);animation:led 1.1s steps(1) infinite"></span>
+          <span style="margin-left:auto;font:600 9px var(--f-num);letter-spacing:.1em;color:var(--t3)">14 MATCHES</span>
+        </div>
+      </div>
+      <div style="flex:1;padding:6px 22px 30px;display:flex;flex-direction:column">
+        <sc-for list="{{ libRows }}" as="e" hint-placeholder-count="9">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:14px 0;border-bottom:1px solid var(--line)">
+            <div><div style="font:600 13.5px var(--f-ui);color:var(--t1)">{{ e.name }}</div><div style="font:9.5px var(--f-num);letter-spacing:.1em;color:var(--t3);margin-top:5px">{{ e.meta }}</div></div>
+            <div style="font:600 9px var(--f-num);letter-spacing:.1em;color:{{ e.tagColor }};white-space:nowrap">{{ e.tag }}</div>
+          </div>
+        </sc-for>
+        <div style="margin-top:20px;font:500 11px var(--f-num);color:var(--acc)">+ create "bench" as custom exercise</div>
+      </div>
+    </div>
+    <sc-if value="{{ showCaptions }}" hint-placeholder-val="{{ true }}"><div style="max-width:384px;font:10.5px/1.6 var(--f-num);color:var(--t3)">Search-first over the 873 seeded names. Tapping a row goes to progress, not to a description.</div></sc-if>
+  </div>
+
+</div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1500,&quot;height&quot;:950},&quot;accent&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#A3E635&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;#4FD8FF&quot;,&quot;#A3E635&quot;,&quot;#FF8A3C&quot;,&quot;#C4B5FD&quot;],&quot;section&quot;:&quot;Instrument&quot;},&quot;prefillFromLastSession&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Logging&quot;},&quot;showCaptions&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Layout&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const showCaptions = this.props.showCaptions ?? true;
+    const prevFill = this.props.prefillFromLastSession ?? true;
+    const dim = "var(--t2)";
+    return {
+      showCaptions,
+      accentVar: this.props.accent ?? "#4FD8FF",
+      weekStrip: [
+        {day:"M", bg:"var(--line2)"},
+        {day:"T", bg:"var(--acc-30)"},
+        {day:"W", bg:"var(--line2)"},
+        {day:"T", bg:"var(--acc-30)"},
+        {day:"F", bg:"var(--acc-30)"},
+        {day:"S", bg:"var(--acc)"},
+        {day:"S", bg:"var(--line2)"}
+      ],
+      routinesList: [
+        {name:"Push · A", meta:"5 EXERCISES · 3 DAYS AGO"},
+        {name:"Pull · B", meta:"6 EXERCISES · 5 DAYS AGO"},
+        {name:"Legs · C", meta:"4 EXERCISES · YESTERDAY"},
+        {name:"Arms · accessory", meta:"5 EXERCISES · 3 WEEKS AGO"}
+      ],
+      routineItems: [
+        {n:"1", name:"Barbell bench press", meta:"CHEST · BARBELL", target:"4 × 6–8", targetColor:"var(--t2)"},
+        {n:"2", name:"Overhead press", meta:"SHOULDERS · BARBELL", target:"3 × 8–10", targetColor:"var(--t2)"},
+        {n:"3", name:"Incline dumbbell press", meta:"CHEST · DUMBBELL", target:"3 × 10–12", targetColor:"var(--t2)"},
+        {n:"4", name:"Cable lateral raise", meta:"SHOULDERS · CABLE", target:"3 × 15", targetColor:"var(--t2)"},
+        {n:"5", name:"Rope triceps extension", meta:"TRICEPS · CABLE", target:"NO TARGET", targetColor:"var(--t3)"}
+      ],
+      pickerRows: [
+        {name:"Incline bench press", meta:"CHEST · BARBELL"},
+        {name:"Incline dumbbell press", meta:"CHEST · DUMBBELL"},
+        {name:"Incline dumbbell fly", meta:"CHEST · DUMBBELL"},
+        {name:"Incline machine press", meta:"CHEST · MACHINE"},
+        {name:"Incline row", meta:"BACK · DUMBBELL"},
+        {name:"Reverse incline curl", meta:"BICEPS · DUMBBELL"}
+      ],
+      exerciseChips: [
+        {n:"1", border:"var(--line2)", color:"var(--t3)"},
+        {n:"2", border:"var(--line2)", color:"var(--t3)"},
+        {n:"3", border:"var(--acc-30)", color:"var(--acc)"},
+        {n:"4", border:"var(--line)", color:"var(--t3)"},
+        {n:"5", border:"var(--line)", color:"var(--t3)"}
+      ],
+      setRows: [
+        {n:"1", prev:"60 × 10", kg:"60.0", reps:"10", check:"✓", rowBg:"transparent",
+         fieldBorder:"transparent", fieldBg:"transparent", valColor:dim, checkBorder:"transparent", checkColor:"var(--ok)"},
+        {n:"2", prev:"80 × 8", kg:"80.0", reps:"8", check:"✓", rowBg:"transparent",
+         fieldBorder:"transparent", fieldBg:"transparent", valColor:dim, checkBorder:"transparent", checkColor:"var(--ok)"},
+        {n:"3", prev:"82.5 × 8", kg: prevFill ? "82.5" : "—", reps: prevFill ? "8" : "—", check:"✓", rowBg:"var(--acc-06)",
+         fieldBorder:"var(--acc)", fieldBg:"var(--sin)", valColor:"var(--t1)", checkBorder:"var(--acc)", checkColor:"var(--acc)"},
+        {n:"4", prev:"82.5 × 7", kg: prevFill ? "82.5" : "—", reps: prevFill ? "7" : "—", check:"✓", rowBg:"transparent",
+         fieldBorder:"var(--line2)", fieldBg:"transparent", valColor:"var(--t3)", checkBorder:"var(--line2)", checkColor:"var(--t3)"}
+      ],
+      quickSteps: ["−2.5","+2.5","SAME AS LAST","⌫"],
+      keypad: [
+        {label:"1",color:"var(--t1)"},{label:"2",color:"var(--t1)"},{label:"3",color:"var(--t1)"},
+        {label:"4",color:"var(--t1)"},{label:"5",color:"var(--t1)"},{label:"6",color:"var(--t1)"},
+        {label:"7",color:"var(--t1)"},{label:"8",color:"var(--t1)"},{label:"9",color:"var(--t1)"},
+        {label:".",color:"var(--t2)"},{label:"0",color:"var(--t1)"},{label:"⌫",color:"var(--t2)"}
+      ],
+      summaryStats: [
+        {label:"DURATION", value:"47m", color:"var(--t1)"},
+        {label:"SETS", value:"18", color:"var(--t1)"},
+        {label:"VOLUME", value:"5.3t", color:"var(--t1)"}
+      ],
+      summaryPRs: [
+        {name:"Barbell bench press", val:"85.0 × 8"},
+        {name:"Cable lateral raise", val:"12.5 × 15"}
+      ],
+      summaryBlocks: [
+        {name:"Barbell bench press", sets:"4 SETS · TOP 85.0"},
+        {name:"Overhead press", sets:"3 SETS · TOP 40.0"},
+        {name:"Incline dumbbell press", sets:"3 SETS · TOP 28.0"},
+        {name:"Cable lateral raise", sets:"4 SETS · TOP 12.5"},
+        {name:"Rope triceps extension", sets:"4 SETS · TOP 25.0"}
+      ],
+      historyRows: [
+        {name:"Push · A", date:"SAT 19 JUL", meta:"5 EXERCISES", sets:"18", dur:"47 MIN", nameColor:"var(--t1)"},
+        {name:"Legs · C", date:"FRI 18 JUL", meta:"4 EXERCISES", sets:"15", dur:"52 MIN", nameColor:"var(--t1)"},
+        {name:"Push · A", date:"THU 17 JUL", meta:"5 EXERCISES", sets:"18", dur:"47 MIN", nameColor:"var(--t1)"},
+        {name:"Pull · B", date:"TUE 15 JUL", meta:"6 EXERCISES", sets:"21", dur:"58 MIN", nameColor:"var(--t1)"},
+        {name:"Empty workout", date:"SUN 13 JUL", meta:"2 EXERCISES", sets:"6", dur:"19 MIN", nameColor:"var(--t2)"},
+        {name:"Push · A", date:"SAT 12 JUL", meta:"5 EXERCISES", sets:"17", dur:"44 MIN", nameColor:"var(--t1)"},
+        {name:"Pull · B", date:"THU 10 JUL", meta:"6 EXERCISES", sets:"20", dur:"55 MIN", nameColor:"var(--t1)"}
+      ],
+      workoutBlocks: [
+        {name:"BARBELL BENCH PRESS", top:"TOP 82.5", sets:[
+          {n:"1", val:"60.0 × 10", tag:"WARMUP", color:"var(--t2)", tagColor:"var(--t3)"},
+          {n:"2", val:"80.0 × 8", tag:"", color:"var(--t1)", tagColor:"var(--t3)"},
+          {n:"3", val:"82.5 × 8", tag:"▲ BEST", color:"var(--t1)", tagColor:"var(--acc)"},
+          {n:"4", val:"75.0 × 8", tag:"DROP", color:"var(--t2)", tagColor:"var(--t3)"}
+        ]},
+        {name:"OVERHEAD PRESS", top:"TOP 40.0", sets:[
+          {n:"1", val:"40.0 × 10", tag:"", color:"var(--t1)", tagColor:"var(--t3)"},
+          {n:"2", val:"40.0 × 10", tag:"", color:"var(--t1)", tagColor:"var(--t3)"},
+          {n:"3", val:"40.0 × 8", tag:"", color:"var(--t2)", tagColor:"var(--t3)"}
+        ]},
+        {name:"CABLE LATERAL RAISE", top:"TOP 12.5", sets:[
+          {n:"1", val:"12.5 × 15", tag:"", color:"var(--t1)", tagColor:"var(--t3)"},
+          {n:"2", val:"12.5 × 14", tag:"", color:"var(--t2)", tagColor:"var(--t3)"}
+        ]}
+      ],
+      chartBars: [
+        {h:"38%",bg:"var(--s1)",top:"var(--line2)"},
+        {h:"44%",bg:"var(--s1)",top:"var(--line2)"},
+        {h:"42%",bg:"var(--s1)",top:"var(--line2)"},
+        {h:"52%",bg:"var(--s1)",top:"var(--line2)"},
+        {h:"58%",bg:"var(--s1)",top:"var(--line2)"},
+        {h:"55%",bg:"var(--s1)",top:"var(--line2)"},
+        {h:"66%",bg:"var(--s1)",top:"var(--line2)"},
+        {h:"72%",bg:"var(--s1)",top:"var(--line2)"},
+        {h:"70%",bg:"var(--s1)",top:"var(--line2)"},
+        {h:"84%",bg:"var(--s1)",top:"var(--line2)"},
+        {h:"88%",bg:"var(--acc-06)",top:"var(--acc-30)"},
+        {h:"100%",bg:"var(--acc-14)",top:"var(--acc)"}
+      ],
+      exSessions: [
+        {date:"SAT 19 JUL", sets:"60×10 · 80×8 · 85×8 · 75×8", tag:"▲ BEST", tagColor:"var(--acc)"},
+        {date:"THU 17 JUL", sets:"60×10 · 80×8 · 82.5×8 · 75×8", tag:"", tagColor:"var(--t3)"},
+        {date:"SAT 12 JUL", sets:"60×10 · 80×8 · 80×8 · 72.5×8", tag:"", tagColor:"var(--t3)"},
+        {date:"WED 09 JUL", sets:"57.5×10 · 77.5×8 · 80×7", tag:"", tagColor:"var(--t3)"}
+      ],
+      libRows: [
+        {name:"Barbell bench press", meta:"CHEST · BARBELL", tag:"24 SESSIONS", tagColor:"var(--t3)"},
+        {name:"Incline bench press", meta:"CHEST · BARBELL", tag:"11 SESSIONS", tagColor:"var(--t3)"},
+        {name:"Dumbbell bench press", meta:"CHEST · DUMBBELL", tag:"6 SESSIONS", tagColor:"var(--t3)"},
+        {name:"Close-grip bench press", meta:"TRICEPS · BARBELL", tag:"2 SESSIONS", tagColor:"var(--t3)"},
+        {name:"Smith machine bench", meta:"CHEST · MACHINE", tag:"", tagColor:"var(--t3)"},
+        {name:"Bench dip", meta:"TRICEPS · BODYWEIGHT", tag:"", tagColor:"var(--t3)"},
+        {name:"Floor press", meta:"CHEST · BARBELL", tag:"", tagColor:"var(--t3)"},
+        {name:"Paused bench press", meta:"CHEST · BARBELL", tag:"CUSTOM", tagColor:"var(--acc)"},
+        {name:"Reverse-grip bench", meta:"CHEST · BARBELL", tag:"", tagColor:"var(--t3)"}
+      ]
+    };
+  }
+}
+
+</script>
+</body>
+</html>

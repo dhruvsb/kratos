@@ -21,12 +21,23 @@ export const profileSchema = z.object({
 });
 export type Profile = z.infer<typeof profileSchema>;
 
+export const exerciseModalitySchema = z.enum([
+  'weight_reps',
+  'bodyweight_reps',
+  'time',
+  'distance_time',
+]);
+export type ExerciseModality = z.infer<typeof exerciseModalitySchema>;
+
 export const exerciseSchema = z.object({
   id: z.string().uuid(),
   canonical_name: z.string(),
-  category: z.string().nullable(),
   equipment: z.string().nullable(),
-  primary_muscle: z.string().nullable(),
+  primary_muscles: z.array(z.string()),
+  secondary_muscles: z.array(z.string()),
+  body_region: z.array(z.string()),
+  mechanic: z.enum(['compound', 'isolation']).nullable(),
+  modality: exerciseModalitySchema,
   is_custom: z.boolean(),
   created_by: z.string().uuid().nullable(),
   created_at: z.string(),

@@ -1,0 +1,2644 @@
+[
+  {
+    "canonical_name": "Barbell Bench Press",
+    "primary_muscles": [
+      "chest"
+    ],
+    "secondary_muscles": [
+      "triceps",
+      "shoulders"
+    ],
+    "body_region": [
+      "Chest"
+    ],
+    "equipment": "barbell",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": [
+      "bench",
+      "flat bench press"
+    ]
+  },
+  {
+    "canonical_name": "Incline Barbell Bench Press",
+    "primary_muscles": [
+      "chest"
+    ],
+    "secondary_muscles": [
+      "shoulders",
+      "triceps"
+    ],
+    "body_region": [
+      "Chest"
+    ],
+    "equipment": "barbell",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": [
+      "incline bench"
+    ]
+  },
+  {
+    "canonical_name": "Decline Barbell Bench Press",
+    "primary_muscles": [
+      "chest"
+    ],
+    "secondary_muscles": [
+      "triceps",
+      "shoulders"
+    ],
+    "body_region": [
+      "Chest"
+    ],
+    "equipment": "barbell",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": [
+      "decline bench"
+    ]
+  },
+  {
+    "canonical_name": "Dumbbell Bench Press",
+    "primary_muscles": [
+      "chest"
+    ],
+    "secondary_muscles": [
+      "triceps",
+      "shoulders"
+    ],
+    "body_region": [
+      "Chest"
+    ],
+    "equipment": "dumbbell",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": [
+      "db bench",
+      "flat db press"
+    ]
+  },
+  {
+    "canonical_name": "Incline Dumbbell Press",
+    "primary_muscles": [
+      "chest"
+    ],
+    "secondary_muscles": [
+      "shoulders",
+      "triceps"
+    ],
+    "body_region": [
+      "Chest"
+    ],
+    "equipment": "dumbbell",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": [
+      "incline db press"
+    ]
+  },
+  {
+    "canonical_name": "Machine Chest Press",
+    "primary_muscles": [
+      "chest"
+    ],
+    "secondary_muscles": [
+      "triceps",
+      "shoulders"
+    ],
+    "body_region": [
+      "Chest"
+    ],
+    "equipment": "machine",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": [
+      "chest press machine"
+    ]
+  },
+  {
+    "canonical_name": "Dumbbell Fly",
+    "primary_muscles": [
+      "chest"
+    ],
+    "secondary_muscles": [
+      "shoulders"
+    ],
+    "body_region": [
+      "Chest"
+    ],
+    "equipment": "dumbbell",
+    "mechanic": "isolation",
+    "modality": "weight_reps",
+    "aliases": [
+      "chest fly",
+      "db fly"
+    ]
+  },
+  {
+    "canonical_name": "Incline Dumbbell Fly",
+    "primary_muscles": [
+      "chest"
+    ],
+    "secondary_muscles": [
+      "shoulders"
+    ],
+    "body_region": [
+      "Chest"
+    ],
+    "equipment": "dumbbell",
+    "mechanic": "isolation",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Cable Crossover",
+    "primary_muscles": [
+      "chest"
+    ],
+    "secondary_muscles": [
+      "shoulders"
+    ],
+    "body_region": [
+      "Chest"
+    ],
+    "equipment": "cable",
+    "mechanic": "isolation",
+    "modality": "weight_reps",
+    "aliases": [
+      "cable fly"
+    ]
+  },
+  {
+    "canonical_name": "Pec Deck",
+    "primary_muscles": [
+      "chest"
+    ],
+    "secondary_muscles": [],
+    "body_region": [
+      "Chest"
+    ],
+    "equipment": "machine",
+    "mechanic": "isolation",
+    "modality": "weight_reps",
+    "aliases": [
+      "machine fly",
+      "pec deck fly"
+    ]
+  },
+  {
+    "canonical_name": "Push-Up",
+    "primary_muscles": [
+      "chest"
+    ],
+    "secondary_muscles": [
+      "triceps",
+      "shoulders",
+      "abdominals"
+    ],
+    "body_region": [
+      "Chest"
+    ],
+    "equipment": "body only",
+    "mechanic": "compound",
+    "modality": "bodyweight_reps",
+    "aliases": [
+      "pushup",
+      "press up"
+    ]
+  },
+  {
+    "canonical_name": "Chest Dip",
+    "primary_muscles": [
+      "chest"
+    ],
+    "secondary_muscles": [
+      "triceps",
+      "shoulders"
+    ],
+    "body_region": [
+      "Chest"
+    ],
+    "equipment": "body only",
+    "mechanic": "compound",
+    "modality": "bodyweight_reps",
+    "aliases": [
+      "dips",
+      "chest dips"
+    ]
+  },
+  {
+    "canonical_name": "Dumbbell Pullover",
+    "primary_muscles": [
+      "chest"
+    ],
+    "secondary_muscles": [
+      "lats",
+      "triceps"
+    ],
+    "body_region": [
+      "Chest"
+    ],
+    "equipment": "dumbbell",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": [
+      "pullover"
+    ]
+  },
+  {
+    "canonical_name": "Diamond Push-Up",
+    "primary_muscles": [
+      "triceps"
+    ],
+    "secondary_muscles": [
+      "chest",
+      "shoulders"
+    ],
+    "body_region": [
+      "Arms"
+    ],
+    "equipment": "body only",
+    "mechanic": "compound",
+    "modality": "bodyweight_reps",
+    "aliases": [
+      "close grip pushup"
+    ]
+  },
+  {
+    "canonical_name": "Deadlift",
+    "primary_muscles": [
+      "glutes",
+      "hamstrings",
+      "lower back"
+    ],
+    "secondary_muscles": [
+      "quadriceps",
+      "traps",
+      "forearms",
+      "lats"
+    ],
+    "body_region": [
+      "Legs",
+      "Back"
+    ],
+    "equipment": "barbell",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": [
+      "conventional deadlift",
+      "dl"
+    ]
+  },
+  {
+    "canonical_name": "Sumo Deadlift",
+    "primary_muscles": [
+      "glutes",
+      "quadriceps",
+      "hamstrings"
+    ],
+    "secondary_muscles": [
+      "adductors",
+      "lower back",
+      "traps",
+      "forearms"
+    ],
+    "body_region": [
+      "Legs"
+    ],
+    "equipment": "barbell",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Romanian Deadlift",
+    "primary_muscles": [
+      "hamstrings",
+      "glutes"
+    ],
+    "secondary_muscles": [
+      "lower back",
+      "forearms"
+    ],
+    "body_region": [
+      "Legs"
+    ],
+    "equipment": "barbell",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": [
+      "rdl"
+    ]
+  },
+  {
+    "canonical_name": "Rack Pull",
+    "primary_muscles": [
+      "lower back",
+      "traps"
+    ],
+    "secondary_muscles": [
+      "glutes",
+      "hamstrings",
+      "forearms"
+    ],
+    "body_region": [
+      "Back"
+    ],
+    "equipment": "barbell",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Pull-Up",
+    "primary_muscles": [
+      "lats"
+    ],
+    "secondary_muscles": [
+      "biceps",
+      "middle back",
+      "forearms"
+    ],
+    "body_region": [
+      "Back"
+    ],
+    "equipment": "body only",
+    "mechanic": "compound",
+    "modality": "bodyweight_reps",
+    "aliases": [
+      "pullup"
+    ]
+  },
+  {
+    "canonical_name": "Chin-Up",
+    "primary_muscles": [
+      "lats",
+      "biceps"
+    ],
+    "secondary_muscles": [
+      "middle back",
+      "forearms"
+    ],
+    "body_region": [
+      "Back",
+      "Arms"
+    ],
+    "equipment": "body only",
+    "mechanic": "compound",
+    "modality": "bodyweight_reps",
+    "aliases": [
+      "chinup"
+    ]
+  },
+  {
+    "canonical_name": "Lat Pulldown",
+    "primary_muscles": [
+      "lats"
+    ],
+    "secondary_muscles": [
+      "biceps",
+      "middle back"
+    ],
+    "body_region": [
+      "Back"
+    ],
+    "equipment": "cable",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": [
+      "pulldown"
+    ]
+  },
+  {
+    "canonical_name": "Close-Grip Lat Pulldown",
+    "primary_muscles": [
+      "lats",
+      "biceps"
+    ],
+    "secondary_muscles": [
+      "middle back"
+    ],
+    "body_region": [
+      "Back",
+      "Arms"
+    ],
+    "equipment": "cable",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Straight-Arm Pulldown",
+    "primary_muscles": [
+      "lats"
+    ],
+    "secondary_muscles": [
+      "triceps"
+    ],
+    "body_region": [
+      "Back"
+    ],
+    "equipment": "cable",
+    "mechanic": "isolation",
+    "modality": "weight_reps",
+    "aliases": [
+      "straight arm pushdown"
+    ]
+  },
+  {
+    "canonical_name": "Bent-Over Barbell Row",
+    "primary_muscles": [
+      "middle back",
+      "lats"
+    ],
+    "secondary_muscles": [
+      "biceps",
+      "lower back",
+      "traps"
+    ],
+    "body_region": [
+      "Back"
+    ],
+    "equipment": "barbell",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": [
+      "barbell row",
+      "bb row"
+    ]
+  },
+  {
+    "canonical_name": "Pendlay Row",
+    "primary_muscles": [
+      "middle back",
+      "lats"
+    ],
+    "secondary_muscles": [
+      "biceps",
+      "traps"
+    ],
+    "body_region": [
+      "Back"
+    ],
+    "equipment": "barbell",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "One-Arm Dumbbell Row",
+    "primary_muscles": [
+      "lats",
+      "middle back"
+    ],
+    "secondary_muscles": [
+      "biceps",
+      "forearms"
+    ],
+    "body_region": [
+      "Back"
+    ],
+    "equipment": "dumbbell",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": [
+      "db row",
+      "single arm row"
+    ]
+  },
+  {
+    "canonical_name": "Seated Cable Row",
+    "primary_muscles": [
+      "middle back",
+      "lats"
+    ],
+    "secondary_muscles": [
+      "biceps",
+      "forearms"
+    ],
+    "body_region": [
+      "Back"
+    ],
+    "equipment": "cable",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": [
+      "cable row"
+    ]
+  },
+  {
+    "canonical_name": "T-Bar Row",
+    "primary_muscles": [
+      "middle back",
+      "lats"
+    ],
+    "secondary_muscles": [
+      "biceps",
+      "traps"
+    ],
+    "body_region": [
+      "Back"
+    ],
+    "equipment": "barbell",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Chest-Supported Row",
+    "primary_muscles": [
+      "middle back",
+      "lats"
+    ],
+    "secondary_muscles": [
+      "biceps"
+    ],
+    "body_region": [
+      "Back"
+    ],
+    "equipment": "machine",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": [
+      "seal row"
+    ]
+  },
+  {
+    "canonical_name": "Machine Row",
+    "primary_muscles": [
+      "middle back",
+      "lats"
+    ],
+    "secondary_muscles": [
+      "biceps"
+    ],
+    "body_region": [
+      "Back"
+    ],
+    "equipment": "machine",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": [
+      "hammer strength row"
+    ]
+  },
+  {
+    "canonical_name": "Inverted Row",
+    "primary_muscles": [
+      "middle back",
+      "lats"
+    ],
+    "secondary_muscles": [
+      "biceps"
+    ],
+    "body_region": [
+      "Back"
+    ],
+    "equipment": "body only",
+    "mechanic": "compound",
+    "modality": "bodyweight_reps",
+    "aliases": [
+      "bodyweight row"
+    ]
+  },
+  {
+    "canonical_name": "Face Pull",
+    "primary_muscles": [
+      "shoulders",
+      "traps"
+    ],
+    "secondary_muscles": [
+      "middle back"
+    ],
+    "body_region": [
+      "Shoulders",
+      "Back"
+    ],
+    "equipment": "cable",
+    "mechanic": "isolation",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Back Extension",
+    "primary_muscles": [
+      "lower back"
+    ],
+    "secondary_muscles": [
+      "glutes",
+      "hamstrings"
+    ],
+    "body_region": [
+      "Back"
+    ],
+    "equipment": "body only",
+    "mechanic": "isolation",
+    "modality": "bodyweight_reps",
+    "aliases": [
+      "hyperextension"
+    ]
+  },
+  {
+    "canonical_name": "Barbell Shrug",
+    "primary_muscles": [
+      "traps"
+    ],
+    "secondary_muscles": [
+      "forearms"
+    ],
+    "body_region": [
+      "Back"
+    ],
+    "equipment": "barbell",
+    "mechanic": "isolation",
+    "modality": "weight_reps",
+    "aliases": [
+      "shrug"
+    ]
+  },
+  {
+    "canonical_name": "Dumbbell Shrug",
+    "primary_muscles": [
+      "traps"
+    ],
+    "secondary_muscles": [
+      "forearms"
+    ],
+    "body_region": [
+      "Back"
+    ],
+    "equipment": "dumbbell",
+    "mechanic": "isolation",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Barbell Back Squat",
+    "primary_muscles": [
+      "quadriceps",
+      "glutes"
+    ],
+    "secondary_muscles": [
+      "hamstrings",
+      "lower back",
+      "adductors"
+    ],
+    "body_region": [
+      "Legs"
+    ],
+    "equipment": "barbell",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": [
+      "squat",
+      "back squat"
+    ]
+  },
+  {
+    "canonical_name": "Front Squat",
+    "primary_muscles": [
+      "quadriceps"
+    ],
+    "secondary_muscles": [
+      "glutes",
+      "abdominals",
+      "lower back"
+    ],
+    "body_region": [
+      "Legs"
+    ],
+    "equipment": "barbell",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Goblet Squat",
+    "primary_muscles": [
+      "quadriceps",
+      "glutes"
+    ],
+    "secondary_muscles": [
+      "abdominals"
+    ],
+    "body_region": [
+      "Legs"
+    ],
+    "equipment": "dumbbell",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Smith Machine Squat",
+    "primary_muscles": [
+      "quadriceps",
+      "glutes"
+    ],
+    "secondary_muscles": [
+      "hamstrings"
+    ],
+    "body_region": [
+      "Legs"
+    ],
+    "equipment": "machine",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Hack Squat",
+    "primary_muscles": [
+      "quadriceps"
+    ],
+    "secondary_muscles": [
+      "glutes",
+      "hamstrings"
+    ],
+    "body_region": [
+      "Legs"
+    ],
+    "equipment": "machine",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Leg Press",
+    "primary_muscles": [
+      "quadriceps",
+      "glutes"
+    ],
+    "secondary_muscles": [
+      "hamstrings"
+    ],
+    "body_region": [
+      "Legs"
+    ],
+    "equipment": "machine",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Bulgarian Split Squat",
+    "primary_muscles": [
+      "quadriceps",
+      "glutes"
+    ],
+    "secondary_muscles": [
+      "hamstrings"
+    ],
+    "body_region": [
+      "Legs"
+    ],
+    "equipment": "dumbbell",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": [
+      "split squat"
+    ]
+  },
+  {
+    "canonical_name": "Walking Lunge",
+    "primary_muscles": [
+      "quadriceps",
+      "glutes"
+    ],
+    "secondary_muscles": [
+      "hamstrings"
+    ],
+    "body_region": [
+      "Legs"
+    ],
+    "equipment": "dumbbell",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": [
+      "lunge"
+    ]
+  },
+  {
+    "canonical_name": "Reverse Lunge",
+    "primary_muscles": [
+      "quadriceps",
+      "glutes"
+    ],
+    "secondary_muscles": [
+      "hamstrings"
+    ],
+    "body_region": [
+      "Legs"
+    ],
+    "equipment": "dumbbell",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Step-Up",
+    "primary_muscles": [
+      "quadriceps",
+      "glutes"
+    ],
+    "secondary_muscles": [
+      "hamstrings"
+    ],
+    "body_region": [
+      "Legs"
+    ],
+    "equipment": "dumbbell",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Leg Extension",
+    "primary_muscles": [
+      "quadriceps"
+    ],
+    "secondary_muscles": [],
+    "body_region": [
+      "Legs"
+    ],
+    "equipment": "machine",
+    "mechanic": "isolation",
+    "modality": "weight_reps",
+    "aliases": [
+      "quad extension"
+    ]
+  },
+  {
+    "canonical_name": "Lying Leg Curl",
+    "primary_muscles": [
+      "hamstrings"
+    ],
+    "secondary_muscles": [],
+    "body_region": [
+      "Legs"
+    ],
+    "equipment": "machine",
+    "mechanic": "isolation",
+    "modality": "weight_reps",
+    "aliases": [
+      "leg curl",
+      "ham curl"
+    ]
+  },
+  {
+    "canonical_name": "Seated Leg Curl",
+    "primary_muscles": [
+      "hamstrings"
+    ],
+    "secondary_muscles": [],
+    "body_region": [
+      "Legs"
+    ],
+    "equipment": "machine",
+    "mechanic": "isolation",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Nordic Hamstring Curl",
+    "primary_muscles": [
+      "hamstrings"
+    ],
+    "secondary_muscles": [
+      "glutes"
+    ],
+    "body_region": [
+      "Legs"
+    ],
+    "equipment": "body only",
+    "mechanic": "isolation",
+    "modality": "bodyweight_reps",
+    "aliases": [
+      "nordic curl"
+    ]
+  },
+  {
+    "canonical_name": "Good Morning",
+    "primary_muscles": [
+      "hamstrings",
+      "lower back"
+    ],
+    "secondary_muscles": [
+      "glutes"
+    ],
+    "body_region": [
+      "Legs",
+      "Back"
+    ],
+    "equipment": "barbell",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Hip Thrust",
+    "primary_muscles": [
+      "glutes"
+    ],
+    "secondary_muscles": [
+      "hamstrings"
+    ],
+    "body_region": [
+      "Legs"
+    ],
+    "equipment": "barbell",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": [
+      "barbell hip thrust"
+    ]
+  },
+  {
+    "canonical_name": "Glute Bridge",
+    "primary_muscles": [
+      "glutes"
+    ],
+    "secondary_muscles": [
+      "hamstrings"
+    ],
+    "body_region": [
+      "Legs"
+    ],
+    "equipment": "body only",
+    "mechanic": "compound",
+    "modality": "bodyweight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Romanian Deadlift (Dumbbell)",
+    "primary_muscles": [
+      "hamstrings",
+      "glutes"
+    ],
+    "secondary_muscles": [
+      "lower back"
+    ],
+    "body_region": [
+      "Legs"
+    ],
+    "equipment": "dumbbell",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": [
+      "db rdl"
+    ]
+  },
+  {
+    "canonical_name": "Single-Leg Deadlift",
+    "primary_muscles": [
+      "hamstrings",
+      "glutes"
+    ],
+    "secondary_muscles": [
+      "lower back",
+      "abdominals"
+    ],
+    "body_region": [
+      "Legs"
+    ],
+    "equipment": "dumbbell",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Sumo Squat",
+    "primary_muscles": [
+      "quadriceps",
+      "glutes",
+      "adductors"
+    ],
+    "secondary_muscles": [
+      "hamstrings"
+    ],
+    "body_region": [
+      "Legs"
+    ],
+    "equipment": "dumbbell",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": [
+      "plie squat"
+    ]
+  },
+  {
+    "canonical_name": "Hip Adduction Machine",
+    "primary_muscles": [
+      "adductors"
+    ],
+    "secondary_muscles": [],
+    "body_region": [
+      "Legs"
+    ],
+    "equipment": "machine",
+    "mechanic": "isolation",
+    "modality": "weight_reps",
+    "aliases": [
+      "inner thigh machine"
+    ]
+  },
+  {
+    "canonical_name": "Hip Abduction Machine",
+    "primary_muscles": [
+      "abductors"
+    ],
+    "secondary_muscles": [],
+    "body_region": [
+      "Legs"
+    ],
+    "equipment": "machine",
+    "mechanic": "isolation",
+    "modality": "weight_reps",
+    "aliases": [
+      "outer thigh machine"
+    ]
+  },
+  {
+    "canonical_name": "Standing Calf Raise",
+    "primary_muscles": [
+      "calves"
+    ],
+    "secondary_muscles": [],
+    "body_region": [
+      "Legs"
+    ],
+    "equipment": "machine",
+    "mechanic": "isolation",
+    "modality": "weight_reps",
+    "aliases": [
+      "calf raise"
+    ]
+  },
+  {
+    "canonical_name": "Seated Calf Raise",
+    "primary_muscles": [
+      "calves"
+    ],
+    "secondary_muscles": [],
+    "body_region": [
+      "Legs"
+    ],
+    "equipment": "machine",
+    "mechanic": "isolation",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Leg Press Calf Raise",
+    "primary_muscles": [
+      "calves"
+    ],
+    "secondary_muscles": [],
+    "body_region": [
+      "Legs"
+    ],
+    "equipment": "machine",
+    "mechanic": "isolation",
+    "modality": "weight_reps",
+    "aliases": [
+      "calf press"
+    ]
+  },
+  {
+    "canonical_name": "Pistol Squat",
+    "primary_muscles": [
+      "quadriceps",
+      "glutes"
+    ],
+    "secondary_muscles": [
+      "hamstrings"
+    ],
+    "body_region": [
+      "Legs"
+    ],
+    "equipment": "body only",
+    "mechanic": "compound",
+    "modality": "bodyweight_reps",
+    "aliases": [
+      "single leg squat"
+    ]
+  },
+  {
+    "canonical_name": "Wall Sit",
+    "primary_muscles": [
+      "quadriceps"
+    ],
+    "secondary_muscles": [
+      "glutes"
+    ],
+    "body_region": [
+      "Legs"
+    ],
+    "equipment": "body only",
+    "mechanic": "isolation",
+    "modality": "time",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Overhead Press",
+    "primary_muscles": [
+      "shoulders"
+    ],
+    "secondary_muscles": [
+      "triceps",
+      "traps"
+    ],
+    "body_region": [
+      "Shoulders"
+    ],
+    "equipment": "barbell",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": [
+      "ohp",
+      "military press",
+      "shoulder press"
+    ]
+  },
+  {
+    "canonical_name": "Seated Dumbbell Shoulder Press",
+    "primary_muscles": [
+      "shoulders"
+    ],
+    "secondary_muscles": [
+      "triceps"
+    ],
+    "body_region": [
+      "Shoulders"
+    ],
+    "equipment": "dumbbell",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": [
+      "db shoulder press"
+    ]
+  },
+  {
+    "canonical_name": "Arnold Press",
+    "primary_muscles": [
+      "shoulders"
+    ],
+    "secondary_muscles": [
+      "triceps"
+    ],
+    "body_region": [
+      "Shoulders"
+    ],
+    "equipment": "dumbbell",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Machine Shoulder Press",
+    "primary_muscles": [
+      "shoulders"
+    ],
+    "secondary_muscles": [
+      "triceps"
+    ],
+    "body_region": [
+      "Shoulders"
+    ],
+    "equipment": "machine",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Push Press",
+    "primary_muscles": [
+      "shoulders"
+    ],
+    "secondary_muscles": [
+      "triceps",
+      "quadriceps"
+    ],
+    "body_region": [
+      "Shoulders"
+    ],
+    "equipment": "barbell",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Dumbbell Lateral Raise",
+    "primary_muscles": [
+      "shoulders"
+    ],
+    "secondary_muscles": [],
+    "body_region": [
+      "Shoulders"
+    ],
+    "equipment": "dumbbell",
+    "mechanic": "isolation",
+    "modality": "weight_reps",
+    "aliases": [
+      "lateral raise",
+      "side raise",
+      "lat raise"
+    ]
+  },
+  {
+    "canonical_name": "Cable Lateral Raise",
+    "primary_muscles": [
+      "shoulders"
+    ],
+    "secondary_muscles": [],
+    "body_region": [
+      "Shoulders"
+    ],
+    "equipment": "cable",
+    "mechanic": "isolation",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Front Raise",
+    "primary_muscles": [
+      "shoulders"
+    ],
+    "secondary_muscles": [],
+    "body_region": [
+      "Shoulders"
+    ],
+    "equipment": "dumbbell",
+    "mechanic": "isolation",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Reverse Fly",
+    "primary_muscles": [
+      "shoulders"
+    ],
+    "secondary_muscles": [
+      "traps",
+      "middle back"
+    ],
+    "body_region": [
+      "Shoulders"
+    ],
+    "equipment": "dumbbell",
+    "mechanic": "isolation",
+    "modality": "weight_reps",
+    "aliases": [
+      "rear delt fly",
+      "bent over lateral raise"
+    ]
+  },
+  {
+    "canonical_name": "Cable Rear Delt Fly",
+    "primary_muscles": [
+      "shoulders"
+    ],
+    "secondary_muscles": [
+      "middle back"
+    ],
+    "body_region": [
+      "Shoulders"
+    ],
+    "equipment": "cable",
+    "mechanic": "isolation",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Upright Row",
+    "primary_muscles": [
+      "shoulders",
+      "traps"
+    ],
+    "secondary_muscles": [
+      "biceps"
+    ],
+    "body_region": [
+      "Shoulders",
+      "Back"
+    ],
+    "equipment": "barbell",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Landmine Press",
+    "primary_muscles": [
+      "shoulders"
+    ],
+    "secondary_muscles": [
+      "triceps",
+      "chest"
+    ],
+    "body_region": [
+      "Shoulders"
+    ],
+    "equipment": "barbell",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Barbell Curl",
+    "primary_muscles": [
+      "biceps"
+    ],
+    "secondary_muscles": [
+      "forearms"
+    ],
+    "body_region": [
+      "Arms"
+    ],
+    "equipment": "barbell",
+    "mechanic": "isolation",
+    "modality": "weight_reps",
+    "aliases": [
+      "bicep curl",
+      "bb curl"
+    ]
+  },
+  {
+    "canonical_name": "Dumbbell Curl",
+    "primary_muscles": [
+      "biceps"
+    ],
+    "secondary_muscles": [
+      "forearms"
+    ],
+    "body_region": [
+      "Arms"
+    ],
+    "equipment": "dumbbell",
+    "mechanic": "isolation",
+    "modality": "weight_reps",
+    "aliases": [
+      "db curl"
+    ]
+  },
+  {
+    "canonical_name": "Hammer Curl",
+    "primary_muscles": [
+      "biceps",
+      "forearms"
+    ],
+    "secondary_muscles": [],
+    "body_region": [
+      "Arms"
+    ],
+    "equipment": "dumbbell",
+    "mechanic": "isolation",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Preacher Curl",
+    "primary_muscles": [
+      "biceps"
+    ],
+    "secondary_muscles": [],
+    "body_region": [
+      "Arms"
+    ],
+    "equipment": "barbell",
+    "mechanic": "isolation",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Incline Dumbbell Curl",
+    "primary_muscles": [
+      "biceps"
+    ],
+    "secondary_muscles": [],
+    "body_region": [
+      "Arms"
+    ],
+    "equipment": "dumbbell",
+    "mechanic": "isolation",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Concentration Curl",
+    "primary_muscles": [
+      "biceps"
+    ],
+    "secondary_muscles": [],
+    "body_region": [
+      "Arms"
+    ],
+    "equipment": "dumbbell",
+    "mechanic": "isolation",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Cable Curl",
+    "primary_muscles": [
+      "biceps"
+    ],
+    "secondary_muscles": [
+      "forearms"
+    ],
+    "body_region": [
+      "Arms"
+    ],
+    "equipment": "cable",
+    "mechanic": "isolation",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "EZ-Bar Curl",
+    "primary_muscles": [
+      "biceps"
+    ],
+    "secondary_muscles": [
+      "forearms"
+    ],
+    "body_region": [
+      "Arms"
+    ],
+    "equipment": "e-z curl bar",
+    "mechanic": "isolation",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Spider Curl",
+    "primary_muscles": [
+      "biceps"
+    ],
+    "secondary_muscles": [],
+    "body_region": [
+      "Arms"
+    ],
+    "equipment": "dumbbell",
+    "mechanic": "isolation",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Close-Grip Bench Press",
+    "primary_muscles": [
+      "triceps"
+    ],
+    "secondary_muscles": [
+      "chest",
+      "shoulders"
+    ],
+    "body_region": [
+      "Arms"
+    ],
+    "equipment": "barbell",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": [
+      "cgbp"
+    ]
+  },
+  {
+    "canonical_name": "Triceps Pushdown",
+    "primary_muscles": [
+      "triceps"
+    ],
+    "secondary_muscles": [],
+    "body_region": [
+      "Arms"
+    ],
+    "equipment": "cable",
+    "mechanic": "isolation",
+    "modality": "weight_reps",
+    "aliases": [
+      "cable pushdown",
+      "rope pushdown"
+    ]
+  },
+  {
+    "canonical_name": "Overhead Triceps Extension",
+    "primary_muscles": [
+      "triceps"
+    ],
+    "secondary_muscles": [],
+    "body_region": [
+      "Arms"
+    ],
+    "equipment": "dumbbell",
+    "mechanic": "isolation",
+    "modality": "weight_reps",
+    "aliases": [
+      "overhead extension"
+    ]
+  },
+  {
+    "canonical_name": "Skull Crusher",
+    "primary_muscles": [
+      "triceps"
+    ],
+    "secondary_muscles": [],
+    "body_region": [
+      "Arms"
+    ],
+    "equipment": "e-z curl bar",
+    "mechanic": "isolation",
+    "modality": "weight_reps",
+    "aliases": [
+      "lying triceps extension"
+    ]
+  },
+  {
+    "canonical_name": "Bench Dip",
+    "primary_muscles": [
+      "triceps"
+    ],
+    "secondary_muscles": [
+      "chest",
+      "shoulders"
+    ],
+    "body_region": [
+      "Arms"
+    ],
+    "equipment": "body only",
+    "mechanic": "compound",
+    "modality": "bodyweight_reps",
+    "aliases": [
+      "tricep dip"
+    ]
+  },
+  {
+    "canonical_name": "Triceps Kickback",
+    "primary_muscles": [
+      "triceps"
+    ],
+    "secondary_muscles": [],
+    "body_region": [
+      "Arms"
+    ],
+    "equipment": "dumbbell",
+    "mechanic": "isolation",
+    "modality": "weight_reps",
+    "aliases": [
+      "kickback"
+    ]
+  },
+  {
+    "canonical_name": "Cable Overhead Triceps Extension",
+    "primary_muscles": [
+      "triceps"
+    ],
+    "secondary_muscles": [],
+    "body_region": [
+      "Arms"
+    ],
+    "equipment": "cable",
+    "mechanic": "isolation",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Wrist Curl",
+    "primary_muscles": [
+      "forearms"
+    ],
+    "secondary_muscles": [],
+    "body_region": [
+      "Arms"
+    ],
+    "equipment": "dumbbell",
+    "mechanic": "isolation",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Reverse Wrist Curl",
+    "primary_muscles": [
+      "forearms"
+    ],
+    "secondary_muscles": [],
+    "body_region": [
+      "Arms"
+    ],
+    "equipment": "dumbbell",
+    "mechanic": "isolation",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Farmer's Walk",
+    "primary_muscles": [
+      "forearms",
+      "traps"
+    ],
+    "secondary_muscles": [
+      "glutes",
+      "abdominals",
+      "quadriceps"
+    ],
+    "body_region": [
+      "Arms",
+      "Back"
+    ],
+    "equipment": "dumbbell",
+    "mechanic": "compound",
+    "modality": "distance_time",
+    "aliases": [
+      "farmers carry"
+    ]
+  },
+  {
+    "canonical_name": "Plank",
+    "primary_muscles": [
+      "abdominals"
+    ],
+    "secondary_muscles": [
+      "lower back"
+    ],
+    "body_region": [
+      "Core"
+    ],
+    "equipment": "body only",
+    "mechanic": "isolation",
+    "modality": "time",
+    "aliases": [
+      "front plank"
+    ]
+  },
+  {
+    "canonical_name": "Side Plank",
+    "primary_muscles": [
+      "abdominals"
+    ],
+    "secondary_muscles": [],
+    "body_region": [
+      "Core"
+    ],
+    "equipment": "body only",
+    "mechanic": "isolation",
+    "modality": "time",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Hollow Hold",
+    "primary_muscles": [
+      "abdominals"
+    ],
+    "secondary_muscles": [],
+    "body_region": [
+      "Core"
+    ],
+    "equipment": "body only",
+    "mechanic": "isolation",
+    "modality": "time",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Crunch",
+    "primary_muscles": [
+      "abdominals"
+    ],
+    "secondary_muscles": [],
+    "body_region": [
+      "Core"
+    ],
+    "equipment": "body only",
+    "mechanic": "isolation",
+    "modality": "bodyweight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Sit-Up",
+    "primary_muscles": [
+      "abdominals"
+    ],
+    "secondary_muscles": [],
+    "body_region": [
+      "Core"
+    ],
+    "equipment": "body only",
+    "mechanic": "compound",
+    "modality": "bodyweight_reps",
+    "aliases": [
+      "situp"
+    ]
+  },
+  {
+    "canonical_name": "Bicycle Crunch",
+    "primary_muscles": [
+      "abdominals"
+    ],
+    "secondary_muscles": [],
+    "body_region": [
+      "Core"
+    ],
+    "equipment": "body only",
+    "mechanic": "isolation",
+    "modality": "bodyweight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Hanging Leg Raise",
+    "primary_muscles": [
+      "abdominals"
+    ],
+    "secondary_muscles": [
+      "forearms"
+    ],
+    "body_region": [
+      "Core"
+    ],
+    "equipment": "body only",
+    "mechanic": "compound",
+    "modality": "bodyweight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Lying Leg Raise",
+    "primary_muscles": [
+      "abdominals"
+    ],
+    "secondary_muscles": [],
+    "body_region": [
+      "Core"
+    ],
+    "equipment": "body only",
+    "mechanic": "isolation",
+    "modality": "bodyweight_reps",
+    "aliases": [
+      "leg raise"
+    ]
+  },
+  {
+    "canonical_name": "Cable Crunch",
+    "primary_muscles": [
+      "abdominals"
+    ],
+    "secondary_muscles": [],
+    "body_region": [
+      "Core"
+    ],
+    "equipment": "cable",
+    "mechanic": "isolation",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Russian Twist",
+    "primary_muscles": [
+      "abdominals"
+    ],
+    "secondary_muscles": [],
+    "body_region": [
+      "Core"
+    ],
+    "equipment": "body only",
+    "mechanic": "isolation",
+    "modality": "bodyweight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Ab Wheel Rollout",
+    "primary_muscles": [
+      "abdominals"
+    ],
+    "secondary_muscles": [
+      "lower back"
+    ],
+    "body_region": [
+      "Core"
+    ],
+    "equipment": "other",
+    "mechanic": "compound",
+    "modality": "bodyweight_reps",
+    "aliases": [
+      "ab rollout"
+    ]
+  },
+  {
+    "canonical_name": "Mountain Climber",
+    "primary_muscles": [
+      "abdominals"
+    ],
+    "secondary_muscles": [
+      "shoulders"
+    ],
+    "body_region": [
+      "Core"
+    ],
+    "equipment": "body only",
+    "mechanic": "compound",
+    "modality": "bodyweight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Dead Bug",
+    "primary_muscles": [
+      "abdominals"
+    ],
+    "secondary_muscles": [],
+    "body_region": [
+      "Core"
+    ],
+    "equipment": "body only",
+    "mechanic": "isolation",
+    "modality": "bodyweight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "V-Up",
+    "primary_muscles": [
+      "abdominals"
+    ],
+    "secondary_muscles": [],
+    "body_region": [
+      "Core"
+    ],
+    "equipment": "body only",
+    "mechanic": "isolation",
+    "modality": "bodyweight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Cable Woodchopper",
+    "primary_muscles": [
+      "abdominals"
+    ],
+    "secondary_muscles": [
+      "shoulders"
+    ],
+    "body_region": [
+      "Core"
+    ],
+    "equipment": "cable",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": [
+      "woodchopper"
+    ]
+  },
+  {
+    "canonical_name": "Pallof Press",
+    "primary_muscles": [
+      "abdominals"
+    ],
+    "secondary_muscles": [],
+    "body_region": [
+      "Core"
+    ],
+    "equipment": "cable",
+    "mechanic": "isolation",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Toes-to-Bar",
+    "primary_muscles": [
+      "abdominals"
+    ],
+    "secondary_muscles": [
+      "forearms",
+      "lats"
+    ],
+    "body_region": [
+      "Core"
+    ],
+    "equipment": "body only",
+    "mechanic": "compound",
+    "modality": "bodyweight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Power Clean",
+    "primary_muscles": [
+      "glutes",
+      "hamstrings",
+      "traps"
+    ],
+    "secondary_muscles": [
+      "quadriceps",
+      "shoulders",
+      "lower back",
+      "forearms"
+    ],
+    "body_region": [
+      "Legs",
+      "Back"
+    ],
+    "equipment": "barbell",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Hang Clean",
+    "primary_muscles": [
+      "glutes",
+      "hamstrings",
+      "traps"
+    ],
+    "secondary_muscles": [
+      "quadriceps",
+      "shoulders",
+      "forearms"
+    ],
+    "body_region": [
+      "Legs",
+      "Back"
+    ],
+    "equipment": "barbell",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Kettlebell Swing",
+    "primary_muscles": [
+      "glutes",
+      "hamstrings"
+    ],
+    "secondary_muscles": [
+      "lower back",
+      "shoulders",
+      "abdominals"
+    ],
+    "body_region": [
+      "Legs"
+    ],
+    "equipment": "kettlebells",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": [
+      "kb swing"
+    ]
+  },
+  {
+    "canonical_name": "Thruster",
+    "primary_muscles": [
+      "quadriceps",
+      "glutes",
+      "shoulders"
+    ],
+    "secondary_muscles": [
+      "triceps",
+      "abdominals"
+    ],
+    "body_region": [
+      "Legs",
+      "Shoulders"
+    ],
+    "equipment": "barbell",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Clean and Press",
+    "primary_muscles": [
+      "shoulders",
+      "glutes"
+    ],
+    "secondary_muscles": [
+      "hamstrings",
+      "quadriceps",
+      "triceps",
+      "traps"
+    ],
+    "body_region": [
+      "Shoulders",
+      "Legs"
+    ],
+    "equipment": "barbell",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Turkish Get-Up",
+    "primary_muscles": [
+      "shoulders",
+      "abdominals"
+    ],
+    "secondary_muscles": [
+      "glutes",
+      "quadriceps"
+    ],
+    "body_region": [
+      "Shoulders",
+      "Core"
+    ],
+    "equipment": "kettlebells",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Burpee",
+    "primary_muscles": [
+      "quadriceps",
+      "chest"
+    ],
+    "secondary_muscles": [
+      "shoulders",
+      "triceps",
+      "abdominals"
+    ],
+    "body_region": [
+      "Legs",
+      "Chest"
+    ],
+    "equipment": "body only",
+    "mechanic": "compound",
+    "modality": "bodyweight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Box Jump",
+    "primary_muscles": [
+      "quadriceps",
+      "glutes"
+    ],
+    "secondary_muscles": [
+      "calves",
+      "hamstrings"
+    ],
+    "body_region": [
+      "Legs"
+    ],
+    "equipment": "body only",
+    "mechanic": "compound",
+    "modality": "bodyweight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Sled Push",
+    "primary_muscles": [
+      "quadriceps",
+      "glutes"
+    ],
+    "secondary_muscles": [
+      "calves",
+      "hamstrings"
+    ],
+    "body_region": [
+      "Legs"
+    ],
+    "equipment": "other",
+    "mechanic": "compound",
+    "modality": "distance_time",
+    "aliases": [
+      "prowler push"
+    ]
+  },
+  {
+    "canonical_name": "Battle Ropes",
+    "primary_muscles": [
+      "shoulders"
+    ],
+    "secondary_muscles": [
+      "abdominals",
+      "forearms"
+    ],
+    "body_region": [
+      "Shoulders"
+    ],
+    "equipment": "other",
+    "mechanic": "compound",
+    "modality": "time",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Treadmill Run",
+    "primary_muscles": [
+      "quadriceps",
+      "hamstrings"
+    ],
+    "secondary_muscles": [
+      "calves",
+      "glutes"
+    ],
+    "body_region": [
+      "Legs"
+    ],
+    "equipment": "machine",
+    "mechanic": "compound",
+    "modality": "distance_time",
+    "aliases": [
+      "running",
+      "treadmill"
+    ]
+  },
+  {
+    "canonical_name": "Stationary Bike",
+    "primary_muscles": [
+      "quadriceps",
+      "hamstrings"
+    ],
+    "secondary_muscles": [
+      "calves",
+      "glutes"
+    ],
+    "body_region": [
+      "Legs"
+    ],
+    "equipment": "machine",
+    "mechanic": "compound",
+    "modality": "distance_time",
+    "aliases": [
+      "cycling",
+      "spin bike"
+    ]
+  },
+  {
+    "canonical_name": "Rowing Machine",
+    "primary_muscles": [
+      "lats",
+      "middle back"
+    ],
+    "secondary_muscles": [
+      "quadriceps",
+      "hamstrings",
+      "biceps"
+    ],
+    "body_region": [
+      "Back"
+    ],
+    "equipment": "machine",
+    "mechanic": "compound",
+    "modality": "distance_time",
+    "aliases": [
+      "erg",
+      "row erg"
+    ]
+  },
+  {
+    "canonical_name": "Elliptical",
+    "primary_muscles": [
+      "quadriceps",
+      "hamstrings"
+    ],
+    "secondary_muscles": [
+      "glutes",
+      "calves"
+    ],
+    "body_region": [
+      "Legs"
+    ],
+    "equipment": "machine",
+    "mechanic": "compound",
+    "modality": "distance_time",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Stair Climber",
+    "primary_muscles": [
+      "quadriceps",
+      "glutes"
+    ],
+    "secondary_muscles": [
+      "calves",
+      "hamstrings"
+    ],
+    "body_region": [
+      "Legs"
+    ],
+    "equipment": "machine",
+    "mechanic": "compound",
+    "modality": "distance_time",
+    "aliases": [
+      "stairmaster"
+    ]
+  },
+  {
+    "canonical_name": "Jump Rope",
+    "primary_muscles": [
+      "calves"
+    ],
+    "secondary_muscles": [
+      "shoulders",
+      "forearms"
+    ],
+    "body_region": [
+      "Legs"
+    ],
+    "equipment": "other",
+    "mechanic": "compound",
+    "modality": "time",
+    "aliases": [
+      "skipping"
+    ]
+  },
+  {
+    "canonical_name": "Incline Treadmill Walk",
+    "primary_muscles": [
+      "glutes",
+      "quadriceps"
+    ],
+    "secondary_muscles": [
+      "calves",
+      "hamstrings"
+    ],
+    "body_region": [
+      "Legs"
+    ],
+    "equipment": "machine",
+    "mechanic": "compound",
+    "modality": "distance_time",
+    "aliases": [
+      "incline walk"
+    ]
+  },
+  {
+    "canonical_name": "Trap Bar Deadlift",
+    "primary_muscles": [
+      "quadriceps",
+      "glutes",
+      "hamstrings"
+    ],
+    "secondary_muscles": [
+      "traps",
+      "forearms",
+      "lower back"
+    ],
+    "body_region": [
+      "Legs"
+    ],
+    "equipment": "other",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": [
+      "hex bar deadlift"
+    ]
+  },
+  {
+    "canonical_name": "Dumbbell Deadlift",
+    "primary_muscles": [
+      "hamstrings",
+      "glutes",
+      "lower back"
+    ],
+    "secondary_muscles": [
+      "quadriceps",
+      "forearms"
+    ],
+    "body_region": [
+      "Legs",
+      "Back"
+    ],
+    "equipment": "dumbbell",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Landmine Row",
+    "primary_muscles": [
+      "middle back",
+      "lats"
+    ],
+    "secondary_muscles": [
+      "biceps",
+      "traps"
+    ],
+    "body_region": [
+      "Back"
+    ],
+    "equipment": "barbell",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": [
+      "meadows row"
+    ]
+  },
+  {
+    "canonical_name": "Renegade Row",
+    "primary_muscles": [
+      "middle back",
+      "lats"
+    ],
+    "secondary_muscles": [
+      "abdominals",
+      "biceps"
+    ],
+    "body_region": [
+      "Back"
+    ],
+    "equipment": "dumbbell",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Assisted Pull-Up",
+    "primary_muscles": [
+      "lats"
+    ],
+    "secondary_muscles": [
+      "biceps",
+      "middle back"
+    ],
+    "body_region": [
+      "Back"
+    ],
+    "equipment": "machine",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Cable Pull-Through",
+    "primary_muscles": [
+      "glutes",
+      "hamstrings"
+    ],
+    "secondary_muscles": [
+      "lower back"
+    ],
+    "body_region": [
+      "Legs"
+    ],
+    "equipment": "cable",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Cable Glute Kickback",
+    "primary_muscles": [
+      "glutes"
+    ],
+    "secondary_muscles": [
+      "hamstrings"
+    ],
+    "body_region": [
+      "Legs"
+    ],
+    "equipment": "cable",
+    "mechanic": "isolation",
+    "modality": "weight_reps",
+    "aliases": [
+      "glute kickback"
+    ]
+  },
+  {
+    "canonical_name": "Hip Thrust Machine",
+    "primary_muscles": [
+      "glutes"
+    ],
+    "secondary_muscles": [
+      "hamstrings"
+    ],
+    "body_region": [
+      "Legs"
+    ],
+    "equipment": "machine",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Cossack Squat",
+    "primary_muscles": [
+      "adductors",
+      "quadriceps"
+    ],
+    "secondary_muscles": [
+      "glutes"
+    ],
+    "body_region": [
+      "Legs"
+    ],
+    "equipment": "body only",
+    "mechanic": "compound",
+    "modality": "bodyweight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Reverse Pec Deck",
+    "primary_muscles": [
+      "shoulders"
+    ],
+    "secondary_muscles": [
+      "middle back",
+      "traps"
+    ],
+    "body_region": [
+      "Shoulders"
+    ],
+    "equipment": "machine",
+    "mechanic": "isolation",
+    "modality": "weight_reps",
+    "aliases": [
+      "rear delt machine"
+    ]
+  },
+  {
+    "canonical_name": "Standing Dumbbell Shoulder Press",
+    "primary_muscles": [
+      "shoulders"
+    ],
+    "secondary_muscles": [
+      "triceps",
+      "abdominals"
+    ],
+    "body_region": [
+      "Shoulders"
+    ],
+    "equipment": "dumbbell",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Machine Bicep Curl",
+    "primary_muscles": [
+      "biceps"
+    ],
+    "secondary_muscles": [],
+    "body_region": [
+      "Arms"
+    ],
+    "equipment": "machine",
+    "mechanic": "isolation",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Machine Triceps Extension",
+    "primary_muscles": [
+      "triceps"
+    ],
+    "secondary_muscles": [],
+    "body_region": [
+      "Arms"
+    ],
+    "equipment": "machine",
+    "mechanic": "isolation",
+    "modality": "weight_reps",
+    "aliases": [
+      "machine dip"
+    ]
+  },
+  {
+    "canonical_name": "Reverse Curl",
+    "primary_muscles": [
+      "forearms",
+      "biceps"
+    ],
+    "secondary_muscles": [],
+    "body_region": [
+      "Arms"
+    ],
+    "equipment": "e-z curl bar",
+    "mechanic": "isolation",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Zottman Curl",
+    "primary_muscles": [
+      "biceps",
+      "forearms"
+    ],
+    "secondary_muscles": [],
+    "body_region": [
+      "Arms"
+    ],
+    "equipment": "dumbbell",
+    "mechanic": "isolation",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Rope Hammer Curl",
+    "primary_muscles": [
+      "biceps",
+      "forearms"
+    ],
+    "secondary_muscles": [],
+    "body_region": [
+      "Arms"
+    ],
+    "equipment": "cable",
+    "mechanic": "isolation",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Incline Push-Up",
+    "primary_muscles": [
+      "chest"
+    ],
+    "secondary_muscles": [
+      "triceps",
+      "shoulders"
+    ],
+    "body_region": [
+      "Chest"
+    ],
+    "equipment": "body only",
+    "mechanic": "compound",
+    "modality": "bodyweight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Decline Push-Up",
+    "primary_muscles": [
+      "chest"
+    ],
+    "secondary_muscles": [
+      "shoulders",
+      "triceps"
+    ],
+    "body_region": [
+      "Chest"
+    ],
+    "equipment": "body only",
+    "mechanic": "compound",
+    "modality": "bodyweight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Cable Chest Press",
+    "primary_muscles": [
+      "chest"
+    ],
+    "secondary_muscles": [
+      "triceps",
+      "shoulders"
+    ],
+    "body_region": [
+      "Chest"
+    ],
+    "equipment": "cable",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Dumbbell Floor Press",
+    "primary_muscles": [
+      "chest",
+      "triceps"
+    ],
+    "secondary_muscles": [
+      "shoulders"
+    ],
+    "body_region": [
+      "Chest",
+      "Arms"
+    ],
+    "equipment": "dumbbell",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Superman",
+    "primary_muscles": [
+      "lower back"
+    ],
+    "secondary_muscles": [
+      "glutes"
+    ],
+    "body_region": [
+      "Back"
+    ],
+    "equipment": "body only",
+    "mechanic": "isolation",
+    "modality": "bodyweight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Reverse Crunch",
+    "primary_muscles": [
+      "abdominals"
+    ],
+    "secondary_muscles": [],
+    "body_region": [
+      "Core"
+    ],
+    "equipment": "body only",
+    "mechanic": "isolation",
+    "modality": "bodyweight_reps",
+    "aliases": []
+  },
+  {
+    "canonical_name": "Flutter Kicks",
+    "primary_muscles": [
+      "abdominals"
+    ],
+    "secondary_muscles": [],
+    "body_region": [
+      "Core"
+    ],
+    "equipment": "body only",
+    "mechanic": "isolation",
+    "modality": "bodyweight_reps",
+    "aliases": []
+  }
+]

@@ -12,6 +12,8 @@ import * as routines from './routines';
 import * as sets from './sets';
 import * as voice from './voice';
 import * as workouts from './workouts';
+import type { WorkoutDetail } from './workouts';
+import type { WorkoutSet } from '@/types/db';
 
 export const keys = {
   profile: ['profile'] as const,
@@ -35,6 +37,26 @@ const PAGE_SIZE = 20;
 
 export function useProfile() {
   return useQuery({ queryKey: keys.profile, queryFn: auth.getProfile });
+}
+
+export function useUpdateProfile() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (patch: Parameters<typeof auth.updateProfile>[0]) => auth.updateProfile(patch),
+    // Optimistic so the whole app's weight display flips units on the same tap.
+    onMutate: async (patch) => {
+      await qc.cancelQueries({ queryKey: keys.profile });
+      const prev = qc.getQueryData(keys.profile);
+      qc.setQueryData(keys.profile, (p: Awaited<ReturnType<typeof auth.getProfile>>) =>
+        p ? { ...p, ...patch } : p
+      );
+      return { prev };
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.prev !== undefined) qc.setQueryData(keys.profile, ctx.prev);
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: keys.profile }),
+  });
 }
 
 export function useRoutines(includeArchived = false) {
@@ -208,12 +230,69 @@ export function useMoveWorkoutExercise(workoutId: string) {
   });
 }
 
+// Manual set writes are optimistic: the workout cache is patched synchronously in
+// onMutate so the grid updates on the same frame as the tap (Priority B — logging
+// must feel instant), with a snapshot rollback on error and a reconciling refetch
+// on settle. `keys.workout(id)` holds the nested WorkoutDetail tree.
+type WorkoutCtx = { prev?: WorkoutDetail };
+
+function patchWorkoutSets(
+  qc: ReturnType<typeof useQueryClient>,
+  workoutId: string,
+  map: (set: WorkoutSet, workoutExerciseId: string) => WorkoutSet | null,
+  insertInto?: { workoutExerciseId: string; make: (existing: WorkoutSet[]) => WorkoutSet }
+): WorkoutDetail | undefined {
+  const key = keys.workout(workoutId);
+  const prev = qc.getQueryData<WorkoutDetail>(key);
+  if (!prev) return undefined;
+  qc.setQueryData<WorkoutDetail>(key, {
+    ...prev,
+    exercises: prev.exercises.map((we) => {
+      let nextSets = we.sets
+        .map((s) => map(s, we.id))
+        .filter((s): s is WorkoutSet => s != null);
+      if (insertInto && insertInto.workoutExerciseId === we.id) {
+        nextSets = [...nextSets, insertInto.make(we.sets)];
+      }
+      return { ...we, sets: nextSets };
+    }),
+  });
+  return prev;
+}
+
+function tempId(): string {
+  return `optimistic-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
 export function useAddSet(workoutId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: { workoutExerciseId: string; set: sets.AddSetInput }) =>
       sets.addSet(input.workoutExerciseId, input.set),
-    onSuccess: () => qc.invalidateQueries({ queryKey: keys.workout(workoutId) }),
+    onMutate: async ({ workoutExerciseId, set }): Promise<WorkoutCtx> => {
+      await qc.cancelQueries({ queryKey: keys.workout(workoutId) });
+      const prev = patchWorkoutSets(qc, workoutId, (s) => s, {
+        workoutExerciseId,
+        make: (existing) => ({
+          id: tempId(),
+          workout_exercise_id: workoutExerciseId,
+          set_number: existing.reduce((m, s) => Math.max(m, s.set_number), 0) + 1,
+          weight_kg: set.weight_kg,
+          reps: set.reps,
+          rpe: set.rpe ?? null,
+          set_type: set.set_type ?? 'normal',
+          logged_via: 'manual',
+          raw_transcript: null,
+          parse_confidence: null,
+          created_at: new Date().toISOString(),
+        }),
+      });
+      return { prev };
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.prev) qc.setQueryData(keys.workout(workoutId), ctx.prev);
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: keys.workout(workoutId) }),
   });
 }
 
@@ -222,7 +301,17 @@ export function useUpdateSet(workoutId: string) {
   return useMutation({
     mutationFn: (input: { setId: string; patch: Parameters<typeof sets.updateSet>[1] }) =>
       sets.updateSet(input.setId, input.patch),
-    onSuccess: () => qc.invalidateQueries({ queryKey: keys.workout(workoutId) }),
+    onMutate: async ({ setId, patch }): Promise<WorkoutCtx> => {
+      await qc.cancelQueries({ queryKey: keys.workout(workoutId) });
+      const prev = patchWorkoutSets(qc, workoutId, (s) =>
+        s.id === setId ? { ...s, ...patch } : s
+      );
+      return { prev };
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.prev) qc.setQueryData(keys.workout(workoutId), ctx.prev);
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: keys.workout(workoutId) }),
   });
 }
 
@@ -230,7 +319,15 @@ export function useDeleteSet(workoutId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (setId: string) => sets.deleteSet(setId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: keys.workout(workoutId) }),
+    onMutate: async (setId): Promise<WorkoutCtx> => {
+      await qc.cancelQueries({ queryKey: keys.workout(workoutId) });
+      const prev = patchWorkoutSets(qc, workoutId, (s) => (s.id === setId ? null : s));
+      return { prev };
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.prev) qc.setQueryData(keys.workout(workoutId), ctx.prev);
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: keys.workout(workoutId) }),
   });
 }
 

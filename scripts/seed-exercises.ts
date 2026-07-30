@@ -1,20 +1,24 @@
 /**
- * Seed the exercise library from free-exercise-db (~870 exercises, public domain).
- * https://github.com/yuhonas/free-exercise-db
+ * Seed the exercise directory from the curated ~150-exercise set with rich,
+ * chart-ready metadata (scripts/data/exercises-curated.json).
  *
- * Idempotent: exercises upsert on canonical_name; aliases insert-if-missing.
- * Run:  npx tsx scripts/seed-exercises.ts
+ * This REPLACES the old free-exercise-db import: it wipes the seeded directory
+ * and inserts the curated rows (primary/secondary muscles, body-region rollup,
+ * mechanic, modality). Custom exercises (is_custom = true) are left untouched.
+ *
+ * Run:  npx tsx scripts/seed-exercises.ts   (or: npm run seed)
  * Needs SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY in .env (service role bypasses
  * RLS — this script runs on your machine only, never in the app).
+ *
+ * Regenerate the JSON with:  python3 scripts/build-curated-exercises.py
  */
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { createClient } from '@supabase/supabase-js';
 import { config } from 'dotenv';
 import { SEED_ALIASES } from './exercise-aliases';
 
 config();
-
-const DATASET_URL =
-  'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/dist/exercises.json';
 
 const url = process.env.SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -24,47 +28,62 @@ if (!url || !serviceKey) {
 }
 const supabase = createClient(url, serviceKey, { auth: { persistSession: false } });
 
-type FreeExercise = {
-  name: string;
-  category: string | null;
+const NIL = '00000000-0000-0000-0000-000000000000';
+
+type CuratedExercise = {
+  canonical_name: string;
+  primary_muscles: string[];
+  secondary_muscles: string[];
+  body_region: string[];
   equipment: string | null;
-  primaryMuscles: string[];
+  mechanic: 'compound' | 'isolation';
+  modality: 'weight_reps' | 'bodyweight_reps' | 'time' | 'distance_time';
+  aliases: string[];
 };
 
 async function main() {
-  console.log(`Downloading ${DATASET_URL} ...`);
-  const res = await fetch(DATASET_URL);
-  if (!res.ok) throw new Error(`Download failed: ${res.status} ${res.statusText}`);
-  const raw: FreeExercise[] = await res.json();
+  const path = join(__dirname, 'data', 'exercises-curated.json');
+  const curated: CuratedExercise[] = JSON.parse(readFileSync(path, 'utf8'));
+  console.log(`Loaded ${curated.length} curated exercises from ${path}`);
 
-  // Dedupe by name (dataset is clean, but belt-and-braces).
-  const byName = new Map<string, FreeExercise>();
-  for (const e of raw) {
-    const name = e.name?.trim();
-    if (name && !byName.has(name)) byName.set(name, e);
+  // --- Wipe the old seeded directory --------------------------------------
+  // routine_exercises / workout_exercises reference exercises WITHOUT cascade,
+  // so clear them first. exercise_aliases DO cascade on exercise delete.
+  // Only seeded rows (is_custom = false) are removed; user customs survive.
+  for (const table of ['routine_exercises', 'workout_exercises'] as const) {
+    const { error } = await supabase.from(table).delete().neq('id', NIL);
+    if (error) throw new Error(`Clearing ${table}: ${error.message}`);
   }
-  const rows = [...byName.values()].map((e) => ({
-    canonical_name: e.name.trim(),
-    category: e.category ?? null,
+  const { error: delErr, count: deleted } = await supabase
+    .from('exercises')
+    .delete({ count: 'exact' })
+    .eq('is_custom', false);
+  if (delErr) throw new Error(`Clearing exercises: ${delErr.message}`);
+  console.log(`Removed ${deleted ?? '?'} old seeded exercises (aliases cascaded).`);
+
+  // --- Insert the curated exercises ---------------------------------------
+  const rows = curated.map((e) => ({
+    canonical_name: e.canonical_name,
+    primary_muscles: e.primary_muscles,
+    secondary_muscles: e.secondary_muscles,
+    body_region: e.body_region,
     equipment: e.equipment ?? null,
-    primary_muscle: e.primaryMuscles?.[0] ?? null,
+    mechanic: e.mechanic,
+    modality: e.modality,
     is_custom: false,
   }));
-  console.log(`Dataset: ${raw.length} rows, ${rows.length} after dedupe.`);
-
-  // Upsert in chunks (PostgREST payload limits).
   let inserted = 0;
   for (let i = 0; i < rows.length; i += 200) {
     const chunk = rows.slice(i, i + 200);
     const { error, count } = await supabase
       .from('exercises')
-      .upsert(chunk, { onConflict: 'canonical_name', ignoreDuplicates: false, count: 'exact' });
-    if (error) throw new Error(`Upsert exercises chunk ${i}: ${error.message}`);
+      .insert(chunk, { count: 'exact' });
+    if (error) throw new Error(`Insert exercises chunk ${i}: ${error.message}`);
     inserted += count ?? chunk.length;
   }
-  console.log(`Exercises upserted: ${inserted}`);
+  console.log(`Exercises inserted: ${inserted}`);
 
-  // Resolve alias-map keys to exercise ids.
+  // --- Aliases: from the curated JSON, merged with the hand-curated map -----
   const { data: seeded, error: listError } = await supabase
     .from('exercises')
     .select('id, canonical_name')
@@ -73,39 +92,40 @@ async function main() {
   if (listError) throw listError;
   const idByName = new Map(seeded!.map((e) => [e.canonical_name.toLowerCase(), e.id]));
 
-  const aliasRows: { exercise_id: string; alias: string; source: 'seed' }[] = [];
-  const unresolved: string[] = [];
+  // canonical (lowercased) -> set of aliases, from both sources.
+  const aliasesByCanonical = new Map<string, Set<string>>();
+  const add = (canonical: string, alias: string) => {
+    const key = canonical.toLowerCase();
+    const a = alias.trim();
+    if (!a || a.toLowerCase() === key) return;
+    if (!aliasesByCanonical.has(key)) aliasesByCanonical.set(key, new Set());
+    aliasesByCanonical.get(key)!.add(a);
+  };
+  for (const e of curated) for (const a of e.aliases) add(e.canonical_name, a);
   for (const [canonical, aliases] of Object.entries(SEED_ALIASES)) {
-    const id = idByName.get(canonical.toLowerCase());
-    if (!id) {
-      unresolved.push(canonical);
-      continue;
-    }
-    for (const alias of aliases) {
-      aliasRows.push({ exercise_id: id, alias, source: 'seed' });
-    }
+    if (idByName.has(canonical.toLowerCase())) for (const a of aliases) add(canonical, a);
   }
-  if (unresolved.length > 0) {
-    console.warn(
-      `WARNING: ${unresolved.length} alias-map keys not found in dataset (skipped):\n  ` +
-        unresolved.join('\n  ')
-    );
+
+  const aliasRows: { exercise_id: string; alias: string; source: 'seed' }[] = [];
+  for (const [canonical, aliases] of aliasesByCanonical) {
+    const id = idByName.get(canonical);
+    if (!id) continue;
+    for (const alias of aliases) aliasRows.push({ exercise_id: id, alias, source: 'seed' });
   }
 
   let aliasCount = 0;
   for (let i = 0; i < aliasRows.length; i += 200) {
     const chunk = aliasRows.slice(i, i + 200);
-    // ignoreDuplicates → idempotent re-runs (unique on exercise_id + alias).
     const { error } = await supabase
       .from('exercise_aliases')
       .upsert(chunk, { onConflict: 'exercise_id,alias', ignoreDuplicates: true });
     if (error) throw new Error(`Upsert aliases chunk ${i}: ${error.message}`);
     aliasCount += chunk.length;
   }
-  console.log(`Aliases processed: ${aliasCount} (existing ones skipped)`);
+  console.log(`Aliases inserted: ${aliasCount}`);
 
-  // Quick sanity checks the PRD asks for.
-  for (const probe of ['RDL', 'OHP', 'incline db']) {
+  // Sanity checks: search should resolve common abbreviations.
+  for (const probe of ['RDL', 'OHP', 'incline db', 'deadlift']) {
     const { data } = await supabase.rpc('search_exercises', { q: probe, max_results: 3 });
     console.log(
       `search "${probe}" → ${(data ?? []).map((e: any) => e.canonical_name).join(' | ') || 'NO MATCH'}`

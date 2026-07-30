@@ -7,6 +7,104 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-07-30 (session 3) — Exercise directory rebuild: curated 150 with rich, chart-ready metadata
+
+**Decision (user):** the 873-row free-exercise-db import was too large and metadata-poor. Replace
+it with a curated set (~150) covering ~95% of common gym movements, each carrying the metadata a
+user actually needs to search and to see *which muscle groups a lift trains* (e.g. a deadlift must
+credit glutes/hams/lower-back + secondary quads/traps/forearms/lats so a "muscles worked" chart is
+complete). Source chosen after review: **curate free-exercise-db** (public domain, already wired,
+has primary+secondary muscles) over ExerciseDB / wger.
+
+**Built:**
+- `scripts/data/exercises-curated.json` — the curated 150, generated + validated by
+  `scripts/build-curated-exercises.py` (checks muscle vocab, dupes, primary/secondary overlap;
+  derives `body_region` from primary muscles). Coverage: Legs 50 / Back 30 / Arms 28 / Core 20 /
+  Shoulders 19 / Chest 18 (regions can overlap). Modality: 106 weight_reps / 30 bodyweight_reps /
+  8 distance_time / 6 time.
+- `0004_exercise_metadata.sql` — restructured `exercises`: added `primary_muscles[]`,
+  `secondary_muscles[]`, `body_region[]`, `mechanic`, `modality` (checked); dropped `primary_muscle`
+  + `category`; GIN indexes on the muscle/region arrays; rewrote `search_exercises()` to be
+  column-agnostic (`select e.*` by id).
+- `src/lib/muscles.ts` — shared 17-muscle → 6-region taxonomy + `deriveBodyRegion()` +
+  primary/secondary volume weights (1.0 / 0.5) for the future muscle-worked chart.
+- Rewrote `scripts/seed-exercises.ts` to wipe the old seeded rows (clearing the 4 blocking
+  `routine_exercises` first; aliases cascade) and insert the curated 150 + merged aliases.
+- Updated `src/types/db.ts` (new `exerciseSchema` + `ExerciseModality`), `src/data/exercises.ts`
+  (custom-create maps a single muscle → arrays + derived region + modality), and the 5 UI reads of
+  the old `primary_muscle` column.
+
+**Applied live:** repaired CLI migration history (0001–0002 were applied outside the CLI), then
+pushed **0003** (alias write policy — turned out to be committed-but-never-applied; now live) and
+**0004**. Ran the seed: **873 removed → 150 inserted, 156 aliases**; search probes (RDL, OHP,
+incline db, deadlift) resolve. `tsc --noEmit` clean.
+
+**Not done / next up:** on-device verification of the picker/library with the new metadata; optional
+UI to surface secondary muscles + a muscle-worked chart (data + weighting are ready); custom-create
+UI still only captures one muscle + equipment (no modality picker yet).
+
+---
+
+## 2026-07-30 (session 2) — Manual-first pivot: implemented the "RepVoice Manual" design (11 screens)
+
+**Decision (user):** step back from voice-first. Make the **manual** logging loop work well
+first — add a routine, start it, pick exercises, enter weight × reps × sets, see per-exercise
+weight history, save routines. Voice comes later, layered back on top of the same set grid.
+The voice-first work is **not deleted** — designs and code are preserved.
+
+**Design source:** imported the Claude Design project *"RepVoice voice-first design"*
+(`claude.ai/design/p/638a7d3a…`). It already contained a dedicated **`RepVoice Manual.dc.html`**
+(11 screens, same dark LED-instrument language). All three design files were pulled into the
+repo so nothing depends on the cloud project — see [`docs/design/`](./design/):
+`RepVoice-Manual.dc.html`, `RepVoice-VoiceFirst-v3.dc.html`, `support.js`.
+
+**Key finding that drove the work:** the app had **no manual set-creation UI at all** —
+`sets.addSet` / `useAddSet` existed but were called by nothing; sets could only be created by
+voice. The active-workout screen was a voice console. So the core of a manual tracker was
+missing and had to be built, and half the screens were still the plain black-on-white
+"Phase-1" UI.
+
+**Built / changed this session (all `tsc`-clean; `expo export --platform web` bundles all 11 routes):**
+- **NEW `src/lib/units.ts`** — kg↔display conversion (storage stays kg, hard rule intact),
+  `formatWeight/formatSet`, ±step, and barbell plate-per-side math.
+- **NEW `src/components/workout/SetKeypad.tsx`** (mockup 05) — bottom-sheet keypad: big KG/REPS
+  fields, ±2.5 / SAME-AS-LAST, numeric pad, plate hint. Handles add **and** edit.
+- **NEW `src/components/workout/Caret.tsx`** — the blinking LED caret.
+- **REWROTE `src/app/workout/[id].tsx`** (mockup 04, "the core") — manual **set grid**
+  (`# · PREV · KG · REPS · ✓`), pre-filled from last session so a repeat is one tap on ✓;
+  otherwise the keypad opens. Exercise chips, +warmup, inline rest countdown, prev/next,
+  finish → summary. No microphone (voice components left intact, just unwired here).
+- **REWROTE `src/app/index.tsx`** (mockup 01) — routines-first Home: week-activity strip,
+  "up next in rotation" (routine trained longest ago), full routine list, + new routine /
+  empty workout. Removed the TALK voice ring.
+- **NEW `src/app/finish/[id].tsx`** (mockup 07) — finish summary (duration / sets / volume +
+  per-exercise recap). The earlier build skipped this and dropped straight home.
+- **Restyled plain-white → dark LED:** `src/components/ui.tsx` (shared `Btn/Loading/Empty/
+  ErrorText` — biggest leverage), `routine/[id]` (02), `ExercisePickerModal` (03),
+  `history/index` (08), `history/[id]` (09), `exercise/[id]` (10, + top-set trend chart &
+  best/sessions/last stats — this is the "weight history per exercise" screen), `exercises`
+  (11).
+- **`_layout.tsx`** — dropped the white-header stack config; every screen is now dark and
+  draws its own in-screen header + safe area, so first paint is dark end-to-end.
+- **Hid the dev surface for demos** — removed the "Voice telemetry (dev)" entry from the Home
+  settings sheet (route still exists, just unreachable from the UI).
+
+**Follow-ups same session:**
+- **Optimistic set writes.** `useAddSet/useUpdateSet/useDeleteSet` now patch the `workout`
+  cache synchronously in `onMutate` (snapshot rollback on error, reconciling refetch on
+  settle), so the ✓ turns green and the grid updates on the same frame as the tap — no
+  network round-trip in the perceived path. Rest timer starts on tap; ✓ isn't disabled
+  mid-flight, so back-to-back logging works.
+- **kg/lb unit toggle.** Finished the half-built units feature: Settings sheet (Home) now has
+  "Weight units · switch to LB/KG", via a new optimistic `useUpdateProfile` — flips every
+  screen's weight display at once (storage stays kg).
+
+**Not done / deferred (see CONTEXT open issues):** on-device run + real logging (still no first
+OTP login); picker RECENT/muscle filter tabs (need usage data); "NEW BESTS" callout on the
+finish screen (needs per-exercise all-time baseline — omitted rather than faked); drag-to-
+reorder in the routine editor (uses ↑/↓); unit toggle in Settings (kg/lb display is wired but
+there's no UI to switch it yet).
+
 ## 2026-07-30 — Full-codebase QA pass + high-impact fix cluster
 
 **Session scope:** Read the whole codebase, flag done/remaining, run static QA, then fix
@@ -67,6 +165,12 @@ tree-shaken out before the wiring).
 **Not done / next up:** apply `0003` to the live DB; the same pending on-device first-login
 walkthrough (now the way to actually see the fonts + dark headers render); the unfixed
 findings listed above.
+
+**Doc tooling (same day):** added [`docs/CONTEXT.md`](./CONTEXT.md) as the single fast-start
+dashboard (current state + pending actions + open-issue backlog + run commands) and pointed
+`CLAUDE.md` at it first, so a new chat can bootstrap from one short file instead of a long
+prior conversation. Convention going forward: update `CONTEXT.md`'s three live sections
+**and** append a `WORK-LOG.md` entry at the end of any session that changes what's built.
 
 ---
 

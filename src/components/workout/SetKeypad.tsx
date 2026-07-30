@@ -1,0 +1,300 @@
+// Set-entry keypad (mockup 05). A bottom sheet over the set grid: two big LED
+// fields (KG active / REPS), ±step + SAME-AS-LAST shortcuts, a numeric pad, and a
+// plate-math hint. Storage is kg; entry is in the profile's display unit and
+// converted on LOG. Used for both adding a new set and editing a logged one.
+import { useEffect, useState } from 'react';
+import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Caret } from '@/components/workout/Caret';
+import {
+  displayToKg,
+  formatSet,
+  kgToDisplay,
+  platesLabel,
+  step,
+  trimWeight,
+} from '@/lib/units';
+import { color, font, radius, space, tracking } from '@/theme/tokens';
+import type { Unit } from '@/types/db';
+
+type Field = 'kg' | 'reps';
+
+export type SetKeypadProps = {
+  visible: boolean;
+  exerciseName: string;
+  setNumber: number;
+  unit: Unit;
+  /** Same-index set from last session (kg), for the SAME-AS-LAST shortcut + label. */
+  lastKg?: number | null;
+  lastReps?: number | null;
+  /** Prefill (kg) — usually the same last-session set, or the value being edited. */
+  initialKg: number | null;
+  initialReps: number | null;
+  mode?: 'add' | 'edit';
+  onLog: (weightKg: number | null, reps: number) => void;
+  onDelete?: () => void;
+  onClose: () => void;
+};
+
+const QUICK = ['−', '+', 'SAME', '⌫'] as const;
+const PAD = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', '⌫'] as const;
+
+export function SetKeypad(props: SetKeypadProps) {
+  const { visible, unit, initialKg, initialReps, lastKg, lastReps } = props;
+  const insets = useSafeAreaInsets();
+  const [kgStr, setKgStr] = useState('');
+  const [repsStr, setRepsStr] = useState('');
+  const [active, setActive] = useState<Field>('kg');
+
+  // Reset the buffers each time the sheet opens for a (new) set.
+  useEffect(() => {
+    if (!visible) return;
+    setKgStr(initialKg == null ? '' : trimWeight(kgToDisplay(initialKg, unit)));
+    setRepsStr(initialReps == null ? '' : String(initialReps));
+    setActive('kg');
+  }, [visible, initialKg, initialReps, unit]);
+
+  const setActiveStr = (updater: (s: string) => string) =>
+    active === 'kg' ? setKgStr(updater) : setRepsStr(updater);
+
+  function pressPad(key: string) {
+    if (key === '⌫') return setActiveStr((s) => s.slice(0, -1));
+    if (key === '.') {
+      if (active !== 'kg') return; // reps are integers
+      return setKgStr((s) => (s.includes('.') ? s : (s === '' ? '0.' : s + '.')));
+    }
+    // digit
+    setActiveStr((s) => {
+      if (active === 'reps' && s.length >= 3) return s; // sane cap
+      if (active === 'kg') {
+        const next = s + key;
+        // one decimal place max
+        if (next.includes('.') && next.split('.')[1].length > 1) return s;
+        if (next.replace('.', '').length > 5) return s;
+      }
+      return s + key;
+    });
+  }
+
+  function adjust(sign: 1 | -1) {
+    if (active === 'kg') {
+      const cur = parseFloat(kgStr || '0') || 0;
+      const next = Math.max(0, Math.round((cur + sign * step(unit)) * 10) / 10);
+      setKgStr(next === 0 && kgStr === '' ? '' : trimWeight(next));
+    } else {
+      const cur = parseInt(repsStr || '0', 10) || 0;
+      const next = Math.max(0, cur + sign);
+      setRepsStr(next === 0 ? '' : String(next));
+    }
+  }
+
+  function sameAsLast() {
+    if (lastKg != null) setKgStr(trimWeight(kgToDisplay(lastKg, unit)));
+    if (lastReps != null) setRepsStr(String(lastReps));
+  }
+
+  const reps = parseInt(repsStr || '0', 10) || 0;
+  const kgDisplay = kgStr === '' ? null : parseFloat(kgStr);
+  const weightKg = kgDisplay == null ? null : displayToKg(kgDisplay, unit);
+  const canLog = reps > 0;
+  const plates = platesLabel(weightKg);
+
+  function log() {
+    if (!canLog) return;
+    props.onLog(weightKg, reps);
+  }
+
+  const lastLabel =
+    lastKg != null || lastReps != null ? `LAST ${formatSet(lastKg, lastReps, unit)}` : null;
+
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={props.onClose}>
+      <Pressable style={styles.backdrop} onPress={props.onClose} />
+      <View style={[styles.sheet, { paddingBottom: insets.bottom + space.xl }]}>
+        <View style={styles.handle} />
+
+        <View style={styles.titleRow}>
+          <Text style={styles.title}>
+            {props.exerciseName.toUpperCase()} · SET {props.setNumber}
+          </Text>
+          {lastLabel && <Text style={styles.lastLabel}>{lastLabel}</Text>}
+        </View>
+
+        <View style={styles.fields}>
+          <Field
+            label={unit.toUpperCase()}
+            value={kgStr || '0'}
+            dim={kgStr === ''}
+            active={active === 'kg'}
+            onPress={() => setActive('kg')}
+          />
+          <Field
+            label="REPS"
+            value={repsStr || '0'}
+            dim={repsStr === ''}
+            active={active === 'reps'}
+            onPress={() => setActive('reps')}
+          />
+        </View>
+
+        <View style={styles.quickRow}>
+          {QUICK.map((q) => (
+            <Pressable
+              key={q}
+              style={styles.quick}
+              onPress={() =>
+                q === '−' ? adjust(-1) : q === '+' ? adjust(1) : q === 'SAME' ? sameAsLast() : pressPad('⌫')
+              }
+            >
+              <Text style={styles.quickText}>
+                {q === '−' ? `−${step(unit)}` : q === '+' ? `+${step(unit)}` : q === 'SAME' ? 'SAME' : '⌫'}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+
+        <View style={styles.pad}>
+          {PAD.map((k) => (
+            <Pressable key={k} style={styles.key} onPress={() => pressPad(k)}>
+              <Text style={[styles.keyText, (k === '.' || k === '⌫') && { color: color.t2 }]}>{k}</Text>
+            </Pressable>
+          ))}
+        </View>
+
+        <Pressable
+          style={[styles.logBtn, !canLog && styles.logBtnOff]}
+          onPress={log}
+          disabled={!canLog}
+        >
+          <Text style={[styles.logText, !canLog && { color: color.t3 }]}>
+            {props.mode === 'edit' ? 'SAVE SET' : 'LOG SET'}
+          </Text>
+        </Pressable>
+
+        <View style={styles.footNote}>
+          {plates ? (
+            <Text style={styles.plateText}>PLATES PER SIDE · {plates}</Text>
+          ) : (
+            <Text style={styles.plateText}> </Text>
+          )}
+          {props.mode === 'edit' && props.onDelete && (
+            <Pressable onPress={props.onDelete} hitSlop={8}>
+              <Text style={styles.deleteText}>DELETE SET</Text>
+            </Pressable>
+          )}
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+function Field({
+  label,
+  value,
+  dim,
+  active,
+  onPress,
+}: {
+  label: string;
+  value: string;
+  dim: boolean;
+  active: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable style={[styles.field, active && styles.fieldActive]} onPress={onPress}>
+      <Text style={[styles.fieldLabel, active && { color: color.acc }]}>{label}</Text>
+      <View style={styles.fieldValRow}>
+        <Text style={[styles.fieldVal, dim && { color: color.t3 }]}>{value}</Text>
+        {active && <Caret height={24} style={{ marginLeft: 3 }} />}
+      </View>
+    </Pressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  backdrop: { flex: 1, backgroundColor: 'rgba(2,6,9,0.66)' },
+  sheet: {
+    backgroundColor: color.s1,
+    borderTopWidth: 1,
+    borderTopColor: color.line2,
+    borderTopLeftRadius: radius.sheet,
+    borderTopRightRadius: radius.sheet,
+    paddingHorizontal: space.lg + 2,
+    paddingTop: space.md,
+  },
+  handle: {
+    width: 34,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: color.line2,
+    alignSelf: 'center',
+    marginBottom: space.lg,
+  },
+  titleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
+  title: { fontFamily: font.numSemibold, fontSize: 10.5, letterSpacing: tracking.label, color: color.t2 },
+  lastLabel: { fontFamily: font.numSemibold, fontSize: 9.5, letterSpacing: 0.6, color: color.t3 },
+
+  fields: { flexDirection: 'row', gap: space.md, marginTop: space.md },
+  field: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: color.line2,
+    borderRadius: radius.ctl + 1,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    backgroundColor: color.sin,
+  },
+  fieldActive: { borderColor: color.acc },
+  fieldLabel: { fontFamily: font.numSemibold, fontSize: 8, letterSpacing: tracking.wide, color: color.t3 },
+  fieldValRow: { flexDirection: 'row', alignItems: 'baseline', marginTop: 6 },
+  fieldVal: { fontFamily: font.numBold, fontSize: 30, color: color.t1 },
+
+  quickRow: { flexDirection: 'row', gap: 7, marginTop: space.md },
+  quick: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 9,
+    borderWidth: 1,
+    borderColor: color.line2,
+    borderRadius: radius.key,
+  },
+  quickText: { fontFamily: font.numSemibold, fontSize: 10, color: color.t2 },
+
+  pad: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: space.md },
+  key: {
+    width: '31.5%',
+    flexGrow: 1,
+    height: 52,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: color.s2,
+    borderWidth: 1,
+    borderColor: color.line2,
+    borderRadius: radius.ctl,
+  },
+  keyText: { fontFamily: font.numSemibold, fontSize: 21, color: color.t1 },
+
+  logBtn: {
+    height: 52,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: color.s2,
+    borderWidth: 1,
+    borderColor: color.acc35,
+    borderRadius: radius.ctl + 1,
+    marginTop: space.md,
+  },
+  logBtnOff: { borderColor: color.line2 },
+  logText: { fontFamily: font.uiSemibold, fontSize: 11, letterSpacing: tracking.label, color: color.acc },
+
+  footNote: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: space.md,
+    minHeight: 14,
+  },
+  plateText: { fontFamily: font.num, fontSize: 9.5, letterSpacing: 0.6, color: color.t3 },
+  deleteText: { fontFamily: font.numSemibold, fontSize: 9.5, letterSpacing: tracking.label, color: color.warn },
+});

@@ -45,3 +45,6 @@ example
 # env files (secrets)
 .env
 .env.local
+
+# Supabase CLI local state (machine-specific project linkage)
+supabase/.temp/

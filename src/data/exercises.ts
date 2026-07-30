@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
-import type { Exercise } from '@/types/db';
+import type { Exercise, ExerciseModality } from '@/types/db';
+import { deriveBodyRegion } from '@/lib/muscles';
 import { requireUserId } from './auth';
 
 /**
@@ -40,18 +41,24 @@ export async function getExercise(id: string): Promise<Exercise> {
 /** Custom exercises behave identically to seeded ones everywhere downstream. */
 export async function createCustomExercise(input: {
   name: string;
+  /** Free-text primary muscle(s); a single value maps to the body-region rollup. */
   primary_muscle?: string;
   equipment?: string;
-  category?: string;
+  modality?: ExerciseModality;
 }): Promise<Exercise> {
   const userId = await requireUserId();
+  const primary = input.primary_muscle?.trim().toLowerCase();
+  const primary_muscles = primary ? [primary] : [];
   const { data, error } = await supabase
     .from('exercises')
     .insert({
       canonical_name: input.name.trim(),
-      primary_muscle: input.primary_muscle?.trim() || null,
+      primary_muscles,
+      secondary_muscles: [],
+      body_region: deriveBodyRegion(primary_muscles),
       equipment: input.equipment?.trim() || null,
-      category: input.category?.trim() || null,
+      mechanic: null,
+      modality: input.modality ?? 'weight_reps',
       is_custom: true,
       created_by: userId,
     })

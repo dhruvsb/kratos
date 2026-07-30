@@ -36,12 +36,13 @@ updatable record of what was actually built from it, not a copy of the spec.
 | App scaffold, env config, conventions doc | ✅ Done |
 | Database schema + Row Level Security | ✅ Done and verified live |
 | Data access layer (`src/data/`) | ✅ Done |
-| Exercise library seed script + alias map | ✅ Done and seeded live (873 exercises, 217 aliases) |
-| All 6 Phase 1 screens | ✅ Done |
-| Hevy import | ❌ **Descoped** — removed from the Phase 1 plan entirely, not just deferred |
+| Exercise library seed script + alias map | ✅ Done and seeded live (**curated 150 exercises, 156 aliases** — rebuilt session 3 with rich metadata; see WORK-LOG) |
+| Manual UI — 11 `RepVoice Manual` screens on the dark LED theme | ✅ Built (2026-07-30 s2). Incl. **manual set logging** (grid + keypad), which was previously **missing** (voice-only). Static-verified, not yet on device. |
+| ↳ Core files | `src/app/{index,workout/[id],routine/[id],history/index,history/[id],exercise/[id],exercises,finish/[id]}.tsx`, `src/components/{ui,ExercisePickerModal,workout/SetKeypad,workout/Caret}.tsx`, `src/lib/units.ts` |
+| Hevy import | ❌ **Descoped** — removed from the Phase 1 plan entirely |
 | Native iPhone development client | ✅ Built, signed, installed, trusted, and launches to sign-in |
 | Email OTP delivery | ✅ Temporary Gmail SMTP + `{{ .Token }}` template; 8-digit delivery verified |
-| Typecheck / verify | ✅ Done (`tsc --noEmit` clean; `expo-doctor` 20/20) |
+| Typecheck / verify | ✅ `tsc --noEmit` clean; `expo export --platform web` bundles all 11 routes. On-device run still pending. |
 
 The Phase 1 backbone is built and its backend is verified. The current working tree has
 intentional uncommitted iOS/dev-client/auth setup changes documented in `WORK-LOG.md`.
@@ -52,8 +53,9 @@ What's left is completing first login and actually exercising the workflows on-d
 - ✅ `.env` filled in with real project URL + anon key + service role key.
 - ✅ `0001_init.sql` and `0002_voice_logs.sql` applied — all 8 Phase 1 tables confirmed
   present and queryable.
-- ✅ `npm run seed` run — 873 exercises, 217 aliases confirmed in the DB; spot-checked
-  search("RDL"/"OHP"/"incline db") returns the right exercise as the top hit.
+- ✅ `npm run seed` run — **curated 150 exercises, 156 aliases** confirmed in the DB
+  (rebuilt session 3; was 873); spot-checked search("RDL"/"OHP"/"incline db"/"deadlift")
+  returns the right exercise as the top hit.
 - ✅ `npm run test:rls` run for real — all 8 isolation checks passed (two throwaway
   accounts, one truly cannot read/write the other's data).
 - ✅ Native development build installed on the user's iPhone 15; Expo Go is not used.
@@ -132,7 +134,7 @@ supabase/migrations/0001_init.sql   Full schema: tables, indexes, RLS policies,
                                      profile-on-signup trigger, two SQL functions
                                      (search_exercises, last_session_sets)
 scripts/
-  seed-exercises.ts       Downloads free-exercise-db (~870 exercises), upserts,
+  seed-exercises.ts       Wipes + seeds the curated 150 from data/exercises-curated.json,
                           idempotent
   exercise-aliases.ts     Reviewable alias map (~70 lifts → shorthand like "RDL",
                           "OHP") — every key verified against the real dataset

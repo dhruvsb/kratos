@@ -1,63 +1,207 @@
-import { useLocalSearchParams } from 'expo-router';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
+// Exercise progress (mockup 10) — the "am I getting stronger?" screen and the
+// per-exercise weight history. Best / sessions / last up top, a top-set trend
+// chart, then every session newest-first. Reached from the library, a past
+// workout, or the exercise title mid-set.
+import { router, useLocalSearchParams } from 'expo-router';
+import { useMemo } from 'react';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Empty, ErrorText, Loading } from '@/components/ui';
-import { useExercise, useExerciseHistory } from '@/data/hooks';
+import { useExercise, useExerciseHistory, useProfile } from '@/data/hooks';
+import type { ExerciseHistoryEntry } from '@/data/workouts';
+import type { WorkoutSet, Unit } from '@/types/db';
+import { formatWeight, kgToDisplay, trimWeight } from '@/lib/units';
+import { color, font, shadow, space, tracking } from '@/theme/tokens';
 
-/** Every past set of one exercise, grouped by workout date, newest first. */
-export default function ExerciseHistoryScreen() {
+const DAY_MS = 86_400_000;
+
+function topSet(sets: WorkoutSet[]): WorkoutSet | null {
+  return sets.reduce<WorkoutSet | null>(
+    (best, s) =>
+      (s.weight_kg ?? 0) > (best?.weight_kg ?? -1) ||
+      ((s.weight_kg ?? 0) === (best?.weight_kg ?? -1) && (s.reps ?? 0) > (best?.reps ?? 0))
+        ? s
+        : best,
+    null
+  );
+}
+
+export default function ExerciseProgressScreen() {
+  const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const exercise = useExercise(id);
   const history = useExerciseHistory(id);
-  const entries = (history.data?.pages ?? []).flat();
+  const profile = useProfile();
+  const unit: Unit = profile.data?.default_unit ?? 'kg';
+
+  const entries = useMemo<ExerciseHistoryEntry[]>(
+    () => (history.data?.pages ?? []).flat(),
+    [history.data]
+  );
+
+  const derived = useMemo(() => {
+    let best: WorkoutSet | null = null;
+    for (const e of entries) {
+      const t = topSet(e.sets);
+      if (t && (t.weight_kg ?? 0) > (best?.weight_kg ?? -1)) best = t;
+    }
+    const lastDays = entries[0]
+      ? Math.round(
+          (Date.now() - new Date(entries[0].started_at).getTime()) / DAY_MS
+        )
+      : null;
+    // Chart: top-set weight per session, chronological, last 12.
+    const chrono = [...entries].reverse().slice(-12);
+    const tops = chrono.map((e) => topSet(e.sets)?.weight_kg ?? 0);
+    const min = Math.min(...(tops.length ? tops : [0]));
+    const max = Math.max(...(tops.length ? tops : [1]));
+    const bars = chrono.map((e) => {
+      const w = topSet(e.sets)?.weight_kg ?? 0;
+      const h = max === min ? 70 : 30 + 70 * ((w - min) / (max - min));
+      return { h, isPr: w === max && max > 0 };
+    });
+    return { best, lastDays, bars, min, max };
+  }, [entries]);
 
   if (exercise.isLoading || history.isLoading) return <Loading />;
   if (history.error != null) return <ErrorText error={history.error} />;
 
-  return (
-    <FlatList
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      data={entries}
-      keyExtractor={(item) => item.workout_id}
-      onEndReached={() => {
-        if (history.hasNextPage && !history.isFetchingNextPage) history.fetchNextPage();
-      }}
-      onEndReachedThreshold={0.5}
-      ListHeaderComponent={
-        <Text style={styles.title}>{exercise.data?.canonical_name ?? ''}</Text>
-      }
-      renderItem={({ item }) => (
-        <View style={styles.block}>
-          <Text style={styles.blockDate}>
-            {new Date(item.started_at).toLocaleDateString(undefined, {
-              weekday: 'short',
-              day: 'numeric',
-              month: 'short',
-              year: 'numeric',
-            })}
+  const bestLabel = derived.best
+    ? `${formatWeight(derived.best.weight_kg, unit)}`
+    : '—';
+  const lastLabel =
+    derived.lastDays == null ? '—' : derived.lastDays === 0 ? 'TODAY' : `${derived.lastDays}D`;
+
+  const Header = (
+    <View>
+      <Pressable onPress={() => router.back()} hitSlop={10}>
+        <Text style={styles.back}>← BACK</Text>
+      </Pressable>
+      <Text style={styles.title}>{exercise.data?.canonical_name ?? ''}</Text>
+      <Text style={styles.sub}>
+        {[exercise.data?.primary_muscles?.join(', '), exercise.data?.equipment].filter(Boolean).join(' · ').toUpperCase() || 'EXERCISE'}
+      </Text>
+
+      <View style={styles.statRow}>
+        <View>
+          <Text style={styles.statLabel}>BEST</Text>
+          <Text style={styles.statValue}>
+            {bestLabel}
+            {derived.best?.reps != null && <Text style={styles.statUnit}> ×{derived.best.reps}</Text>}
           </Text>
-          {item.sets.map((set) => (
-            <Text key={set.id} style={styles.setText}>
-              #{set.set_number} {set.weight_kg ?? '—'} kg × {set.reps ?? '—'}
-              {set.set_type !== 'normal' ? `  [${set.set_type}]` : ''}
+        </View>
+        <View>
+          <Text style={styles.statLabel}>SESSIONS</Text>
+          <Text style={styles.statValue}>{entries.length}</Text>
+        </View>
+        <View>
+          <Text style={styles.statLabel}>LAST</Text>
+          <Text style={[styles.statValue, { color: color.t2 }]}>{lastLabel}</Text>
+        </View>
+      </View>
+
+      {derived.bars.length > 1 && (
+        <View style={{ marginTop: space.xxl }}>
+          <View style={styles.chartHead}>
+            <Text style={styles.statLabel}>TOP SET · LAST {derived.bars.length}</Text>
+            <Text style={styles.chartRange}>
+              {trimWeight(kgToDisplay(derived.min, unit))}—{trimWeight(kgToDisplay(derived.max, unit))} {unit.toUpperCase()}
             </Text>
-          ))}
+          </View>
+          <View style={styles.chart}>
+            {derived.bars.map((b, i) => (
+              <View
+                key={i}
+                style={[
+                  styles.bar,
+                  { height: `${b.h}%`, backgroundColor: b.isPr ? color.acc14 : color.s1 },
+                  b.isPr && { borderTopWidth: 1, borderTopColor: color.acc, ...shadow.glowSm },
+                ]}
+              />
+            ))}
+          </View>
         </View>
       )}
-      ListEmptyComponent={<Empty text="Never performed. It's leg day somewhere." />}
-      ListFooterComponent={
-        history.isFetchingNextPage ? <Text style={styles.footer}>Loading more…</Text> : null
-      }
-    />
+
+      <Text style={[styles.statLabel, { marginTop: space.xxl }]}>EVERY SESSION</Text>
+    </View>
+  );
+
+  return (
+    <View style={[styles.screen, { paddingTop: insets.top + space.md }]}>
+      <FlatList
+        data={entries}
+        keyExtractor={(item) => item.workout_id}
+        contentContainerStyle={styles.content}
+        ListHeaderComponent={Header}
+        onEndReached={() => {
+          if (history.hasNextPage && !history.isFetchingNextPage) history.fetchNextPage();
+        }}
+        onEndReachedThreshold={0.5}
+        renderItem={({ item }) => {
+          const t = topSet(item.sets);
+          const isBest = t != null && derived.best != null && t.weight_kg === derived.best.weight_kg && t.reps === derived.best.reps;
+          const summary = item.sets
+            .map((s) => `${formatWeight(s.weight_kg, unit)}×${s.reps ?? '—'}`)
+            .join('  ·  ');
+          return (
+            <Pressable style={styles.sessionRow} onPress={() => router.push(`/history/${item.workout_id}`)}>
+              <Text style={styles.sessionDate}>
+                {new Date(item.started_at)
+                  .toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })
+                  .toUpperCase()}
+              </Text>
+              <Text style={styles.sessionSets} numberOfLines={1}>
+                {summary}
+              </Text>
+              {isBest && <Text style={styles.bestTag}>▲ BEST</Text>}
+            </Pressable>
+          );
+        }}
+        ListEmptyComponent={<Empty text="Never performed. It's leg day somewhere." />}
+        ListFooterComponent={
+          history.isFetchingNextPage ? <Text style={styles.loadingMore}>LOADING…</Text> : null
+        }
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  content: { padding: 16, gap: 8 },
-  title: { fontSize: 18, color: '#000', marginBottom: 8 },
-  block: { borderWidth: 1, borderColor: '#ccc', padding: 10, gap: 3, marginBottom: 8 },
-  blockDate: { fontSize: 13, color: '#666', marginBottom: 4 },
-  setText: { color: '#000', fontSize: 15 },
-  footer: { color: '#666', padding: 12, textAlign: 'center' },
+  screen: { flex: 1, backgroundColor: color.bg },
+  content: { paddingHorizontal: space.xl, paddingBottom: space.xxl },
+  back: { fontFamily: font.numSemibold, fontSize: 9.5, letterSpacing: tracking.label, color: color.t3 },
+  title: { fontFamily: font.uiBold, fontSize: 21, color: color.t1, marginTop: space.lg },
+  sub: { fontFamily: font.numSemibold, fontSize: 9.5, letterSpacing: tracking.label, color: color.t3, marginTop: 7 },
+
+  statRow: { flexDirection: 'row', gap: 28, marginTop: space.xl },
+  statLabel: { fontFamily: font.numSemibold, fontSize: 8, letterSpacing: tracking.wide, color: color.t3 },
+  statValue: { fontFamily: font.numBold, fontSize: 20, color: color.t1, marginTop: 7 },
+  statUnit: { fontFamily: font.num, fontSize: 11, color: color.t3 },
+
+  chartHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
+  chartRange: { fontFamily: font.numSemibold, fontSize: 8, letterSpacing: 0.6, color: color.t3 },
+  chart: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 5,
+    height: 88,
+    marginTop: space.md,
+    borderBottomWidth: 1,
+    borderBottomColor: color.line,
+  },
+  bar: { flex: 1, backgroundColor: color.s1, borderTopLeftRadius: 1, borderTopRightRadius: 1 },
+
+  sessionRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: space.md,
+    paddingVertical: 13,
+    borderBottomWidth: 1,
+    borderBottomColor: color.line,
+  },
+  sessionDate: { fontFamily: font.numSemibold, fontSize: 9.5, letterSpacing: 0.6, color: color.t3, width: 64 },
+  sessionSets: { fontFamily: font.numSemibold, fontSize: 12, color: color.t2, flex: 1 },
+  bestTag: { fontFamily: font.numSemibold, fontSize: 9, letterSpacing: 0.6, color: color.acc },
+  loadingMore: { fontFamily: font.numSemibold, fontSize: 10, letterSpacing: tracking.label, color: color.t3, textAlign: 'center', padding: space.md },
 });

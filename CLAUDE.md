@@ -5,7 +5,8 @@
 Workout logging app. Phase 1 = manual tracker backbone. Phase 2 adds voice/LLM logging. Phase 3 TBD.
 
 **Before doing anything else, read the knowledge base in `docs/`:**
-- [`docs/PRODUCT-PRINCIPLES.md`](docs/PRODUCT-PRINCIPLES.md) — **the standing priorities behind every decision** (showcase-first purpose, sleek + minimal-touch UI, instant speed). Read this first; when a request would compromise a priority, flag it before implementing.
+- [`docs/CONTEXT.md`](docs/CONTEXT.md) — **start here.** The fast-start dashboard: current state, pending actions, and the open-issue backlog, with pointers into the deeper docs. Update its three live sections at the end of any session that changes what's built.
+- [`docs/PRODUCT-PRINCIPLES.md`](docs/PRODUCT-PRINCIPLES.md) — **the standing priorities behind every decision** (showcase-first purpose, sleek + minimal-touch UI, instant speed). When a request would compromise a priority, flag it before implementing.
 - [`docs/PROJECT-SUMMARY-PHASE1.md`](docs/PROJECT-SUMMARY-PHASE1.md) — manual tracker: what's built, decided, left
 - [`docs/PROJECT-SUMMARY-PHASE2.md`](docs/PROJECT-SUMMARY-PHASE2.md) — voice/LLM pipeline: same, for Phase 2
 - [`docs/WORK-LOG.md`](docs/WORK-LOG.md) — dated history of what happened each session
@@ -20,10 +21,13 @@ changes what's built or decided — don't let the docs drift from reality.
   display concern only. Default display unit: **kg** (`profiles.default_unit`).
 - **No API keys in client code.** All future AI/LLM calls go through Supabase Edge
   Functions. The client holds only the anon key (via `.env` → `app.config.ts` extra).
-- **Frontend is intentionally unstyled** until a dedicated design phase: default fonts,
-  black/white/grey only, minimal spacing. Never add colors, custom fonts, or a component
-  library without being asked. `src/theme/tokens.ts` is the (empty) placeholder for the
-  future design pass.
+- **The design phase has happened — the UI is the dark "LED-instrument" theme.** (This
+  supersedes the old "frontend is intentionally unstyled / black-white-grey only" rule.)
+  `src/theme/tokens.ts` is fully populated and is the **single source of truth for every
+  color, font, radius, spacing, and shadow** — never hardcode a value that has a token, and
+  never introduce a color/font outside the token set. Fonts are Space Grotesk (UI) + IBM
+  Plex Mono (numbers). The reference designs live in `docs/design/` (`RepVoice-Manual.dc.html`
+  is what's implemented; the voice-first canvas is kept for Phase 2).
 - **All DB access goes through `src/data/` repository modules.** Screens and components
   never import `src/lib/supabase.ts` directly — auth is also wrapped, in `src/data/auth.ts`.
 - Security model is **Postgres RLS** (`user_id = auth.uid()`, child tables via join).
@@ -61,7 +65,12 @@ changes what's built or decided — don't let the docs drift from reality.
 
 ## Current state
 
-- Phase 1 scaffold + schema + repositories + screens + seed & import scripts written.
-- NOT yet done: Supabase project creation (user), applying migration, running seed,
-  Hevy import run, RLS two-account test run, 4 real workouts logged.
-- No AI anywhere yet (by design — Phase 2).
+- **Manual-first.** The full manual loop — add/save routine → start → pick exercises →
+  log weight×reps×sets (set grid + keypad) → finish summary → history → per-exercise weight
+  history — is implemented across all 11 `RepVoice Manual` screens on the dark theme.
+  Backbone (schema, RLS, repos, curated 150-exercise seed) is verified live.
+- Voice logging (Phase 2) is built but **unwired from the manual screens**; it returns later
+  on top of the same set grid. Don't delete voice code.
+- NOT yet done: first on-device OTP login + a real manual-loop walkthrough (the build is
+  `tsc`- and web-export-verified only, never run on a device).
+- Read [`docs/CONTEXT.md`](docs/CONTEXT.md) for the live status / pending / open-issues detail.
