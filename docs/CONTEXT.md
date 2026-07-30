@@ -10,9 +10,9 @@ codebase or a huge prior conversation.
 > issues**) *and* append a dated entry to [`WORK-LOG.md`](./WORK-LOG.md). This file is the
 > snapshot; `WORK-LOG.md` is the full history. Keep this file short.
 
-**Last updated:** 2026-07-30 (session 3 — **exercise directory rebuild**: replaced the 873
-free-exercise-db rows with a curated 150-set carrying muscle arrays + body-region rollup +
-mechanic/modality; applied migrations 0003 & 0004 live. See WORK-LOG). Static-verified + live-verified.
+**Last updated:** 2026-07-30 (session 4 — **calendar view**: added mockup-12 "five a week"
+Calendar screen (`/calendar`) + `data/calendar.ts`, wired into Home's tab bar. Static-verified,
+not on device. Prior: session 3 exercise directory rebuild — migrations 0003 & 0004 live. See WORK-LOG).
 
 ---
 
@@ -48,9 +48,10 @@ logging via an LLM pipeline, **3** TBD (PRs/charts).
 |---|---|
 | Phase 1 backbone (schema, RLS, repos) | ✅ Built; backend verified live (**150 curated exercises** / 156 aliases seeded; RLS test passed) |
 | **Exercise directory — curated + rich metadata** | ✅ **Rebuilt this session**: replaced the 873 free-exercise-db import with a curated 150-set carrying `primary_muscles[]`, `secondary_muscles[]`, `body_region[]` rollup, `mechanic`, `modality`. Source of truth: `scripts/data/exercises-curated.json` (regen via `scripts/build-curated-exercises.py`). Muscle taxonomy in `src/lib/muscles.ts`. |
-| **Manual-first UI — all 11 `RepVoice Manual` screens** | ✅ **Built this session** (dark LED theme); **not yet run on device** |
+| **Manual-first UI — all 12 `RepVoice Manual` screens** | ✅ Built (dark LED theme); **not yet run on device** |
 | ↳ Manual set logging (grid + keypad) — *the core, previously missing* | ✅ Built (`workout/[id]`, `components/workout/SetKeypad`, `lib/units`) |
 | ↳ Home / routine editor / picker / history / past workout / exercise progress / library / finish | ✅ Built / restyled dark |
+| ↳ **Calendar (mockup 12, "five a week")** | ✅ **Built this session** — `src/app/calendar.tsx` + `src/data/calendar.ts` (finished-workout days → week card / month grid / streak stats / 12-week bars); wired into Home tab bar. `WEEK_GOAL` hardcoded to 5. |
 | Two-theme white/dark patchwork | ✅ **Resolved** — every screen is now dark; `_layout` header config dropped |
 | Phase 2 voice pipeline (extraction → resolution → kg) | ✅ Built; edge fn deployed + auth-guarded; **unwired from manual UI** (returns later) |
 | Native iOS dev client on physical iPhone 15 | ✅ Installed, launches to sign-in |
@@ -59,7 +60,7 @@ logging via an LLM pipeline, **3** TBD (PRs/charts).
 | Migration `0003_alias_write_policy.sql` | ✅ **Applied this session** (was committed-but-unapplied; Phase 2 alias write-back policy now live) |
 | Migration `0004_exercise_metadata.sql` | ✅ Applied — exercises table restructured (muscle arrays + body_region + mechanic + modality; dropped `primary_muscle`/`category`) |
 
-Static checks currently green: `tsc --noEmit` clean; `expo export --platform web` bundles all 11 routes.
+Static checks currently green: `tsc --noEmit` clean; `expo export --platform web` bundles all 12 routes.
 
 ## Pending actions (owner: user / next session)
 
@@ -70,7 +71,9 @@ Static checks currently green: `tsc --noEmit` clean; `expo export --platform web
       on device).
 - [ ] **Create + save a routine** on device (name, add exercises, targets, save) and confirm
       it appears on Home and starts.
-- [ ] Log ~4 real workouts on-device (the real "done" bar for the manual tracker).
+- [ ] Log ~4 real workouts on-device (the real "done" bar for the manual tracker) — this also
+      populates the new **Calendar** tab; verify the week card / month grid / 12-week bars read
+      right against real workout days.
 - [ ] *(Phase 2, when voice resumes)* Apply migration `0003` to the live DB; run `npm run eval`.
 - [ ] Replace temporary Gmail SMTP with a dedicated provider before any external-user testing.
 

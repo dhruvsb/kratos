@@ -7,6 +7,35 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-07-30 (session 4) — Calendar view (mockup 12, "five a week")
+
+**Context:** the `RepVoice Manual` design gained a 12th screen — a **Calendar** built on a
+"five a week" goal (a count, not a streak: miss a day and the week still stands). Implemented
+**in isolation** (parallel chats were editing other files), so the whole feature is two new
+files and — at first — zero edits to existing code; the Home tab-wiring was added in a
+follow-up step once that was safe.
+
+**Built:**
+- `src/app/calendar.tsx` — the screen (`/calendar`, auto-registered by file-based routing).
+  Sections, all derived from finished-workout days (no new table): **this-week card** (count
+  toward 5, Mon–Sun marks, `ONE TO GO` / `GOAL HIT` status), **month grid** (Monday-first,
+  worked days lit / today solid, per-week tally colored by whether it hit 5, `‹ ›` month nav
+  capped at the current month), **three stats** (last 7d / last 30d / weeks-at-5+ over 12
+  weeks), and a **12-week bar chart** vs. a goal line at 5. Dark LED theme, tokens only; own
+  `TabBar` with `CALENDAR` active.
+- `src/data/calendar.ts` — new repo module: `listWorkoutDays()` (finished-workout `started_at`
+  only, RLS-scoped) + a co-located `useWorkoutDays` query hook (kept out of `data/hooks.ts` to
+  preserve isolation; move it there if the file is ever consolidated).
+
+**Wired in (follow-up):** added a `CALENDAR` tab to Home's `TabBar` in `src/app/index.tsx`
+(`HOME · CALENDAR · HISTORY · SETTINGS`, per the design) → `router.push('/calendar')`.
+
+**Verified:** `tsc --noEmit` clean; `expo export --platform web` bundles **12** routes incl.
+`/calendar`; regenerated typed-routes so `'/calendar'` is a known route. Not yet run on device.
+
+**Left:** `WEEK_GOAL` is hardcoded to 5 (design value) — could become a profile setting. The
+calendar's `SETTINGS` tab is inert (Home owns the settings sheet). Not verified on device.
+
 ## 2026-07-30 (session 3) — Exercise directory rebuild: curated 150 with rich, chart-ready metadata
 
 **Decision (user):** the 873-row free-exercise-db import was too large and metadata-poor. Replace

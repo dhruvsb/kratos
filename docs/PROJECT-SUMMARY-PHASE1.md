@@ -37,12 +37,12 @@ updatable record of what was actually built from it, not a copy of the spec.
 | Database schema + Row Level Security | ✅ Done and verified live |
 | Data access layer (`src/data/`) | ✅ Done |
 | Exercise library seed script + alias map | ✅ Done and seeded live (**curated 150 exercises, 156 aliases** — rebuilt session 3 with rich metadata; see WORK-LOG) |
-| Manual UI — 11 `RepVoice Manual` screens on the dark LED theme | ✅ Built (2026-07-30 s2). Incl. **manual set logging** (grid + keypad), which was previously **missing** (voice-only). Static-verified, not yet on device. |
-| ↳ Core files | `src/app/{index,workout/[id],routine/[id],history/index,history/[id],exercise/[id],exercises,finish/[id]}.tsx`, `src/components/{ui,ExercisePickerModal,workout/SetKeypad,workout/Caret}.tsx`, `src/lib/units.ts` |
+| Manual UI — 12 `RepVoice Manual` screens on the dark LED theme | ✅ Built (2026-07-30 s2; **Calendar** added s4). Incl. **manual set logging** (grid + keypad), which was previously **missing** (voice-only). Static-verified, not yet on device. |
+| ↳ Core files | `src/app/{index,workout/[id],routine/[id],history/index,history/[id],exercise/[id],exercises,finish/[id],calendar}.tsx`, `src/components/{ui,ExercisePickerModal,workout/SetKeypad,workout/Caret}.tsx`, `src/data/calendar.ts`, `src/lib/units.ts` |
 | Hevy import | ❌ **Descoped** — removed from the Phase 1 plan entirely |
 | Native iPhone development client | ✅ Built, signed, installed, trusted, and launches to sign-in |
 | Email OTP delivery | ✅ Temporary Gmail SMTP + `{{ .Token }}` template; 8-digit delivery verified |
-| Typecheck / verify | ✅ `tsc --noEmit` clean; `expo export --platform web` bundles all 11 routes. On-device run still pending. |
+| Typecheck / verify | ✅ `tsc --noEmit` clean; `expo export --platform web` bundles all 12 routes. On-device run still pending. |
 
 The Phase 1 backbone is built and its backend is verified. The current working tree has
 intentional uncommitted iOS/dev-client/auth setup changes documented in `WORK-LOG.md`.
