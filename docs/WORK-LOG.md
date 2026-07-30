@@ -7,6 +7,55 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-07-30 (session 4) — "Entry & edges" screens 13–18 (built in an isolated worktree)
+
+**Context:** design canvas `RepVoice Manual.dc.html` grew an **Entry & edges** section (screens 13–18)
+covering the states the happy-path 11 skipped. Imported the latest canvas via the Claude Design MCP
+and implemented all six. Done on branch `worktree-entry-edges-screens` so the main tree stayed free
+for parallel work; the untracked `src/app/calendar.tsx` (screen 12, another chat) is deliberately not
+in this worktree.
+
+**Decision (isolation over migration):** the four new logging prefs (default rest, auto-start rest,
+pre-fill, weekly goal) are stored **device-local in AsyncStorage** (`src/data/settings.ts`), not on
+`profiles` — no migration, no shared-schema edit, works the moment Settings opens. Weight *unit*
+stays on `profiles` (read across the whole write path). This mirrors the "built in isolation" pattern
+`src/data/calendar.ts` already uses. `weeklyGoal` is the one cross-screen contract: import
+`useSettings` in the calendar screen when the calendar tab lands (it currently hardcodes 5).
+
+**Built:**
+- **13 Sign in** — rewrote `src/components/SignInScreen.tsx` from the old white placeholder to the dark
+  LED theme: email stage with blinking caret → segmented six-box code that auto-advances and verifies
+  on the sixth digit (hidden `TextInput` drives the boxes; `oneTimeCode`/`sms-otp` autofill). `_layout`
+  status bar for the signed-out branch flipped to light.
+- **14 First run** + **16 Resume** — both are Home states (`src/app/index.tsx`). Day-zero: empty week
+  strip, "Nothing logged yet / Start with a routine", BUILD MY FIRST ROUTINE vs OR JUST START LIFTING,
+  three starter-template cards (all open the routine builder — illustrative, no canned lists).
+  Resume: a live-ticking "STILL RUNNING" card (started/sets/last-set from the active `useWorkout`
+  detail) with RESUME / FINISH NOW / DISCARD, the "nothing lost — only a half-typed set is gone" note,
+  and the routine list held inert (LOCKED, dimmed).
+- **15 No-history set grid** — `src/app/workout/[id].tsx` now honours the new settings: `defaultRestSec`
+  + `autoStartRest` drive the rest timer, `prefillFromLastSession` gates the pending row (off ⇒ blank
+  fields). First time on a lift: lone em-dash PREV (not "— × —"), "NO PREVIOUS SETS", and a one-line
+  explainer.
+- **17 Fix a logged set** — `src/app/history/[id].tsx` sets are now tappable → the same `SetKeypad`
+  edit sheet (save / delete set) weeks later, reusing the optimistic `useUpdateSet`/`useDeleteSet`
+  hooks (they key off the shared workout cache, so a finished session patches instantly). Added
+  `useDeleteWorkout` + a "Wrong day entirely? DELETE WORKOUT" affordance in the keypad footer, kept
+  visually apart from SAVE; wired in both the history sheet and mid-workout.
+- **18 Settings** — new real screen `src/app/settings.tsx` (replaces Home's ActionSheet), grouped
+  LOGGING / DATA / ACCOUNT; rows toggle/cycle in place (no switches). Export = share a workout-summary
+  CSV via the RN `Share` sheet. `TabBar` is now the 4-tab HOME · CALENDAR · HISTORY · SETTINGS across
+  Home + Settings.
+
+**Verified:** `tsc --noEmit` clean; `expo export --platform web` bundles all 12 routes (incl. `/settings`;
+`/calendar` intentionally absent from this worktree). **Not** run on device (unchanged project state).
+
+**Pending / handoff:** merge needs `src/app/calendar.tsx` present so the CALENDAR tab resolves; wire
+`useSettings().weeklyGoal` into the calendar tally; if longer OTP codes are ever configured, bump
+`CODE_LEN` in `SignInScreen`.
+
+---
+
 ## 2026-07-30 (session 3) — Exercise directory rebuild: curated 150 with rich, chart-ready metadata
 
 **Decision (user):** the 873-row free-exercise-db import was too large and metadata-poor. Replace

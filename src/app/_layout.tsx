@@ -58,7 +58,8 @@ export default function RootLayout() {
           />
         ) : (
           <>
-            <StatusBar style="dark" />
+            {/* Sign-in is now the dark LED theme (mockup 13), so the bar goes light. */}
+            <StatusBar style="light" />
             <SignInScreen />
           </>
         )}

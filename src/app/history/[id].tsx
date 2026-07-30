@@ -1,13 +1,26 @@
-// Past workout (mockup 09) — read-only session detail, same set typography as the
-// live grid. Tap an exercise to jump to its progress.
+// Past workout (mockups 09 / 17) — session detail with the same set typography as
+// the live grid, and the same correction sheet: tap any set to fix its weight/reps
+// or delete it weeks later, or delete the whole workout if it's the wrong day.
+// Edits reuse the optimistic set hooks (they key off the shared workout cache, so a
+// finished session patches instantly just like the active one).
 import { router, useLocalSearchParams } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Empty, ErrorText, Loading } from '@/components/ui';
-import { useProfile, useWorkout } from '@/data/hooks';
+import { SetKeypad } from '@/components/workout/SetKeypad';
+import { useDeleteSet, useDeleteWorkout, useProfile, useUpdateSet, useWorkout } from '@/data/hooks';
 import type { WorkoutSet, Unit } from '@/types/db';
 import { formatSet, formatWeight } from '@/lib/units';
 import { color, font, space, tracking } from '@/theme/tokens';
+
+type EditState = {
+  setId: string;
+  exerciseName: string;
+  setNumber: number;
+  kg: number | null;
+  reps: number | null;
+};
 
 export default function WorkoutDetailScreen() {
   const insets = useSafeAreaInsets();
@@ -15,6 +28,10 @@ export default function WorkoutDetailScreen() {
   const workout = useWorkout(id);
   const profile = useProfile();
   const unit: Unit = profile.data?.default_unit ?? 'kg';
+  const updateSet = useUpdateSet(id!);
+  const deleteSet = useDeleteSet(id!);
+  const deleteWorkout = useDeleteWorkout(id!);
+  const [edit, setEdit] = useState<EditState | null>(null);
 
   if (workout.isLoading) return <Loading />;
   if (workout.error != null) return <ErrorText error={workout.error} />;
@@ -37,6 +54,18 @@ export default function WorkoutDetailScreen() {
     .join(' · ')
     .toUpperCase();
 
+  function confirmDeleteWorkout() {
+    setEdit(null);
+    Alert.alert('Delete this workout?', 'The whole session and every set in it are removed.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () => deleteWorkout.mutate(undefined, { onSuccess: () => router.back() }),
+      },
+    ]);
+  }
+
   return (
     <View style={[styles.screen, { paddingTop: insets.top + space.md }]}>
       <ScrollView contentContainerStyle={styles.content}>
@@ -49,7 +78,11 @@ export default function WorkoutDetailScreen() {
         <Text style={styles.meta}>{meta}</Text>
         {detail.notes ? <Text style={styles.notes}>{detail.notes}</Text> : null}
 
-        {detail.exercises.length === 0 && <Empty text="No exercises in this workout." />}
+        {detail.exercises.length === 0 ? (
+          <Empty text="No exercises in this workout." />
+        ) : (
+          <Text style={styles.editHint}>Tap any set to fix it.</Text>
+        )}
 
         {detail.exercises.map((we) => {
           const top = we.sets.reduce<WorkoutSet | null>(
@@ -65,18 +98,53 @@ export default function WorkoutDetailScreen() {
                 {top && <Text style={styles.blockTop}>TOP {formatWeight(top.weight_kg, unit)}</Text>}
               </Pressable>
               {we.sets.map((set, i) => (
-                <View key={set.id} style={styles.setRow}>
+                <Pressable
+                  key={set.id}
+                  style={({ pressed }) => [styles.setRow, pressed && styles.setRowPressed]}
+                  onPress={() =>
+                    setEdit({
+                      setId: set.id,
+                      exerciseName: we.exercise.canonical_name,
+                      setNumber: set.set_number,
+                      kg: set.weight_kg,
+                      reps: set.reps,
+                    })
+                  }
+                >
                   <Text style={styles.setNum}>{set.set_type === 'warmup' ? 'W' : i + 1}</Text>
                   <Text style={styles.setVal}>{formatSet(set.weight_kg, set.reps, unit)}</Text>
                   {set.set_type !== 'normal' && (
                     <Text style={styles.setTag}>{set.set_type.toUpperCase()}</Text>
                   )}
-                </View>
+                  <Text style={styles.setEdit}>EDIT</Text>
+                </Pressable>
               ))}
             </View>
           );
         })}
       </ScrollView>
+
+      {edit && (
+        <SetKeypad
+          visible
+          exerciseName={edit.exerciseName}
+          setNumber={edit.setNumber}
+          unit={unit}
+          initialKg={edit.kg}
+          initialReps={edit.reps}
+          mode="edit"
+          onLog={(weightKg, reps) => {
+            updateSet.mutate({ setId: edit.setId, patch: { weight_kg: weightKg, reps } });
+            setEdit(null);
+          }}
+          onDelete={() => {
+            deleteSet.mutate(edit.setId);
+            setEdit(null);
+          }}
+          onDeleteWorkout={confirmDeleteWorkout}
+          onClose={() => setEdit(null)}
+        />
+      )}
     </View>
   );
 }
@@ -87,6 +155,7 @@ const styles = StyleSheet.create({
   back: { fontFamily: font.numSemibold, fontSize: 9.5, letterSpacing: tracking.label, color: color.t3 },
   title: { fontFamily: font.uiBold, fontSize: 21, color: color.t1, marginTop: space.lg },
   meta: { fontFamily: font.numSemibold, fontSize: 10.5, letterSpacing: 0.8, color: color.t2, marginTop: 7 },
+  editHint: { fontFamily: font.num, fontSize: 10, letterSpacing: 0.4, color: color.t3, marginTop: space.md },
   notes: {
     fontFamily: font.num,
     fontSize: 11.5,
@@ -118,7 +187,9 @@ const styles = StyleSheet.create({
     borderBottomColor: color.line,
     borderStyle: 'dashed',
   },
+  setRowPressed: { backgroundColor: color.acc06 },
   setNum: { fontFamily: font.numSemibold, fontSize: 9.5, color: color.t3, width: 20 },
   setVal: { fontFamily: font.numBold, fontSize: 15, color: color.t1, flex: 1 },
   setTag: { fontFamily: font.numSemibold, fontSize: 9, letterSpacing: 0.6, color: color.t3 },
+  setEdit: { fontFamily: font.numSemibold, fontSize: 8.5, letterSpacing: tracking.label, color: color.t3 },
 });

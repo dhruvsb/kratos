@@ -10,9 +10,10 @@ codebase or a huge prior conversation.
 > issues**) *and* append a dated entry to [`WORK-LOG.md`](./WORK-LOG.md). This file is the
 > snapshot; `WORK-LOG.md` is the full history. Keep this file short.
 
-**Last updated:** 2026-07-30 (session 3 — **exercise directory rebuild**: replaced the 873
-free-exercise-db rows with a curated 150-set carrying muscle arrays + body-region rollup +
-mechanic/modality; applied migrations 0003 & 0004 live. See WORK-LOG). Static-verified + live-verified.
+**Last updated:** 2026-07-30 (session 4 — **"Entry & edges" screens 13–18** on branch
+`worktree-entry-edges-screens`: sign-in, first-run, resume, no-history grid, fix-a-set, real Settings
++ a local AsyncStorage settings store. Static-verified. See WORK-LOG). Prior: session 3 exercise
+directory rebuild (curated 150, migrations 0003 & 0004 live).
 
 ---
 
@@ -48,7 +49,8 @@ logging via an LLM pipeline, **3** TBD (PRs/charts).
 |---|---|
 | Phase 1 backbone (schema, RLS, repos) | ✅ Built; backend verified live (**150 curated exercises** / 156 aliases seeded; RLS test passed) |
 | **Exercise directory — curated + rich metadata** | ✅ **Rebuilt this session**: replaced the 873 free-exercise-db import with a curated 150-set carrying `primary_muscles[]`, `secondary_muscles[]`, `body_region[]` rollup, `mechanic`, `modality`. Source of truth: `scripts/data/exercises-curated.json` (regen via `scripts/build-curated-exercises.py`). Muscle taxonomy in `src/lib/muscles.ts`. |
-| **Manual-first UI — all 11 `RepVoice Manual` screens** | ✅ **Built this session** (dark LED theme); **not yet run on device** |
+| **Manual-first UI — all 11 `RepVoice Manual` screens** | ✅ Built (dark LED theme); **not yet run on device** |
+| **"Entry & edges" screens 13–18** | ✅ **Built session 4** (branch `worktree-entry-edges-screens`): 13 sign-in (LED, 6-box code) · 14 first-run + 16 resume (Home states) · 15 no-history grid · 17 fix-a-set from history + delete-workout · 18 real Settings screen. New local settings store `src/data/settings.ts` (AsyncStorage; drives pre-fill/rest/weekly-goal). 4-tab nav (HOME·CALENDAR·HISTORY·SETTINGS). Static-verified only. |
 | ↳ Manual set logging (grid + keypad) — *the core, previously missing* | ✅ Built (`workout/[id]`, `components/workout/SetKeypad`, `lib/units`) |
 | ↳ Home / routine editor / picker / history / past workout / exercise progress / library / finish | ✅ Built / restyled dark |
 | Two-theme white/dark patchwork | ✅ **Resolved** — every screen is now dark; `_layout` header config dropped |
@@ -73,6 +75,10 @@ Static checks currently green: `tsc --noEmit` clean; `expo export --platform web
 - [ ] Log ~4 real workouts on-device (the real "done" bar for the manual tracker).
 - [ ] *(Phase 2, when voice resumes)* Apply migration `0003` to the live DB; run `npm run eval`.
 - [ ] Replace temporary Gmail SMTP with a dedicated provider before any external-user testing.
+- [ ] **Merge branch `worktree-entry-edges-screens`** (screens 13–18). Needs `src/app/calendar.tsx`
+      present so the new CALENDAR tab resolves; then wire `useSettings().weeklyGoal` into the calendar
+      tally (it currently hardcodes 5). If a longer OTP length is configured, bump `CODE_LEN` in
+      `SignInScreen.tsx`.
 
 ## Open issues / backlog (from the 2026-07-30 QA pass)
 

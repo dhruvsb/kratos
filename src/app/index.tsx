@@ -1,18 +1,35 @@
-// Home (mockup 01) — routines first, thumb only. One press to the workout you're
-// most likely doing ("up next"), the full rotation underneath, and a week strip
-// that marks the days you showed up. No microphone here — this is the manual-first
-// build; the voice entry point returns in a later phase.
+// Home (mockups 01 / 14 / 16) — routines first, thumb only. One press to the
+// workout you're most likely doing ("up next"), the full rotation underneath, and a
+// week strip that marks the days you showed up. Two edge states share this screen:
+// day zero (mockup 14 — nothing logged, two doors into the first workout) and a
+// workout left running (mockup 16 — resume / finish / discard, with the routine list
+// held inert). No microphone here — the voice entry point returns in a later phase.
 import { router } from 'expo-router';
-import { useMemo } from 'react';
-import { ActionSheetIOS, Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusPip } from '@/components/voice/primitives';
 import { TabBar } from '@/components/voice/TabBar';
-import { signOut } from '@/data/auth';
-import { useActiveWorkout, useProfile, useRoutines, useStartWorkout, useUpdateProfile, useWorkoutList } from '@/data/hooks';
+import {
+  useActiveWorkout,
+  useDiscardWorkout,
+  useFinishWorkout,
+  useRoutines,
+  useStartWorkout,
+  useWorkout,
+  useWorkoutList,
+} from '@/data/hooks';
 import { color, font, radius, shadow, space, tracking } from '@/theme/tokens';
 
 const DAY_MS = 86_400_000;
+
+// Push-first day-zero suggestions. Illustrative only — every card opens the routine
+// builder so day one still ends with the user's own list, not a canned one.
+const STARTER_TEMPLATES = [
+  { name: 'Push · Pull · Legs', meta: '3 DAYS' },
+  { name: 'Upper / Lower', meta: '4 DAYS' },
+  { name: 'Full body', meta: '3 DAYS' },
+];
 
 function startOfDay(d: Date): number {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
@@ -28,15 +45,43 @@ function agoLabel(iso: string | undefined): string | null {
   return weeks === 1 ? '1 WEEK AGO' : `${weeks} WEEKS AGO`;
 }
 
+function fmtDuration(ms: number): string {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  const mm = m.toString().padStart(2, '0');
+  const ss = sec.toString().padStart(2, '0');
+  return h > 0 ? `${h}:${mm}:${ss}` : `${m}:${ss}`;
+}
+
+function minutesAgo(iso: string | undefined, now: number): string | null {
+  if (!iso) return null;
+  const mins = Math.round((now - new Date(iso).getTime()) / 60000);
+  if (mins <= 0) return 'JUST NOW';
+  if (mins < 60) return `${mins} MIN AGO`;
+  const hrs = Math.round(mins / 60);
+  return hrs === 1 ? '1 HR AGO' : `${hrs} HR AGO`;
+}
+
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const routines = useRoutines();
   const activeWorkout = useActiveWorkout();
   const startWorkout = useStartWorkout();
   const history = useWorkoutList();
-  const profile = useProfile();
-  const updateProfile = useUpdateProfile();
-  const unit = profile.data?.default_unit ?? 'kg';
+
+  const activeId = activeWorkout.data?.id;
+  const activeDetail = useWorkout(activeId);
+  const finish = useFinishWorkout(activeId ?? '');
+  const discard = useDiscardWorkout(activeId ?? '');
+
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    if (!activeId) return;
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [activeId]);
 
   const workouts = history.data?.pages.flat() ?? [];
 
@@ -76,11 +121,19 @@ export default function HomeScreen() {
     })[0];
   }, [list, lastDone]);
 
-  const busy = !!activeWorkout.data || startWorkout.isPending;
+  const hasActive = !!activeId;
+  const busy = hasActive || startWorkout.isPending;
+  // Day zero: no routines, no history, nothing running — and both queries have loaded.
+  const firstRun =
+    !hasActive &&
+    !routines.isLoading &&
+    !history.isLoading &&
+    list.length === 0 &&
+    workouts.length === 0;
 
   function start(routineId?: string) {
-    if (activeWorkout.data) {
-      router.push(`/workout/${activeWorkout.data.id}`);
+    if (activeId) {
+      router.push(`/workout/${activeId}`);
       return;
     }
     startWorkout.mutate(routineId, {
@@ -88,33 +141,38 @@ export default function HomeScreen() {
     });
   }
 
-  function openSettings() {
-    const nextUnit = unit === 'kg' ? 'lb' : 'kg';
-    const options = [
-      'Exercise library',
-      `Weight units · switch to ${nextUnit.toUpperCase()}`,
-      'Sign out',
-      'Cancel',
-    ];
-    const run = (i: number) => {
-      if (i === 0) router.push('/exercises');
-      else if (i === 1) updateProfile.mutate({ default_unit: nextUnit });
-      else if (i === 2) signOut();
-    };
-    if (Platform.OS === 'ios') {
-      ActionSheetIOS.showActionSheetWithOptions(
-        { options, cancelButtonIndex: options.length - 1, destructiveButtonIndex: 2 },
-        run
-      );
-    } else {
-      Alert.alert('Settings', undefined, [
-        { text: options[0], onPress: () => run(0) },
-        { text: options[1], onPress: () => run(1) },
-        { text: options[2], style: 'destructive', onPress: () => run(2) },
-        { text: options[3], style: 'cancel' },
-      ]);
-    }
+  function finishNow() {
+    if (!activeId) return;
+    finish.mutate(undefined, { onSuccess: () => router.push(`/finish/${activeId}`) });
   }
+
+  function confirmDiscard() {
+    if (!activeId) return;
+    Alert.alert('Discard workout?', 'Every set logged this session is deleted.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Discard', style: 'destructive', onPress: () => discard.mutate() },
+    ]);
+  }
+
+  // Resume-card stats (mockup 16). Set count + last-set recency from the live detail.
+  const resume = useMemo(() => {
+    const d = activeDetail.data;
+    if (!d) return null;
+    let sets = 0;
+    let lastSetAt: string | undefined;
+    for (const we of d.exercises) {
+      for (const s of we.sets) {
+        sets += 1;
+        if (!lastSetAt || s.created_at > lastSetAt) lastSetAt = s.created_at;
+      }
+    }
+    return {
+      name: d.routine_name ?? 'Empty workout',
+      startedAt: d.started_at,
+      sets,
+      lastSetAt,
+    };
+  }, [activeDetail.data]);
 
   const dateLabel = new Date()
     .toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })
@@ -146,83 +204,181 @@ export default function HomeScreen() {
           ))}
         </View>
 
-        {activeWorkout.data && (
-          <Pressable style={styles.resume} onPress={() => router.push(`/workout/${activeWorkout.data!.id}`)}>
-            <StatusPip label="WORKOUT IN PROGRESS" />
-            <Text style={styles.resumeText}>Resume →</Text>
-          </Pressable>
-        )}
-
-        {/* Up next */}
-        {upNext && !activeWorkout.data && (
-          <View style={{ marginTop: space.xl }}>
-            <Text style={styles.section}>UP NEXT IN ROTATION</Text>
-            <View style={styles.upCard}>
-              <View style={styles.upHead}>
-                <Text style={styles.upName} numberOfLines={1}>
-                  {upNext.name}
+        {hasActive ? (
+          /* ---- Mockup 16: workout left running ---- */
+          <>
+            <View style={styles.resumeCard}>
+              <StatusPip label="STILL RUNNING" on />
+              <View style={styles.resumeHead}>
+                <Text style={styles.resumeName} numberOfLines={1}>
+                  {resume?.name ?? 'Workout'}
                 </Text>
-                <Text style={styles.upAgo}>{agoLabel(lastDone.get(upNext.id)) ?? 'NEW'}</Text>
+                <Text style={styles.resumeClock}>
+                  {resume ? fmtDuration(now - new Date(resume.startedAt).getTime()) : '—'}
+                </Text>
               </View>
-              <Text style={styles.upMeta}>
-                {upNext.exercise_count} EXERCISE{upNext.exercise_count === 1 ? '' : 'S'}
+              <Text style={styles.resumeMeta}>
+                {resume
+                  ? [
+                      `STARTED ${new Date(resume.startedAt).toLocaleTimeString('en-US', {
+                        hour: 'numeric',
+                        minute: '2-digit',
+                      })}`,
+                      `${resume.sets} SET${resume.sets === 1 ? '' : 'S'} LOGGED`,
+                      minutesAgo(resume.lastSetAt, now) && `LAST SET ${minutesAgo(resume.lastSetAt, now)}`,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')
+                  : 'LOADING…'}
               </Text>
-              <Pressable style={styles.startBtn} onPress={() => start(upNext.id)} disabled={busy}>
-                <Text style={styles.startText}>START WORKOUT</Text>
+              <View style={styles.resumeBtns}>
+                <Pressable style={styles.resumeMain} onPress={() => router.push(`/workout/${activeId}`)}>
+                  <Text style={styles.resumeMainText}>RESUME</Text>
+                </Pressable>
+                <Pressable style={styles.resumeSecondary} onPress={finishNow}>
+                  <Text style={styles.resumeSecondaryText}>
+                    {finish.isPending ? 'FINISHING…' : 'FINISH NOW'}
+                  </Text>
+                </Pressable>
+              </View>
+              <Pressable onPress={confirmDiscard} hitSlop={8} style={{ alignSelf: 'center' }}>
+                <Text style={styles.discard}>DISCARD WORKOUT</Text>
               </Pressable>
             </View>
-          </View>
-        )}
 
-        {/* All routines */}
-        <View style={{ marginTop: space.xl, flex: 1 }}>
-          <Text style={styles.section}>ALL ROUTINES</Text>
-          {routines.isLoading ? (
-            <Text style={styles.loading}>LOADING…</Text>
-          ) : list.length === 0 ? (
-            <Text style={styles.emptyRoutines}>
-              No routines yet. Create one, or start an empty workout and add exercises as you go.
+            <View style={styles.note}>
+              <View style={styles.noteBar} />
+              <Text style={styles.noteText}>
+                Nothing was lost — sets save the moment you tap ✓. Only a half-typed set that was
+                never checked off is gone.
+              </Text>
+            </View>
+
+            {list.length > 0 && (
+              <View style={styles.lockedWrap}>
+                <Text style={styles.section}>ALL ROUTINES</Text>
+                {list.map((r) => (
+                  <View key={r.id} style={styles.lockedRow}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.rowName} numberOfLines={1}>
+                        {r.name}
+                      </Text>
+                      <Text style={styles.rowMeta}>
+                        {r.exercise_count} EX · {agoLabel(lastDone.get(r.id)) ?? 'NEVER'}
+                      </Text>
+                    </View>
+                    <Text style={styles.locked}>LOCKED</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+          </>
+        ) : firstRun ? (
+          /* ---- Mockup 14: day zero ---- */
+          <View style={styles.firstRun}>
+            <Text style={styles.frTitle}>
+              Nothing logged yet.{'\n'}
+              <Text style={{ color: color.t3 }}>Start with a routine.</Text>
             </Text>
-          ) : (
-            list.map((r) => (
-              <Pressable key={r.id} style={styles.rowItem} onPress={() => start(r.id)} disabled={busy}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.rowName} numberOfLines={1}>
-                    {r.name}
-                  </Text>
-                  <Text style={styles.rowMeta}>
-                    {r.exercise_count} EX · {agoLabel(lastDone.get(r.id)) ?? 'NEVER'}
-                  </Text>
-                </View>
-                <Pressable
-                  onPress={() => router.push(`/routine/${r.id}`)}
-                  hitSlop={10}
-                  style={{ paddingHorizontal: 4 }}
-                >
-                  <Text style={styles.rowEdit}>EDIT</Text>
-                </Pressable>
-                <Text style={styles.rowStart}>START →</Text>
-              </Pressable>
-            ))
-          )}
+            <Text style={styles.frBody}>
+              A routine is just an ordered list of exercises — say, five for a push day. Two minutes
+              now, one tap every session after.
+            </Text>
+            <Pressable style={styles.frPrimary} onPress={() => router.push('/routine/new')}>
+              <Text style={styles.frPrimaryText}>BUILD MY FIRST ROUTINE</Text>
+            </Pressable>
+            <Pressable style={styles.frSecondary} onPress={() => start()} disabled={busy}>
+              <Text style={styles.frSecondaryText}>OR JUST START LIFTING</Text>
+            </Pressable>
+            <Text style={styles.frHint}>An empty workout can be saved as a routine when you finish.</Text>
 
-          <View style={styles.ctaRow}>
-            <Pressable style={[styles.cta, styles.ctaDashed]} onPress={() => router.push('/routine/new')}>
-              <Text style={styles.ctaAcc}>+ NEW ROUTINE</Text>
-            </Pressable>
-            <Pressable style={styles.cta} onPress={() => start()} disabled={busy}>
-              <Text style={styles.ctaDim}>EMPTY WORKOUT</Text>
-            </Pressable>
+            <View style={styles.frTemplates}>
+              <View style={styles.frTemplatesHead}>
+                <Text style={styles.section}>STARTER TEMPLATES</Text>
+                <Pressable onPress={() => router.push('/routine/new')} hitSlop={8}>
+                  <Text style={styles.frBrowse}>BROWSE</Text>
+                </Pressable>
+              </View>
+              <View style={styles.frCards}>
+                {STARTER_TEMPLATES.map((t) => (
+                  <Pressable key={t.name} style={styles.frCard} onPress={() => router.push('/routine/new')}>
+                    <Text style={styles.frCardName}>{t.name}</Text>
+                    <Text style={styles.frCardMeta}>{t.meta}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
           </View>
-        </View>
+        ) : (
+          /* ---- Mockup 01: the standing home ---- */
+          <>
+            {upNext && (
+              <View style={{ marginTop: space.xl }}>
+                <Text style={styles.section}>UP NEXT IN ROTATION</Text>
+                <View style={styles.upCard}>
+                  <View style={styles.upHead}>
+                    <Text style={styles.upName} numberOfLines={1}>
+                      {upNext.name}
+                    </Text>
+                    <Text style={styles.upAgo}>{agoLabel(lastDone.get(upNext.id)) ?? 'NEW'}</Text>
+                  </View>
+                  <Text style={styles.upMeta}>
+                    {upNext.exercise_count} EXERCISE{upNext.exercise_count === 1 ? '' : 'S'}
+                  </Text>
+                  <Pressable style={styles.startBtn} onPress={() => start(upNext.id)} disabled={busy}>
+                    <Text style={styles.startText}>START WORKOUT</Text>
+                  </Pressable>
+                </View>
+              </View>
+            )}
+
+            <View style={{ marginTop: space.xl, flex: 1 }}>
+              <Text style={styles.section}>ALL ROUTINES</Text>
+              {routines.isLoading ? (
+                <Text style={styles.loading}>LOADING…</Text>
+              ) : (
+                list.map((r) => (
+                  <Pressable key={r.id} style={styles.rowItem} onPress={() => start(r.id)} disabled={busy}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.rowName} numberOfLines={1}>
+                        {r.name}
+                      </Text>
+                      <Text style={styles.rowMeta}>
+                        {r.exercise_count} EX · {agoLabel(lastDone.get(r.id)) ?? 'NEVER'}
+                      </Text>
+                    </View>
+                    <Pressable
+                      onPress={() => router.push(`/routine/${r.id}`)}
+                      hitSlop={10}
+                      style={{ paddingHorizontal: 4 }}
+                    >
+                      <Text style={styles.rowEdit}>EDIT</Text>
+                    </Pressable>
+                    <Text style={styles.rowStart}>START →</Text>
+                  </Pressable>
+                ))
+              )}
+
+              <View style={styles.ctaRow}>
+                <Pressable style={[styles.cta, styles.ctaDashed]} onPress={() => router.push('/routine/new')}>
+                  <Text style={styles.ctaAcc}>+ NEW ROUTINE</Text>
+                </Pressable>
+                <Pressable style={styles.cta} onPress={() => start()} disabled={busy}>
+                  <Text style={styles.ctaDim}>EMPTY WORKOUT</Text>
+                </Pressable>
+              </View>
+            </View>
+          </>
+        )}
       </ScrollView>
 
       <TabBar
         active="home"
         tabs={[
           { key: 'home', label: 'HOME' },
+          { key: 'calendar', label: 'CALENDAR', onPress: () => router.push('/calendar') },
           { key: 'history', label: 'HISTORY', onPress: () => router.push('/history') },
-          { key: 'settings', label: 'SETTINGS', onPress: openSettings },
+          { key: 'settings', label: 'SETTINGS', onPress: () => router.push('/settings') },
         ]}
       />
     </View>
@@ -241,21 +397,104 @@ const styles = StyleSheet.create({
   weekDay: { fontFamily: font.numSemibold, fontSize: 8, color: color.t3 },
   weekMark: { width: '100%', height: 3, borderRadius: 1 },
 
-  resume: {
-    marginTop: space.xl,
-    borderWidth: 1,
-    borderColor: color.acc,
-    borderRadius: radius.card,
-    backgroundColor: color.acc06,
-    padding: space.md,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  resumeText: { fontFamily: font.numSemibold, fontSize: 11, color: color.acc },
-
   section: { fontFamily: font.numSemibold, fontSize: 8, letterSpacing: tracking.wide, color: color.t3 },
 
+  // Resume (mockup 16)
+  resumeCard: {
+    marginTop: space.xl,
+    borderWidth: 1,
+    borderColor: color.acc35,
+    borderRadius: radius.card,
+    backgroundColor: color.s1,
+    padding: space.xl,
+  },
+  resumeHead: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    gap: space.md,
+    marginTop: space.md,
+  },
+  resumeName: { fontFamily: font.uiBold, fontSize: 21, color: color.t1, flex: 1 },
+  resumeClock: { fontFamily: font.numBold, fontSize: 17, color: color.t2 },
+  resumeMeta: { fontFamily: font.numSemibold, fontSize: 9.5, letterSpacing: 0.7, color: color.t3, marginTop: 8 },
+  resumeBtns: { flexDirection: 'row', gap: space.sm, marginTop: space.lg },
+  resumeMain: {
+    flex: 1,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: color.s2,
+    borderWidth: 1,
+    borderColor: color.acc35,
+    borderRadius: radius.ctl,
+    ...shadow.glowSm,
+  },
+  resumeMainText: { fontFamily: font.uiSemibold, fontSize: 11, letterSpacing: tracking.label, color: color.acc },
+  resumeSecondary: {
+    width: 118,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: color.line2,
+    borderRadius: radius.ctl,
+  },
+  resumeSecondaryText: { fontFamily: font.numSemibold, fontSize: 10, letterSpacing: 0.8, color: color.t2 },
+  discard: { fontFamily: font.numSemibold, fontSize: 9.5, letterSpacing: tracking.label, color: color.t3, marginTop: space.lg },
+
+  note: { flexDirection: 'row', gap: space.md, marginTop: space.xl, padding: 14, borderWidth: 1, borderColor: color.line2, borderRadius: radius.ctl + 1, borderStyle: 'dashed' },
+  noteBar: { width: 2, backgroundColor: color.line2, borderRadius: 1 },
+  noteText: { flex: 1, fontFamily: font.num, fontSize: 10.5, lineHeight: 18, color: color.t2 },
+
+  lockedWrap: { marginTop: space.xl, opacity: 0.4 },
+  lockedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.md,
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: color.line,
+  },
+  locked: { fontFamily: font.numSemibold, fontSize: 10, letterSpacing: tracking.label, color: color.t3 },
+
+  // First run (mockup 14)
+  firstRun: { marginTop: space.xl, flex: 1 },
+  frTitle: { fontFamily: font.uiBold, fontSize: 25, lineHeight: 34, color: color.t1 },
+  frBody: { fontFamily: font.num, fontSize: 11.5, lineHeight: 20, color: color.t2, marginTop: space.lg, maxWidth: 300 },
+  frPrimary: {
+    height: 54,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: color.s2,
+    borderWidth: 1,
+    borderColor: color.acc35,
+    borderRadius: radius.ctl + 1,
+    marginTop: space.xl + 4,
+    ...shadow.glowSm,
+  },
+  frPrimaryText: { fontFamily: font.uiSemibold, fontSize: 11.5, letterSpacing: tracking.label, color: color.acc },
+  frSecondary: {
+    height: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: color.line2,
+    borderRadius: radius.ctl + 1,
+    marginTop: space.sm + 2,
+  },
+  frSecondaryText: { fontFamily: font.numSemibold, fontSize: 10.5, letterSpacing: tracking.label, color: color.t2 },
+  frHint: { fontFamily: font.num, fontSize: 10.5, lineHeight: 17, color: color.t3, marginTop: 14, textAlign: 'center' },
+
+  frTemplates: { marginTop: space.xxl + 4, borderTopWidth: 1, borderTopColor: color.line, paddingTop: space.lg },
+  frTemplatesHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
+  frBrowse: { fontFamily: font.numSemibold, fontSize: 9.5, letterSpacing: 0.6, color: color.acc },
+  frCards: { flexDirection: 'row', gap: space.sm, marginTop: space.md },
+  frCard: { flex: 1, borderWidth: 1, borderColor: color.line2, borderStyle: 'dashed', borderRadius: radius.ctl + 2, padding: 13 },
+  frCardName: { fontFamily: font.uiSemibold, fontSize: 12.5, color: color.t2 },
+  frCardMeta: { fontFamily: font.numSemibold, fontSize: 9, letterSpacing: 0.8, color: color.t3, marginTop: 5 },
+
+  // Up next (mockup 01)
   upCard: {
     marginTop: space.md,
     borderWidth: 1,
@@ -282,7 +521,6 @@ const styles = StyleSheet.create({
   startText: { fontFamily: font.uiSemibold, fontSize: 12, letterSpacing: tracking.label, color: color.acc },
 
   loading: { fontFamily: font.numSemibold, fontSize: 11, color: color.t3, marginTop: space.md },
-  emptyRoutines: { fontFamily: font.num, fontSize: 12, lineHeight: 19, color: color.t3, marginTop: space.md },
 
   rowItem: {
     flexDirection: 'row',
