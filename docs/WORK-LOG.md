@@ -7,6 +7,19 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-07-30 (session 5) — Wire weekly goal into the calendar tally
+
+After merging the calendar (screen 12) and Entry & edges (13–18) branches, closed the one open
+seam between them: `calendar.tsx` hardcoded `WEEK_GOAL = 5`, while screens 13–18 shipped a Settings
+"Weekly goal" pref (`src/data/settings.ts`). The calendar now reads it via `useSettings()` —
+`const WEEK_GOAL = settings.data?.weeklyGoal ?? 5` (default holds until the query resolves), threaded
+through the this-week card, month-grid per-week tallies, the "WEEKS AT N+" stat, and the 12-week
+goal line; the three affected `useMemo`s gained `WEEK_GOAL` deps so changing the goal recomputes
+live. Also wired the calendar's previously-inert `SETTINGS` tab to `/settings`. `tsc` clean; web
+export bundles 13 routes. Not run on device.
+
+---
+
 ## 2026-07-30 (session 4) — Calendar view (mockup 12, "five a week")
 
 **Context:** the `RepVoice Manual` design gained a 12th screen — a **Calendar** built on a

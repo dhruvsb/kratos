@@ -10,11 +10,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TabBar } from '@/components/voice/TabBar';
 import { ErrorText, Loading } from '@/components/ui';
 import { useWorkoutDays } from '@/data/calendar';
+import { useSettings } from '@/data/settings';
 import { color, font, radius, shadow, space, tracking } from '@/theme/tokens';
 
-// Five sessions a week is the goal. A count, not a streak — see the header note.
-// Could become a profile setting later; hardcoded to match the design for now.
-const WEEK_GOAL = 5;
+// Sessions/week the tally counts toward. A count, not a streak — see the header
+// note. Driven by Settings › Weekly goal (mockup 18); 5 is the default until the
+// settings query resolves.
+const DEFAULT_WEEK_GOAL = 5;
 const DAY_MS = 86_400_000;
 const DAY_HEADS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
@@ -38,6 +40,8 @@ type Week = { key: string; days: Cell[]; count: string; countColor: string };
 export default function CalendarScreen() {
   const insets = useSafeAreaInsets();
   const query = useWorkoutDays();
+  const settings = useSettings();
+  const WEEK_GOAL = settings.data?.weeklyGoal ?? DEFAULT_WEEK_GOAL;
 
   // Days you showed up (one entry per calendar day, even if you logged twice).
   const doneDays = useMemo(() => {
@@ -75,7 +79,7 @@ export default function CalendarScreen() {
     const remaining = Math.max(0, WEEK_GOAL - count);
     const status = remaining === 0 ? 'GOAL HIT' : remaining === 1 ? 'ONE TO GO' : `${remaining} TO GO`;
     return { days, count, status };
-  }, [weekMonday, doneDays, todayStart]);
+  }, [weekMonday, doneDays, todayStart, WEEK_GOAL]);
 
   // ---- Month grid ----
   const weeks = useMemo<Week[]>(() => {
@@ -121,7 +125,7 @@ export default function CalendarScreen() {
       wStart = addDays(wStart, 7);
     }
     return out;
-  }, [view, doneDays, todayStart]);
+  }, [view, doneDays, todayStart, WEEK_GOAL]);
 
   // ---- Stats + 12-week bars ----
   const { stats, bars, barsFrom, weeksAtGoal } = useMemo(() => {
@@ -137,7 +141,7 @@ export default function CalendarScreen() {
     }
     const atGoal = twelve.filter((w) => w.count >= WEEK_GOAL).length;
     const bars = twelve.map((w, i) => {
-      const pct = Math.min(100, Math.round((w.count / WEEK_GOAL) * 80)); // goal (5) = 80%
+      const pct = Math.min(100, Math.round((w.count / WEEK_GOAL) * 80)); // goal = 80% height
       return {
         key: `b-${i}`,
         h: `${Math.max(3, pct)}%`,
@@ -149,13 +153,13 @@ export default function CalendarScreen() {
       stats: [
         { label: 'LAST 7 DAYS', value: String(countLastDays(7)), color: color.t1 },
         { label: 'LAST 30 DAYS', value: String(countLastDays(30)), color: color.t1 },
-        { label: 'WEEKS AT 5+', value: String(atGoal), color: color.acc },
+        { label: `WEEKS AT ${WEEK_GOAL}+`, value: String(atGoal), color: color.acc },
       ],
       bars,
       barsFrom: addDays(weekMonday, -11 * 7).toLocaleDateString('en-US', { month: 'short' }).toUpperCase(),
       weeksAtGoal: atGoal,
     };
-  }, [doneDays, today, weekMonday]);
+  }, [doneDays, today, weekMonday, WEEK_GOAL]);
 
   const monthLabel = new Date(view.year, view.month, 1)
     .toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
@@ -256,7 +260,7 @@ export default function CalendarScreen() {
         {/* 12-week bars */}
         <View style={styles.barsBlock}>
           <View style={styles.rowBetween}>
-            <Text style={styles.cardLabel}>WEEKS AT FIVE OR MORE</Text>
+            <Text style={styles.cardLabel}>WEEKS AT {WEEK_GOAL} OR MORE</Text>
             <Text style={styles.barsCount}>{weeksAtGoal} / 12 WEEKS</Text>
           </View>
           <View style={styles.barsArea}>
@@ -279,7 +283,7 @@ export default function CalendarScreen() {
 
         <Text style={styles.note}>
           The goal is a count, not a chain — miss a day and the week still stands. Each week row carries its own
-          tally, so five is legible at a glance.
+          tally, so the count is legible at a glance.
         </Text>
       </ScrollView>
 
@@ -289,7 +293,7 @@ export default function CalendarScreen() {
           { key: 'home', label: 'HOME', onPress: () => router.push('/') },
           { key: 'calendar', label: 'CALENDAR' },
           { key: 'history', label: 'HISTORY', onPress: () => router.push('/history') },
-          { key: 'settings', label: 'SETTINGS' },
+          { key: 'settings', label: 'SETTINGS', onPress: () => router.push('/settings') },
         ]}
       />
     </View>

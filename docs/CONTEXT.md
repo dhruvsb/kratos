@@ -54,7 +54,7 @@ logging via an LLM pipeline, **3** TBD (PRs/charts).
 | **"Entry & edges" screens 13–18** | ✅ **Built session 4**: 13 sign-in (LED, 6-box code) · 14 first-run + 16 resume (Home states) · 15 no-history grid · 17 fix-a-set from history + delete-workout · 18 real Settings screen. New local settings store `src/data/settings.ts` (AsyncStorage; drives pre-fill/rest/weekly-goal). 4-tab nav (HOME·CALENDAR·HISTORY·SETTINGS). Static-verified only. |
 | ↳ Manual set logging (grid + keypad) — *the core, previously missing* | ✅ Built (`workout/[id]`, `components/workout/SetKeypad`, `lib/units`) |
 | ↳ Home / routine editor / picker / history / past workout / exercise progress / library / finish | ✅ Built / restyled dark |
-| ↳ **Calendar (mockup 12, "five a week")** | ✅ **Built this session** — `src/app/calendar.tsx` + `src/data/calendar.ts` (finished-workout days → week card / month grid / streak stats / 12-week bars); wired into Home tab bar. `WEEK_GOAL` hardcoded to 5. |
+| ↳ **Calendar (mockup 12, "five a week")** | ✅ **Built this session** — `src/app/calendar.tsx` + `src/data/calendar.ts` (finished-workout days → week card / month grid / streak stats / 12-week bars); wired into Home tab bar. Weekly goal driven by Settings (`useSettings().weeklyGoal`, default 5). |
 | Two-theme white/dark patchwork | ✅ **Resolved** — every screen is now dark; `_layout` header config dropped |
 | Phase 2 voice pipeline (extraction → resolution → kg) | ✅ Built; edge fn deployed + auth-guarded; **unwired from manual UI** (returns later) |
 | Native iOS dev client on physical iPhone 15 | ✅ Installed, launches to sign-in |
@@ -79,10 +79,10 @@ Static checks currently green: `tsc --noEmit` clean; `expo export --platform web
       right against real workout days.
 - [ ] *(Phase 2, when voice resumes)* Apply migration `0003` to the live DB; run `npm run eval`.
 - [ ] Replace temporary Gmail SMTP with a dedicated provider before any external-user testing.
-- [ ] **Wire `useSettings().weeklyGoal` into the Calendar tally** — screens 13–18 landed a Settings
-      "Weekly goal" pref (`src/data/settings.ts`), but `calendar.tsx` still hardcodes `WEEK_GOAL = 5`.
-      Read the setting so the two agree. (If a longer OTP length is ever configured, also bump
-      `CODE_LEN` in `SignInScreen.tsx`.)
+- [x] ~~Wire `useSettings().weeklyGoal` into the Calendar tally~~ — **done**: `calendar.tsx` now reads
+      the Settings "Weekly goal" pref (default 5 until the query resolves); every tally, label, and the
+      12-week goal line follow it. (If a longer OTP length is ever configured, bump `CODE_LEN` in
+      `SignInScreen.tsx`.)
 
 ## Open issues / backlog (from the 2026-07-30 QA pass)
 
