@@ -182,8 +182,7 @@ missing and had to be built, and half the screens were still the plain black-on-
 **Not done / deferred (see CONTEXT open issues):** on-device run + real logging (still no first
 OTP login); picker RECENT/muscle filter tabs (need usage data); "NEW BESTS" callout on the
 finish screen (needs per-exercise all-time baseline — omitted rather than faked); drag-to-
-reorder in the routine editor (uses ↑/↓); unit toggle in Settings (kg/lb display is wired but
-there's no UI to switch it yet).
+reorder in the routine editor (uses ↑/↓).
 
 ## 2026-07-30 — Full-codebase QA pass + high-impact fix cluster
 
