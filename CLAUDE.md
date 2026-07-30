@@ -1,11 +1,14 @@
 @AGENTS.md
+@docs/AGENT-PROTOCOL.md
 
 # RepVoice — project conventions
 
 Workout logging app. Phase 1 = manual tracker backbone. Phase 2 adds voice/LLM logging. Phase 3 TBD.
 
 **Before doing anything else, read the knowledge base in `docs/`:**
+- [`docs/AGENT-PROTOCOL.md`](docs/AGENT-PROTOCOL.md) — **the operating protocol** (auto-loaded via the `@import` above): how to work here when many chats run in parallel, and the update-docs-and-commit routine on every completion step. Follow it every session.
 - [`docs/CONTEXT.md`](docs/CONTEXT.md) — **start here.** The fast-start dashboard: current state, pending actions, and the open-issue backlog, with pointers into the deeper docs. Update its three live sections at the end of any session that changes what's built.
+- [`docs/FEEDBACK-LOG.md`](docs/FEEDBACK-LOG.md) — hands-on feedback items with per-item Done/Open status; update when a feedback-driven fix lands.
 - [`docs/PRODUCT-PRINCIPLES.md`](docs/PRODUCT-PRINCIPLES.md) — **the standing priorities behind every decision** (showcase-first purpose, sleek + minimal-touch UI, instant speed). When a request would compromise a priority, flag it before implementing.
 - [`docs/PROJECT-SUMMARY-PHASE1.md`](docs/PROJECT-SUMMARY-PHASE1.md) — manual tracker: what's built, decided, left
 - [`docs/PROJECT-SUMMARY-PHASE2.md`](docs/PROJECT-SUMMARY-PHASE2.md) — voice/LLM pipeline: same, for Phase 2
