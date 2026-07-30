@@ -48,3 +48,6 @@ example
 
 # Supabase CLI local state (machine-specific project linkage)
 supabase/.temp/
+
+# Agent worktree scratch (transient git worktrees created by Claude Code agents)
+.claude/worktrees/
