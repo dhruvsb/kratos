@@ -9,7 +9,7 @@ entry at top. When an item is fixed, mark it and move the detail into `WORK-LOG.
 ## 2026-07-31 — First simulator run (manual loop), user QA pass
 
 **Context:** First time the manual UI actually rendered on a simulator (iPhone 17, iOS sim).
-Getting there required two fixes still **uncommitted** on `master`:
+Getting there required two fixes (committed in `36696fd`):
 - `CODE_LEN 6 → 8` in `SignInScreen.tsx` — the Supabase project mails an **8-digit** OTP; the
   app only accepted 6 and auto-submitted on the 6th digit.
 - `UIViewControllerBasedStatusBarAppearance = true` in `ios/RepVoice/Info.plist` (and mirrored
@@ -21,22 +21,23 @@ Getting there required two fixes still **uncommitted** on `master`:
 Session state observed: already signed in (persisted session), one in-progress "Chest" workout,
 two routines ("Push A", "Chest") both `0 EX · LOCKED` (locked because they have no exercises).
 
-### Verification legend
-✅ Confirmed in code · 🟡 Partially present, gap confirmed · 🔁 Needs live repro · 💡 Design/new feature
+### Status roll-up (as of 2026-07-31, commit `c5c1b38`)
+**6 of 9 addressed:** ✅ #1 #2 #4 #6 #7 #9 · ⬜ still open: #3 (defaults), #5 (scroll), #8 (drag).
+Everything below is code-verified; #1 also verified live on the simulator. Detail per item.
 
 ### Summary
 
-| # | Item | Area | Status | Sev | Effort |
-|---|------|------|--------|-----|--------|
-| 1 | History has no back / no way out | Navigation | ✅ bug | High | S |
-| 2 | Remove the rest timer | Logging UX | ✅ present | Med | S |
-| 3 | Default reps = 12, weight = previous best | Logging UX | 🟡 gap | High | M |
-| 4 | Muscle filter in exercise search | Search | ✅ missing | Med | M |
-| 5 | Can't scroll the exercise list | Search | 🔁 repro | High | S–M |
-| 6 | History detail: primary/secondary muscle % (Hevy-style) | History | ✅ missing | Med | M |
-| 7 | Routine editor: unclear where weight/reps/sets go | Routine editor | ✅ confirmed | High | S |
-| 8 | Set/exercise reordering by drag | Routine editor | ✅ missing (↑/↓ only) | Low | M |
-| 9 | Tap an exercise in a routine → see its progress | Routine editor | ✅ missing | Med | S |
+| # | Item | Area | Done? | Sev | Effort |
+|---|------|------|-------|-----|--------|
+| 1 | History has no back / no way out | Navigation | ✅ DONE (verified live) | High | S |
+| 2 | Remove the rest timer | Logging UX | ✅ DONE | Med | S |
+| 3 | Default reps = 12, weight = previous best | Logging UX | ⬜ OPEN (still last-session prefill) | High | M |
+| 4 | Muscle filter in exercise search | Search | ✅ DONE | Med | M |
+| 5 | Can't scroll the exercise list | Search | ⬜ OPEN (unreproduced / unfixed) | High | S–M |
+| 6 | History detail: primary/secondary muscle % (Hevy-style) | History | ✅ DONE | Med | M |
+| 7 | Routine editor: unclear where weight/reps/sets go | Routine editor | ✅ DONE | High | S |
+| 8 | Set/exercise reordering by drag | Routine editor | ⬜ OPEN (still ↑/↓) | Low | M |
+| 9 | Tap an exercise in a routine → see its progress | Routine editor | ✅ DONE | Med | S |
 
 ---
 
@@ -48,6 +49,9 @@ the shared `TabBar`**. Home (`index.tsx:375`), `calendar.tsx`, and `settings.tsx
 (pushed via `router.push('/history')`), so there is no header back either. → stranded.
 **Fix:** render the shared `TabBar` at the bottom of `history/index.tsx` with `active="history"`
 and the same four `onPress` routes the other tabs use. (S)
+**Done (2026-07-31):** `<TabBar active="history" …>` added to `history/index.tsx`, with the list
+given `flex: 1` so it scrolls above the bar. **Verified live on the simulator** — History is no
+longer a dead-end. Commit `c5c1b38`.
 
 ### 2. Remove the rest timer ✅ Med
 **User:** "Remove the rest timer. It is annoying and does not add any value."
@@ -59,6 +63,9 @@ rest presets (`REST_PRESETS` in `src/data/settings.ts`, surfaced in `settings.ts
 row from Settings. Keep `defaultRestSec`/`autoStartRest` out of the settings type or default
 `autoStartRest` to `false` and hide the UI. (S)
 **Note:** aligns with the frictionless-logging goal below — no countdown nagging between sets.
+**Done (2026-07-31):** rest bar + `startRest()` removed from `workout/[id].tsx`; rest fields dropped
+from `settings.ts` and the Settings screen. No `restEndsAt` / `REST_PRESETS` references remain.
+Commit `c5c1b38`.
 
 ### 3. Frictionless defaults — reps default 12, weight default = previous best 🟡 High
 **User philosophy (important — drives several items):** "I touch my phone once or twice in the
@@ -75,6 +82,9 @@ there's **no history** `prefillReps` is `null` and the field shows `—` (no 12 
   than the same-index set.
 - Keep it one-tap: pressing ✓ should log the pre-filled set with zero typing. (M)
 **Open Q:** "previous best" = heaviest ever, or heaviest at similar reps? Assume heaviest-ever for v1.
+**Status — STILL OPEN (2026-07-31):** not implemented. `workout/[id].tsx:132-133` still prefills
+weight/reps from the *same-index set of last session* (`lastForNext`) — no `?? 12` reps default and
+no all-time previous-best lookup. This is the core frictionless-logging payoff and is still to do.
 
 ### 4. Muscle-group filter in exercise search ✅ Med
 **User:** "Implement a filter in the exercise search list — filter all triceps exercises easily.
@@ -103,6 +113,9 @@ the keyboard immediately, which can cover the lower rows.
 **Next:** reproduce on the simulator to confirm whether it's the picker (modal) or the library
 (`exercises.tsx`), then fix the specific container. Prime suspects: modal backdrop/sheet height math,
 or missing `flex` on the sheet content. (S–M once reproduced)
+**Status — STILL OPEN (2026-07-31):** not reproduced or fixed. The picker's `backdrop: flex:1` +
+`sheet: height:'86%'` structure is unchanged (the #4 filter chips were added above the list, but the
+scroll container itself was untouched). Needs the live repro before a fix.
 
 ### 6. History detail — primary/secondary muscles worked, with % (Hevy-style) ✅ Med
 **User:** "Clicking a chest workout should show primary + secondary muscle worked with %, like Hevy."
@@ -131,6 +144,9 @@ missing mental model that weight isn't set here.
 **Fix:** label each field inline (SETS / REPS / REPS, or "sets × reps range"), widen/space them, and
 add a one-line helper: "Targets only — you'll log actual weight during the workout." The note at
 line 197 hints at this but is easy to miss. (S)
+**Done (2026-07-31):** per-field `SETS` / `REPS` captions under each input (new `targetCol` / `tCap`
+styles), header changed to `TARGETS · OPTIONAL`, and the helper note now states weight is entered
+during the workout, not here. Commit `c5c1b38`.
 
 ### 8. Reorder exercises (and sets) by drag ✅ Low
 **User:** "Set ordering (dragging is not there)."
@@ -138,6 +154,8 @@ line 197 hints at this but is easy to miss. (S)
 pre-existing "Low" backlog item in `CONTEXT.md`.)
 **Fix:** adopt a draggable list (e.g. `react-native-draggable-flatlist`) for routine exercises; same
 pattern could later apply to reordering sets. (M — adds a native-capable dep; verify against Expo 57.)
+**Status — STILL OPEN (2026-07-31):** unchanged — routine still reorders via `↑`/`↓` `move()`; no
+draggable dependency added.
 
 ### 9. Tap an exercise inside a routine → see its progress ✅ Med
 **User:** "I should be able to click any exercise when I'm in a routine to see my progress over time."
@@ -146,6 +164,8 @@ top-set trend chart + session history), reached from the **library** and **past-
 The **routine editor rows are not tappable** to reach it (`routine/[id].tsx:142` name is plain text).
 **Fix:** make the exercise name/row in the routine editor a `Pressable` → `router.push('/exercise/'
 + item.exercise.id)`. Small, reuses the existing screen. (S)
+**Done (2026-07-31):** the exercise row in `routine/[id].tsx` is now a `Pressable` →
+`router.push('/exercise/' + id)` with a `›` affordance. Commit `c5c1b38`.
 
 ---
 
@@ -155,10 +175,9 @@ once or twice per session.** Design implication for the workout screen: every se
 pre-filled (weight = previous best, reps = 12/last), logging is a single ✓, and nothing (rest timer,
 extra typing) interrupts the flow. Treat this as the guiding principle when picking up items here.
 
-### Suggested order of attack
-1. **#1 History nav** and **#7 routine labels** — tiny, remove obvious dead-ends/confusion.
-2. **#3 defaults** and **#2 remove rest timer** — the core frictionless-logging payoff.
-3. **#9 progress-from-routine** — small, high value.
-4. **#5 scroll** — reproduce then fix.
-5. **#4 filter** and **#6 muscle split** — medium features, share the muscle metadata.
-6. **#8 drag reorder** — lowest priority; adds a dependency.
+### Remaining work (what's left after the 2026-07-31 pass)
+Done: #1 #2 #4 #6 #7 #9. Left, in priority order:
+1. **#3 defaults** — reps default 12, weight = all-time previous best; make ✓ a true one-tap log.
+   This is the biggest remaining frictionless-logging win. (M)
+2. **#5 scroll** — reproduce on the simulator (picker vs library), then fix the specific container. (S–M)
+3. **#8 drag reorder** — lowest priority; adds a native-capable dependency. (M)

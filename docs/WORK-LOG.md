@@ -7,6 +7,41 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-07-31 — First on-device (simulator) run + feedback pass #1/#2/#7/#9 + parallel-work reconcile
+
+**Milestone: the manual UI rendered on a simulator for the first time** (iPhone 17, iOS sim, via
+`expo run:ios`). Two blockers had to be cleared first, both committed in `36696fd`:
+- **8-digit OTP.** `SignInScreen.tsx` accepted only a 6-digit code and auto-verified on the 6th
+  digit, but the Supabase project mails an **8-digit** code → `CODE_LEN 6 → 8` + copy.
+- **Status-bar red-screen.** `react-native-screens` threw a fatal assertion because `_layout` sets
+  `statusBarStyle: 'light'` on the native Stack while `UIViewControllerBasedStatusBarAppearance`
+  defaulted to NO. Set `true` via `ios.infoPlist` in `app.config.ts`. NOTE: the committed `ios/`
+  folder is gitignored and `expo run:ios` skips prebuild, so the value had to be set directly in
+  `ios/RepVoice/Info.plist` too (local, not tracked); a clean prebuild regenerates it from config.
+
+**Feedback items closed this session** (see `FEEDBACK-LOG.md`):
+- **#1 History nav** — History was a dead-end (rendered no `TabBar`, and it's a pushed top-level
+  tab so no header back). Added `<TabBar active="history">` + `flex: 1` on the list. **Verified live
+  on the simulator.**
+- **#7 Routine-editor clarity** — the three unlabeled micro-inputs now carry `SETS` / `REPS`
+  captions, header reads `TARGETS · OPTIONAL`, and the helper note says weight is logged during the
+  workout, not here (routines hold rep/set targets only, by design).
+- **#2 rest timer removed** and **#9 tappable exercise → progress** also landed (via the parallel
+  frictionless-logging / routine sessions); **#4 filter + #6 muscle split** have their own entry below.
+
+**Parallel-work reconcile.** Four concurrent chats edited the *same* working tree (no branches /
+worktrees), so git already held the merged result — no conflicts, but a risk of silent clobbering.
+Verified the combined tree: `tsc` clean, both new font deps installed + lockfile in sync, app runs
+with no red screen, and the shared files kept **both** features (`history/index` #1; `routine/[id]`
+#7 + #9). Committed everything as one recovery checkpoint **`c5c1b38`** ("combined QA-feedback work").
+
+**Still open after this pass:** **#3** frictionless defaults (reps 12 / previous-best — `workout/[id]`
+still prefills from last session's same-index set), **#5** exercise-list scroll (unreproduced), **#8**
+drag-reorder (still ↑/↓). The transient `fetch failed: network connection was lost` toast seen on the
+sim is a Supabase/network blip, unrelated to the diff (both muscle-split files are pure).
+
+---
+
 ## 2026-07-31 — Type refresh: "option 01" (Instrument Sans + Geist Mono) across all screens
 
 Implemented the updated `RepVoice Manual.dc.html` from the Claude Design project — the

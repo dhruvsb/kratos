@@ -10,10 +10,13 @@ codebase or a huge prior conversation.
 > issues**) *and* append a dated entry to [`WORK-LOG.md`](./WORK-LOG.md). This file is the
 > snapshot; `WORK-LOG.md` is the full history. Keep this file short.
 
-**Last updated:** 2026-07-31 — **type refresh "option 01"**: UI font Space Grotesk → **Instrument
-Sans**, numbers IBM Plex Mono → **Geist Mono**; every UI weight steps down one (titles 600, names
-500) while mono keeps its weight; spacing opened up (24px insets, +2px rows, looser captions). All
-via the token system — see WORK-LOG. Prior: session-4 branches, now merged: **calendar view**
+**Last updated:** 2026-07-31 — **first on-device (simulator) run of the manual UI** + a QA-feedback
+pass. Cleared two blockers (8-digit OTP + status-bar red-screen; `36696fd`) and closed feedback items
+**#1 nav · #2 rest-timer · #4 filter · #6 muscle split · #7 routine labels · #9 progress-from-routine**
+(see [`FEEDBACK-LOG.md`](./FEEDBACK-LOG.md)); four parallel sessions' work combined + checkpointed in
+`c5c1b38`. Still open: **#3** defaults, **#5** list scroll, **#8** drag-reorder. Prior same day:
+**type refresh "option 01"** (Space Grotesk → **Instrument Sans**, IBM Plex Mono → **Geist Mono**;
+UI weights step down one, mono unchanged; 24px insets) — see WORK-LOG. Prior: session-4 branches, now merged: **calendar view**
 (mockup-12 "five a week" `/calendar` + `data/calendar.ts`, wired into Home's tab bar) and **"Entry &
 edges" screens 13–18** (sign-in, first-run, resume, no-history grid, fix-a-set, real Settings + a
 local AsyncStorage settings store). Both static-verified, not on device. Prior: session 3 exercise
@@ -53,7 +56,7 @@ logging via an LLM pipeline, **3** TBD (PRs/charts).
 |---|---|
 | Phase 1 backbone (schema, RLS, repos) | ✅ Built; backend verified live (**150 curated exercises** / 156 aliases seeded; RLS test passed) |
 | **Exercise directory — curated + rich metadata** | ✅ **Rebuilt this session**: replaced the 873 free-exercise-db import with a curated 150-set carrying `primary_muscles[]`, `secondary_muscles[]`, `body_region[]` rollup, `mechanic`, `modality`. Source of truth: `scripts/data/exercises-curated.json` (regen via `scripts/build-curated-exercises.py`). Muscle taxonomy in `src/lib/muscles.ts`. |
-| **Manual-first UI — all 12 `RepVoice Manual` screens** | ✅ Built (dark LED theme); **not yet run on device** |
+| **Manual-first UI — all 12 `RepVoice Manual` screens** | ✅ Built (dark LED theme); **now renders on the iOS simulator** (first run 2026-07-31 — Home, History, routines all render; full manual-loop walkthrough still pending) |
 | **"Entry & edges" screens 13–18** | ✅ **Built session 4**: 13 sign-in (LED, 6-box code) · 14 first-run + 16 resume (Home states) · 15 no-history grid · 17 fix-a-set from history + delete-workout · 18 real Settings screen. New local settings store `src/data/settings.ts` (AsyncStorage; drives pre-fill/rest/weekly-goal). 4-tab nav (HOME·CALENDAR·HISTORY·SETTINGS). Static-verified only. |
 | ↳ Manual set logging (grid + keypad) — *the core, previously missing* | ✅ Built (`workout/[id]`, `components/workout/SetKeypad`, `lib/units`) |
 | ↳ Home / routine editor / picker / history / past workout / exercise progress / library / finish | ✅ Built / restyled dark |
@@ -61,20 +64,23 @@ logging via an LLM pipeline, **3** TBD (PRs/charts).
 | Two-theme white/dark patchwork | ✅ **Resolved** — every screen is now dark; `_layout` header config dropped |
 | Phase 2 voice pipeline (extraction → resolution → kg) | ✅ Built; edge fn deployed + auth-guarded; **unwired from manual UI** (returns later) |
 | Native iOS dev client on physical iPhone 15 | ✅ Installed, launches to sign-in |
-| First OTP login + on-device smoke test of the manual loop | ❌ **Never completed** — the manual UI is unverified on device until this happens |
+| First OTP login + on-device smoke test of the manual loop | 🟡 **Partial (2026-07-31)** — app runs on the simulator, signed in via a persisted session, and **#1 History nav verified live**. Still to do: a real OTP sign-in from scratch (8-digit code now supported) and walk the full loop (start routine → log sets via ✓ and keypad → finish → History → progress). |
 | Eval baseline (`npm run eval`) | ❌ Never run against the real API (Phase 2 concern) |
 | Migration `0003_alias_write_policy.sql` | ✅ **Applied this session** (was committed-but-unapplied; Phase 2 alias write-back policy now live) |
 | Migration `0004_exercise_metadata.sql` | ✅ Applied — exercises table restructured (muscle arrays + body_region + mechanic + modality; dropped `primary_muscle`/`category`) |
 
-Static checks currently green: `tsc --noEmit` clean; `expo export --platform web` bundles all 12 routes.
+Static checks currently green: `tsc --noEmit` clean; `expo export --platform web` bundles all 13 routes;
+`expo run:ios` builds + launches on the simulator. **Feedback pass (`FEEDBACK-LOG.md`): 6 of 9 done** —
+✅ #1 #2 #4 #6 #7 #9 · ⬜ #3 #5 #8.
 
 ## Pending actions (owner: user / next session)
 
-- [ ] **Complete first OTP login on device**, then walk the manual loop: Home → start a
-      routine → add exercise → log a set via ✓ and via the keypad → edit a set → finish →
-      see it in History → open an exercise's progress (weight history). This is the real
-      verification of the manual-first build (fonts, dark theme, keypad, grid all unproven
-      on device).
+- [ ] **Walk the full manual loop on the simulator** (app already runs + is signed in): Home →
+      start a routine → add exercise → log a set via ✓ and via the keypad → edit a set → finish →
+      see it in History → open an exercise's progress. Home/History/routines already render;
+      the *logging* path (keypad, grid, finish, progress chart) is still unproven on-device.
+- [ ] **Verify a real OTP sign-in from scratch** (sign out → enter email → 8-digit code). This
+      session used a persisted session, so the end-to-end auth flow itself is still unconfirmed.
 - [ ] **Create + save a routine** on device (name, add exercises, targets, save) and confirm
       it appears on Home and starts.
 - [ ] Log ~4 real workouts on-device (the real "done" bar for the manual tracker) — this also
@@ -82,6 +88,9 @@ Static checks currently green: `tsc --noEmit` clean; `expo export --platform web
       right against real workout days.
 - [ ] *(Phase 2, when voice resumes)* Apply migration `0003` to the live DB; run `npm run eval`.
 - [ ] Replace temporary Gmail SMTP with a dedicated provider before any external-user testing.
+- [ ] **Remaining feedback items** (`FEEDBACK-LOG.md`): **#3** frictionless defaults (reps 12 /
+      previous-best; the biggest logging win), **#5** exercise-list scroll (reproduce then fix),
+      **#8** drag-reorder in the routine editor.
 - [x] ~~Wire `useSettings().weeklyGoal` into the Calendar tally~~ — **done**: `calendar.tsx` now reads
       the Settings "Weekly goal" pref (default 5 until the query resolves); every tally, label, and the
       12-week goal line follow it. (If a longer OTP length is ever configured, bump `CODE_LEN` in
@@ -105,7 +114,7 @@ optimistic** (instant ✓, rollback on error) · ✅ **kg/lb unit toggle** in Se
 | Med | `db.ts` `z.coerce` numeric guards are dead — repos `return data as X`, never `.parse()`; a numeric-as-string would make `weight_kg` a string | `src/data/*`, `src/types/db.ts` |
 | ~~Low~~ | ✅ **Done 2026-07-31** — body-region **muscle filter** chip row added to the picker *and* the library (`exercises.tsx`); `searchExercises(query, region?)` + `listExercisesByRegion()`. (RECENT tab still deferred.) Also new: per-workout **muscle split** on `history/[id].tsx` (`lib/muscleSplit.ts` + `components/MuscleSplit.tsx`). | `ExercisePickerModal.tsx` |
 | Low | Finish summary omits the "NEW BESTS" callout (needs per-exercise all-time baseline; omitted, not faked) | `src/app/finish/[id].tsx` |
-| Low | Routine editor uses ↑/↓ reorder, not drag | `src/app/routine/[id].tsx` |
+| Low | Routine editor uses ↑/↓ reorder, not drag (= FEEDBACK **#8**, still open) | `src/app/routine/[id].tsx` |
 | Low | Fresh account = empty Home/History/Progress; a `scripts/seed-demo-workouts.ts` would make screenshots (esp. the progress chart + week strip) look alive | `scripts/` |
 | Low | App icon + splash are still default Expo placeholder art (white splash) | `app.config.ts`, `assets/` |
 | Low | `addExerciseToWorkout` doesn't dedupe `(workout_id, exercise_id)` | `src/data/workouts.ts` |
