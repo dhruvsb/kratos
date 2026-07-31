@@ -22,26 +22,55 @@ export type WorkoutListItem = Workout & {
   set_count: number;
 };
 
+/** Client-chosen ids for an optimistic start: the UI seeds its cache with these
+ *  and navigates immediately; the insert below writes the same ids so every row
+ *  the user is already touching exists once the background write lands. */
+export type StartPreset = {
+  workoutId: string;
+  startedAt: string;
+  exercises: { id: string; exerciseId: string }[];
+};
+
 /**
  * Start a workout. From a routine, its exercises are pre-loaded in order as
  * workout_exercises rows (so mid-workout state survives an app restart).
  * Exercises left with zero sets are deleted by finishWorkout — skipping leaves
  * no empty records.
+ *
+ * With a `preset` (built from the cached routine detail), rows are inserted
+ * under the client's ids and the routine_exercises SELECT is skipped — one
+ * fewer round-trip, and the caller never has to wait for this to navigate.
  */
-export async function startWorkout(routineId?: string): Promise<Workout> {
+export async function startWorkout(
+  routineId?: string,
+  preset?: StartPreset
+): Promise<Workout> {
   const userId = await requireUserId();
   const { data: workout, error } = await supabase
     .from('workouts')
     .insert({
+      ...(preset ? { id: preset.workoutId } : {}),
       user_id: userId,
       routine_id: routineId ?? null,
-      started_at: new Date().toISOString(),
+      started_at: preset?.startedAt ?? new Date().toISOString(),
     })
     .select()
     .single();
   if (error) throw error;
 
-  if (routineId) {
+  if (preset) {
+    if (preset.exercises.length > 0) {
+      const { error: weError } = await supabase.from('workout_exercises').insert(
+        preset.exercises.map((e, index) => ({
+          id: e.id,
+          workout_id: preset.workoutId,
+          exercise_id: e.exerciseId,
+          position: index,
+        }))
+      );
+      if (weError) throw weError;
+    }
+  } else if (routineId) {
     const { data: routineExercises, error: reError } = await supabase
       .from('routine_exercises')
       .select('exercise_id, position')
@@ -145,23 +174,32 @@ export async function listWorkouts(page = 0, pageSize = 20): Promise<WorkoutList
   });
 }
 
+/** With a `preset` (id + position chosen from the cached workout detail) the
+ *  position SELECT is skipped and the row lands under the client's id — same
+ *  optimistic contract as startWorkout's preset. */
 export async function addExerciseToWorkout(
   workoutId: string,
-  exerciseId: string
+  exerciseId: string,
+  preset?: { id: string; position: number }
 ): Promise<WorkoutExercise> {
-  const { data: last } = await supabase
-    .from('workout_exercises')
-    .select('position')
-    .eq('workout_id', workoutId)
-    .order('position', { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  let position = preset?.position;
+  if (position == null) {
+    const { data: last } = await supabase
+      .from('workout_exercises')
+      .select('position')
+      .eq('workout_id', workoutId)
+      .order('position', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    position = (last?.position ?? -1) + 1;
+  }
   const { data, error } = await supabase
     .from('workout_exercises')
     .insert({
+      ...(preset ? { id: preset.id } : {}),
       workout_id: workoutId,
       exercise_id: exerciseId,
-      position: (last?.position ?? -1) + 1,
+      position,
     })
     .select()
     .single();

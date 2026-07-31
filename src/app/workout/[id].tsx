@@ -9,6 +9,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ExercisePickerModal } from '@/components/ExercisePickerModal';
 import { SetKeypad } from '@/components/workout/SetKeypad';
+import { ElapsedClock } from '@/components/workout/LiveClock';
 import { InsetWell, KeyCap, StatusPip } from '@/components/voice/primitives';
 import {
   useAddExerciseToWorkout,
@@ -17,6 +18,7 @@ import {
   useDiscardWorkout,
   useFinishWorkout,
   useLastSession,
+  usePrefetchLastSessions,
   useProfile,
   useUpdateSet,
   useWorkout,
@@ -24,6 +26,7 @@ import {
 import { useSettings } from '@/data/settings';
 import type { LastSessionSet } from '@/types/db';
 import type { SetType, Unit } from '@/types/db';
+import { newUuid } from '@/lib/ids';
 import { formatSet, formatWeight } from '@/lib/units';
 import { color, font, radius, space, tracking } from '@/theme/tokens';
 
@@ -41,12 +44,6 @@ type KeypadState = {
   kg: number | null;
   reps: number | null;
 };
-
-function fmtClock(secs: number): string {
-  const s = Math.max(0, Math.floor(secs));
-  const m = Math.floor(s / 60);
-  return `${m}:${(s % 60).toString().padStart(2, '0')}`;
-}
 
 export default function ActiveWorkoutScreen() {
   const insets = useSafeAreaInsets();
@@ -67,17 +64,17 @@ export default function ActiveWorkoutScreen() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [activeExerciseId, setActiveExerciseId] = useState<string | null>(null);
   const [keypad, setKeypad] = useState<KeypadState | null>(null);
-  const [now, setNow] = useState(Date.now());
 
   const detail = workout.data;
   const isFinished = detail?.ended_at != null;
 
-  // A one-second clock drives the elapsed-time readout in the header.
-  useEffect(() => {
-    if (isFinished) return;
-    const t = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
-  }, [isFinished]);
+  // Warm the last-session panel for every exercise up front (the 80% case: this
+  // session repeats last session), so switching exercises is instant from cache.
+  const exerciseIds = useMemo(
+    () => detail?.exercises.map((we) => we.exercise_id) ?? [],
+    [detail]
+  );
+  usePrefetchLastSessions(id, exerciseIds);
 
   // Default the active exercise to the last one added.
   useEffect(() => {
@@ -178,8 +175,16 @@ export default function ActiveWorkoutScreen() {
       Alert.alert('Nothing logged', 'Log at least one set, or discard the workout.');
       return;
     }
+    // Optimistic finish (useFinishWorkout patches the cache to look finished), so
+    // replace to the summary NOW; on failure, roll back and return to the grid.
     // replace (not push) so Back from the summary doesn't return to the dead grid.
-    finish.mutate(undefined, { onSuccess: () => router.replace(`/finish/${id}`) });
+    finish.mutate(undefined, {
+      onError: (e) => {
+        Alert.alert("Couldn't finish workout", e.message);
+        router.replace(`/workout/${id}`);
+      },
+    });
+    router.replace(`/finish/${id}`);
   }
 
   function confirmDiscard() {
@@ -188,12 +193,16 @@ export default function ActiveWorkoutScreen() {
       {
         text: 'Discard',
         style: 'destructive',
-        onPress: () => discard.mutate(undefined, { onSuccess: () => router.dismissTo('/') }),
+        onPress: () => {
+          discard.mutate(undefined, {
+            onError: (e) => Alert.alert("Couldn't discard workout", e.message),
+          });
+          router.dismissTo('/');
+        },
       },
     ]);
   }
 
-  const elapsed = fmtClock((now - new Date(detail.started_at).getTime()) / 1000);
   const isLast = activeIndex === detail.exercises.length - 1;
   const topLast = lastSets.reduce<LastSessionSet | null>(
     (best, s) => ((s.weight_kg ?? 0) > (best?.weight_kg ?? -1) ? s : best),
@@ -211,7 +220,12 @@ export default function ActiveWorkoutScreen() {
           </Text>
         </View>
         <View style={{ alignItems: 'flex-end' }}>
-          <Text style={styles.timer}>{elapsed}</Text>
+          <ElapsedClock
+            startedAt={detail.started_at}
+            endedAt={detail.ended_at}
+            format="mmss"
+            style={styles.timer}
+          />
           <Text style={styles.meta}>
             {totals.sets} SET{totals.sets === 1 ? '' : 'S'} · {Math.round(totals.kg).toLocaleString()} KG
           </Text>
@@ -396,9 +410,13 @@ export default function ActiveWorkoutScreen() {
         onClose={() => setPickerOpen(false)}
         onPick={(exercise) => {
           setPickerOpen(false);
-          addExercise.mutate(exercise.id, {
-            onSuccess: (we) => setActiveExerciseId(we.exercise_id),
-          });
+          // Optimistic: the grid gets the new exercise on this tap (onMutate
+          // patches the cache under presetId), so switch to it immediately.
+          addExercise.mutate(
+            { exercise, presetId: newUuid() },
+            { onError: (e) => Alert.alert("Couldn't add exercise", e.message) }
+          );
+          setActiveExerciseId(exercise.id);
         }}
       />
 

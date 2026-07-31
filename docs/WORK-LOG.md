@@ -7,6 +7,48 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-07-31 — Instant interactions: navigate-first (optimistic start/finish/discard) + prefetch
+
+Idea #2 of the "snappier" plan, built on #1's persisted cache. Start/finish/discard were
+gated on a network round-trip (they navigated in the mutation's `onSuccess`); the grid and
+finish screens then blocked on their own fetch. Now every one of those transitions happens on
+the **same tap**, backed by the local cache, with the server reconciling in the background.
+Leans directly into the "80% of sessions repeat" insight: the whole workout is assembled
+locally from the cached routine.
+
+- **`src/lib/ids.ts`** (new) — `newUuid()` (WebCrypto with a Math.random v4 fallback for
+  runtimes without it). Client-chosen row ids are what let START navigate before the insert:
+  the UI seeds the cache with the ids the background insert will use.
+- **`src/data/workouts.ts`** — `startWorkout(routineId, preset?)` and
+  `addExerciseToWorkout(id, exId, preset?)` accept client ids and skip their lookup SELECT
+  (start is now 3→2 round-trips for a routine; both no longer block navigation).
+- **`src/data/hooks.ts`** —
+  - `buildStartPlan(qc, routineId)` builds a full optimistic `WorkoutDetail` from the **cached
+    routine detail** (null when cold ⇒ caller falls back to the await path).
+  - `useStartWorkout` seeds `keys.workout(id)` + `activeWorkout` and inserts in the background;
+    finish/discard/add-exercise are now optimistic with snapshot rollback.
+  - **FK-safety guard:** a `pendingWorkoutInserts` map + `awaitWorkoutCommitted()` — the first
+    set / add-exercise / finish / discard for a workout awaits its in-flight insert, so a child
+    write can never reach the DB before its parent row exists. A failed start rolls those back too.
+  - `usePrefetchRoutineDetails` (Home) + `usePrefetchLastSessions` (grid) warm the routine
+    lists and every exercise's last-session panel, so START and mid-workout exercise switches
+    are served from cache (the 80% case).
+- **`src/components/workout/LiveClock.tsx`** (new) — `ElapsedClock` + `useNowTick`. The 1-second
+  timer now lives in a leaf, so a tick re-renders one `<Text>` instead of all of Home / the
+  whole set grid. Home's resume meta moved into a `ResumeMeta` leaf for the same reason.
+- **`src/app/index.tsx` + `workout/[id].tsx`** — navigate-first handlers with error-path returns
+  (roll back + bounce home / back to the grid), isolated clocks, and the new prefetchers wired in.
+
+**QA:** `tsc` clean; `expo export` bundles all 15 routes (its static render exercises Home + the
+grid through all the new code); the freshly-built web bundle boots in-browser with **zero console
+errors**. A **live-DB harness** (service-role throwaway user, anon-key RLS, `test-rls` pattern)
+proves the novel risk end-to-end: client-generated UUIDs are accepted for `workouts.id` /
+`workout_exercises.id`, the FK-ordered set insert passes the RLS with-check, the tree round-trips
+under the chosen ids, and finish still drops empty exercises + stamps `ended_at` (10/10). Not yet
+walked on device — the optimistic *feel* still wants a real-session smoke (JS-only ⇒ no rebuild).
+
+---
+
 ## 2026-07-31 — Local-first: persist the React Query cache (instant cold start)
 
 First of the three "snappier / faster to load / fewer taps" ideas. The data layer was

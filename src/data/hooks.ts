@@ -5,16 +5,20 @@ import {
   useMutation,
   useQuery,
   useQueryClient,
+  type QueryClient,
 } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import * as auth from './auth';
 import * as exercises from './exercises';
 import * as importer from './import';
 import * as routines from './routines';
+import type { RoutineDetail } from './routines';
 import * as sets from './sets';
 import * as voice from './voice';
 import * as workouts from './workouts';
-import type { WorkoutDetail } from './workouts';
-import type { WorkoutSet } from '@/types/db';
+import type { WorkoutDetail, WorkoutExerciseDetail } from './workouts';
+import type { Exercise, Workout, WorkoutSet } from '@/types/db';
+import { newUuid } from '@/lib/ids';
 import type { BodyRegion } from '@/lib/muscles';
 
 export const keys = {
@@ -154,6 +158,45 @@ export function useLastSession(exerciseId: string, excludeWorkoutId?: string) {
   });
 }
 
+/** Warm each routine's full detail from Home so START can build the whole workout
+ *  locally (buildStartPlan reads this cache) and navigate without a network wait.
+ *  prefetchQuery no-ops while the cached copy is still fresh, so re-renders are free. */
+export function usePrefetchRoutineDetails(routineIds: string[] | undefined) {
+  const qc = useQueryClient();
+  const idsKey = routineIds?.join(',') ?? '';
+  useEffect(() => {
+    if (!idsKey) return;
+    for (const id of idsKey.split(',')) {
+      void qc.prefetchQuery({
+        queryKey: keys.routine(id),
+        queryFn: () => routines.getRoutine(id),
+        staleTime: STALE.routines,
+      });
+    }
+  }, [qc, idsKey]);
+}
+
+/** Warm the last-session panel for every exercise in the workout at once (the 80%
+ *  case: this session repeats last session's exercises), so switching exercises
+ *  mid-workout shows PREV + prefill instantly from cache instead of fetching. */
+export function usePrefetchLastSessions(
+  workoutId: string | undefined,
+  exerciseIds: string[] | undefined
+) {
+  const qc = useQueryClient();
+  const idsKey = exerciseIds?.join(',') ?? '';
+  useEffect(() => {
+    if (!workoutId || !idsKey) return;
+    for (const exerciseId of idsKey.split(',')) {
+      void qc.prefetchQuery({
+        queryKey: keys.lastSession(exerciseId, workoutId),
+        queryFn: () => workouts.getLastSession(exerciseId, workoutId),
+        staleTime: STALE.lastSession,
+      });
+    }
+  }, [qc, workoutId, idsKey]);
+}
+
 export function useExerciseHistory(exerciseId: string | undefined) {
   return useInfiniteQuery({
     queryKey: keys.exerciseHistory(exerciseId ?? ''),
@@ -203,36 +246,184 @@ export function useSetRoutineExercises(routineId: string) {
   });
 }
 
+// --- Optimistic start ------------------------------------------------------
+// START navigates to the grid on the same tap: the client picks every row id
+// (workout + workout_exercises), seeds the cache, and the insert runs in the
+// background under those same ids. Child writes (log a set, add an exercise,
+// finish, discard) first await any in-flight insert for their workout so a
+// write can never reach the DB before its FK target exists.
+
+const pendingWorkoutInserts = new Map<string, Promise<unknown>>();
+
+function trackWorkoutInsert(workoutId: string, insert: Promise<unknown>) {
+  pendingWorkoutInserts.set(workoutId, insert);
+  // Detach a handled branch so a failed background insert never surfaces as an
+  // unhandled rejection; awaiters of the original promise still see the error.
+  insert.catch(() => {}).then(() => pendingWorkoutInserts.delete(workoutId));
+}
+
+/** Resolves once the workout's row exists server-side (no-op when it already
+ *  does). Rejects if the start insert failed — the child mutation then fails
+ *  too and rolls back its own optimistic patch. */
+async function awaitWorkoutCommitted(workoutId: string) {
+  const pending = pendingWorkoutInserts.get(workoutId);
+  if (pending) await pending;
+}
+
+export type StartPlan = {
+  /** Optimistic WorkoutDetail seeded into `keys.workout(id)` before navigating. */
+  detail: WorkoutDetail;
+  /** The same ids, in the shape the repository inserts them. */
+  preset: workouts.StartPreset;
+};
+
+/** Build a complete local workout from the cached routine detail. Returns null
+ *  when the routine's detail isn't cached yet (cold cache) — the caller then
+ *  falls back to the classic await-the-server path. */
+export function buildStartPlan(qc: QueryClient, routineId?: string): StartPlan | null {
+  const startedAt = new Date().toISOString();
+  const workoutId = newUuid();
+  let routineName: string | null = null;
+  let exercisesDetail: WorkoutExerciseDetail[] = [];
+
+  if (routineId) {
+    const routine = qc.getQueryData<RoutineDetail>(keys.routine(routineId));
+    if (!routine) return null;
+    routineName = routine.name;
+    exercisesDetail = routine.exercises.map((re, index) => ({
+      id: newUuid(),
+      workout_id: workoutId,
+      exercise_id: re.exercise_id,
+      position: index,
+      created_at: startedAt,
+      exercise: re.exercise,
+      sets: [],
+    }));
+  }
+
+  return {
+    detail: {
+      id: workoutId,
+      // Not rendered anywhere; the background refetch fills in the real value.
+      user_id: '',
+      routine_id: routineId ?? null,
+      started_at: startedAt,
+      ended_at: null,
+      notes: null,
+      external_id: null,
+      created_at: startedAt,
+      routine_name: routineName,
+      exercises: exercisesDetail,
+    },
+    preset: {
+      workoutId,
+      startedAt,
+      exercises: exercisesDetail.map((we) => ({ id: we.id, exerciseId: we.exercise_id })),
+    },
+  };
+}
+
+type StartCtx = { planId?: string; prevActive?: Workout | null };
+
 export function useStartWorkout() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (routineId?: string) => workouts.startWorkout(routineId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: keys.activeWorkout }),
-  });
-}
-
-export function useFinishWorkout(workoutId: string) {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: () => workouts.finishWorkout(workoutId),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: keys.activeWorkout });
-      qc.invalidateQueries({ queryKey: keys.workoutList });
-      qc.invalidateQueries({ queryKey: keys.workout(workoutId) });
-      // Finished workout becomes someone's "last session".
-      qc.invalidateQueries({ queryKey: ['lastSession'] });
-      qc.invalidateQueries({ queryKey: ['exerciseHistory'] });
+    mutationFn: ({ routineId, plan }: { routineId?: string; plan?: StartPlan | null }) => {
+      if (!plan) return workouts.startWorkout(routineId);
+      const insert = workouts.startWorkout(routineId, plan.preset);
+      trackWorkoutInsert(plan.preset.workoutId, insert);
+      return insert;
+    },
+    onMutate: async ({ plan }): Promise<StartCtx> => {
+      if (!plan) return {};
+      await qc.cancelQueries({ queryKey: keys.activeWorkout });
+      const prevActive = qc.getQueryData<Workout | null>(keys.activeWorkout);
+      const { routine_name: _n, exercises: _e, ...workoutRow } = plan.detail;
+      qc.setQueryData<WorkoutDetail>(keys.workout(plan.detail.id), plan.detail);
+      qc.setQueryData<Workout | null>(keys.activeWorkout, workoutRow);
+      return { planId: plan.detail.id, prevActive };
+    },
+    onError: (_e, _v, ctx) => {
+      if (!ctx?.planId) return;
+      qc.removeQueries({ queryKey: keys.workout(ctx.planId) });
+      if (ctx.prevActive !== undefined) qc.setQueryData(keys.activeWorkout, ctx.prevActive);
+      else qc.removeQueries({ queryKey: keys.activeWorkout });
+    },
+    onSettled: (_d, _e, { plan }) => {
+      void qc.invalidateQueries({ queryKey: keys.activeWorkout });
+      if (plan) void qc.invalidateQueries({ queryKey: keys.workout(plan.detail.id) });
     },
   });
 }
 
+// Optimistic finish: callers navigate to the summary immediately after mutate(),
+// so the cache must already look finished when that screen mounts. Mirrors the
+// server's behaviour (ended_at set, zero-set exercises dropped); rolls back and
+// the caller returns the user to the grid if the write fails.
+type FinishCtx = { prevDetail?: WorkoutDetail; prevActive?: Workout | null };
+
+export function useFinishWorkout(workoutId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      await awaitWorkoutCommitted(workoutId);
+      return workouts.finishWorkout(workoutId);
+    },
+    onMutate: async (): Promise<FinishCtx> => {
+      await qc.cancelQueries({ queryKey: keys.workout(workoutId) });
+      await qc.cancelQueries({ queryKey: keys.activeWorkout });
+      const prevDetail = qc.getQueryData<WorkoutDetail>(keys.workout(workoutId));
+      const prevActive = qc.getQueryData<Workout | null>(keys.activeWorkout);
+      if (prevDetail) {
+        qc.setQueryData<WorkoutDetail>(keys.workout(workoutId), {
+          ...prevDetail,
+          ended_at: new Date().toISOString(),
+          exercises: prevDetail.exercises.filter((we) => we.sets.length > 0),
+        });
+      }
+      if (prevActive?.id === workoutId) qc.setQueryData(keys.activeWorkout, null);
+      return { prevDetail, prevActive };
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.prevDetail) qc.setQueryData(keys.workout(workoutId), ctx.prevDetail);
+      if (ctx?.prevActive !== undefined) qc.setQueryData(keys.activeWorkout, ctx.prevActive);
+    },
+    onSettled: () => {
+      void qc.invalidateQueries({ queryKey: keys.activeWorkout });
+      void qc.invalidateQueries({ queryKey: keys.workoutList });
+      void qc.invalidateQueries({ queryKey: keys.workout(workoutId) });
+      // Finished workout becomes someone's "last session".
+      void qc.invalidateQueries({ queryKey: ['lastSession'] });
+      void qc.invalidateQueries({ queryKey: ['exerciseHistory'] });
+    },
+  });
+}
+
+// Optimistic discard: the resume card / grid clear on the same tap; rollback
+// restores the active-workout pointer if the delete fails.
 export function useDiscardWorkout(workoutId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: () => workouts.discardWorkout(workoutId),
+    mutationFn: async () => {
+      await awaitWorkoutCommitted(workoutId);
+      return workouts.discardWorkout(workoutId);
+    },
+    onMutate: async () => {
+      await qc.cancelQueries({ queryKey: keys.activeWorkout });
+      const prevActive = qc.getQueryData<Workout | null>(keys.activeWorkout);
+      if (prevActive?.id === workoutId) qc.setQueryData(keys.activeWorkout, null);
+      return { prevActive };
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.prevActive !== undefined) qc.setQueryData(keys.activeWorkout, ctx.prevActive);
+    },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: keys.activeWorkout });
-      qc.invalidateQueries({ queryKey: keys.workoutList });
+      // The row is gone — drop its detail so nothing can refetch a 404.
+      qc.removeQueries({ queryKey: keys.workout(workoutId) });
+    },
+    onSettled: () => {
+      void qc.invalidateQueries({ queryKey: keys.activeWorkout });
+      void qc.invalidateQueries({ queryKey: keys.workoutList });
     },
   });
 }
@@ -264,12 +455,55 @@ export function useCommitImport() {
   });
 }
 
+// Optimistic add-exercise: the caller passes the picked Exercise plus a
+// client-generated id (`presetId: newUuid()`), the grid switches to it on the
+// same tap, and the insert lands under that id in the background.
+
+/** Next position slot, excluding the optimistic entry itself (onMutate patches
+ *  the cache before mutationFn reads it, so the new row must not count itself). */
+function nextExercisePosition(detail: WorkoutDetail | undefined, excludeId?: string): number {
+  const list = (detail?.exercises ?? []).filter((we) => we.id !== excludeId);
+  return list.length > 0 ? Math.max(...list.map((we) => we.position)) + 1 : 0;
+}
+
 export function useAddExerciseToWorkout(workoutId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (exerciseId: string) =>
-      workouts.addExerciseToWorkout(workoutId, exerciseId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: keys.workout(workoutId) }),
+    mutationFn: async ({ exercise, presetId }: { exercise: Exercise; presetId?: string }) => {
+      await awaitWorkoutCommitted(workoutId);
+      const prev = qc.getQueryData<WorkoutDetail>(keys.workout(workoutId));
+      const preset =
+        presetId != null && prev != null
+          ? { id: presetId, position: nextExercisePosition(prev, presetId) }
+          : undefined;
+      return workouts.addExerciseToWorkout(workoutId, exercise.id, preset);
+    },
+    onMutate: async ({ exercise, presetId }) => {
+      if (!presetId) return {};
+      await qc.cancelQueries({ queryKey: keys.workout(workoutId) });
+      const prev = qc.getQueryData<WorkoutDetail>(keys.workout(workoutId));
+      if (!prev) return {};
+      qc.setQueryData<WorkoutDetail>(keys.workout(workoutId), {
+        ...prev,
+        exercises: [
+          ...prev.exercises,
+          {
+            id: presetId,
+            workout_id: workoutId,
+            exercise_id: exercise.id,
+            position: nextExercisePosition(prev),
+            created_at: new Date().toISOString(),
+            exercise,
+            sets: [],
+          },
+        ],
+      });
+      return { prev };
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.prev) qc.setQueryData(keys.workout(workoutId), ctx.prev);
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: keys.workout(workoutId) }),
   });
 }
 
@@ -328,8 +562,12 @@ function tempId(): string {
 export function useAddSet(workoutId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: { workoutExerciseId: string; set: sets.AddSetInput }) =>
-      sets.addSet(input.workoutExerciseId, input.set),
+    mutationFn: async (input: { workoutExerciseId: string; set: sets.AddSetInput }) => {
+      // A ✓ tapped the instant the grid appears must not race the workout's own
+      // background insert (FK: sets → workout_exercises → workouts).
+      await awaitWorkoutCommitted(workoutId);
+      return sets.addSet(input.workoutExerciseId, input.set);
+    },
     onMutate: async ({ workoutExerciseId, set }): Promise<WorkoutCtx> => {
       await qc.cancelQueries({ queryKey: keys.workout(workoutId) });
       const prev = patchWorkoutSets(qc, workoutId, (s) => s, {

@@ -39,6 +39,7 @@ updatable record of what was actually built from it, not a copy of the spec.
 | Database schema + Row Level Security | ✅ Done and verified live |
 | Data access layer (`src/data/`) | ✅ Done |
 | Local-first cache (persisted React Query) | ✅ **Built 2026-07-31** — cache persisted to AsyncStorage; cold start paints from disk then revalidates; `staleTime` tiered; wiped on sign-out/account-switch. Pure-JS deps ⇒ no dev-client rebuild. On-device warm-relaunch check pending. |
+| Instant interactions (navigate-first) | ✅ **Built 2026-07-31** — start/finish/discard/add-exercise optimistic: client-chosen row ids (`src/lib/ids.ts`) let START build the workout from the cached routine and navigate on the same tap; an FK-ordering await + snapshot rollback keep it safe; routine/last-session prefetch serves the 80%-repeat case; the 1s clock is isolated in `LiveClock`. Live-DB RLS harness green (10/10). |
 | Exercise library seed script + alias map | ✅ Done and seeded live (**curated 150 exercises, 156 aliases** — rebuilt session 3 with rich metadata; see WORK-LOG) |
 | Manual UI — 12 `RepVoice Manual` screens on the dark LED theme | ✅ Built (2026-07-30 s2; **Calendar** added s4). Incl. **manual set logging** (grid + keypad), which was previously **missing** (voice-only). Static-verified, not yet on device. |
 | ↳ Core files | `src/app/{index,workout/[id],routine/[id],history/index,history/[id],exercise/[id],exercises,finish/[id],calendar}.tsx`, `src/components/{ui,ExercisePickerModal,workout/SetKeypad,workout/Caret}.tsx`, `src/data/calendar.ts`, `src/lib/units.ts` |

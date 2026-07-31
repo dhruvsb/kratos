@@ -10,7 +10,15 @@ codebase or a huge prior conversation.
 > issues**) *and* append a dated entry to [`WORK-LOG.md`](./WORK-LOG.md). This file is the
 > snapshot; `WORK-LOG.md` is the full history. Keep this file short.
 
-**Last updated:** 2026-07-31 — **Local-first: persisted React Query cache (instant cold start)**. The
+**Last updated:** 2026-07-31 — **Instant interactions: navigate-first start/finish/discard + prefetch**
+(idea #2, on top of the persisted cache). Start/finish/discard now act on the same tap against the local
+cache and reconcile in the background; the client picks row ids (`src/lib/ids.ts`) so START builds the
+whole workout from the cached routine and navigates immediately — guarded by an FK-ordering await
+(`awaitWorkoutCommitted`) so no child write beats its parent insert. `usePrefetchRoutineDetails` /
+`usePrefetchLastSessions` warm the 80%-repeat data; the 1s clock moved into a leaf (`LiveClock`) so it no
+longer re-renders Home / the grid. `tsc` + web-export green; a **live-DB RLS harness** proves client-uuid
+inserts + finish semantics (10/10). On-device optimistic-feel smoke still pending. Prior: **Local-first:
+persisted React Query cache (instant cold start)**. The
 query cache now persists to AsyncStorage (`src/lib/queryClient.ts`); `_layout` uses
 `PersistQueryClientProvider` + a `BootGate` that holds the splash on cache-restore so first paint shows
 hydrated data, and wipes the cache on sign-out/account-switch. `staleTime` tiered in `hooks.ts`. New deps
@@ -66,6 +74,7 @@ logging via an LLM pipeline, **3** TBD (PRs/charts).
 |---|---|
 | Phase 1 backbone (schema, RLS, repos) | ✅ Built; backend verified live (**150 curated exercises** / 156 aliases seeded; RLS test passed) |
 | **Local-first cache (persisted React Query)** | ✅ **Built 2026-07-31** — cold start hydrates last-known data from AsyncStorage (`src/lib/queryClient.ts`), revalidates in background; `staleTime` tiered; cache wiped on sign-out/account-switch. Pure-JS deps ⇒ no rebuild. On-device warm-relaunch check pending. |
+| **Instant interactions (navigate-first + prefetch)** | ✅ **Built 2026-07-31** — start/finish/discard/add-exercise are optimistic (client-chosen ids via `src/lib/ids.ts`, FK-ordering guard, snapshot rollback); routine + last-session prefetch serve the 80%-repeat case from cache; 1s clock isolated in `LiveClock`. Live-DB RLS harness green (10/10). On-device optimistic-feel smoke pending. |
 | **Exercise directory — curated + rich metadata** | ✅ **Rebuilt this session**: replaced the 873 free-exercise-db import with a curated 150-set carrying `primary_muscles[]`, `secondary_muscles[]`, `body_region[]` rollup, `mechanic`, `modality`. Source of truth: `scripts/data/exercises-curated.json` (regen via `scripts/build-curated-exercises.py`). Muscle taxonomy in `src/lib/muscles.ts`. |
 | **Manual-first UI — all 12 `RepVoice Manual` screens** | ✅ Built (dark LED theme); **now renders on the iOS simulator** (first run 2026-07-31 — Home, History, routines all render; full manual-loop walkthrough still pending) |
 | **"Entry & edges" screens 13–18** | ✅ **Built session 4**: 13 sign-in (LED, 6-box code) · 14 first-run + 16 resume (Home states) · 15 no-history grid · 17 fix-a-set from history + delete-workout · 18 real Settings screen. New local settings store `src/data/settings.ts` (AsyncStorage; drives pre-fill/rest/weekly-goal). 4-tab nav (HOME·CALENDAR·HISTORY·SETTINGS). Static-verified only. |
@@ -90,6 +99,10 @@ Static checks currently green: `tsc --noEmit` clean; `expo export --platform web
 - [ ] **Verify warm-relaunch hydration on device** (the one unproven bit of the persisted cache):
       with data present, kill + relaunch — Home/History should paint instantly from disk (no
       spinner), then quietly refresh. JS-only change ⇒ no rebuild, just `expo start --dev-client`.
+- [ ] **Smoke the optimistic flow on device** (idea #2): START opens the grid with no spinner;
+      log a set immediately (must not error — the FK-order guard should hold); FINISH jumps
+      straight to the summary; DISCARD returns home instantly; kill the app right after START and
+      relaunch to confirm the background insert committed. JS-only ⇒ no rebuild.
 - [ ] **Walk the full manual loop on the simulator** (app already runs + is signed in): Home →
       start a routine → add exercise → log a set via ✓ and via the keypad → edit a set → finish →
       see it in History → open an exercise's progress. Home/History/routines already render;

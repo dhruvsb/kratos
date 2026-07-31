@@ -4,16 +4,20 @@
 // day zero (mockup 14 — nothing logged, two doors into the first workout) and a
 // workout left running (mockup 16 — resume / finish / discard, with the routine list
 // held inert). No microphone here — the voice entry point returns in a later phase.
+import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusPip } from '@/components/voice/primitives';
 import { TabBar } from '@/components/voice/TabBar';
+import { ElapsedClock, useNowTick } from '@/components/workout/LiveClock';
 import {
+  buildStartPlan,
   useActiveWorkout,
   useDiscardWorkout,
   useFinishWorkout,
+  usePrefetchRoutineDetails,
   useRoutines,
   useStartWorkout,
   useWorkout,
@@ -45,16 +49,6 @@ function agoLabel(iso: string | undefined): string | null {
   return weeks === 1 ? '1 WEEK AGO' : `${weeks} WEEKS AGO`;
 }
 
-function fmtDuration(ms: number): string {
-  const s = Math.max(0, Math.floor(ms / 1000));
-  const h = Math.floor(s / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  const sec = s % 60;
-  const mm = m.toString().padStart(2, '0');
-  const ss = sec.toString().padStart(2, '0');
-  return h > 0 ? `${h}:${mm}:${ss}` : `${m}:${ss}`;
-}
-
 function minutesAgo(iso: string | undefined, now: number): string | null {
   if (!iso) return null;
   const mins = Math.round((now - new Date(iso).getTime()) / 60000);
@@ -66,6 +60,7 @@ function minutesAgo(iso: string | undefined, now: number): string | null {
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
+  const qc = useQueryClient();
   const routines = useRoutines();
   const activeWorkout = useActiveWorkout();
   const startWorkout = useStartWorkout();
@@ -75,13 +70,6 @@ export default function HomeScreen() {
   const activeDetail = useWorkout(activeId);
   const finish = useFinishWorkout(activeId ?? '');
   const discard = useDiscardWorkout(activeId ?? '');
-
-  const [now, setNow] = useState(Date.now());
-  useEffect(() => {
-    if (!activeId) return;
-    const t = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
-  }, [activeId]);
 
   const workouts = history.data?.pages.flat() ?? [];
 
@@ -108,6 +96,10 @@ export default function HomeScreen() {
   }, [workouts]);
 
   const list = routines.data ?? [];
+  // Warm every routine's exercise list so START can build the workout locally
+  // and navigate on the same tap (see start() below).
+  const routineIds = useMemo(() => list.map((r) => r.id), [list]);
+  usePrefetchRoutineDetails(routineIds);
   // "Up next" = the routine trained longest ago (never-trained first).
   const upNext = useMemo(() => {
     if (list.length === 0) return null;
@@ -136,21 +128,57 @@ export default function HomeScreen() {
       router.push(`/workout/${activeId}`);
       return;
     }
-    startWorkout.mutate(routineId, {
-      onSuccess: (workout) => router.push(`/workout/${workout.id}`),
-    });
+    // Fast path: build the whole workout from the cached routine detail and
+    // navigate NOW — the insert runs in the background under the same ids.
+    const plan = buildStartPlan(qc, routineId);
+    if (plan) {
+      startWorkout.mutate(
+        { routineId, plan },
+        {
+          onError: (e) => {
+            Alert.alert("Couldn't start workout", e.message);
+            router.dismissTo('/');
+          },
+        }
+      );
+      router.push(`/workout/${plan.detail.id}`);
+      return;
+    }
+    // Routine detail not cached yet (first cold run) — classic await path.
+    startWorkout.mutate(
+      { routineId },
+      {
+        onSuccess: (workout) => router.push(`/workout/${workout.id}`),
+        onError: (e) => Alert.alert("Couldn't start workout", e.message),
+      }
+    );
   }
 
   function finishNow() {
     if (!activeId) return;
-    finish.mutate(undefined, { onSuccess: () => router.push(`/finish/${activeId}`) });
+    // Optimistic finish (see useFinishWorkout) — the summary renders from the
+    // already-patched cache, so navigate immediately.
+    finish.mutate(undefined, {
+      onError: (e) => {
+        Alert.alert("Couldn't finish workout", e.message);
+        router.dismissTo('/');
+      },
+    });
+    router.push(`/finish/${activeId}`);
   }
 
   function confirmDiscard() {
     if (!activeId) return;
     Alert.alert('Discard workout?', 'Every set logged this session is deleted.', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Discard', style: 'destructive', onPress: () => discard.mutate() },
+      {
+        text: 'Discard',
+        style: 'destructive',
+        onPress: () =>
+          discard.mutate(undefined, {
+            onError: (e) => Alert.alert("Couldn't discard workout", e.message),
+          }),
+      },
     ]);
   }
 
@@ -213,24 +241,17 @@ export default function HomeScreen() {
                 <Text style={styles.resumeName} numberOfLines={1}>
                   {resume?.name ?? 'Workout'}
                 </Text>
-                <Text style={styles.resumeClock}>
-                  {resume ? fmtDuration(now - new Date(resume.startedAt).getTime()) : '—'}
-                </Text>
+                {resume ? (
+                  <ElapsedClock startedAt={resume.startedAt} format="hmmss" style={styles.resumeClock} />
+                ) : (
+                  <Text style={styles.resumeClock}>—</Text>
+                )}
               </View>
-              <Text style={styles.resumeMeta}>
-                {resume
-                  ? [
-                      `STARTED ${new Date(resume.startedAt).toLocaleTimeString('en-US', {
-                        hour: 'numeric',
-                        minute: '2-digit',
-                      })}`,
-                      `${resume.sets} SET${resume.sets === 1 ? '' : 'S'} LOGGED`,
-                      minutesAgo(resume.lastSetAt, now) && `LAST SET ${minutesAgo(resume.lastSetAt, now)}`,
-                    ]
-                      .filter(Boolean)
-                      .join(' · ')
-                  : 'LOADING…'}
-              </Text>
+              {resume ? (
+                <ResumeMeta startedAt={resume.startedAt} sets={resume.sets} lastSetAt={resume.lastSetAt} />
+              ) : (
+                <Text style={styles.resumeMeta}>LOADING…</Text>
+              )}
               <View style={styles.resumeBtns}>
                 <Pressable style={styles.resumeMain} onPress={() => router.push(`/workout/${activeId}`)}>
                   <Text style={styles.resumeMainText}>RESUME</Text>
@@ -383,6 +404,29 @@ export default function HomeScreen() {
       />
     </View>
   );
+}
+
+// Resume-card meta line. A leaf so its "LAST SET … AGO" recency can tick without
+// re-rendering the whole Home screen (the clock and this are the only live bits).
+function ResumeMeta({
+  startedAt,
+  sets,
+  lastSetAt,
+}: {
+  startedAt: string;
+  sets: number;
+  lastSetAt: string | undefined;
+}) {
+  const now = useNowTick(1000);
+  const ago = minutesAgo(lastSetAt, now);
+  const text = [
+    `STARTED ${new Date(startedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`,
+    `${sets} SET${sets === 1 ? '' : 'S'} LOGGED`,
+    ago && `LAST SET ${ago}`,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+  return <Text style={styles.resumeMeta}>{text}</Text>;
 }
 
 const styles = StyleSheet.create({
