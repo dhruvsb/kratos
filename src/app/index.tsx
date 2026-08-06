@@ -158,7 +158,7 @@ export default function HomeScreen() {
     if (!activeId) return;
     // Optimistic finish (see useFinishWorkout) — the summary renders from the
     // already-patched cache, so navigate immediately.
-    finish.mutate(undefined, {
+    finish.mutate({
       onError: (e) => {
         Alert.alert("Couldn't finish workout", e.message);
         router.dismissTo('/');
@@ -175,7 +175,7 @@ export default function HomeScreen() {
         text: 'Discard',
         style: 'destructive',
         onPress: () =>
-          discard.mutate(undefined, {
+          discard.mutate({
             onError: (e) => Alert.alert("Couldn't discard workout", e.message),
           }),
       },

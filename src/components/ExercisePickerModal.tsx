@@ -15,7 +15,13 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useCreateCustomExercise, useExerciseSearch } from '@/data/hooks';
+import {
+  useCreateCustomExercise,
+  useExerciseDirectory,
+  useExerciseSearch,
+} from '@/data/hooks';
+import { filterExercisesLocally } from '@/data/exercises';
+import { useIsOnline } from '@/lib/network';
 import { BODY_REGIONS, type BodyRegion } from '@/lib/muscles';
 import type { Exercise } from '@/types/db';
 import { color, font, radius, space, tracking } from '@/theme/tokens';
@@ -35,8 +41,18 @@ export function ExercisePickerModal({
   const [creating, setCreating] = useState(false);
   const [customMuscle, setCustomMuscle] = useState('');
   const [customEquipment, setCustomEquipment] = useState('');
+  const online = useIsOnline();
+  // Online: server search (trigram + aliases). Offline: filter the cached, persisted
+  // directory locally — same picker, no connection needed. The directory also warms
+  // the offline path (it's loaded whenever the picker opens online, then persisted).
   const search = useExerciseSearch(query, region);
+  const directory = useExerciseDirectory();
   const createCustom = useCreateCustomExercise();
+
+  const results = online
+    ? search.data ?? []
+    : filterExercisesLocally(directory.data ?? [], query, region);
+  const loading = online ? search.isLoading : directory.isLoading;
 
   function pick(exercise: Exercise) {
     setQuery('');
@@ -46,8 +62,6 @@ export function ExercisePickerModal({
     setCustomEquipment('');
     onPick(exercise);
   }
-
-  const results = search.data ?? [];
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -117,10 +131,12 @@ export function ExercisePickerModal({
             </Pressable>
           )}
           ListEmptyComponent={
-            search.isLoading ? (
+            loading ? (
               <Text style={styles.hint}>SEARCHING…</Text>
             ) : query.trim() ? (
-              <Text style={styles.hint}>No matches — create it below.</Text>
+              <Text style={styles.hint}>
+                {online ? 'No matches — create it below.' : 'No matches in your saved exercises.'}
+              </Text>
             ) : region ? (
               <Text style={styles.hint}>No {region.toLowerCase()} exercises.</Text>
             ) : (
@@ -129,7 +145,13 @@ export function ExercisePickerModal({
           }
         />
 
-        {query.trim().length > 1 && (
+        {query.trim().length > 1 && !online && (
+          <View style={styles.createBox}>
+            <Text style={styles.hint}>Reconnect to add “{query.trim()}” as a custom exercise.</Text>
+          </View>
+        )}
+
+        {query.trim().length > 1 && online && (
           <View style={styles.createBox}>
             {creating ? (
               <>

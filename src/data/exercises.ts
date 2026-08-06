@@ -49,6 +49,41 @@ export async function listExercises(limit = 50, offset = 0): Promise<Exercise[]>
   return (data ?? []) as Exercise[];
 }
 
+/**
+ * The whole curated directory (~150 rows), name-sorted. Cached + persisted so the
+ * exercise picker works offline: server search (trigram + aliases) needs a
+ * connection, so offline we filter this list locally instead (see filterExercisesLocally).
+ * The cap is generous headroom over the curated set — one round-trip, then it lives in cache.
+ */
+export async function listAllExercises(): Promise<Exercise[]> {
+  const { data, error } = await supabase
+    .from('exercises')
+    .select('*')
+    .order('canonical_name')
+    .limit(500);
+  if (error) throw error;
+  return (data ?? []) as Exercise[];
+}
+
+/**
+ * Local, connection-free search over a cached directory — the offline counterpart
+ * to searchExercises. Canonical-name substring + the same body-region narrowing;
+ * aliases/trigram aren't available offline (they're a server concern), which is an
+ * accepted fidelity trade for working with no connection.
+ */
+export function filterExercisesLocally(
+  all: Exercise[],
+  query: string,
+  region?: BodyRegion | null,
+  limit = 30
+): Exercise[] {
+  const q = query.trim().toLowerCase();
+  let list = all;
+  if (region) list = list.filter((e) => e.body_region?.includes(region));
+  if (q) list = list.filter((e) => e.canonical_name.toLowerCase().includes(q));
+  return list.slice(0, limit);
+}
+
 export async function getExercise(id: string): Promise<Exercise> {
   const { data, error } = await supabase
     .from('exercises')

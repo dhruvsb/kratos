@@ -6,6 +6,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
+import { OfflineBanner } from '@/components/OfflineBanner';
 import { SignInScreen } from '@/components/SignInScreen';
 import { getSession, onAuthStateChange } from '@/data/auth';
 import {
@@ -68,19 +69,33 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-      <PersistQueryClientProvider client={queryClient} persistOptions={persistOptions}>
+      <PersistQueryClientProvider
+        client={queryClient}
+        persistOptions={persistOptions}
+        // Restoration is done: flush any writes that were logged offline in a
+        // previous run and persisted as paused mutations. resumePausedMutations
+        // replays them in order; still-offline, they simply re-pause.
+        onSuccess={() => {
+          void queryClient.resumePausedMutations();
+        }}
+      >
         <BootGate ready={ready} fontsReady={fontsReady}>
           {session ? (
             // Every screen is the dark LED theme and draws its own header +
             // safe-area (back links live in-screen), so the native header stays
             // off and first paint is dark end-to-end.
-            <Stack
-              screenOptions={{
-                headerShown: false,
-                statusBarStyle: 'light',
-                contentStyle: { backgroundColor: color.bg },
-              }}
-            />
+            <>
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                  statusBarStyle: 'light',
+                  contentStyle: { backgroundColor: color.bg },
+                }}
+              />
+              {/* Floats over every screen; only visible offline or while the
+                  offline queue is draining. */}
+              <OfflineBanner />
+            </>
           ) : (
             <>
               {/* Sign-in is the dark LED theme (mockup 13), so the bar goes light. */}

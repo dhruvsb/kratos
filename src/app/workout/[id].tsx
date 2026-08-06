@@ -18,6 +18,7 @@ import {
   useDiscardWorkout,
   useFinishWorkout,
   useLastSession,
+  usePrefetchExerciseDirectory,
   usePrefetchLastSessions,
   useProfile,
   useUpdateSet,
@@ -75,6 +76,9 @@ export default function ActiveWorkoutScreen() {
     [detail]
   );
   usePrefetchLastSessions(id, exerciseIds);
+  // Warm the exercise directory so the picker can add exercises even if the
+  // connection drops mid-workout (the picker filters this list locally offline).
+  usePrefetchExerciseDirectory();
 
   // Default the active exercise to the last one added.
   useEffect(() => {
@@ -178,7 +182,7 @@ export default function ActiveWorkoutScreen() {
     // Optimistic finish (useFinishWorkout patches the cache to look finished), so
     // replace to the summary NOW; on failure, roll back and return to the grid.
     // replace (not push) so Back from the summary doesn't return to the dead grid.
-    finish.mutate(undefined, {
+    finish.mutate({
       onError: (e) => {
         Alert.alert("Couldn't finish workout", e.message);
         router.replace(`/workout/${id}`);
@@ -194,7 +198,7 @@ export default function ActiveWorkoutScreen() {
         text: 'Discard',
         style: 'destructive',
         onPress: () => {
-          discard.mutate(undefined, {
+          discard.mutate({
             onError: (e) => Alert.alert("Couldn't discard workout", e.message),
           });
           router.dismissTo('/');

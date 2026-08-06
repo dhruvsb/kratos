@@ -10,7 +10,17 @@ codebase or a huge prior conversation.
 > issues**) *and* append a dated entry to [`WORK-LOG.md`](./WORK-LOG.md). This file is the
 > snapshot; `WORK-LOG.md` is the full history. Keep this file short.
 
-**Last updated:** 2026-07-31 — **Instant interactions: navigate-first start/finish/discard + prefetch**
+**Last updated:** 2026-08-06 — **Offline-first logging.** The active-logging path now works fully
+disconnected and syncs on reconnect (surviving an app kill), via React Query's offline machinery:
+NetInfo→`onlineManager` (`src/lib/network.ts`) so offline writes **pause** instead of rolling back;
+replay-safe writes (client `set_number`/`position`/ids captured into mutation *variables*, dependent
+SELECTs dropped); a persisted+resumable mutation queue (`src/data/offlineSync.ts` + `resumePausedMutations`
+in `_layout`); offline exercise picking (`useExerciseDirectory` + local filter, custom-create disabled
+offline); and an `OfflineBanner`. Scope = start (new/from-routine) → pick exercises → log/edit/delete
+weight×reps×sets → finish; history/calendar/progress/voice stay online-only. `tsc` + web-export green;
+new `npm run test:offline` harness passes **8/8** on the live DB (client ids, sequential FK order,
+edit+delete by id, finish semantics). **Needs a dev-client rebuild** (NetInfo native) + an on-device
+airplane-mode walkthrough. Prior: **Instant interactions: navigate-first start/finish/discard + prefetch**
 (idea #2, on top of the persisted cache). Start/finish/discard now act on the same tap against the local
 cache and reconcile in the background; the client picks row ids (`src/lib/ids.ts`) so START builds the
 whole workout from the cached routine and navigates immediately — guarded by an FK-ordering await
@@ -74,6 +84,7 @@ logging via an LLM pipeline, **3** TBD (PRs/charts).
 |---|---|
 | Phase 1 backbone (schema, RLS, repos) | ✅ Built; backend verified live (**150 curated exercises** / 156 aliases seeded; RLS test passed) |
 | **Local-first cache (persisted React Query)** | ✅ **Built 2026-07-31** — cold start hydrates last-known data from AsyncStorage (`src/lib/queryClient.ts`), revalidates in background; `staleTime` tiered; cache wiped on sign-out/account-switch. Pure-JS deps ⇒ no rebuild. On-device warm-relaunch check pending. |
+| **Offline-first logging (write while disconnected + sync)** | ✅ **Built 2026-08-06** — start→pick→log/edit/delete sets→finish all work offline and sync on reconnect, surviving app kill. NetInfo→`onlineManager` (writes pause, not roll back); replay-safe writes (client `set_number`/`position`/ids in mutation *variables*); persisted+resumable queue (`src/data/offlineSync.ts`, `resumePausedMutations`); offline picker (`useExerciseDirectory` + local filter); `OfflineBanner`. History/calendar/progress/voice stay online-only. `npm run test:offline` **8/8** on live DB. **Needs dev-client rebuild** (NetInfo native) + on-device airplane-mode check. |
 | **Instant interactions (navigate-first + prefetch)** | ✅ **Built 2026-07-31** — start/finish/discard/add-exercise are optimistic (client-chosen ids via `src/lib/ids.ts`, FK-ordering guard, snapshot rollback); routine + last-session prefetch serve the 80%-repeat case from cache; 1s clock isolated in `LiveClock`. Live-DB RLS harness green (10/10). On-device optimistic-feel smoke pending. |
 | **Exercise directory — curated + rich metadata** | ✅ **Rebuilt this session**: replaced the 873 free-exercise-db import with a curated 150-set carrying `primary_muscles[]`, `secondary_muscles[]`, `body_region[]` rollup, `mechanic`, `modality`. Source of truth: `scripts/data/exercises-curated.json` (regen via `scripts/build-curated-exercises.py`). Muscle taxonomy in `src/lib/muscles.ts`. |
 | **Manual-first UI — all 12 `RepVoice Manual` screens** | ✅ Built (dark LED theme); **now renders on the iOS simulator** (first run 2026-07-31 — Home, History, routines all render; full manual-loop walkthrough still pending) |
@@ -96,6 +107,13 @@ Static checks currently green: `tsc --noEmit` clean; `expo export --platform web
 
 ## Pending actions (owner: user / next session)
 
+- [ ] **Rebuild the dev client** (`expo run:ios`) for the new NetInfo native dep, then **walk the
+      offline logging path**: airplane mode → start a routine → add an exercise (picker filters the
+      cached directory) → log sets via ✓ and the keypad → edit/delete a set → finish; the
+      `OfflineBanner` shows OFFLINE throughout. Re-enable network → SYNCING flashes, then History /
+      Calendar / progress light up (rows synced, no dupes). **Kill-and-relaunch check:** log offline,
+      force-quit the app, relaunch (still offline) → the session is intact from cache; reconnect →
+      it still syncs (proves the persisted mutation queue + `resumePausedMutations`).
 - [ ] **Verify warm-relaunch hydration on device** (the one unproven bit of the persisted cache):
       with data present, kill + relaunch — Home/History should paint instantly from disk (no
       spinner), then quietly refresh. JS-only change ⇒ no rebuild, just `expo start --dev-client`.
@@ -173,6 +191,7 @@ PATH="/opt/homebrew/opt/node@22/bin:$PATH" npx expo export --platform web
 # Data / pipeline tooling
 npm run seed        # seed exercise library (idempotent)
 npm run test:rls    # two-account RLS isolation test
+npm run test:offline # replay an offline-logged session against the live DB + assert the tree
 npm run eval        # score the golden set against the real pipeline
 ```
 

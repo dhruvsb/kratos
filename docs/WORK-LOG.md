@@ -7,6 +7,51 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-06 — Offline-first logging (log a whole session disconnected, sync on reconnect)
+
+The persisted cache made *reads* offline-tolerant and the logging flow *feel* instant, but an
+offline **write** used to fire → fail → roll back (no network awareness, no durable queue). This
+session makes the active-logging path fully offline-capable: start a workout (new or from a
+routine), pick exercises, log/edit/delete weight×reps×sets, finish — all with no connection —
+and it syncs automatically when the network returns, surviving an app kill in between. Scope is
+deliberately the logging path only; history/calendar/progress/voice stay online-only. Rode React
+Query v5's built-in offline machinery rather than a bespoke queue (the app already had optimistic
+patches, a persisted cache, and client-chosen UUIDs).
+
+- **`@react-native-community/netinfo` (new native dep, 12.0.1)** → `src/lib/network.ts`:
+  `registerOnlineManager()` points RQ's `onlineManager` at NetInfo, plus `useIsOnline()`. With
+  this, an offline mutation **pauses** instead of erroring — so the optimistic patch survives
+  offline for free (it never reaches `onError`). **Needs a dev-client rebuild.**
+- **Replay-safe writes** — a paused/persisted mutation replays later with only its serializable
+  variables, so the dependent server SELECTs were removed: `sets.addSet` takes a client
+  `set_number` + `id`; `addExerciseToWorkout` takes a client `position`; start uses the
+  preset-only path. `hooks.ts` now captures `id`/`set_number`/`position` into the mutation
+  **variables** at enqueue time (recomputing at replay would be wrong once several are queued),
+  via thin `mutate` wrappers on `useAddSet` / `useAddExerciseToWorkout`; `finish`/`discard` carry
+  `workoutId` in their variables (call sites drop the `undefined` first arg).
+- **`src/data/offlineSync.ts` (new)** — `mutationKeys` + standalone, self-contained replay fns +
+  `registerOfflineMutationDefaults(qc)` (`setMutationDefaults` per key, `networkMode:'online'`,
+  `retry:3`, a broad reconcile-on-settle). This is the resume path a persisted mutation binds to
+  after an app kill (its own fn/callbacks don't survive serialization).
+- **Persist + resume** — the RQ persister already dehydrates paused mutations; `_layout.tsx`'s
+  `PersistQueryClientProvider` gains `onSuccess → queryClient.resumePausedMutations()`, which
+  flushes the queue in enqueue order on relaunch. Client-chosen ids make that order FK-safe
+  (workout → exercise → set).
+- **Offline exercise picking** — `listAllExercises()` + `filterExercisesLocally()` in
+  `exercises.ts`; `useExerciseDirectory()` + `usePrefetchExerciseDirectory()` (warmed from the
+  workout screen). `ExercisePickerModal` uses server search online, local directory filter
+  offline, and disables custom-create offline with a reconnect hint.
+- **`src/components/OfflineBanner.tsx` (new)** — floats over every screen; shows OFFLINE while
+  disconnected and a brief SYNCING while the queue drains (`useIsMutating`). Mounted in `_layout`.
+- **`scripts/test-offline-sync.ts` (new, `npm run test:offline`)** — replays the exact insert/
+  update/delete shapes the queue emits, in enqueue order, against a throwaway live account and
+  asserts the tree. **8/8 pass**: client ids accepted, client set_numbers, sequential FK order,
+  mid-session add, edit+delete by id, finish drops zero-set exercises + stamps ended_at.
+
+Verified: `tsc` clean; `expo export --platform web` bundles all 15 routes (NetInfo web-safe);
+offline-sync harness 8/8 on the live DB. **Not yet run on device** — needs a dev-client rebuild
+for NetInfo, then the airplane-mode walkthrough + kill-and-relaunch check.
+
 ## 2026-07-31 — Instant interactions: navigate-first (optimistic start/finish/discard) + prefetch
 
 Idea #2 of the "snappier" plan, built on #1's persisted cache. Start/finish/discard were

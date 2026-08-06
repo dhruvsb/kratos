@@ -10,17 +10,29 @@ export type AddSetInput = {
 
 export async function addSet(
   workoutExerciseId: string,
-  input: AddSetInput
+  input: AddSetInput,
+  // Client-computed set_number (max existing + 1) and a client-chosen row id.
+  // Passing both makes the write a pure insert with no dependent SELECT, so it can
+  // replay offline / after an app kill under React Query's paused-mutation queue —
+  // and a later edit/delete of a not-yet-synced set targets this same id. Omit
+  // them and the server read + a server-generated id are used (the voice path).
+  setNumber?: number,
+  id?: string
 ): Promise<WorkoutSet> {
-  return insertSet(workoutExerciseId, {
-    weight_kg: input.weight_kg,
-    reps: input.reps,
-    set_type: input.set_type ?? 'normal',
-    rpe: input.rpe ?? null,
-    logged_via: 'manual',
-    raw_transcript: null,
-    parse_confidence: null,
-  });
+  return insertSet(
+    workoutExerciseId,
+    {
+      weight_kg: input.weight_kg,
+      reps: input.reps,
+      set_type: input.set_type ?? 'normal',
+      rpe: input.rpe ?? null,
+      logged_via: 'manual',
+      raw_transcript: null,
+      parse_confidence: null,
+    },
+    setNumber,
+    id
+  );
 }
 
 export type AddVoiceSetInput = {
@@ -57,21 +69,34 @@ async function insertSet(
     logged_via: WorkoutSet['logged_via'];
     raw_transcript: string | null;
     parse_confidence: number | null;
-  }
+  },
+  setNumber?: number,
+  id?: string
 ): Promise<WorkoutSet> {
   // set_number = max existing + 1 (single-device assumption; no race handling).
-  const { data: last, error: lastError } = await supabase
-    .from('sets')
-    .select('set_number')
-    .eq('workout_exercise_id', workoutExerciseId)
-    .order('set_number', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (lastError) throw lastError;
+  // A caller that already knows it from the cache passes it in, which skips this
+  // read so the insert stays offline-replayable.
+  let set_number = setNumber;
+  if (set_number == null) {
+    const { data: last, error: lastError } = await supabase
+      .from('sets')
+      .select('set_number')
+      .eq('workout_exercise_id', workoutExerciseId)
+      .order('set_number', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (lastError) throw lastError;
+    set_number = (last?.set_number ?? 0) + 1;
+  }
 
   const { data, error } = await supabase
     .from('sets')
-    .insert({ workout_exercise_id: workoutExerciseId, set_number: (last?.set_number ?? 0) + 1, ...row })
+    .insert({
+      ...(id ? { id } : {}),
+      workout_exercise_id: workoutExerciseId,
+      set_number,
+      ...row,
+    })
     .select()
     .single();
   if (error) throw error;

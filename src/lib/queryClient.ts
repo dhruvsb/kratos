@@ -8,6 +8,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
 import { QueryClient } from '@tanstack/react-query';
+import { registerOfflineMutationDefaults } from '@/data/offlineSync';
+import { registerOnlineManager } from './network';
+
+// Teach React Query to read connectivity from NetInfo. Must run before any
+// mutation fires so offline writes pause (and later resume) instead of failing.
+registerOnlineManager();
 
 // Bump this whenever a persisted row/query shape changes (the zod types in
 // src/types/db.ts). A changed buster makes PersistQueryClientProvider discard the
@@ -35,6 +41,11 @@ export const queryClient = new QueryClient({
     },
   },
 });
+
+// Pair each offline-capable mutation key to a standalone replay fn, so a mutation
+// persisted while offline can resume after an app kill (its fn/callbacks don't
+// survive serialization — the key + these defaults are how it finds its code).
+registerOfflineMutationDefaults(queryClient);
 
 export const persister = createAsyncStoragePersister({
   storage: AsyncStorage,
