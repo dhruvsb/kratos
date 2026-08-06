@@ -38,19 +38,20 @@ updatable record of what was actually built from it, not a copy of the spec.
 | App scaffold, env config, conventions doc | ✅ Done |
 | Database schema + Row Level Security | ✅ Done and verified live |
 | Data access layer (`src/data/`) | ✅ Done |
-| Local-first cache (persisted React Query) | ✅ **Built 2026-07-31** — cache persisted to AsyncStorage; cold start paints from disk then revalidates; `staleTime` tiered; wiped on sign-out/account-switch. Pure-JS deps ⇒ no dev-client rebuild. On-device warm-relaunch check pending. |
+| Local-first cache (persisted React Query) | ✅ **Built 2026-07-31** — cache persisted to AsyncStorage; cold start paints from disk then revalidates; `staleTime` tiered; wiped on sign-out/account-switch. Warm-relaunch hydration proven live 2026-08-06 (instant paint from disk, even offline). |
 | Instant interactions (navigate-first) | ✅ **Built 2026-07-31** — start/finish/discard/add-exercise optimistic: client-chosen row ids (`src/lib/ids.ts`) let START build the workout from the cached routine and navigate on the same tap; an FK-ordering await + snapshot rollback keep it safe; routine/last-session prefetch serves the 80%-repeat case; the 1s clock is isolated in `LiveClock`. Live-DB RLS harness green (10/10). |
+| **Offline-first logging (write offline, sync on reconnect)** | ✅ **Built + QA'd 2026-08-06** — the active-logging path (start new/from-routine → pick → log/edit/delete sets → finish/discard) works fully disconnected, syncs on reconnect in FK-safe serial order, and survives an app kill (persisted mutation queue, `src/data/offlineSync.ts` + `src/lib/network.ts`; connectivity truth via a HEAD probe, not NetInfo alone). History/calendar/progress/voice deliberately online-only. Verified against the live DB incl. a workout born wholly offline; `npm run test:offline` 11/11. NetInfo is a native dep (dev-client rebuilt). See WORK-LOG 2026-08-06. |
 | Exercise library seed script + alias map | ✅ Done and seeded live (**curated 150 exercises, 156 aliases** — rebuilt session 3 with rich metadata; see WORK-LOG) |
 | Manual UI — 12 `RepVoice Manual` screens on the dark LED theme | ✅ Built (2026-07-30 s2; **Calendar** added s4). Incl. **manual set logging** (grid + keypad), which was previously **missing** (voice-only). Static-verified, not yet on device. |
 | ↳ Core files | `src/app/{index,workout/[id],routine/[id],history/index,history/[id],exercise/[id],exercises,finish/[id],calendar}.tsx`, `src/components/{ui,ExercisePickerModal,workout/SetKeypad,workout/Caret}.tsx`, `src/data/calendar.ts`, `src/lib/units.ts` |
 | Hevy import | ❌ **Descoped** — removed from the Phase 1 plan entirely |
 | Native iPhone development client | ✅ Built, signed, installed, trusted, and launches to sign-in |
 | Email OTP delivery | ✅ Temporary Gmail SMTP + `{{ .Token }}` template; 8-digit delivery verified |
-| Typecheck / verify | ✅ `tsc --noEmit` clean; `expo export --platform web` bundles all 12 routes. On-device run still pending. |
+| Typecheck / verify | ✅ `tsc --noEmit` clean; `expo export --platform web` bundles all routes; runs on the iOS simulator (manual loop + offline loop exercised live 2026-08-06). |
 
-The Phase 1 backbone is built and its backend is verified. The current working tree has
-intentional uncommitted iOS/dev-client/auth setup changes documented in `WORK-LOG.md`.
-What's left is completing first login and actually exercising the workflows on-device.
+The Phase 1 backbone is built, its backend is verified, and the core logging loop (incl.
+offline) has been exercised live on the simulator. What's left on-device: a from-scratch
+OTP sign-in, the history/progress screens, and Hevy import/export end-to-end.
 
 ### Setup checklist — all verified done except the last item
 - ✅ Supabase project created.

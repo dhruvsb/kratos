@@ -10,17 +10,20 @@ codebase or a huge prior conversation.
 > issues**) *and* append a dated entry to [`WORK-LOG.md`](./WORK-LOG.md). This file is the
 > snapshot; `WORK-LOG.md` is the full history. Keep this file short.
 
-**Last updated:** 2026-08-06 — **Offline-first logging.** The active-logging path now works fully
-disconnected and syncs on reconnect (surviving an app kill), via React Query's offline machinery:
-NetInfo→`onlineManager` (`src/lib/network.ts`) so offline writes **pause** instead of rolling back;
-replay-safe writes (client `set_number`/`position`/ids captured into mutation *variables*, dependent
-SELECTs dropped); a persisted+resumable mutation queue (`src/data/offlineSync.ts` + `resumePausedMutations`
-in `_layout`); offline exercise picking (`useExerciseDirectory` + local filter, custom-create disabled
-offline); and an `OfflineBanner`. Scope = start (new/from-routine) → pick exercises → log/edit/delete
-weight×reps×sets → finish; history/calendar/progress/voice stay online-only. `tsc` + web-export green;
-new `npm run test:offline` harness passes **8/8** on the live DB (client ids, sequential FK order,
-edit+delete by id, finish semantics). **Needs a dev-client rebuild** (NetInfo native) + an on-device
-airplane-mode walkthrough. Prior: **Instant interactions: navigate-first start/finish/discard + prefetch**
+**Last updated:** 2026-08-06 — **Offline-first logging: built, QA'd (2 rounds, 6 fixes), verified live.**
+The active-logging path (start new/from-routine → pick exercises → log/edit/delete weight×reps×sets →
+finish/discard) works fully disconnected, syncs on reconnect, and survives an app kill. Mechanism:
+NetInfo→`onlineManager` so offline writes **pause** (not roll back); replay-safe writes (client
+`set_number`/`position`/ids in mutation *variables*); persisted+resumable queue (`src/data/offlineSync.ts`
++ **serial** resume via `SerialResumeQueryClient` — RQ's own flush is concurrent and can race FK order);
+offline picker (cached directory + local filter); `OfflineBanner`; connectivity truth from a **HEAD probe**
+of Supabase health (NetInfo can lie both ways — stale-"online" makes writes fire→fail→roll back).
+History/calendar/progress/voice stay online-only by design. Proven on the simulator (Release build; a dev
+build can't test offline — Wi-Fi-off severs Metro) against the live DB: workout born offline → kill →
+relaunch → reconnect → exact serial flush incl. offline edit/delete; offline discard nets no trace;
+`npm run test:offline` **11/11**; online regression sweep green. `tsc` + web-export green. NetInfo is
+native ⇒ dev-client rebuilt. See WORK-LOG 2026-08-06 (three entries) for the QA findings.
+Prior: **Instant interactions: navigate-first start/finish/discard + prefetch**
 (idea #2, on top of the persisted cache). Start/finish/discard now act on the same tap against the local
 cache and reconcile in the background; the client picks row ids (`src/lib/ids.ts`) so START builds the
 whole workout from the cached routine and navigates immediately — guarded by an FK-ordering await
@@ -83,7 +86,7 @@ logging via an LLM pipeline, **3** TBD (PRs/charts).
 | Area | Status |
 |---|---|
 | Phase 1 backbone (schema, RLS, repos) | ✅ Built; backend verified live (**150 curated exercises** / 156 aliases seeded; RLS test passed) |
-| **Local-first cache (persisted React Query)** | ✅ **Built 2026-07-31** — cold start hydrates last-known data from AsyncStorage (`src/lib/queryClient.ts`), revalidates in background; `staleTime` tiered; cache wiped on sign-out/account-switch. Pure-JS deps ⇒ no rebuild. On-device warm-relaunch check pending. |
+| **Local-first cache (persisted React Query)** | ✅ **Built 2026-07-31** — cold start hydrates last-known data from AsyncStorage (`src/lib/queryClient.ts`), revalidates in background; `staleTime` tiered; cache wiped on sign-out/account-switch. Warm-relaunch hydration **proven live 2026-08-06** (instant paint from disk even offline). |
 | **Offline-first logging (write while disconnected + sync)** | ✅ **Built + verified on-device 2026-08-06** — start→pick→log/edit/delete sets→finish all work offline and sync on reconnect, surviving app kill. NetInfo→`onlineManager` (writes pause, not roll back); replay-safe writes (client `set_number`/`position`/ids in mutation *variables*); persisted+resumable queue (`src/data/offlineSync.ts`, `resumePausedMutations`); offline picker (`useExerciseDirectory` + local filter); `OfflineBanner`. History/calendar/progress/voice stay online-only. `npm run test:offline` **8/8** on live DB **and the full loop proven on the simulator** (offline log → kill → relaunch → reconnect → rows verified in Supabase). **QA'd 2026-08-06 (6 fixes)**: banner cold-start seed, SYNCING-pill latch, offline cold-cache START alert, **serial resume** (`SerialResumeQueryClient` — RQ 5.101's own resume is concurrent `Promise.all`), foreground re-seed + 10s poll, and an **authoritative reachability probe** (HEAD `/auth/v1/health` — NetInfo can lie in both directions; a stale "online" makes writes fire→fail→roll back). Deep scenarios verified vs the live DB: offline edit/delete of unsynced sets, offline discard (net no-trace), stuck-queue recovery; harness `test:offline` **11/11**. |
 | **Instant interactions (navigate-first + prefetch)** | ✅ **Built 2026-07-31** — start/finish/discard/add-exercise are optimistic (client-chosen ids via `src/lib/ids.ts`, FK-ordering guard, snapshot rollback); routine + last-session prefetch serve the 80%-repeat case from cache; 1s clock isolated in `LiveClock`. Live-DB RLS harness green (10/10). On-device optimistic-feel smoke pending. |
 | **Exercise directory — curated + rich metadata** | ✅ **Rebuilt this session**: replaced the 873 free-exercise-db import with a curated 150-set carrying `primary_muscles[]`, `secondary_muscles[]`, `body_region[]` rollup, `mechanic`, `modality`. Source of truth: `scripts/data/exercises-curated.json` (regen via `scripts/build-curated-exercises.py`). Muscle taxonomy in `src/lib/muscles.ts`. |
@@ -116,17 +119,13 @@ Static checks currently green: `tsc --noEmit` clean; `expo export --platform web
       didn't re-show after the *offline relaunch* (cosmetic — NetInfo initial-state timing; queue
       still replayed correctly); (2) a **dev** build can't be tested offline (cutting Wi‑Fi severs
       Metro itself) — use a Release build (`expo run:ios --configuration Release`).
-- [ ] **Verify warm-relaunch hydration on device** (the one unproven bit of the persisted cache):
-      with data present, kill + relaunch — Home/History should paint instantly from disk (no
-      spinner), then quietly refresh. JS-only change ⇒ no rebuild, just `expo start --dev-client`.
-- [ ] **Smoke the optimistic flow on device** (idea #2): START opens the grid with no spinner;
-      log a set immediately (must not error — the FK-order guard should hold); FINISH jumps
-      straight to the summary; DISCARD returns home instantly; kill the app right after START and
-      relaunch to confirm the background insert committed. JS-only ⇒ no rebuild.
-- [ ] **Walk the full manual loop on the simulator** (app already runs + is signed in): Home →
-      start a routine → add exercise → log a set via ✓ and via the keypad → edit a set → finish →
-      see it in History → open an exercise's progress. Home/History/routines already render;
-      the *logging* path (keypad, grid, finish, progress chart) is still unproven on-device.
+- [x] ~~Verify warm-relaunch hydration on device~~ — **done 2026-08-06** (proven repeatedly by the
+      offline QA's kill+relaunch cycles: Home/grid paint instantly from disk, even fully offline).
+- [x] ~~Smoke the optimistic flow on device~~ — **done 2026-08-06** (offline QA covered it end-to-end:
+      START→grid same-tap, immediate set logs, FINISH→summary, DISCARD→home, kill-after-START commits).
+- [x] ~~Walk the manual logging loop on the simulator~~ — **mostly done 2026-08-06** via the QA passes
+      (start → picker → ✓ and keypad logs → edit a set → delete a set → finish → summary all exercised
+      live). Still unseen: History list → past-workout detail → an exercise's progress chart on-device.
 - [ ] **Rebuild the dev client** (`expo run:ios`) to pick up `expo-document-picker` /
       `expo-file-system` / `expo-sharing`, then **run import + export** end-to-end: Settings → DATA →
       Import from Hevy → pick `workout_data.csv` → confirm preview → import; check History / Calendar /
