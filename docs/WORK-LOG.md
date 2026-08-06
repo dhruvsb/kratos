@@ -28,10 +28,13 @@ insert→delete replays to a no-trace net server state.
    is now a **real HEAD probe** of Supabase's public `/auth/v1/health` (3s timeout, ~200
    bytes, foreground-only); NetInfo events remain the fast transition path.
 
-**Env note for future offline testing:** macOS kept auto-re-enabling Wi‑Fi mid-test (three
-times) — hold it down in a loop, or test on a device with airplane mode. The final probe
-build's offline path is code-verified + tsc/web-export green; its live off-transition check
-was cut short by exactly that env quirk.
+**Env note for future offline testing:** the Wi‑Fi kept coming back mid-test because this is
+the user's live machine (they re-enable it when their own work needs it — entirely fair).
+Simulator offline tests contend for the host's network; prefer short announced windows, or a
+real device's airplane mode. The probe build's offline-detect branch is code-verified (a
+fetch cannot succeed without a network path) + tsc/web-export green; the probe's
+online-detect branch and the full online regression (start → prefilled ✓ log → discard →
+DB net-zero, no SYNCING flash, empty queue after) were verified live on the final build.
 
 ## 2026-08-06 (later still) — QA pass on the offline layer: 4 issues found + fixed, re-verified on-device
 
