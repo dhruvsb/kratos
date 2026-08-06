@@ -7,6 +7,36 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-06 (evening) — Showcase-finish pass: brand assets, demo data, NEW BESTS
+
+Three items that made every screenshot read "unfinished," now closed:
+
+- **App icon + splash (LED barbell brand).** New `scripts/build-app-icons.ts` (`npm run
+  build:icons`; `@resvg/resvg-js` devDep) renders one parametric SVG glyph — cyan barbell +
+  5-tick meter row with one lit tick, LED glow on `#020609` — into `icon.png` (1024²),
+  Android adaptive foreground/background/monochrome, `splash-icon.png`, `favicon.png`. Pure
+  geometry, no font deps ⇒ deterministic. `app.config.ts`: dropped the stock `ios.icon`
+  Icon Composer bundle (deleted `assets/expo.icon/` + all leftover Expo/React placeholder
+  art), adaptive bg → `#020609`, splash → dark (`#020609`, imageWidth 104) — **the white
+  cold-start flash is gone**. `expo prebuild -p ios` regenerated the native icon/splash;
+  verified on the springboard and a cold launch.
+- **`scripts/seed-demo-workouts.ts`** (`npm run seed:demo <email> [--weeks 8] [--wipe]`).
+  Seeds a Push/Pull/Legs/Upper block (~4 sessions/week, ~12% skipped, warmups, progressive
+  overload + jitter, evening timestamps, all finished) and **find-or-creates the four
+  named routines** so History rows carry real titles and Home shows a plausible rotation.
+  Deterministic per-session RNG (seeded from week+slot — a shared stream desynced on skips
+  and broke idempotency; found by re-running) and idempotent via `external_id 'demo:%'`;
+  `--wipe` removes exactly the demo workouts (routines stay — they're usable). Verified:
+  wipe 28 → create 28 → re-run creates 0; History/Calendar/progress light up.
+- **NEW BESTS on the finish summary** (mockup 07, cyan — the hot palette stays reserved for
+  floor mode). `getExerciseBests(exerciseIds, excludeWorkoutId)` in `data/workouts.ts` (one
+  tiny indexed top-set query per exercise, parallel; a `distinct on` RPC is the future
+  optimization) + `useExerciseBests` (excludes the finished workout server-side, so the
+  result stays valid while its own rows sync) + the section in `finish/[id].tsx`:
+  improvements-only (first-ever lifts don't count), session top vs prior best with
+  heavier-or-same-weight-more-reps semantics; offline finish simply omits it. Also
+  extracted a proper `topSet()` (weight then reps) replacing the weight-only reduce.
+
 ## 2026-08-06 (final) — Deep-scenario QA on the simulator: 2 more fixes (network truth is now probed, not trusted)
 
 Ran the remaining offline scenarios entirely on the simulator, inspecting the persisted

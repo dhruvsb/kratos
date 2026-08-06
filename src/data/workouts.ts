@@ -260,6 +260,42 @@ export async function getLastSession(
   return (data ?? []) as LastSessionSet[];
 }
 
+export type ExerciseBest = { exercise_id: string; weight_kg: number; reps: number | null };
+
+/** All-time top set per exercise (heaviest weight, reps as tie-break) across
+ *  *finished* workouts, excluding `excludeWorkoutId` — the baseline the finish
+ *  summary compares against for its NEW BESTS callout. One tiny indexed query
+ *  per exercise (a finished workout has ≤ a handful), fired in parallel; a
+ *  `distinct on` RPC is the future optimization if this ever grows. */
+export async function getExerciseBests(
+  exerciseIds: string[],
+  excludeWorkoutId?: string
+): Promise<ExerciseBest[]> {
+  const bests = await Promise.all(
+    exerciseIds.map(async (exerciseId) => {
+      let query = supabase
+        .from('sets')
+        .select(
+          'weight_kg, reps, workout_exercise:workout_exercises!inner(exercise_id, workout:workouts!inner(id, ended_at))'
+        )
+        .eq('workout_exercise.exercise_id', exerciseId)
+        .not('workout_exercise.workout.ended_at', 'is', null)
+        .not('weight_kg', 'is', null)
+        .order('weight_kg', { ascending: false })
+        .order('reps', { ascending: false })
+        .limit(1);
+      if (excludeWorkoutId) {
+        query = query.neq('workout_exercise.workout.id', excludeWorkoutId);
+      }
+      const { data, error } = await query.maybeSingle();
+      if (error) throw error;
+      if (!data || data.weight_kg == null) return null;
+      return { exercise_id: exerciseId, weight_kg: data.weight_kg, reps: data.reps };
+    })
+  );
+  return bests.filter((b): b is ExerciseBest => b != null);
+}
+
 export type ExerciseHistoryEntry = {
   workout_id: string;
   started_at: string;

@@ -6,10 +6,21 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Empty, Loading } from '@/components/ui';
-import { useProfile, useWorkout } from '@/data/hooks';
+import { useExerciseBests, useProfile, useWorkout } from '@/data/hooks';
 import type { WorkoutSet, Unit } from '@/types/db';
-import { formatWeight, kgToDisplay } from '@/lib/units';
+import { formatSet, formatWeight, kgToDisplay } from '@/lib/units';
 import { color, font, radius, shadow, space, tracking } from '@/theme/tokens';
+
+/** Session top set: heaviest weight wins, reps break ties. */
+function topSet(sets: WorkoutSet[]): WorkoutSet | null {
+  return sets.reduce<WorkoutSet | null>((best, s) => {
+    if (s.weight_kg == null) return best;
+    if (best?.weight_kg == null) return s;
+    if (s.weight_kg > best.weight_kg) return s;
+    if (s.weight_kg === best.weight_kg && (s.reps ?? 0) > (best.reps ?? 0)) return s;
+    return best;
+  }, null);
+}
 
 export default function FinishScreen() {
   const insets = useSafeAreaInsets();
@@ -17,6 +28,11 @@ export default function FinishScreen() {
   const workout = useWorkout(id);
   const profile = useProfile();
   const unit: Unit = profile.data?.default_unit ?? 'kg';
+
+  // Pre-workout all-time bests (excludes this workout server-side), for the
+  // NEW BESTS callout. Order of hooks: must run before the early returns.
+  const exerciseIds = (workout.data?.exercises ?? []).map((we) => we.exercise_id);
+  const bests = useExerciseBests(id, exerciseIds);
 
   if (workout.isLoading) return <Loading />;
   if (!workout.data) return <Empty text="Workout not found." />;
@@ -37,6 +53,23 @@ export default function FinishScreen() {
   const vol = kgToDisplay(totalKg, unit);
   const volText = vol >= 1000 ? `${(vol / 1000).toFixed(1)}t` : `${Math.round(vol)}`;
 
+  // NEW BESTS (mockup 07): session top set beat the all-time best that existed
+  // before this workout — strictly heavier, or same weight for more reps.
+  // Improvements only: a first-ever exercise has no baseline to beat, and bests
+  // are an online read (offline finish just omits the section).
+  const bestByExercise = new Map((bests.data ?? []).map((b) => [b.exercise_id, b]));
+  const newBests = detail.exercises.flatMap((we) => {
+    const top = topSet(we.sets);
+    const prior = bestByExercise.get(we.exercise_id);
+    if (!top || top.weight_kg == null || !prior) return [];
+    const beat =
+      top.weight_kg > prior.weight_kg ||
+      (top.weight_kg === prior.weight_kg && (top.reps ?? 0) > (prior.reps ?? 0));
+    return beat
+      ? [{ id: we.id, name: we.exercise.canonical_name, val: formatSet(top.weight_kg, top.reps, unit) }]
+      : [];
+  });
+
   const time = (d: Date) => d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
   return (
@@ -55,12 +88,25 @@ export default function FinishScreen() {
           <Tile label="VOLUME" value={volText} unit={vol >= 1000 ? '' : unit.toUpperCase()} />
         </View>
 
+        {newBests.length > 0 && (
+          <>
+            <Text style={[styles.section, styles.bestsLabel, { marginTop: space.xxl }]}>
+              NEW BESTS
+            </Text>
+            {newBests.map((b) => (
+              <View key={b.id} style={styles.exRow}>
+                <Text style={styles.bestName} numberOfLines={1}>
+                  {b.name}
+                </Text>
+                <Text style={styles.bestVal}>{b.val}</Text>
+              </View>
+            ))}
+          </>
+        )}
+
         <Text style={[styles.section, { marginTop: space.xxl }]}>SESSION</Text>
         {detail.exercises.map((we) => {
-          const top = we.sets.reduce<WorkoutSet | null>(
-            (best, s) => ((s.weight_kg ?? 0) > (best?.weight_kg ?? -1) ? s : best),
-            null
-          );
+          const top = topSet(we.sets);
           return (
             <View key={we.id} style={styles.exRow}>
               <Text style={styles.exName} numberOfLines={1}>
@@ -120,6 +166,11 @@ const styles = StyleSheet.create({
   tileUnit: { fontFamily: font.num, fontSize: 11, color: color.t3 },
 
   section: { fontFamily: font.numSemibold, fontSize: 8, letterSpacing: tracking.wide, color: color.t3 },
+  // NEW BESTS — cyan per mockup 07 (the hot palette stays reserved for the live
+  // floor-mode PR moment).
+  bestsLabel: { color: color.acc },
+  bestName: { fontFamily: font.uiSemibold, fontSize: 13, color: color.t1, flex: 1 },
+  bestVal: { fontFamily: font.numBold, fontSize: 14, color: color.acc },
   exRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

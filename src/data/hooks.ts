@@ -228,6 +228,19 @@ export function usePrefetchLastSessions(
   }, [qc, workoutId, idsKey]);
 }
 
+/** Pre-workout all-time bests for the finish summary's NEW BESTS callout.
+ *  Excludes the finished workout itself, so the result stays valid while that
+ *  workout's own rows are still syncing (offline queue) — no invalidation
+ *  coupling. Offline, this simply never resolves and the section is omitted. */
+export function useExerciseBests(workoutId: string | undefined, exerciseIds: string[]) {
+  return useQuery({
+    queryKey: ['exerciseBests', workoutId ?? '', ...exerciseIds],
+    queryFn: () => workouts.getExerciseBests(exerciseIds, workoutId),
+    enabled: !!workoutId && exerciseIds.length > 0,
+    staleTime: 30 * MINUTE, // the pre-workout baseline never changes for this id
+  });
+}
+
 export function useExerciseHistory(exerciseId: string | undefined) {
   return useInfiniteQuery({
     queryKey: keys.exerciseHistory(exerciseId ?? ''),
