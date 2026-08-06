@@ -229,6 +229,20 @@ async function main() {
       .eq('id', W2)
       .single();
     check('finish dropped the zero-set exercise', ((tree2 as any)?.workout_exercises ?? []).length === 1);
+
+    // --- Third scenario: a workout started AND discarded offline. The queue then
+    // replays insert → delete; the net server state must be "never existed". ---
+    const W3 = randomUUID();
+    const EC = randomUUID();
+    const SC = randomUUID();
+    await replayStart(u.client, u.id, W3, [{ id: EC, exerciseId: X }]);
+    await replayAddSet(u.client, EC, SC, 1, 40, 6);
+    const { error: discardErr } = await u.client.from('workouts').delete().eq('id', W3);
+    check('offline discard replay succeeds', !discardErr, discardErr?.message);
+    const { data: gone } = await u.client.from('workouts').select('id').eq('id', W3);
+    check('discarded offline workout leaves no rows', (gone ?? []).length === 0);
+    const { data: orphanSets } = await u.client.from('sets').select('id').eq('id', SC);
+    check('discard cascaded to its sets', (orphanSets ?? []).length === 0);
   } finally {
     await admin.auth.admin.deleteUser(u.id);
     console.log('\nCleaned up test user.');

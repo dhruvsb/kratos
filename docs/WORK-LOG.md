@@ -7,6 +7,32 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-06 (final) — Deep-scenario QA on the simulator: 2 more fixes (network truth is now probed, not trusted)
+
+Ran the remaining offline scenarios entirely on the simulator, inspecting the persisted
+mutation queue directly in the app container (`RCTAsyncLocalStorage_V1`) between steps.
+
+**Verified end-to-end:** empty workout born offline → 3 sets (✓ + keypad) → offline *edit*
+(20→22.5) → offline *delete* of set 3 → offline finish → survived a stuck queue → flushed
+exactly right on the next launch (DB: set 1 = 20×12, set 2 = 22.5×12, no set 3, ended_at).
+In-app offline discard: instant, and `test:offline` (now **11/11**) proves the queued
+insert→delete replays to a no-trace net server state.
+
+**Two more fixes (both about NetInfo lying):**
+5. **Missed / wedged reachability events** — the simulator dropped transitions entirely
+   (Wi-Fi restored, app foregrounded, still "offline"; queue stuck until restart). Fix:
+   re-seed on every AppState→active + a 10s poll (`RECHECK_MS`).
+6. **NetInfo can lie in BOTH directions** (stale "online" is the dangerous one: writes fire,
+   fail, exhaust retries, roll back — the best explanation for a `startWorkout` observed
+   vanishing from the persisted queue while its discard survived). Fix: the poll's authority
+   is now a **real HEAD probe** of Supabase's public `/auth/v1/health` (3s timeout, ~200
+   bytes, foreground-only); NetInfo events remain the fast transition path.
+
+**Env note for future offline testing:** macOS kept auto-re-enabling Wi‑Fi mid-test (three
+times) — hold it down in a loop, or test on a device with airplane mode. The final probe
+build's offline path is code-verified + tsc/web-export green; its live off-transition check
+was cut short by exactly that env quirk.
+
 ## 2026-08-06 (later still) — QA pass on the offline layer: 4 issues found + fixed, re-verified on-device
 
 Audited the day's offline work end to end. Four real issues, all fixed:
