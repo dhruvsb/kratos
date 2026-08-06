@@ -84,7 +84,7 @@ logging via an LLM pipeline, **3** TBD (PRs/charts).
 |---|---|
 | Phase 1 backbone (schema, RLS, repos) | ✅ Built; backend verified live (**150 curated exercises** / 156 aliases seeded; RLS test passed) |
 | **Local-first cache (persisted React Query)** | ✅ **Built 2026-07-31** — cold start hydrates last-known data from AsyncStorage (`src/lib/queryClient.ts`), revalidates in background; `staleTime` tiered; cache wiped on sign-out/account-switch. Pure-JS deps ⇒ no rebuild. On-device warm-relaunch check pending. |
-| **Offline-first logging (write while disconnected + sync)** | ✅ **Built 2026-08-06** — start→pick→log/edit/delete sets→finish all work offline and sync on reconnect, surviving app kill. NetInfo→`onlineManager` (writes pause, not roll back); replay-safe writes (client `set_number`/`position`/ids in mutation *variables*); persisted+resumable queue (`src/data/offlineSync.ts`, `resumePausedMutations`); offline picker (`useExerciseDirectory` + local filter); `OfflineBanner`. History/calendar/progress/voice stay online-only. `npm run test:offline` **8/8** on live DB. **Needs dev-client rebuild** (NetInfo native) + on-device airplane-mode check. |
+| **Offline-first logging (write while disconnected + sync)** | ✅ **Built + verified on-device 2026-08-06** — start→pick→log/edit/delete sets→finish all work offline and sync on reconnect, surviving app kill. NetInfo→`onlineManager` (writes pause, not roll back); replay-safe writes (client `set_number`/`position`/ids in mutation *variables*); persisted+resumable queue (`src/data/offlineSync.ts`, `resumePausedMutations`); offline picker (`useExerciseDirectory` + local filter); `OfflineBanner`. History/calendar/progress/voice stay online-only. `npm run test:offline` **8/8** on live DB **and the full loop proven on the simulator** (offline log → kill → relaunch → reconnect → rows verified in Supabase). Known cosmetic nit: banner doesn't re-show after an offline relaunch. |
 | **Instant interactions (navigate-first + prefetch)** | ✅ **Built 2026-07-31** — start/finish/discard/add-exercise are optimistic (client-chosen ids via `src/lib/ids.ts`, FK-ordering guard, snapshot rollback); routine + last-session prefetch serve the 80%-repeat case from cache; 1s clock isolated in `LiveClock`. Live-DB RLS harness green (10/10). On-device optimistic-feel smoke pending. |
 | **Exercise directory — curated + rich metadata** | ✅ **Rebuilt this session**: replaced the 873 free-exercise-db import with a curated 150-set carrying `primary_muscles[]`, `secondary_muscles[]`, `body_region[]` rollup, `mechanic`, `modality`. Source of truth: `scripts/data/exercises-curated.json` (regen via `scripts/build-curated-exercises.py`). Muscle taxonomy in `src/lib/muscles.ts`. |
 | **Manual-first UI — all 12 `RepVoice Manual` screens** | ✅ Built (dark LED theme); **now renders on the iOS simulator** (first run 2026-07-31 — Home, History, routines all render; full manual-loop walkthrough still pending) |
@@ -107,13 +107,15 @@ Static checks currently green: `tsc --noEmit` clean; `expo export --platform web
 
 ## Pending actions (owner: user / next session)
 
-- [ ] **Rebuild the dev client** (`expo run:ios`) for the new NetInfo native dep, then **walk the
-      offline logging path**: airplane mode → start a routine → add an exercise (picker filters the
-      cached directory) → log sets via ✓ and the keypad → edit/delete a set → finish; the
-      `OfflineBanner` shows OFFLINE throughout. Re-enable network → SYNCING flashes, then History /
-      Calendar / progress light up (rows synced, no dupes). **Kill-and-relaunch check:** log offline,
-      force-quit the app, relaunch (still offline) → the session is intact from cache; reconnect →
-      it still syncs (proves the persisted mutation queue + `resumePausedMutations`).
+- [x] ~~Walk the offline logging path on-device~~ — **done 2026-08-06 (simulator, Release build)**:
+      Wi‑Fi off → banner shows → logged a set via ✓ (stuck, no rollback) → picker searched the cached
+      directory ("Curl" → 18 local matches, custom-create gated) → added Hammer Curl + logged 12×10
+      via keypad → **force-quit + relaunched still offline** (all 3 sets intact from cache) →
+      Wi‑Fi on → queue flushed: both offline sets + the offline-added exercise landed in Supabase
+      (verified by service-role query) → finish → summary correct. Two notes: (1) the OFFLINE banner
+      didn't re-show after the *offline relaunch* (cosmetic — NetInfo initial-state timing; queue
+      still replayed correctly); (2) a **dev** build can't be tested offline (cutting Wi‑Fi severs
+      Metro itself) — use a Release build (`expo run:ios --configuration Release`).
 - [ ] **Verify warm-relaunch hydration on device** (the one unproven bit of the persisted cache):
       with data present, kill + relaunch — Home/History should paint instantly from disk (no
       spinner), then quietly refresh. JS-only change ⇒ no rebuild, just `expo start --dev-client`.

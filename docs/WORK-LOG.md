@@ -7,6 +7,27 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-06 (later) — Offline loop verified on-device (simulator, Release build)
+
+Rebuilt the client with NetInfo and walked the whole offline path live. Two build lessons:
+the shell's `C` locale breaks CocoaPods (`Unicode Normalization not appropriate for ASCII-8BIT`)
+— run pod-touching commands with `LANG=en_US.UTF-8`; and a **dev build can't be tested offline**
+(cutting Wi‑Fi severs Metro itself and the dev overlay takes over) — offline testing needs
+`expo run:ios --configuration Release`, which embeds the JS bundle.
+
+The test (Wi‑Fi off on the host = simulator offline): OFFLINE banner appeared → ✓-logged a set
+(stuck, header updated, no rollback) → picker listed + searched the **cached** directory
+("Curl" → 18 instant matches; custom-create correctly gated with the reconnect hint) → added
+Hammer Curl mid-workout + logged 12×10 on the keypad → **force-quit, relaunched still offline**:
+Home + grid rehydrated with all 3 sets intact → Wi‑Fi on → queue flushed; a service-role query
+confirmed both offline sets **and** the offline-added exercise landed in Supabase under their
+client ids (created_at timestamps = the reconnect moment) → FINISH → correct summary (73m ·
+3 sets · 220 kg), `ended_at` stamped.
+
+One cosmetic nit found: after the *offline relaunch* the OFFLINE banner didn't re-show (NetInfo
+initial-state timing on cold start); the queue itself replayed correctly, so logged as a
+low-priority polish item, not a blocker.
+
 ## 2026-08-06 — Offline-first logging (log a whole session disconnected, sync on reconnect)
 
 The persisted cache made *reads* offline-tolerant and the logging flow *feel* instant, but an
