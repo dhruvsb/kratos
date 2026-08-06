@@ -26,7 +26,27 @@ export const CACHE_BUSTER = 'rq-v1';
 // refresh, so "old but shown instantly, then updated" is the worst case.
 export const CACHE_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
 
-export const queryClient = new QueryClient({
+// React Query's own resumePausedMutations flushes the paused queue with
+// Promise.all — CONCURRENT. Our offline queue is FK-ordered (workout →
+// workout_exercise → set, in the order the user logged them), and a child insert
+// racing its parent would 23503. Serialize the flush instead: creation order,
+// one at a time. Overriding the method covers every resume path — the manual
+// call after cache restore (_layout) and RQ's own on-reconnect / on-focus
+// resumes both go through this.resumePausedMutations() (verified in
+// query-core's queryClient.mount()).
+class SerialResumeQueryClient extends QueryClient {
+  override resumePausedMutations(): Promise<unknown> {
+    const paused = this.getMutationCache()
+      .getAll()
+      .filter((m) => m.state.isPaused);
+    return paused.reduce<Promise<unknown>>(
+      (chain, mutation) => chain.then(() => mutation.continue().catch(() => {})),
+      Promise.resolve()
+    );
+  }
+}
+
+export const queryClient = new SerialResumeQueryClient({
   defaultOptions: {
     queries: {
       retry: 1,

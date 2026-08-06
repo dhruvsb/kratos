@@ -7,7 +7,36 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
-## 2026-08-06 (later) — Offline loop verified on-device (simulator, Release build)
+## 2026-08-06 (later still) — QA pass on the offline layer: 4 issues found + fixed, re-verified on-device
+
+Audited the day's offline work end to end. Four real issues, all fixed:
+
+1. **Banner absent after an offline cold start** (the known nit) — root cause: RQ's
+   `onlineManager` *defaults to online* and the NetInfo listener only reports *changes*, so a
+   cold start while disconnected believed it was online until the first network flip. Fix:
+   seed real state via `NetInfo.fetch()` in `registerOnlineManager()` (at registration and on
+   each lazy listener setup). **Re-verified on-device**: offline relaunch now shows the banner.
+2. **SYNCING pill fired on every normal online write** — `useIsMutating() > 0` counts all
+   mutations, so each online ✓ would flash the pill. Fix: latch `draining` on the
+   offline→online transition (only if something is queued/in flight), clear when the queue
+   empties (`OfflineBanner.tsx`).
+3. **Offline START dead-end on a never-loaded routine** — with a cold routine cache,
+   `buildStartPlan` returns null and the server-path mutation just *pauses*: no navigation, no
+   error, START stuck disabled. Fix: honest alert in `index.tsx` ("reconnect once…"); every
+   prefetched routine and the empty start keep working offline.
+4. **`resumePausedMutations` is `Promise.all` — CONCURRENT — in RQ 5.101** (verified in
+   query-core source), so the FK-ordered queue could race child-before-parent (23503) on
+   flush; the earlier "sequential replay" assumption was wrong. Fix: `SerialResumeQueryClient`
+   (`queryClient.ts`) overrides `resumePausedMutations` with a creation-order promise chain —
+   covers the manual restore-time call *and* RQ's own on-reconnect / on-focus resumes (all go
+   through `this.resumePausedMutations()`).
+
+**Hardest-case re-test on-device (Release build)**: entire workout born offline — START from
+routine (3 exercises) → keypad set 30×8 → FINISH → kill → relaunch → reconnect. The serial
+flush landed the full tree exactly once, in FK order: workout row + Barbell Curl + set +
+`ended_at`, zero-set exercises dropped (service-role query verified). Also audited-and-fine:
+paused-only mutation dehydration (kill mid-active-write self-reconciles), offline re-pause on
+launch resume, unsynced-set edit/delete by client id. `tsc` + web export green.
 
 Rebuilt the client with NetInfo and walked the whole offline path live. Two build lessons:
 the shell's `C` locale breaks CocoaPods (`Unicode Normalization not appropriate for ASCII-8BIT`)

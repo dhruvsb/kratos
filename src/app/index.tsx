@@ -23,6 +23,7 @@ import {
   useWorkout,
   useWorkoutList,
 } from '@/data/hooks';
+import { useIsOnline } from '@/lib/network';
 import { color, font, radius, shadow, space, tracking } from '@/theme/tokens';
 
 const DAY_MS = 86_400_000;
@@ -65,6 +66,7 @@ export default function HomeScreen() {
   const activeWorkout = useActiveWorkout();
   const startWorkout = useStartWorkout();
   const history = useWorkoutList();
+  const online = useIsOnline();
 
   const activeId = activeWorkout.data?.id;
   const activeDetail = useWorkout(activeId);
@@ -144,7 +146,18 @@ export default function HomeScreen() {
       router.push(`/workout/${plan.detail.id}`);
       return;
     }
-    // Routine detail not cached yet (first cold run) — classic await path.
+    // Routine detail not cached yet (first cold run) — the fallback needs the
+    // server. Offline, the mutation would just pause (no navigation, button stuck
+    // in isPending — a silent dead-end), so say so honestly instead. Only a
+    // routine that was *never opened online* hits this; an empty start and every
+    // prefetched routine take the plan path above.
+    if (!online) {
+      Alert.alert(
+        'Routine not available offline',
+        'This routine has never been loaded on this device. Reconnect once and it will work offline from then on.'
+      );
+      return;
+    }
     startWorkout.mutate(
       { routineId },
       {

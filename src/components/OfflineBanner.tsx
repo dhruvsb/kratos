@@ -3,6 +3,7 @@
 // not lost), and show a brief "syncing" beat when the connection returns and the
 // queued writes flush. Purely informational — pointerEvents none, never blocks a tap.
 import { useIsMutating } from '@tanstack/react-query';
+import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useIsOnline } from '@/lib/network';
@@ -11,12 +12,31 @@ import { color, font, radius, space, tracking } from '@/theme/tokens';
 export function OfflineBanner() {
   const insets = useSafeAreaInsets();
   const isOnline = useIsOnline();
-  // Any mutation still in flight right after we come back online is the offline
-  // queue draining. While offline, mutations are paused (not counted), so this
-  // only lights up during the flush — not on every normal online write.
-  const flushing = useIsMutating() > 0;
+  const inFlight = useIsMutating();
+  const paused = useIsMutating({ predicate: (m) => m.state.isPaused });
 
-  const show = !isOnline || (isOnline && flushing);
+  // SYNCING must mean "draining the offline queue", not "a write is happening" —
+  // otherwise every normal online ✓ would flash the pill. Latch it on the
+  // offline→online transition (only if something is actually queued/running),
+  // clear it once the queue is empty.
+  const [draining, setDraining] = useState(false);
+  const wasOffline = useRef(false);
+  useEffect(() => {
+    if (!isOnline) {
+      wasOffline.current = true;
+      setDraining(false);
+      return;
+    }
+    if (wasOffline.current) {
+      wasOffline.current = false;
+      if (paused > 0 || inFlight > 0) setDraining(true);
+    }
+  }, [isOnline, paused, inFlight]);
+  useEffect(() => {
+    if (draining && inFlight === 0 && paused === 0) setDraining(false);
+  }, [draining, inFlight, paused]);
+
+  const show = !isOnline || draining;
   if (!show) return null;
 
   const offline = !isOnline;
