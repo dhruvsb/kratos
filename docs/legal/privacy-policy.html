@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>RepVoice — Privacy Policy</title>
+<!--
+  The hosted privacy policy. App Store Review Guideline 5.1.1(i) requires this to be
+  linked BOTH from the App Store Connect metadata field AND from inside the app
+  (Settings → ABOUT → "Privacy policy" opens this URL).
+
+  Keep this file truthful about what the app actually does. As of writing that is:
+  Supabase is the only third party, there are no analytics/advertising/tracking SDKs
+  of any kind in the codebase, and no audio is recorded. If any of that changes, this
+  file changes in the same commit.
+
+  Self-contained on purpose (no external CSS/fonts/scripts) so it can be dropped on
+  GitHub Pages, Netlify, Cloudflare Pages, or any static host as-is.
+-->
+<style>
+  :root {
+    --bg: #020609;
+    --panel: #070d13;
+    --t1: #EAF3F9;
+    --t2: #8DA2B2;
+    --t3: #55636E;
+    --line: rgba(150, 205, 255, 0.09);
+    --line2: rgba(150, 205, 255, 0.18);
+    --acc: #A3E635;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--t1);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.65;
+  }
+  main { max-width: 46rem; margin: 0 auto; padding: 4rem 1.5rem 6rem; }
+  header { border-bottom: 1px solid var(--line2); padding-bottom: 1.75rem; margin-bottom: 2.5rem; }
+  .brand {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.22em;
+    color: var(--acc);
+    text-transform: uppercase;
+    margin: 0 0 0.9rem;
+  }
+  h1 { font-size: 1.75rem; line-height: 1.25; margin: 0 0 0.75rem; font-weight: 600; }
+  .dates {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    color: var(--t3);
+    text-transform: uppercase;
+    margin: 0;
+  }
+  h2 {
+    font-size: 1.0rem;
+    font-weight: 600;
+    margin: 2.75rem 0 0.85rem;
+    padding-top: 1.75rem;
+    border-top: 1px solid var(--line);
+  }
+  h2:first-of-type { border-top: 0; padding-top: 0; }
+  p, li { color: var(--t2); }
+  p { margin: 0 0 1rem; }
+  ul { margin: 0 0 1rem; padding-left: 1.25rem; }
+  li { margin-bottom: 0.5rem; }
+  strong { color: var(--t1); font-weight: 600; }
+  a { color: var(--acc); text-decoration: none; border-bottom: 1px solid rgba(163, 230, 53, 0.35); }
+  a:hover { border-bottom-color: var(--acc); }
+  .callout {
+    background: var(--panel);
+    border: 1px solid var(--line2);
+    border-left: 2px solid var(--acc);
+    border-radius: 10px;
+    padding: 1.1rem 1.25rem;
+    margin: 0 0 1.25rem;
+  }
+  .callout p:last-child { margin-bottom: 0; }
+  footer {
+    margin-top: 3.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--line);
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    color: var(--t3);
+  }
+  @media (max-width: 480px) { main { padding: 2.5rem 1.25rem 4rem; } h1 { font-size: 1.4rem; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <p class="brand">RepVoice</p>
+    <h1>Privacy Policy</h1>
+    <p class="dates">Effective 8 August 2026 &middot; Last updated 8 August 2026</p>
+  </header>
+
+  <p>
+    RepVoice is a workout logging app. This policy explains exactly what it collects, why,
+    who else can see it, and how to get rid of it. It covers the RepVoice iOS app and the
+    backend it talks to.
+  </p>
+
+  <div class="callout">
+    <p>
+      <strong>The short version.</strong> RepVoice stores the workouts you log and the email
+      address you sign in with. That is all. There is no analytics SDK, no advertising, no
+      tracking, and no third party receives your data other than the hosting provider that
+      runs the database. Nothing is ever sold. You can delete everything from inside the app
+      at any time, and the deletion is immediate and permanent.
+    </p>
+  </div>
+
+  <h2>What data is collected, and how</h2>
+  <p>Everything below is data <strong>you enter or import yourself</strong>. Nothing is gathered in the background.</p>
+  <ul>
+    <li>
+      <strong>Your email address.</strong> Collected when you sign in. RepVoice uses one-time
+      email codes, so the address is both your account identifier and the only way to sign in.
+      No password is collected or stored.
+    </li>
+    <li>
+      <strong>Your workout data.</strong> The routines you create, the exercises you pick, and
+      the sets you log — weight, reps, RPE, set type, and the time each workout started and
+      ended — plus any custom exercise names and workout notes you write.
+    </li>
+    <li>
+      <strong>Your preferences.</strong> A display name if you set one, and your preferred
+      weight unit (kg or lb). Some settings, such as your weekly goal, are stored only on your
+      device and are never transmitted.
+    </li>
+    <li>
+      <strong>Data you choose to import.</strong> If you use the Hevy CSV import, the workout
+      history in the file you pick is read and stored as your own workout data. RepVoice reads
+      only the file you explicitly select; it has no other access to your files.
+    </li>
+  </ul>
+  <p>
+    RepVoice does <strong>not</strong> collect your name (unless you type one), location,
+    contacts, photos, health or fitness data from Apple Health, advertising identifiers,
+    device identifiers, or any usage, diagnostic, or behavioural analytics. It contains no
+    analytics, attribution, advertising, or crash-reporting software of any kind.
+  </p>
+  <p>
+    RepVoice does <strong>not record audio</strong>. A future version is planned to support
+    logging sets by voice; if microphone or speech-recognition permission is ever requested,
+    it will be at the moment you use that feature, and this policy will be updated to describe
+    it before the feature ships.
+  </p>
+
+  <h2>How the data is used</h2>
+  <p>
+    Your data is used for one purpose: to run the app for you — to save your workouts, show
+    your history and progress, and keep you signed in. Your email address is additionally used
+    to send you the one-time sign-in code.
+  </p>
+  <p>
+    Your data is <strong>never</strong> sold, rented, or shared for advertising; never used to
+    build a profile of you; never used to train machine-learning models; and never used to send
+    you marketing. There is no advertising in RepVoice.
+  </p>
+
+  <h2>Who else can access it</h2>
+  <p>
+    RepVoice is built and run by an individual developer. Only one third party processes your
+    data:
+  </p>
+  <ul>
+    <li>
+      <strong>Supabase</strong> — provides the hosted database and authentication that RepVoice
+      runs on, and delivers the one-time sign-in codes to your email address. Your account and
+      workout data are stored on Supabase infrastructure in Singapore (AWS <code>ap-southeast-1</code>).
+      Supabase processes this data only to provide that hosting on RepVoice's instructions, and
+      is contractually bound to protections at least equal to those described in this policy and
+      required by the App Store Review Guidelines. See
+      <a href="https://supabase.com/privacy" rel="noopener">supabase.com/privacy</a>.
+    </li>
+  </ul>
+  <p>
+    There is no parent company, subsidiary, or affiliated entity with access to your data.
+    Data may be disclosed if required by law, but you will be told unless the law forbids it.
+  </p>
+
+  <h2>How long it is kept, and how to delete it</h2>
+  <p>
+    Your data is kept for as long as your account exists. There is no separate retention period
+    and no archival copy kept for analysis.
+  </p>
+  <p>
+    You can delete your account at any time from inside the app: <strong>Settings → Account →
+    Delete account</strong>. This permanently deletes your account together with every workout,
+    routine, set, and custom exercise on it. It happens immediately, it cannot be undone, and
+    there is nothing left to recover afterwards. You do not need to contact anyone to do it.
+  </p>
+  <p>
+    Because signing in is what creates your account, deleting the account is also how you
+    withdraw consent to any processing described here. If you would rather keep a copy of your
+    history first, <strong>Settings → Data → Export workouts</strong> produces a CSV file of
+    your workouts that you can save or share before you delete.
+  </p>
+  <p>
+    Backups taken by the hosting provider may briefly retain deleted rows before they age out
+    on the provider's normal backup cycle; they are not accessible through the app and are not
+    used for any purpose.
+  </p>
+
+  <h2>Your rights</h2>
+  <p>
+    Wherever you live, you can access your data (it is all visible in the app), export it, correct
+    it by editing it in the app, and delete it — using the in-app controls described above, with
+    no request or approval needed. If you would prefer to exercise any of these rights by writing
+    to a human instead, use the contact address below.
+  </p>
+
+  <h2>Security</h2>
+  <p>
+    All traffic between the app and the server is encrypted with TLS. Data is protected at the
+    database level by row-level security policies, meaning the database itself enforces that a
+    signed-in account can only ever read or write its own rows. No API keys or secrets are
+    embedded in the app. No system is perfectly secure, but no data is stored that is not
+    described above.
+  </p>
+
+  <h2>Children</h2>
+  <p>
+    RepVoice is not directed to children and is not intended for use by anyone under 13. No
+    data is knowingly collected from children. If you believe a child has created an account,
+    use the contact address below and it will be deleted.
+  </p>
+
+  <h2>Changes to this policy</h2>
+  <p>
+    If this policy changes, the updated version will be posted at this URL with a new "last
+    updated" date. Material changes to what is collected or who receives it will be announced
+    in the app before they take effect.
+  </p>
+
+  <h2>Contact</h2>
+  <p>
+    Questions about this policy or your data:
+    <a href="mailto:dsooseven@gmail.com">dsooseven@gmail.com</a>.
+  </p>
+
+  <footer>REPVOICE &middot; PRIVACY POLICY &middot; V1</footer>
+</main>
+</body>
+</html>

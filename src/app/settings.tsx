@@ -9,6 +9,7 @@
 // device-local (src/data/settings.ts).
 import { useState } from 'react';
 import { router } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
 import { useQuery } from '@tanstack/react-query';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,6 +18,14 @@ import { deleteAccount, getSession, signOut } from '@/data/auth';
 import { useProfile, useUpdateProfile } from '@/data/hooks';
 import { GOAL_PRESETS, useSettings, useUpdateSettings } from '@/data/settings';
 import { color, font, radius, space, tracking } from '@/theme/tokens';
+
+// App Store Review Guideline 5.1.1(i) wants the privacy policy reachable from
+// *inside* the app as well as from the App Store listing, so it gets a row here.
+// The page itself is `docs/legal/privacy-policy.html`.
+//
+// ⚠️ This must point at the live hosted copy before any TestFlight/App Store
+// submission — a 404 here is a review rejection.
+const PRIVACY_POLICY_URL = 'https://dhruv-shah1.github.io/repvoice/privacy-policy.html';
 
 function next<T>(list: readonly T[], current: T): T {
   const i = list.indexOf(current);
@@ -160,6 +169,17 @@ export default function SettingsScreen() {
               value: deleting ? 'DELETING…' : 'DELETE',
               tone: 'danger',
               onPress: deleting ? undefined : confirmDeleteAccount,
+            },
+          ],
+        },
+        {
+          title: 'ABOUT',
+          rows: [
+            {
+              label: 'Privacy policy',
+              note: 'what RepVoice stores, and how to erase it',
+              value: 'READ',
+              onPress: () => WebBrowser.openBrowserAsync(PRIVACY_POLICY_URL),
             },
           ],
         },

@@ -10,7 +10,16 @@ codebase or a huge prior conversation.
 > issues**) *and* append a dated entry to [`WORK-LOG.md`](./WORK-LOG.md). This file is the
 > snapshot; `WORK-LOG.md` is the full history. Keep this file short.
 
-**Last updated:** 2026-08-08 — **In-app account deletion** (App Store Guideline 5.1.1(v): an
+**Last updated:** 2026-08-08 — **App Store prep, part 2: privacy policy + `eas.json`.**
+`docs/legal/privacy-policy.html` (self-contained, LED-themed, written from a real audit of the code —
+there are **no** analytics/ads/crash SDKs anywhere, so Supabase is the only third party) + a Settings →
+ABOUT → "Privacy policy" row, since 5.1.1(i) wants the link in-app *and* in App Store Connect.
+`eas.json` (which already existed) gained a `development-device` profile and an explicit
+`preview.ios.simulator: false`, so `preview` is the internal-distribution **Release** build.
+**Two blockers before any build:**
+the policy URL in `settings.tsx` is a placeholder until the page is hosted, and `.env` is gitignored so
+the Supabase vars must be pushed to EAS or the build ships with empty credentials. Prior:
+**In-app account deletion** (App Store Guideline 5.1.1(v): an
 account-creating app that can't delete accounts in-app gets rejected). Settings → ACCOUNT → "Delete
 account" → two confirms → `deleteAccount()` → RPC `public.delete_own_account()` (migration **`0005`,
 applied live** — security-definer, no args, acts only on `auth.uid()`) → local sign-out wipes the
@@ -183,6 +192,17 @@ Static checks currently green: `tsc --noEmit` clean; `expo export --platform web
       Import from Hevy → pick `workout_data.csv` → confirm preview → import; check History / Calendar /
       an exercise's progress light up; then Export workouts → share the `.csv` and confirm it re-imports
       cleanly (idempotent — should report all skipped).
+- [ ] **Host `docs/legal/privacy-policy.html` and set `PRIVACY_POLICY_URL`** in `src/app/settings.tsx`
+      to the live URL (same URL goes in the App Store Connect privacy field). A 404 = rejection.
+- [ ] **Push the Supabase vars to EAS** (`eas env:create` for `SUPABASE_URL` + `SUPABASE_ANON_KEY` in
+      the `development`/`preview`/`production` environments). `.env` is gitignored, so a cloud build
+      without these ships credential-less and can't sign in. Service-role / OpenAI keys stay local.
+- [ ] **`eas init`**, then paste the printed id into `app.config.ts` as `extra.eas.projectId` — the
+      config is a dynamic `.ts` file, so the CLI can't write it for you.
+- [ ] **Decide what to do about the mic/speech permission strings** before submitting: the
+      `expo-speech-recognition` plugin puts them in the Info.plist, but Phase 2 voice is unwired, so
+      the build declares permissions it never uses — a known review flag. Either drop the plugin from
+      `app.config.ts` for the 1.0 submission or be ready to justify it.
 - [ ] **See "Delete account" on device** (Settings → ACCOUNT) — the row is static-verified only.
       Don't smoke-test it on the real account; make a throwaway one, or re-run the live-DB check.
 - [ ] **Verify a real OTP sign-in from scratch** (sign out → enter email → 8-digit code). This

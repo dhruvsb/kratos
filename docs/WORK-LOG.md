@@ -7,6 +7,41 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-08 — Release plumbing: privacy policy + `eas.json`
+
+Second half of the App Store prep. Nothing here changes app behaviour except one new Settings row.
+
+- **Privacy policy — `docs/legal/privacy-policy.html`.** Guideline 5.1.1(i) requires the policy to be
+  linked from the App Store Connect metadata field **and** from inside the app, and to state what is
+  collected, how, every use of it, every third party that receives it (with a commitment that they
+  protect it equally), retention/deletion, and how to revoke consent. Written from an actual audit of
+  the codebase rather than from a template: a grep for analytics/attribution/ads/crash SDKs
+  (amplitude, mixpanel, segment, sentry, firebase, posthog, bugsnag, AppsFlyer, …) returns **nothing**,
+  so the policy can honestly say Supabase is the *only* third party and no background collection
+  happens at all. Self-contained HTML in the app's own LED theme so it drops onto any static host.
+  Also states that no audio is recorded — true today, and it has to be revisited when Phase 2 voice
+  ships (the mic/speech permission strings are already in the Info.plist via the
+  `expo-speech-recognition` plugin, which is its own review risk while the feature is unwired).
+- **In-app link:** Settings gained an ABOUT group with a "Privacy policy" row that opens
+  `PRIVACY_POLICY_URL` in `expo-web-browser` (already a dependency — no new native module, so no
+  dev-client rebuild). **The URL is a placeholder** until the page is hosted; a 404 there is a
+  rejection, so it's a blocking pending action.
+- **`eas.json` — already existed** (committed in `8c68457`, `development`/`preview`/`production` +
+  `appVersionSource: remote`), but had gone missing from the working tree, so it was rewritten before
+  that was noticed and then reconciled against `HEAD`. The committed diff is **purely additive**: a new
+  `development-device` profile (dev client on real hardware, not the simulator) and
+  `preview.ios.simulator: false`, so `preview` is unambiguously the internal-distribution **Release**
+  build — the one that can be tested offline, since cutting Wi-Fi on a dev build severs Metro. Existing
+  `cli.version`, both `channel`s, and the `submit` block were kept as they were. Profiles are flat
+  rather than `extends`-chained so the `ios.simulator` override doesn't ride on deep-merge semantics.
+  (The `channel` fields are inert until `expo-updates` is added — harmless, left alone.)
+- **The trap this sets up:** `.env` is gitignored, and `app.config.ts` reads `process.env.SUPABASE_URL`
+  at *build* time. EAS builds from the git tree in the cloud, so without EAS environment variables the
+  app ships with empty Supabase credentials and simply cannot sign in — a green build that fails on
+  launch. Each profile declares an `environment`, so the variables must exist in all three.
+
+---
+
 ## 2026-08-08 — In-app account deletion (App Store Guideline 5.1.1(v))
 
 Prompted by the App Store launch question: an app that creates accounts **must** let the user delete
