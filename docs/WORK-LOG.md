@@ -7,6 +7,40 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-08 — Feedback fixes: #21 routine targets dropped, #18 multi-select add, #5 picker scroll
+
+Three items across the routine editor + exercise picker, in the otherwise feedback-log-only chat (user
+explicitly asked for these three). No overlap with the parallel #11/#13/#26 chat — those live in
+`SetKeypad.tsx` / `workout/[id].tsx`, which this session deliberately never touches.
+
+- **#21 — targets off the routine editor.** `target_sets`/`target_reps_low/high` were written by the
+  editor but read *nowhere* in the app (workout screen, prefill, Home cards all ignore them), so the
+  three micro-inputs were pure write-only friction — and the direct cause of #20's stuck-keyboard.
+  Removed them entirely: a routine row is now name (tappable → progress) + reorder/delete. Save no
+  longer sends targets (new routines write null; existing routines null on next save — invisible,
+  read nowhere). Retired the `InputAccessoryView` DONE bar from **#20** (it existed only for these
+  number-pad inputs), plus the `Item` target fields, `patchItem`, `parseIntOrNull`, and orphaned styles.
+- **#18 — multi-select exercise add.** `ExercisePickerModal` gained an optional `multiSelect` prop +
+  `onPickMany` callback. In multi mode a row tap toggles a checkmark (query + region persist so you
+  keep browsing a filtered list), and an **ADD (n) EXERCISES** bar commits the whole batch; a custom
+  exercise created mid-flow joins the selection instead of closing. Routine editor opts in. Kept
+  `onPick` (single) unchanged so **mid-workout add stays single-select and `workout/[id].tsx` needed
+  no edit** — both a UX call (adding many at once makes less sense mid-workout) and a clobber-avoidance
+  call (that file is the parallel chat's).
+- **#5 — exercise-list scroll (fix applied, device-confirm pending).** Best-reasoned root cause: the
+  search field's `autoFocus` opens the keyboard on modal appear, and the `Modal` wasn't keyboard-aware,
+  so the bottom of the `height:'86%'` sheet — including much of the `FlatList` — sat behind the
+  keyboard ("can't scroll down"). Wrapped the sheet + backdrop in a `KeyboardAvoidingView`
+  (`behavior='padding'` on iOS); keyboard-down layout unchanged (no regression), `autoFocus` kept. Only
+  the picker modal changed — if a repro shows the library screen (`exercises.tsx`) also can't scroll,
+  that's a separate container. Can't drive the modal+keyboard offline here, so this one still wants a
+  device check.
+
+`tsc --noEmit` clean; `expo export --platform web` bundles all 15 routes. Not yet run on device.
+Committed with the docs.
+
+---
+
 ## 2026-08-08 — Feedback fixes: #13 rep chips, #26 keypad auto-advance, #11 delete-set
 
 Parallel chat to the #14/#20/#3 work below — took the three frictionless-logging items that build

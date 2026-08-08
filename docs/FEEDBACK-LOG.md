@@ -175,7 +175,7 @@ stays reachable some other way (e.g. deep-linked from a past-workout edit flow).
 | # | Item | Area | Done? | Sev | Effort |
 |---|------|------|-------|-----|--------|
 | 20 | Number-pad keyboard has no way to dismiss in the routine editor | Routine editor | ✅ DONE | High | S |
-| 21 | Drop/defer SETS·REPS targets from routine *creation* — exercise selection only | Routine editor | ⬜ OPEN (agent recommends: yes) | Med | S |
+| 21 | Drop/defer SETS·REPS targets from routine *creation* — exercise selection only | Routine editor | ✅ DONE | Med | S |
 
 ---
 
@@ -199,7 +199,7 @@ got `keyboardDismissMode="on-drag"` so a scroll drops the keyboard on both platf
 green. NOTE: this is superseded in spirit by #21 (drop targets from creation entirely) if that
 lands — but the dismiss fix is correct regardless, and targets still exist on the edit path.
 
-### 21. Targets (SETS × REPS) don't belong on the routine-*creation* screen ⬜ Med — **agent recommends doing this**
+### 21. Targets (SETS × REPS) don't belong on the routine-*creation* screen ✅ Med
 **Requested:** while creating a routine, the screen should just be exercise selection — no
 sets/reps target entry.
 **Verified — and there's a concrete reason to agree:** `target_sets` / `target_reps_low` /
@@ -216,6 +216,14 @@ get removed for good.
 **Fix (scope, not started):** simplify the create/edit routine screen to exercise picking +
 reorder only; either remove the SETS/REPS columns entirely or move them behind a secondary
 "edit targets" step reached after the exercise list exists. (S once scoped)
+**Done (2026-08-08):** removed the three SETS/REPS target inputs from the routine editor entirely —
+each row is now just the exercise name (tappable → progress) + reorder/delete. `setRoutineExercises`
+no longer receives target values, so new routines write null targets; existing routines' targets are
+nulled on next save (harmless — read nowhere in the app). Removed the now-dead `InputAccessoryView`
+DONE bar (feedback **#20** existed only to dismiss the number-pad on *these* inputs — with them gone
+the name field is the sole input and needs no accessory), plus the `Item` target fields, `patchItem`,
+`parseIntOrNull`, and the orphaned target styles. Helper note reworded to "just pick exercises + order;
+log weight/reps/sets during the workout." `tsc` + web-export green; not yet on device.
 
 ---
 
@@ -227,12 +235,12 @@ reorder only; either remove the SETS/REPS columns entirely or move them behind a
 
 | # | Item | Area | Done? | Sev | Effort |
 |---|------|------|-------|-----|--------|
-| 18 | Multi-select exercises when adding to a routine | Routine editor | ⬜ OPEN | Med | M |
+| 18 | Multi-select exercises when adding to a routine | Routine editor | ✅ DONE | Med | M |
 | 19 | Split "Arms" filter into Biceps / Triceps | Search / taxonomy | ⬜ OPEN | Med | M |
 
 ---
 
-### 18. Multi-select exercise add ⬜ Med
+### 18. Multi-select exercise add ✅ Med
 **Requested:** picking a body-region filter (e.g. Chest) in the exercise picker while building a
 routine should allow selecting multiple exercises before returning, rather than one add per open
 of the picker.
@@ -247,6 +255,13 @@ browsing the same body-region list. `onPick`'s signature and both call sites nee
 together — the modal is also used mid-workout (per the file's header comment), where adding many
 exercises at once makes less sense than up front in a routine; worth deciding whether mid-workout
 add should stay single-select or get an escape hatch.
+**Done (2026-08-08):** `ExercisePickerModal` gained an optional `multiSelect` mode + `onPickMany`
+callback. In multi mode a row tap toggles a checkmark (query + region persist so you keep browsing),
+and an **ADD (n) EXERCISES** bar commits the whole batch at once; a custom exercise created mid-flow
+joins the selection rather than closing. The routine editor (`routine/[id].tsx`) opts in via
+`multiSelect` + `onPickMany`. **Mid-workout add stays single-select** — `onPick` (single) is
+unchanged, so `workout/[id].tsx` needed no edit (deliberate, to avoid clobbering the parallel
+#11/#13/#26 chat editing that file). `tsc` + web-export green; not yet on device.
 
 ### 19. Split "Arms" into Biceps / Triceps in the region filter ⬜ Med
 **Requested:** the body-region filter should let you pick Triceps or Biceps specifically, not just
@@ -472,7 +487,7 @@ Everything below is code-verified; #1 also verified live on the simulator. Detai
 | 2 | Remove the rest timer | Logging UX | ✅ DONE | Med | S |
 | 3 | Default reps = 12, weight = previous best | Logging UX | ✅ DONE | High | M |
 | 4 | Muscle filter in exercise search | Search | ✅ DONE | Med | M |
-| 5 | Can't scroll the exercise list | Search | ⬜ OPEN (unreproduced / unfixed) | High | S–M |
+| 5 | Can't scroll the exercise list | Search | 🟡 FIX APPLIED (keyboard-avoidance; device-confirm pending) | High | S–M |
 | 6 | History detail: primary/secondary muscle % (Hevy-style) | History | ✅ DONE | Med | M |
 | 7 | Routine editor: unclear where weight/reps/sets go | Routine editor | ✅ DONE | High | S |
 | 8 | Set/exercise reordering by drag | Routine editor | ⬜ OPEN (still ↑/↓) | Low | M |
@@ -559,9 +574,17 @@ the keyboard immediately, which can cover the lower rows.
 **Next:** reproduce on the simulator to confirm whether it's the picker (modal) or the library
 (`exercises.tsx`), then fix the specific container. Prime suspects: modal backdrop/sheet height math,
 or missing `flex` on the sheet content. (S–M once reproduced)
-**Status — STILL OPEN (2026-07-31):** not reproduced or fixed. The picker's `backdrop: flex:1` +
-`sheet: height:'86%'` structure is unchanged (the #4 filter chips were added above the list, but the
-scroll container itself was untouched). Needs the live repro before a fix.
+**Status — FIX APPLIED (2026-08-08), device-confirm still pending.** Best-reasoned root cause: the
+picker's search field has `autoFocus`, so the keyboard opens the moment the modal appears. The `Modal`
+was **not** keyboard-aware, and the sheet (`height:'86%'`, bottom-anchored) has its lower portion —
+including much of the `FlatList`'s scroll area — sitting *behind* the keyboard, so the lower rows can't
+be seen or reliably dragged ("can't scroll down"). Fix: wrapped the sheet + backdrop in a
+`KeyboardAvoidingView` (`behavior='padding'` on iOS) so the sheet lifts above the keyboard and the whole
+list is scrollable; `autoFocus` kept (type-immediately UX preserved). Keyboard-down layout is unchanged,
+so no regression when the field isn't focused. **Only the picker modal was changed** — if a live repro
+shows the *library* screen (`exercises.tsx`, a full screen, not a modal) also can't scroll, that's a
+separate container and a separate fix. Reason-only (the repo has no offline way to drive the modal +
+keyboard); verify on device by opening the picker and scrolling with the keyboard up.
 
 ### 6. History detail — primary/secondary muscles worked, with % (Hevy-style) ✅ Med
 **User:** "Clicking a chest workout should show primary + secondary muscle worked with %, like Hevy."

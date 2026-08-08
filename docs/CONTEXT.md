@@ -10,7 +10,15 @@ codebase or a huge prior conversation.
 > issues**) *and* append a dated entry to [`WORK-LOG.md`](./WORK-LOG.md). This file is the
 > snapshot; `WORK-LOG.md` is the full history. Keep this file short.
 
-**Last updated:** 2026-08-08 — **Feedback fixes #13 / #26 / #11** (code only, not yet on device):
+**Last updated:** 2026-08-08 — **Feedback fixes #21 / #18 / #5** (code only, not yet on device):
+**#21** dropped the SETS/REPS target inputs from the routine editor — creating a routine is now
+exercise-selection + order only (targets were write-only, read nowhere); this also retired the
+`InputAccessoryView` from **#20** (it existed only to dismiss the number-pad on those inputs).
+**#18** the exercise picker gained a `multiSelect` mode — tap rows to check them (search/region
+persist), an **ADD (n)** bar commits the batch; routine editor uses it, mid-workout add stays
+single-select (so `workout/[id].tsx` was untouched). **#5** exercise-list scroll: wrapped the picker
+sheet in a `KeyboardAvoidingView` so the `autoFocus` keyboard no longer sits over the lower list rows
+(best-reasoned root cause; device-confirm pending). `tsc` + web-export green. Prior: **Feedback fixes #13 / #26 / #11** (code only, not yet on device):
 **#13** reps are now a fixed chip row (4·6·8·10·12) in `SetKeypad`, always visible so the numeric pad
 serves weight alone — flow is "type weight → tap a rep chip → LOG"; odd reps stay reachable via the
 REPS field + ± step (this also dissolves **#12**'s weight→reps auto-advance — no longer needed);
@@ -130,8 +138,9 @@ logging via an LLM pipeline, **3** TBD (PRs/charts).
 
 Static checks currently green: `tsc --noEmit` clean; `expo export --platform web` bundles all 15 routes;
 `xcodebuild -allowProvisioningUpdates` builds + installs Release to physical hardware.
-**Feedback pass (`FEEDBACK-LOG.md`): 13 of 30 done** — ✅ #1 #2 #3 #4 #6 #7 #9 #10 #11 #13 #14 #20 #26
-(#12 dissolved by #13) · ⬜ #5 #8 #15 #16 #17 #18 #19 #21 #22 #23 #24 #25 #27 #28 #29 #30.
+**Feedback pass (`FEEDBACK-LOG.md`): 15 of 30 done** — ✅ #1 #2 #3 #4 #6 #7 #9 #10 #11 #13 #14 #18 #20
+#21 #26 (#12 dissolved by #13) · 🟡 #5 (fix applied — keyboard-avoidance; device-confirm pending) ·
+⬜ #8 #15 #16 #17 #19 #22 #23 #24 #25 #27 #28 #29 #30.
 
 ## Pending actions (owner: user / next session)
 
@@ -175,10 +184,11 @@ Static checks currently green: `tsc --noEmit` clean; `expo export --platform web
       right against real workout days.
 - [ ] *(Phase 2, when voice resumes)* Apply migration `0003` to the live DB; run `npm run eval`.
 - [ ] Replace temporary Gmail SMTP with a dedicated provider before any external-user testing.
-- [ ] **Remaining feedback items** (`FEEDBACK-LOG.md`): **#5** exercise-list scroll (reproduce then
-      fix), **#8** drag-reorder, plus the newer backlog (#15–#30, minus #26 done). **#3/#14/#20 and
-      #11/#13/#26 fixed 2026-08-08** — verify all six on device (esp. #13 chip layout, #26 auto-advance
-      feel, #11 long-press delete).
+- [ ] **Remaining feedback items** (`FEEDBACK-LOG.md`): **#8** drag-reorder + the newer backlog
+      (#15 #16 #17 #19 #22–#25 #27–#30). **#5/#18/#21 fixed 2026-08-08** (code) alongside earlier
+      #3/#14/#20 and #11/#13/#26 — **verify on device**: #5 open the picker and scroll with the keyboard
+      up (should reach every row now); #18 multi-select add in the routine editor; #21 routine creation
+      has no target inputs; plus #13 chip layout, #26 auto-advance feel, #11 long-press delete.
 - [x] ~~Wire `useSettings().weeklyGoal` into the Calendar tally~~ — **done**: `calendar.tsx` now reads
       the Settings "Weekly goal" pref (default 5 until the query resolves); every tally, label, and the
       12-week goal line follow it. (If a longer OTP length is ever configured, bump `CODE_LEN` in

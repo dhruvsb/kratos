@@ -1,12 +1,10 @@
-// Routine editor (mockup 02) — create ("new") or edit: name, ordered exercises,
-// optional per-exercise targets. Same screen for both; the workout screen just
-// shows "last time" when a target is left blank.
+// Routine editor (mockup 02) — create ("new") or edit: name + ordered exercises.
+// Per-exercise sets/reps targets were dropped (feedback #21): they were written
+// here but read nowhere in the app, so creating a routine is exercise selection
+// only. Weight/reps/sets are entered live during the workout.
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-  InputAccessoryView,
-  Keyboard,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -23,17 +21,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import type { Exercise } from '@/types/db';
 import { color, font, radius, shadow, space, tracking } from '@/theme/tokens';
 
-type Item = {
-  exercise: Exercise;
-  target_sets: string; // kept as text while editing; parsed on save
-  target_reps_low: string;
-  target_reps_high: string;
-};
-
-// iOS number-pad has no built-in Done key, so a shared accessory bar over the
-// numeric target inputs is the only way to dismiss the keyboard (feedback #20).
-const KEYBOARD_ACCESSORY_ID = 'routine-targets-done';
-const numberPadAccessory = Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined;
+type Item = { exercise: Exercise };
 
 export default function RoutineEditorScreen() {
   const insets = useSafeAreaInsets();
@@ -54,14 +42,7 @@ export default function RoutineEditorScreen() {
     if (isNew || !existing.data || loadedFromServer) return;
     setName(existing.data.name);
     setArchived(existing.data.archived);
-    setItems(
-      existing.data.exercises.map((re) => ({
-        exercise: re.exercise,
-        target_sets: re.target_sets?.toString() ?? '',
-        target_reps_low: re.target_reps_low?.toString() ?? '',
-        target_reps_high: re.target_reps_high?.toString() ?? '',
-      }))
-    );
+    setItems(existing.data.exercises.map((re) => ({ exercise: re.exercise })));
     setLoadedFromServer(true);
   }, [isNew, existing.data, loadedFromServer]);
 
@@ -73,15 +54,6 @@ export default function RoutineEditorScreen() {
       [next[index], next[target]] = [next[target], next[index]];
       return next;
     });
-  }
-
-  function patchItem(index: number, patch: Partial<Item>) {
-    setItems((prev) => prev.map((p, i) => (i === index ? { ...p, ...patch } : p)));
-  }
-
-  function parseIntOrNull(text: string): number | null {
-    const n = parseInt(text, 10);
-    return Number.isFinite(n) && n > 0 ? n : null;
   }
 
   async function save(nextArchived?: boolean) {
@@ -97,12 +69,7 @@ export default function RoutineEditorScreen() {
       }
       await setRoutineExercises(
         routineId,
-        items.map((item) => ({
-          exercise_id: item.exercise.id,
-          target_sets: parseIntOrNull(item.target_sets),
-          target_reps_low: parseIntOrNull(item.target_reps_low),
-          target_reps_high: parseIntOrNull(item.target_reps_high),
-        }))
+        items.map((item) => ({ exercise_id: item.exercise.id }))
       );
       queryClient.invalidateQueries({ queryKey: ['routines'] });
       queryClient.invalidateQueries({ queryKey: ['routine', routineId] });
@@ -145,10 +112,7 @@ export default function RoutineEditorScreen() {
           selectionColor={color.acc}
         />
 
-        <View style={styles.exHeadRow}>
-          <Text style={styles.label}>EXERCISES · ORDER = WORKOUT ORDER</Text>
-          <Text style={styles.labelDim}>TARGETS · OPTIONAL</Text>
-        </View>
+        <Text style={styles.label}>EXERCISES · ORDER = WORKOUT ORDER</Text>
 
         {items.length === 0 && (
           <Text style={styles.emptyText}>No exercises yet — add your first below.</Text>
@@ -173,48 +137,6 @@ export default function RoutineEditorScreen() {
                 {'  ›'}
               </Text>
             </Pressable>
-            <View style={styles.targets}>
-              <View style={styles.targetCol}>
-                <TextInput
-                  style={styles.tInput}
-                  value={item.target_sets}
-                  onChangeText={(t) => patchItem(index, { target_sets: t })}
-                  keyboardType="number-pad"
-                  inputAccessoryViewID={numberPadAccessory}
-                  placeholder="—"
-                  placeholderTextColor={color.t3}
-                  selectionColor={color.acc}
-                />
-                <Text style={styles.tCap}>SETS</Text>
-              </View>
-              <Text style={styles.tSepTop}>×</Text>
-              <View style={styles.targetCol}>
-                <View style={styles.repPair}>
-                  <TextInput
-                    style={styles.tInput}
-                    value={item.target_reps_low}
-                    onChangeText={(t) => patchItem(index, { target_reps_low: t })}
-                    keyboardType="number-pad"
-                    inputAccessoryViewID={numberPadAccessory}
-                    placeholder="—"
-                    placeholderTextColor={color.t3}
-                    selectionColor={color.acc}
-                  />
-                  <Text style={styles.tSep}>–</Text>
-                  <TextInput
-                    style={styles.tInput}
-                    value={item.target_reps_high}
-                    onChangeText={(t) => patchItem(index, { target_reps_high: t })}
-                    keyboardType="number-pad"
-                    inputAccessoryViewID={numberPadAccessory}
-                    placeholder="—"
-                    placeholderTextColor={color.t3}
-                    selectionColor={color.acc}
-                  />
-                </View>
-                <Text style={styles.tCap}>REPS</Text>
-              </View>
-            </View>
             <View style={styles.rowBtns}>
               <Pressable onPress={() => move(index, -1)} hitSlop={6}><Text style={styles.rowBtn}>↑</Text></Pressable>
               <Pressable onPress={() => move(index, 1)} hitSlop={6}><Text style={styles.rowBtn}>↓</Text></Pressable>
@@ -230,9 +152,8 @@ export default function RoutineEditorScreen() {
         </Pressable>
 
         <Text style={styles.note}>
-          Targets are optional — just sets and a rep range. You’ll enter the actual weight while
-          logging the workout, not here. Leave targets blank and the workout screen simply shows
-          what you did last time.
+          Just pick your exercises and the order. You’ll log the actual weight, reps, and sets while
+          doing the workout — the screen shows what you did last time for each lift.
         </Text>
 
         {error != null && <ErrorText error={error} />}
@@ -254,24 +175,16 @@ export default function RoutineEditorScreen() {
       <ExercisePickerModal
         visible={pickerOpen}
         onClose={() => setPickerOpen(false)}
+        multiSelect
         onPick={(exercise) => {
-          setItems((prev) => [
-            ...prev,
-            { exercise, target_sets: '', target_reps_low: '', target_reps_high: '' },
-          ]);
+          setItems((prev) => [...prev, { exercise }]);
+          setPickerOpen(false);
+        }}
+        onPickMany={(exercises) => {
+          setItems((prev) => [...prev, ...exercises.map((exercise) => ({ exercise }))]);
           setPickerOpen(false);
         }}
       />
-
-      {Platform.OS === 'ios' && (
-        <InputAccessoryView nativeID={KEYBOARD_ACCESSORY_ID}>
-          <View style={styles.accessoryBar}>
-            <Pressable onPress={() => Keyboard.dismiss()} hitSlop={10}>
-              <Text style={styles.accessoryDone}>DONE</Text>
-            </Pressable>
-          </View>
-        </InputAccessoryView>
-      )}
     </View>
   );
 }
@@ -283,7 +196,6 @@ const styles = StyleSheet.create({
   navLink: { fontFamily: font.numSemibold, fontSize: 9.5, letterSpacing: tracking.label, color: color.t3 },
 
   label: { fontFamily: font.numSemibold, fontSize: 8, letterSpacing: tracking.wide, color: color.t3, marginTop: space.xl },
-  labelDim: { fontFamily: font.numSemibold, fontSize: 8, letterSpacing: 0.6, color: color.t3, marginTop: space.xl },
   nameInput: {
     fontFamily: font.uiSemibold,
     fontSize: 19,
@@ -293,7 +205,6 @@ const styles = StyleSheet.create({
     borderBottomColor: color.acc35,
   },
 
-  exHeadRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
   emptyText: { fontFamily: font.num, fontSize: 12, color: color.t3, marginTop: space.md },
 
   itemRow: {
@@ -307,43 +218,8 @@ const styles = StyleSheet.create({
   itemNum: { fontFamily: font.numSemibold, fontSize: 9.5, color: color.t3, width: 16 },
   itemName: { fontFamily: font.uiMedium, fontSize: 13, color: color.t1 },
   itemMeta: { fontFamily: font.num, fontSize: 9, letterSpacing: 0.6, color: color.t3, marginTop: 6 },
-  targets: { flexDirection: 'row', alignItems: 'flex-start', gap: 4 },
-  targetCol: { alignItems: 'center' },
-  repPair: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  tCap: { fontFamily: font.numSemibold, fontSize: 7, letterSpacing: 0.5, color: color.t3, marginTop: 4 },
-  tSepTop: { fontFamily: font.num, fontSize: 11, color: color.t3, marginTop: 5 },
-  tInput: {
-    width: 26,
-    fontFamily: font.numSemibold,
-    fontSize: 12,
-    color: color.t1,
-    textAlign: 'center',
-    paddingVertical: 2,
-    borderBottomWidth: 1,
-    borderBottomColor: color.line2,
-  },
-  tSep: { fontFamily: font.num, fontSize: 11, color: color.t3 },
   rowBtns: { flexDirection: 'row', gap: 10, marginLeft: 4 },
   rowBtn: { fontFamily: font.numSemibold, fontSize: 14, color: color.t2 },
-
-  accessoryBar: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    paddingHorizontal: space.lg,
-    paddingVertical: space.sm,
-    backgroundColor: color.s1,
-    borderTopWidth: 1,
-    borderTopColor: color.line2,
-  },
-  accessoryDone: {
-    fontFamily: font.numSemibold,
-    fontSize: 12,
-    letterSpacing: tracking.label,
-    color: color.acc,
-    paddingHorizontal: space.sm,
-    paddingVertical: 2,
-  },
 
   addEx: {
     height: 46,
