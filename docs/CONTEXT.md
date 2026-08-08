@@ -10,7 +10,13 @@ codebase or a huge prior conversation.
 > issues**) *and* append a dated entry to [`WORK-LOG.md`](./WORK-LOG.md). This file is the
 > snapshot; `WORK-LOG.md` is the full history. Keep this file short.
 
-**Last updated:** 2026-08-08 — **App Store prep, part 2: privacy policy + `eas.json`.**
+**Last updated:** 2026-08-08 — **Feedback fixes #16 / #15 + warmup-removal logged (#31).**
+**#16:** the finish summary now reads in **kg** regardless of the profile display unit
+(`finish/[id].tsx`) — kills the tonne-on-pounds label bug (a converted lb volume no longer gets a `t`
+suffix). **#15:** the plate-per-side hint moved from a 9.5px footer whisper to a readable line
+(11.5px) right under the KG/REPS fields in `SetKeypad`. Also logged **#31** (remove the warmup feature
+entirely — UI only; the `set_type` enum + Hevy import stay) and **withdrew #29** (warmup ramp). `tsc` +
+web-export green; not on device. Prior: **App Store prep, part 2: privacy policy + `eas.json`.**
 `docs/legal/privacy-policy.html` (self-contained, LED-themed, written from a real audit of the code —
 there are **no** analytics/ads/crash SDKs anywhere, so Supabase is the only third party) + a Settings →
 ABOUT → "Privacy policy" row, since 5.1.1(i) wants the link in-app *and* in App Store Connect.
@@ -155,9 +161,9 @@ logging via an LLM pipeline, **3** TBD (PRs/charts).
 
 Static checks currently green: `tsc --noEmit` clean; `expo export --platform web` bundles all 15 routes;
 `xcodebuild -allowProvisioningUpdates` builds + installs Release to physical hardware.
-**Feedback pass (`FEEDBACK-LOG.md`): 15 of 30 done** — ✅ #1 #2 #3 #4 #6 #7 #9 #10 #11 #13 #14 #18 #20
-#21 #26 (#12 dissolved by #13) · 🟡 #5 (fix applied — keyboard-avoidance; device-confirm pending) ·
-⬜ #8 #15 #16 #17 #19 #22 #23 #24 #25 #27 #28 #29 #30.
+**Feedback pass (`FEEDBACK-LOG.md`): 17 of 30 done** — ✅ #1 #2 #3 #4 #6 #7 #9 #10 #11 #13 #14 #15 #16
+#18 #20 #21 #26 (#12 dissolved by #13) · 🟡 #5 (fix applied — keyboard-avoidance; device-confirm
+pending) · ⬜ #8 #17 #19 #22 #23 #24 #25 #27 #28 #30 #31 (#29 withdrawn — superseded by #31).
 
 ## Pending actions (owner: user / next session)
 

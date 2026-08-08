@@ -156,6 +156,16 @@ export function SetKeypad(props: SetKeypadProps) {
           />
         </View>
 
+        {/* Plate hint sits right under the weight field, where the eyes are while
+            typing — not buried at the bottom of the sheet (feedback #15). */}
+        <View style={styles.plateRow}>
+          {plates ? (
+            <Text style={styles.plateText} numberOfLines={1} ellipsizeMode="tail">
+              PLATES / SIDE · {plates}
+            </Text>
+          ) : null}
+        </View>
+
         <View style={styles.repChips}>
           {REP_CHIPS.map((n) => {
             const on = reps === n;
@@ -210,20 +220,13 @@ export function SetKeypad(props: SetKeypadProps) {
           </Text>
         </Pressable>
 
-        <View style={styles.footNote}>
-          {plates ? (
-            <Text style={styles.plateText} numberOfLines={1} ellipsizeMode="tail">
-              PLATES PER SIDE · {plates}
-            </Text>
-          ) : (
-            <Text style={styles.plateText}> </Text>
-          )}
-          {props.mode === 'edit' && props.onDelete && (
+        {props.mode === 'edit' && props.onDelete && (
+          <View style={styles.editActions}>
             <Pressable onPress={props.onDelete} hitSlop={8} style={styles.deleteBtn}>
               <Text style={styles.deleteText}>DELETE SET</Text>
             </Pressable>
-          )}
-        </View>
+          </View>
+        )}
 
         {props.mode === 'edit' && props.onDeleteWorkout && (
           <View style={styles.deleteWorkoutRow}>
@@ -352,14 +355,18 @@ const styles = StyleSheet.create({
   logBtnOff: { borderColor: color.line2 },
   logText: { fontFamily: font.uiMedium, fontSize: 11, letterSpacing: tracking.label, color: color.acc },
 
-  footNote: {
+  // Plate hint, promoted from a 9.5px footer whisper to a readable line right under
+  // the fields (feedback #15). Reserve height so it doesn't shift the pad when it
+  // appears/clears as the weight crosses the bar weight.
+  plateRow: { minHeight: 16, marginTop: 8, justifyContent: 'center' },
+  plateText: { fontFamily: font.numSemibold, fontSize: 11.5, letterSpacing: 0.6, color: color.t2 },
+
+  editActions: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     alignItems: 'center',
     marginTop: space.md,
-    minHeight: 14,
   },
-  plateText: { fontFamily: font.num, fontSize: 9.5, letterSpacing: 0.6, color: color.t3 },
   // A real outlined button, not a whisper of footer text — feedback #11 was "no delete
   // set option?" because the old 9.5px link went unseen. Long-press on the grid row is
   // the fast path; this is the discoverable one you reach by tapping a set to edit it.

@@ -6,6 +6,41 @@ entry at top. When an item is fixed, mark it and move the detail into `WORK-LOG.
 
 ---
 
+## 2026-08-08 (8) — Feature request: remove warmup sets entirely
+
+**Context:** user-requested. "I don't want to log the warmup set, and I don't want to see any
+mention of warmup in my application." This **withdraws #29** (the warmup-ramp generator) — no point
+improving a feature we're deleting.
+
+### Summary
+
+| # | Item | Area | Done? | Sev | Effort |
+|---|------|------|-------|-----|--------|
+| 31 | Remove the warmup set feature — no "+ WARMUP" entry, no "W"/WARMUP labels anywhere | Logging UX / history | ⬜ OPEN | Med | S |
+
+---
+
+### 31. Remove warmup sets from the app ⬜ Med
+**Requested:** drop warmup entirely — the ability to log a warmup set and every visible trace of the
+word "warmup".
+**Verified — the manual-UI footprint is small and self-contained:**
+- **Add path:** `workout/[id].tsx:416-417` renders the `+ WARMUP` button (`openAdd('warmup')`); `:179-180`
+  force `kg`/`reps` to `null` for a warmup; `:199` skips the #26 auto-advance for warmups.
+- **Labels:** the grid shows a `W` for warmup rows (`workout/[id].tsx:376`); history does the same plus a
+  `WARMUP` tag (`history/[id].tsx:130,132-133`).
+**Leave in place (not user-visible, needed for data integrity):** the `set_type` enum
+(`types/db.ts:10`) and its DB check (`0001_init.sql:92-93`) — the column stays so **imported Hevy data**
+that contains warmup sets still loads (`lib/hevy.ts` maps `warmup`), and the Phase-2 voice
+correction UI (`VoiceConfirmationCard`) keeps the type list; voice is unwired from the manual screens
+today, so it's not a visible surface. So this is a **UI-removal**, not a schema change.
+**Fix (scope, not started):** remove the `+ WARMUP` button + `openAdd('warmup')` and the warmup-null /
+auto-advance-skip branches in `workout/[id].tsx`; render plain set numbers (drop the `W` special-case)
+in both the live grid and `history/[id].tsx` (and its `WARMUP` tag). Decide the display for any
+*existing* warmup rows (imported or already-logged): simplest is to just number them like any other set.
+(S)
+
+---
+
 ## 2026-08-08 (7) — Gemini PM-lens pass: micro-interaction friction + "hyper-intelligent" ideas
 
 **Context:** a product-management-style review from Gemini (not a device recording), focused on
@@ -21,8 +56,11 @@ in full below; not all items need to be built.
 | 26 | Auto-advance/reopen keypad for the next set after logging | Logging UX | ✅ DONE (code 2026-08-08) | Med | S |
 | 27 | Superset linking — group 2 exercises, cycle input between them | Logging UX | ⬜ OPEN | Low | M |
 | 28 | Progressive-overload ghost suggestion (vs. flat previous-best prefill) | Logging UX | ⬜ OPEN (builds on #3) | Low | M |
-| 29 | One-tap warmup ramp generator (50/70/90% of working weight) | Logging UX | ⬜ OPEN | Low | S |
 | 30 | Global rest timer, auto-triggered on set-checkoff | Logging UX | ⬜ OPEN — **conflicts with #2, needs a call** | — | — |
+
+> **#29 (one-tap warmup ramp) was withdrawn 2026-08-08** — superseded by **#31**, which removes the
+> warmup feature entirely (see the top of this log). No point auto-generating a ramp for a thing
+> we're deleting.
 
 ---
 
@@ -81,16 +119,6 @@ separate prefill changes.
 **Fix (scope, not started):** define the progression rule (e.g. +2.5kg if all sets hit the top of
 the rep range), compute it from the last session's sets vs. the routine's `target_reps_high`, show
 it as a ghosted/suggested value distinct from a hard prefill. (M)
-
-### 29. One-tap warmup ramp generator ⬜ Low
-**Proposed:** the "+ Warmup" button should auto-generate a 50/70/90%-of-working-weight ramp
-instead of requiring the user to type each warmup set manually.
-**Verified:** `+ Warmup` exists (`workout/[id].tsx:359`, `openAdd('warmup')`) but only opens the
-keypad with `kg`/`reps` forced to `null` (`:154-155`) — a blank entry, same manual typing as any
-other set, just tagged `set_type: 'warmup'`.
-**Fix:** once a working-set weight exists for the exercise (this session or prefilled from last
-time), generate 2-3 warmup rows at 50/70/90% (rounded to a sane plate increment) that the user can
-accept with one tap each or edit. (S)
 
 ### 30. Global rest timer, auto-triggered on checkoff ⬜ — **conflicts with a shipped decision (#2)**
 **Asked:** "are you planning to integrate a global rest timer that automatically triggers the
@@ -326,8 +354,8 @@ code-verified below.
 | # | Item | Area | Done? | Sev | Effort |
 |---|------|------|-------|-----|--------|
 | 14 | No max-weight validation → plate calculator runs off-screen | Logging UX / data validation | ✅ DONE | High | S |
-| 15 | Plate-calculator text too small / placed too low | Logging UX | ⬜ OPEN | Low | S |
-| 16 | Volume shown as "4.7t" — raw kg may be more scannable | Summary screen | ⬜ OPEN (needs a call) | Low | S |
+| 15 | Plate-calculator text too small / placed too low | Logging UX | ✅ DONE | Low | S |
+| 16 | Volume shown as "4.7t" — raw kg may be more scannable | Summary screen | ✅ DONE (finish summary pinned to kg) | Low | S |
 
 ---
 
@@ -358,7 +386,7 @@ absurd weight hides the hint instead of emitting a runaway string; (3) `plateTex
 `numberOfLines={1}` + `ellipsizeMode="tail"` so it can never overflow the row regardless. `tsc` +
 web-export green.
 
-### 15. Plate-calculator text is small and easy to miss ⬜ Low
+### 15. Plate-calculator text is small and easy to miss ✅ Low
 **Reported:** "Plates per side" sits at the very bottom of the keypad sheet, in small type,
 away from where the user is actually looking (the weight/reps fields).
 **Verified:** `plateText` is `fontSize: 9.5` (`SetKeypad.tsx:310`), placed in `footNote` below
@@ -366,8 +394,14 @@ the entire numeric pad and LOG button (`:177-188`) — visually as far as possib
 (`:126-141`, the KG/REPS boxes at the top of the sheet) where the user's eyes are while typing.
 **Fix:** move the plate hint to directly under `fields` (or inline in the KG field's label row)
 and bump it a size or two. Straightforward layout change, no logic change.
+**Done (2026-08-08):** the plate hint now sits in its own row **directly under the KG/REPS fields**
+(`SetKeypad.tsx`), bumped 9.5px→11.5px and to `numSemibold`/`t2` (was `num`/`t3`) so it reads at a
+glance where the eyes already are. Label shortened to `PLATES / SIDE · …`; row has a reserved
+`minHeight` so the pad doesn't jump when the hint appears/clears at the bar weight; kept
+`numberOfLines={1}` (feedback #14 overflow guard). The old bottom `footNote` became an edit-only
+`editActions` row holding just the DELETE SET button.
 
-### 16. Volume as "4.7t" vs raw kg — may want a toggle ⬜ Low — **needs a call, not a bug**
+### 16. Volume as "4.7t" vs raw kg — may want a toggle ✅ Low
 **Reported:** the finish-summary volume ("4.7t") is accurate but some users may find raw kg
 (4,700) easier to compare week-to-week at a glance; suggests a settings toggle.
 **Verified:** `finish/[id].tsx:54` — `vol >= 1000 ? `${(vol/1000).toFixed(1)}t` : Math.round(vol)`.
@@ -377,6 +411,12 @@ crossing 1000 lb also sees a `t` (tonne) label on a pound figure, which is a rea
 bug independent of the raw-vs-abbreviated question. If addressing this, fix both at once: decide
 kg/tonne vs raw as a preference (possibly reuse the existing `profiles.default_unit` toggle
 rather than adding a second setting), and make the abbreviation threshold/label unit-aware.
+**Done (2026-08-08):** per the product call, **the whole finish summary now reads in kg** — the
+storage unit — regardless of the profile's display unit (`finish/[id].tsx` sets `unit = 'kg'` instead
+of reading `profiles.default_unit`). This kills the bug outright: a tonne is metric, so the `t`
+suffix on a kg value is correct (1000 kg = 1 t), and a lb user never again sees `t` on a pound figure.
+Volume, NEW BESTS values, and per-exercise TOP all show kg. The `t`/tonne abbreviation was kept (it's
+unit-correct now and keeps the tile scannable) — flip to raw kg trivially if preferred.
 
 ---
 

@@ -7,6 +7,33 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-08 — Feedback fixes: #16 finish summary in kg, #15 plate hint moved up; #31 logged, #29 withdrawn
+
+Two small logging-readout fixes (user asked for these after picking the next batch), plus feedback
+bookkeeping. Feedback-log chat, implementation explicitly requested.
+
+- **#16 — finish summary reads in kg.** The summary rendered every number through the profile's
+  display unit, and the volume tile applied the `t` (tonne) threshold to the *converted* value — so a
+  **lb** user over 1000 lb saw `4.7t` (tonne) on a pound figure. Per the product call, the whole finish
+  screen is now pinned to **kg** (`finish/[id].tsx`: `unit = 'kg'`, dropped the `useProfile` read).
+  That fixes the bug for free — a tonne is metric, so `t` on a kg value is correct. Kept the `t`
+  abbreviation (unit-correct now, keeps the tile scannable); raw-kg is a one-line change if wanted.
+- **#15 — plate hint promoted.** "Plates per side" was 9.5px in a footer *below* the pad + LOG button,
+  as far as possible from where the eyes sit. Moved it to its own row **directly under the KG/REPS
+  fields** in `SetKeypad`, 9.5→11.5px, `num`/`t3`→`numSemibold`/`t2`, relabeled `PLATES / SIDE · …`,
+  with a reserved `minHeight` so the pad doesn't jump as it appears/clears at the bar weight
+  (`numberOfLines={1}` kept — #14 overflow guard). The old footer became an edit-only `editActions` row
+  holding just DELETE SET.
+- **Feedback bookkeeping.** Logged **#31** — remove the warmup feature entirely (user: "don't want to
+  see any mention of warmup"). It's a UI-removal (`+ WARMUP` button + `W`/`WARMUP` labels in
+  `workout/[id].tsx` and `history/[id].tsx`); the `set_type` enum + DB check + Hevy import stay so
+  imported warmup rows still load. **Withdrew #29** (warmup-ramp generator) — no point improving a
+  feature we're deleting.
+
+`tsc --noEmit` clean. Not yet on device. Committed with the docs.
+
+---
+
 ## 2026-08-08 — Release plumbing: privacy policy + `eas.json`
 
 Second half of the App Store prep. Nothing here changes app behaviour except one new Settings row.

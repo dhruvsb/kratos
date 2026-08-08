@@ -6,7 +6,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Empty, Loading } from '@/components/ui';
-import { useExerciseBests, useProfile, useWorkout } from '@/data/hooks';
+import { useExerciseBests, useWorkout } from '@/data/hooks';
 import type { WorkoutSet, Unit } from '@/types/db';
 import { formatSet, formatWeight, kgToDisplay } from '@/lib/units';
 import { color, font, radius, shadow, space, tracking } from '@/theme/tokens';
@@ -26,8 +26,10 @@ export default function FinishScreen() {
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const workout = useWorkout(id);
-  const profile = useProfile();
-  const unit: Unit = profile.data?.default_unit ?? 'kg';
+  // #16: the finish summary always reads in kg — the storage unit. This fixes the
+  // unit-label bug (a converted lb volume still got a "t"/tonne suffix), and per
+  // the product call the payoff screen shows kg regardless of the display unit.
+  const unit: Unit = 'kg';
 
   // Pre-workout all-time bests (excludes this workout server-side), for the
   // NEW BESTS callout. Order of hooks: must run before the early returns.
