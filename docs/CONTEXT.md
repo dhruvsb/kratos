@@ -10,7 +10,17 @@ codebase or a huge prior conversation.
 > issues**) *and* append a dated entry to [`WORK-LOG.md`](./WORK-LOG.md). This file is the
 > snapshot; `WORK-LOG.md` is the full history. Keep this file short.
 
-**Last updated:** 2026-08-08 — **Feedback fixes #16 / #15 + warmup-removal logged (#31).**
+**Last updated:** 2026-08-08 — **Light theme (#17), Phase 1: theme plumbing (dark-only, zero visual
+change).** `tokens.ts` now exports `themes.{dark,light}` (each `{ color, shadow }`); `dark` is the
+untouched literal default, `light` is a placeholder clone until the user supplies the design.
+`src/theme/ThemeProvider.tsx` resolves the active palette from a persisted preference
+(`data/settings.ts` `themeMode`, default `'system'`) + RN `Appearance` (live), via `useTheme()` /
+`useThemeName()` / `useThemeMode()`; mounted in `_layout`. Back-compat: the static `color`/`shadow`
+exports still equal dark, so the ~28 unmigrated screens are byte-for-byte unchanged. `Appearance` is
+JS-only ⇒ no rebuild. `tsc` + web-export green. **Next:** Phase 2 (migrate screens to `useTheme()` +
+drop in real light values — **needs the light palette from the user**), Phase 3 (Settings
+Light·Dark·System control + theme-aware status bar). Decisions locked: user supplies the design (not a
+mechanical invert); follow-system + Settings override. Prior: **Feedback fixes #16 / #15 + warmup-removal logged (#31).**
 **#16:** the finish summary now reads in **kg** regardless of the profile display unit
 (`finish/[id].tsx`) — kills the tonne-on-pounds label bug (a converted lb volume no longer gets a `t`
 suffix). **#15:** the plate-per-side hint moved from a 9.5px footer whisper to a readable line
@@ -163,7 +173,8 @@ Static checks currently green: `tsc --noEmit` clean; `expo export --platform web
 `xcodebuild -allowProvisioningUpdates` builds + installs Release to physical hardware.
 **Feedback pass (`FEEDBACK-LOG.md`): 17 of 30 done** — ✅ #1 #2 #3 #4 #6 #7 #9 #10 #11 #13 #14 #15 #16
 #18 #20 #21 #26 (#12 dissolved by #13) · 🟡 #5 (fix applied — keyboard-avoidance; device-confirm
-pending) · ⬜ #8 #17 #19 #22 #23 #24 #25 #27 #28 #30 #31 (#29 withdrawn — superseded by #31).
+pending) · 🟡 #17 light theme (Phase 1 plumbing done; Phase 2/3 need the light palette from the user)
+· ⬜ #8 #19 #22 #23 #24 #25 #27 #28 #30 #31 (#29 withdrawn — superseded by #31).
 
 ## Pending actions (owner: user / next session)
 

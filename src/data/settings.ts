@@ -10,18 +10,27 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+/** Theme preference (#17): follow the OS ('system') or force a palette. */
+export type ThemeMode = 'system' | 'light' | 'dark';
+
 export type AppSettings = {
   /** Pre-fill the pending set row from last session (mockup 04). Off ⇒ blank rows
    *  every set (mockup 15's blank-field treatment for every lift, not just new ones). */
   prefillFromLastSession: boolean;
   /** Sessions/week the calendar tally counts toward (mockup 12's "five a week"). */
   weeklyGoal: number;
+  /** Light/dark preference; 'system' follows the OS appearance (#17). */
+  themeMode: ThemeMode;
 };
 
 export const DEFAULT_SETTINGS: AppSettings = {
   prefillFromLastSession: true,
   weeklyGoal: 5,
+  themeMode: 'system',
 };
+
+/** Theme options offered by the Settings control (#17 Phase 3). */
+export const THEME_MODES: ThemeMode[] = ['system', 'light', 'dark'];
 
 const STORAGE_KEY = 'repvoice.settings.v1';
 const SETTINGS_KEY = ['settings'] as const;

@@ -27,7 +27,7 @@ export const font = {
   numBold: 'GeistMono_700Bold',
 } as const;
 
-export const color = {
+const darkColor = {
   // Base canvas + surfaces (--s0/s1/s2/sin + body bg)
   bg: '#020609',
   s0: '#070C11',
@@ -81,6 +81,17 @@ export const color = {
   tagNeutralBorder: 'rgba(150,205,255,0.18)',
 } as const;
 
+// Light-theme palette — PLACEHOLDER (#17 Phase 2). Identical to dark for now so the
+// app stays visually unchanged while the theme *plumbing* lands. The real light
+// "LED-instrument" values (from the design) drop in here; keys must match darkColor
+// exactly, so a spread clone is the typed scaffold to overwrite.
+const lightColor: typeof darkColor = { ...darkColor };
+
+// Back-compat: the ~28 screens that still `import { color } from '@/theme/tokens'`
+// resolve to the dark palette until they migrate to useTheme() (#17 Phase 2). Dark
+// remains the literal source of truth for the default look.
+export const color = darkColor;
+
 export const radius = {
   ctl: 10, // --rad-ctl
   card: 16, // --rad-card
@@ -104,7 +115,7 @@ export const space = {
 // Elevation recipes. RN can't express inset shadows, so "recessed" wells are
 // approximated with a dark inset-tinted background + hairline; the raised keycap
 // look is a real (outer) shadow. Spread as {...shadow.key} onto a style.
-export const shadow = {
+const darkShadow = {
   // Raised physical keycap (--key-shadow ≈ top highlight + bottom drop)
   key: {
     shadowColor: '#000',
@@ -137,6 +148,24 @@ export const shadow = {
     elevation: 0,
   },
 } as const;
+
+// Light-theme shadows — PLACEHOLDER (#17 Phase 2). On a light canvas the LED "glow"
+// bloom reads wrong; the design will likely swap these for soft drop-shadows or plain
+// borders. Identical to dark for now.
+const lightShadow: typeof darkShadow = { ...darkShadow };
+
+export const shadow = darkShadow;
+
+// The theme registry. `color` + `shadow` are per-mode; radius/space/font/tracking/
+// timing are shared (not theme-dependent). useTheme() resolves { color, shadow } for
+// the active mode — see src/theme/ThemeProvider.tsx.
+export const themes = {
+  dark: { color: darkColor, shadow: darkShadow },
+  light: { color: lightColor, shadow: lightShadow },
+} as const;
+
+export type ThemeName = keyof typeof themes;
+export type Theme = { color: typeof darkColor; shadow: typeof darkShadow };
 
 // Letter-spacing presets (the mockup leans on wide tracking for LED labels).
 export const tracking = {

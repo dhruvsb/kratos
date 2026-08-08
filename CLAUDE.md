@@ -24,14 +24,21 @@ changes what's built or decided — don't let the docs drift from reality.
   display concern only. Default display unit: **kg** (`profiles.default_unit`).
 - **No API keys in client code.** All future AI/LLM calls go through Supabase Edge
   Functions. The client holds only the anon key (via `.env` → `app.config.ts` extra).
-- **The design phase has happened — the UI is the dark "LED-instrument" theme.** (This
+- **The design phase has happened — the dark "LED-instrument" theme is the default.** (This
   supersedes the old "frontend is intentionally unstyled / black-white-grey only" rule.)
-  `src/theme/tokens.ts` is fully populated and is the **single source of truth for every
-  color, font, radius, spacing, and shadow** — never hardcode a value that has a token, and
-  never introduce a color/font outside the token set. Fonts are Instrument Sans (UI) + Geist
-  Mono (numbers) — the "type option 01" refresh (2026-07-31). The reference designs live in
-  `docs/design/` (`RepVoice-Manual.dc.html` is what's implemented; the voice-first canvas is
-  kept for Phase 2).
+  `src/theme/tokens.ts` is the **single source of truth for every color, font, radius, spacing,
+  and shadow** — never hardcode a value that has a token, and never introduce a color/font
+  outside the token set. Fonts are Instrument Sans (UI) + Geist Mono (numbers) — the "type
+  option 01" refresh (2026-07-31). The reference designs live in `docs/design/`
+  (`RepVoice-Manual.dc.html` is what's implemented; the voice-first canvas is kept for Phase 2).
+  - **Theming (#17, in progress):** `color`/`shadow` are now **per-mode** — `tokens.ts` exports
+    `themes.{dark,light}`, resolved at runtime by `useTheme()` (`src/theme/ThemeProvider.tsx`,
+    preference persisted in `data/settings.ts`, `'system'` follows the OS). `radius`/`space`/
+    `font`/`tracking`/`timing` stay shared (not theme-dependent). **Dark is unchanged and still
+    the literal default**; the `light` palette is a placeholder clone until the design lands.
+    Screens still `import { color } from '@/theme/tokens'` (= dark) until migrated to `useTheme()`
+    — new/edited screens should read `color`/`shadow` from `useTheme()`, everything else from the
+    static token exports.
 - **All DB access goes through `src/data/` repository modules.** Screens and components
   never import `src/lib/supabase.ts` directly — auth is also wrapped, in `src/data/auth.ts`.
 - Security model is **Postgres RLS** (`user_id = auth.uid()`, child tables via join).

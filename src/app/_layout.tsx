@@ -17,6 +17,7 @@ import {
   resetQueryCache,
 } from '@/lib/queryClient';
 import { useAppFonts } from '@/theme/fonts';
+import { ThemeProvider } from '@/theme/ThemeProvider';
 import { color } from '@/theme/tokens';
 
 // Hold the native splash until the session check, fonts, AND the persisted-cache
@@ -88,7 +89,11 @@ export default function RootLayout() {
           void queryClient.resumePausedMutations();
         }}
       >
-        <BootGate ready={ready} fontsReady={fontsReady}>
+        {/* Resolves the active palette from the persisted preference + OS appearance.
+            Phase 1: plumbing only (light === dark until the design lands), so this is
+            visually a no-op today — it just makes useTheme() available for Phase 2. */}
+        <ThemeProvider>
+          <BootGate ready={ready} fontsReady={fontsReady}>
           {session ? (
             // Every screen is the dark LED theme and draws its own header +
             // safe-area (back links live in-screen), so the native header stays
@@ -117,7 +122,8 @@ export default function RootLayout() {
               <SignInScreen />
             </>
           )}
-        </BootGate>
+          </BootGate>
+        </ThemeProvider>
       </PersistQueryClientProvider>
     </SafeAreaProvider>
   );

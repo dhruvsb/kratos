@@ -318,12 +318,27 @@ reads sensibly with 7–8 regions instead of 6. Same-shape request likely applie
 
 | # | Item | Area | Done? | Sev | Effort |
 |---|------|------|-------|-----|--------|
-| 17 | Add a light theme (dark-only today) | Theming / design system | ⬜ OPEN | Med | L |
+| 17 | Add a light theme (dark-only today) | Theming / design system | 🟡 IN PROGRESS (Phase 1 plumbing done) | Med | L |
 
 ---
 
-### 17. Add a light theme ⬜ Med — **conflicts with a hard rule, needs a call**
-**Requested:** a light theme option alongside the current dark UI.
+### 17. Add a light theme 🟡 Med — **decisions made; Phase 1 (plumbing) landed 2026-08-08**
+**Decisions (user):** (1) the user supplies the light **design** — not a mechanical invert; (2)
+behavior is **follow-system with a Settings override**. Building in phases: **1** theme
+infrastructure (done), **2** migrate the ~28 screens off the static `color`/`shadow` imports to
+`useTheme()` + drop in the real light values, **3** the Settings `Light · Dark · System` control +
+theme-aware status bar, **4** docs.
+**Phase 1 done (2026-08-08) — plumbing only, zero visual change:** `tokens.ts` now exports
+`themes.{dark,light}` (each `{ color, shadow }`); `dark` is the untouched literal source of truth,
+`light` is a **placeholder clone** until the design arrives. `src/theme/ThemeProvider.tsx` resolves
+the active palette from a persisted preference (`data/settings.ts` `themeMode`, default `'system'`)
++ RN `Appearance` (live OS-change listener), exposed via `useTheme()` / `useThemeName()` /
+`useThemeMode()`. Mounted in `_layout`. Back-compat: the static `color`/`shadow` exports still equal
+dark, so the unmigrated screens render exactly as before. `Appearance` is JS-only ⇒ **no dev-client
+rebuild**. `tsc` + web-export green. **Next:** Phase 2 needs the light palette values from the user
+(see the format options in the session) before the 28-screen migration.
+<details><summary>Original verification (2026-08-08)</summary>
+
 **Verified:** there is currently **no theming abstraction at all**. `src/theme/tokens.ts` exports
 one flat `color` const (`bg`, `s0`/`s1`/`s2`, `t1`/`t2`/`t3`, `acc`, etc.) imported directly by
 **27 files** across `src/app/` and `src/components/`; there's no `useColorScheme`/`Appearance`
@@ -334,13 +349,7 @@ outside the token set." That rule assumes a single palette; a light theme means 
 second full token set + a theme-context/provider that every one of those 27 call sites resolves
 through, or (b) a separate light "LED-instrument" design pass first — the lime-on-black accent,
 glow shadows, and meter-bar ramp in `tokens.ts` are dark-canvas-specific and wouldn't just invert.
-**Fix (scope, not started):** (1) decide whether light is a real second design pass or a
-mechanical invert; (2) if building it, introduce a `ThemeProvider`/context wrapping
-`color`/`shadow` per-mode, migrate the 27 direct-import call sites to consume it, add a persisted
-preference (reuse the `profiles`/local-settings pattern already used for `default_unit`), default
-to system `Appearance` with a manual override in Settings. This is the largest item in the open
-backlog — flag with the user before scheduling given the showcase-first / sleek-minimal priority
-in `PRODUCT-PRINCIPLES.md`.
+</details>
 
 ---
 

@@ -7,6 +7,40 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-08 — Light theme (#17) Phase 1: theme infrastructure (dark-only, zero visual change)
+
+First slice of the biggest backlog item. Decisions locked with the user first: **the user supplies the
+light design** (not a mechanical invert — the lime accent + LED glows don't survive inversion on white),
+and behavior is **follow-system with a Settings override**. Built in phases so the design-agnostic
+plumbing lands now and the 28-screen migration + real light values come once the palette arrives.
+
+**Phase 1 (this session) — plumbing only, nothing changes visually:**
+- **`tokens.ts` → per-mode palettes.** The flat `color`/`shadow` consts became `darkColor`/`darkShadow`
+  (verbatim values) + placeholder `lightColor`/`lightShadow` (typed clones of dark, to overwrite in
+  Phase 2). Exported as `themes.{dark,light}` (each `{ color, shadow }`), plus `ThemeName`/`Theme`
+  types. `radius`/`space`/`font`/`tracking`/`timing` stay shared. **Back-compat kept:** `export const
+  color`/`shadow` still point at dark, so the ~28 screens that import them statically are byte-for-byte
+  unchanged — no migration forced yet.
+- **`src/theme/ThemeProvider.tsx` (new).** `ThemeProvider` resolves the active palette from the stored
+  preference + OS appearance; `useTheme()` (→ `{ color, shadow }`), `useThemeName()`, and
+  `useThemeMode()` (→ `{ mode, setMode }` for the Phase-3 Settings control). `Appearance.getColorScheme()`
+  seeds first paint synchronously; an `Appearance` listener keeps `'system'` live if the OS flips.
+  Falls back to dark outside the provider (can't crash a stray consumer).
+- **`data/settings.ts`.** Added `themeMode: 'system' | 'light' | 'dark'` (default `'system'`) to
+  `AppSettings` + a `THEME_MODES` preset; the load-merge-over-defaults path picks it up for existing
+  stored settings. Persisted via the existing optimistic `useUpdateSettings`.
+- **`_layout.tsx`.** Mounted `<ThemeProvider>` under the query provider (it reads `useSettings`). The
+  Stack's `contentStyle`/`statusBarStyle` still use the static dark `color` — made theme-aware in Phase 3.
+- **`CLAUDE.md`.** Amended the single-palette hard rule to describe the theme layer (tokens.ts still the
+  SoT, now `themes.{dark,light}` via `useTheme()`; dark unchanged + default; new/edited screens read
+  `color`/`shadow` from `useTheme()`).
+
+`Appearance` is JS-only ⇒ **no dev-client rebuild**. `tsc` + web-export green. Zero visual change (light
+=== dark today), so nothing to see on device yet. **Blocked on the user for Phase 2:** the light palette
+values (hex map against the token keys, a light `.dc.html` canvas, or a mockup to sample).
+
+---
+
 ## 2026-08-08 — Feedback fixes: #16 finish summary in kg, #15 plate hint moved up; #31 logged, #29 withdrawn
 
 Two small logging-readout fixes (user asked for these after picking the next batch), plus feedback
