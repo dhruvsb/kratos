@@ -410,9 +410,9 @@ export default function HomeScreen() {
         active="home"
         tabs={[
           { key: 'home', label: 'HOME' },
-          { key: 'calendar', label: 'CALENDAR', onPress: () => router.push('/calendar') },
-          { key: 'history', label: 'HISTORY', onPress: () => router.push('/history') },
-          { key: 'settings', label: 'SETTINGS', onPress: () => router.push('/settings') },
+          { key: 'calendar', label: 'CALENDAR', onPress: () => router.replace('/calendar') },
+          { key: 'history', label: 'HISTORY', onPress: () => router.replace('/history') },
+          { key: 'settings', label: 'SETTINGS', onPress: () => router.replace('/settings') },
         ]}
       />
     </View>

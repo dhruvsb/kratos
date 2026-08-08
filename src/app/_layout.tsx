@@ -31,6 +31,15 @@ const persistOptions = {
   buster: CACHE_BUSTER,
 };
 
+// The four TabBar destinations are *lateral* moves, not "deeper" ones, so they
+// cross-fade instead of playing the iOS slide-from-right push. The slide is what
+// made tab switching read as wrong — horizontal travel means "you went one level
+// in", which a tab hop never does. Detail routes (workout, exercise, routine,
+// finish…) are deliberately left on the native push so depth still reads as depth.
+// Paired with router.replace() at every TabBar call site, so stack depth stays 1
+// instead of growing on every hop.
+const TAB_SCREEN = { animation: 'fade', animationDuration: 160 } as const;
+
 export default function RootLayout() {
   const [session, setSession] = useState<Session | null>(null);
   const [ready, setReady] = useState(false);
@@ -91,7 +100,12 @@ export default function RootLayout() {
                   statusBarStyle: 'light',
                   contentStyle: { backgroundColor: color.bg },
                 }}
-              />
+              >
+                <Stack.Screen name="index" options={TAB_SCREEN} />
+                <Stack.Screen name="calendar" options={TAB_SCREEN} />
+                <Stack.Screen name="history/index" options={TAB_SCREEN} />
+                <Stack.Screen name="settings" options={TAB_SCREEN} />
+              </Stack>
               {/* Floats over every screen; only visible offline or while the
                   offline queue is draining. */}
               <OfflineBanner />

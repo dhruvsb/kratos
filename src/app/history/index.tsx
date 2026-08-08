@@ -108,10 +108,10 @@ export default function HistoryScreen() {
       <TabBar
         active="history"
         tabs={[
-          { key: 'home', label: 'HOME', onPress: () => router.push('/') },
-          { key: 'calendar', label: 'CALENDAR', onPress: () => router.push('/calendar') },
+          { key: 'home', label: 'HOME', onPress: () => router.replace('/') },
+          { key: 'calendar', label: 'CALENDAR', onPress: () => router.replace('/calendar') },
           { key: 'history', label: 'HISTORY' },
-          { key: 'settings', label: 'SETTINGS', onPress: () => router.push('/settings') },
+          { key: 'settings', label: 'SETTINGS', onPress: () => router.replace('/settings') },
         ]}
       />
     </View>

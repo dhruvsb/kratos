@@ -7,6 +7,40 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-08 — First run on real hardware (iPhone 15) + tab-transition fix
+
+**First time the app ran on physical hardware**, not a simulator. Installed as a Release build
+via a free Apple **Personal Team** (`TUR974K866`, dhruvsb@icloud.com) — no paid Apple Developer
+account, fully wireless once trusted, no cable needed for daily use. Signing cert expires every
+**7 days** (free-team limit); reinstall command is in the `ios-device-install` memory note.
+Getting there needed: `DEVELOPMENT_TEAM` wired into `ios/RepVoice.xcodeproj/project.pbxproj`
+(gitignored/regenerated — **should move into `app.config.ts`** so `expo prebuild` doesn't wipe
+it), and building with `xcodebuild -allowProvisioningUpdates` directly since `expo run:ios`
+doesn't pass that flag and can't self-heal a missing profile.
+
+**QA pass from a screen recording surfaced 4 items** (`FEEDBACK-LOG.md` #10–13). Fixed #10 this
+session:
+
+- **Tab transitions (#10, DONE).** Root cause: the 4 top-level tabs (Home/Calendar/History/
+  Settings) are plain Stack routes, not a `Tabs` layout — `TabBar` moved between them with
+  `router.push()`, which plays iOS's "going deeper" slide-from-right on a lateral move, and grew
+  the stack unbounded (never popped). `settings.tsx` also used a different verb (`replace`/
+  `dismissTo`) than the other three (`push`), so leaving Settings behaved differently. Fix: all
+  four call sites → `router.replace()` (depth stays 1), plus a `TAB_SCREEN` animation override
+  (`_layout.tsx`, 160ms fade) applied only to the 4 tab routes — detail routes (workout,
+  exercise, routine, finish) deliberately kept the native push so depth still reads as depth.
+  **Verified live on-device** — user confirmed it feels smooth. Not the complete fix: each hop
+  still remounts its screen (no real `Tabs` layout), so scroll position isn't preserved across
+  tab switches — tracked as the open half of #10.
+- **Logged, not yet fixed:** #11 delete-set exists but is undiscoverable (buried in the edit
+  sheet, reachable only via `mode==='edit'`) — needs swipe-to-delete or similar. #12 "auto-advance
+  weight→reps after 2 digits" conflicts with 3-digit weights (100kg+ deadlift/squat) — recommended
+  resolution is to build #13 first (fixed rep-count chips), which removes the need for
+  auto-advance entirely. #13 reps as 5 fixed buttons (4/6/8/10/12) needs an escape hatch for
+  reps outside that set (singles, AMRAP, 15s) — ties into open item #3 (default reps=12).
+
+`tsc --noEmit` clean throughout.
+
 ## 2026-08-06 (evening) — Showcase-finish pass: brand assets, demo data, NEW BESTS
 
 Three items that made every screenshot read "unfinished," now closed:

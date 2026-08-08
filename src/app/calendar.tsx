@@ -290,10 +290,10 @@ export default function CalendarScreen() {
       <TabBar
         active="calendar"
         tabs={[
-          { key: 'home', label: 'HOME', onPress: () => router.push('/') },
+          { key: 'home', label: 'HOME', onPress: () => router.replace('/') },
           { key: 'calendar', label: 'CALENDAR' },
-          { key: 'history', label: 'HISTORY', onPress: () => router.push('/history') },
-          { key: 'settings', label: 'SETTINGS', onPress: () => router.push('/settings') },
+          { key: 'history', label: 'HISTORY', onPress: () => router.replace('/history') },
+          { key: 'settings', label: 'SETTINGS', onPress: () => router.replace('/settings') },
         ]}
       />
     </View>

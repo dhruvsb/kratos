@@ -2,7 +2,7 @@
 //
 // This is the design phase that Phases 1–3 deferred (the file used to be an empty
 // placeholder). Every value here is lifted 1:1 from the Claude Design mockup
-// "RepVoice Voice-First.dc.html" (v2 — cyan/quantum-black reskin) so screens read the
+// "RepVoice Manual.dc.html" (lime/quantum-black reskin) so screens read the
 // same numbers the mockup did. Rule from that mockup's agent notes: never hardcode a
 // value that has a token.
 //
@@ -51,16 +51,16 @@ export const color = {
   t2b: '#A0B3C2',
   t1b: '#C7DCE6',
 
-  // Accent = electric cyan LED (--acc + derivatives). Accent is only ever border /
+  // Accent = lime LED (--acc + derivatives). Accent is only ever border /
   // underline / glow — never a fill (agent-notes hard rule).
-  acc: '#4FD8FF',
-  accHi: '#9CE9FF',
-  accInk: '#03141A',
-  acc07: 'rgba(79,216,255,0.07)',
-  acc14: 'rgba(79,216,255,0.14)',
-  acc35: 'rgba(79,216,255,0.35)',
-  acc05: 'rgba(79,216,255,0.05)',
-  acc06: 'rgba(79,216,255,0.06)',
+  acc: '#A3E635',
+  accHi: '#BEF264',
+  accInk: '#0F1A03',
+  acc07: 'rgba(163,230,53,0.07)',
+  acc14: 'rgba(163,230,53,0.14)',
+  acc35: 'rgba(163,230,53,0.35)',
+  acc05: 'rgba(163,230,53,0.05)',
+  acc06: 'rgba(163,230,53,0.06)',
 
   ok: '#5FE3B0',
   warn: '#FF5647',
@@ -74,7 +74,7 @@ export const color = {
   meterCold: '#17222B',
   meterMid: '#1E2C36',
   meterHigh: '#2B3A45',
-  meterHot: '#4FD8FF',
+  meterHot: '#A3E635',
 
   // Tag chip borders used in the annotation cards.
   tagOkBorder: '#2B3A45',

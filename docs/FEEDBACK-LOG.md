@@ -6,6 +6,81 @@ entry at top. When an item is fixed, mark it and move the detail into `WORK-LOG.
 
 ---
 
+## 2026-08-08 — First run on a real device (iPhone 15), user QA pass
+
+**Context:** First time the app ran on physical hardware — installed as a Release build via a
+free Apple Personal Team (see the `ios-device-install` note for the signing route). Feedback
+came from a screen recording of the manual loop.
+
+### Summary
+
+| # | Item | Area | Done? | Sev | Effort |
+|---|------|------|-------|-----|--------|
+| 10 | Screen transitions feel wrong / not smooth | Navigation | ✅ DONE (verified live) | High | M |
+| 11 | No way to delete a set (actually: undiscoverable) | Logging UX | ⬜ OPEN | High | S |
+| 12 | Weight entry should auto-advance to reps | Logging UX | ⬜ OPEN (design conflict) | Med | S |
+| 13 | Reps should be 5 fixed buttons (4/6/8/10/12) | Logging UX | ⬜ OPEN | Med | S |
+
+---
+
+### 10. Screen transitions feel wrong — "not state of the art" ✅ High
+**User:** "transitions are very odd, not smooth. like home to calendar, calendar to history."
+**Verified — this is architectural, not cosmetic. There is no tab navigator.** The four
+top-level tabs are plain Stack routes and `TabBar` moves between them with `router.push()`:
+`index.tsx:413-415`, `calendar.tsx:293-296`, `history/index.tsx:111-114`. Three consequences:
+1. **Wrong animation.** A `push` plays the iOS slide-from-right — the "going deeper" gesture.
+   Tab switches must never slide horizontally; that mismatch is exactly what reads as "odd".
+2. **The stack grows without bound.** Home→Calendar→History→Home leaves 4 screens stacked and
+   never popped. Every hop remounts a screen and re-runs its queries.
+3. **Inconsistent.** `settings.tsx:171-172` uses `router.replace()` while every other tab uses
+   `push()`, so leaving Settings behaves unlike leaving any other tab.
+**Fix (staged, part (a) done 2026-08-08):** all four `TabBar` call sites now use
+`router.replace()` (`index.tsx`, `calendar.tsx`, `history/index.tsx`, `settings.tsx`), so stack
+depth stays 1 instead of growing on every hop; the four tab routes cross-fade (160ms,
+`TAB_SCREEN` in `_layout.tsx:34`) instead of the native push-slide, while detail routes
+(workout/exercise/routine/finish) keep the push so "going deeper" still reads as depth.
+**Verified live on-device** — feels smooth. **Still open (part (b)):** each hop still remounts
+the screen (no `Tabs` layout yet), so scroll position resets on return to a tab. The full fix is
+an Expo Router `Tabs` layout (`(tabs)/_layout.tsx`) with the existing `TabBar` as a custom
+`tabBar`, which would also preserve per-tab state.
+
+### 11. No delete-set option ⬜ High
+**User:** "no delete set option?"
+**Verified — the feature exists but is effectively invisible.** `SetKeypad.tsx:183-187` renders
+a `DELETE SET` link, but *only* when `mode === 'edit'`, which is reached solely by tapping an
+already-logged set in the grid (`workout/[id].tsx:309`). It is 9.5px text in the footer beside
+the plate hint, styled `color.warn`. The data path is fine — `useDeleteSet` (`hooks.ts:710`) →
+`sets.deleteSet` (`sets.ts:114`).
+**So this is a discoverability bug, not a missing capability.**
+**Fix options:** swipe-to-delete on the set row (most discoverable, matches Hevy/Strong), or a
+long-press on a logged set, or promote DELETE SET in the edit sheet to a real button. Swipe is
+the state-of-the-art answer and needs `react-native-gesture-handler`, already a dependency.
+
+### 12. Weight should auto-advance to reps after 2 digits ⬜ Med — **design conflict, needs a call**
+**User:** "after double digit it should automatically go to reps… deadlift 60, type 6 and 0,
+cursor should automatically go to reps."
+**Verified:** `SetKeypad.pressPad` (`SetKeypad.tsx:63-80`) appends digits to whichever field is
+active and never moves focus; `active` only changes when a `Field` is tapped (`:132`, `:139`).
+**Conflict:** advancing at exactly 2 digits makes **3-digit weights unenterable** without
+tapping back — 100/105/120 kg are routine on deadlift and squat, the very lifts cited. The
+current cap is 5 digits (`:76`), and decimals (7.5, 2.5 plates) are also legal.
+**Recommended resolution:** implement #13 first. Once reps are fixed buttons, the numeric pad
+serves **only** weight, so the flow is *type weight → tap a rep chip → logged* — strictly fewer
+taps than auto-advance, with no ambiguity about when the weight is "finished". Auto-advance
+then becomes unnecessary rather than merely risky.
+
+### 13. Reps should be a fixed set of 5 buttons ⬜ Med
+**User:** "reps should be fixed set of 5 buttons -> 4,6,8,10,12"
+**Verified:** reps are currently free numeric entry through the shared pad, with a 3-digit cap
+(`SetKeypad.tsx:71`) and ± stepping (`adjust`, `:87-91`). `PAD`/`QUICK` (`:42-43`) are shared
+between both fields.
+**Fix:** replace the reps field's numeric entry with a 5-chip row (4 · 6 · 8 · 10 · 12). Open
+question to settle when building: these five cover most working sets but not all (singles,
+triples, 15s, 20s, AMRAP) — needs an escape hatch (keep ± stepping, or a "…" chip that reveals
+the pad) or the app silently cannot log a 3-rep top single. Ties into #3 (default reps = 12).
+
+---
+
 ## 2026-07-31 — First simulator run (manual loop), user QA pass
 
 **Context:** First time the manual UI actually rendered on a simulator (iPhone 17, iOS sim).

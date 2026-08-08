@@ -167,7 +167,7 @@ export default function SettingsScreen() {
       <TabBar
         active="settings"
         tabs={[
-          { key: 'home', label: 'HOME', onPress: () => router.dismissTo('/') },
+          { key: 'home', label: 'HOME', onPress: () => router.replace('/') },
           { key: 'calendar', label: 'CALENDAR', onPress: () => router.replace('/calendar') },
           { key: 'history', label: 'HISTORY', onPress: () => router.replace('/history') },
           { key: 'settings', label: 'SETTINGS' },
