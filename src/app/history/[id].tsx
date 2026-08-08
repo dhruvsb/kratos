@@ -130,9 +130,11 @@ export default function WorkoutDetailScreen() {
                     })
                   }
                 >
-                  <Text style={styles.setNum}>{set.set_type === 'warmup' ? 'W' : i + 1}</Text>
+                  <Text style={styles.setNum}>{i + 1}</Text>
                   <Text style={styles.setVal}>{formatSet(set.weight_kg, set.reps, unit)}</Text>
-                  {set.set_type !== 'normal' && (
+                  {/* Warmup carries no visible trace (feedback #31); drop/failure tags stay
+                      for imported (Hevy) data that can still contain them. */}
+                  {set.set_type !== 'normal' && set.set_type !== 'warmup' && (
                     <Text style={styles.setTag}>{set.set_type.toUpperCase()}</Text>
                   )}
                   <Text style={styles.setEdit}>EDIT</Text>

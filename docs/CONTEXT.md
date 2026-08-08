@@ -10,8 +10,13 @@ codebase or a huge prior conversation.
 > issues**) *and* append a dated entry to [`WORK-LOG.md`](./WORK-LOG.md). This file is the
 > snapshot; `WORK-LOG.md` is the full history. Keep this file short.
 
-**Last updated:** 2026-08-08 — **Light theme (#17) COMPLETE — Phases 2 + 3 done; the toggle works
-app-wide.** The real light palette ("Greige + Moss", option 2a from `design_handoff_light_mode/`) is in
+**Last updated:** 2026-08-08 — **Warmup feature removed (#31) + backlog pruned.** The manual UI no
+longer references warmup anywhere: no `+ WARMUP` button, no `W`/`WARMUP` labels in the live grid or
+history — every set numbers plainly (`workout/[id].tsx`, `history/[id].tsx`). UI-removal only; the
+`set_type` enum, `lib/hevy.ts` warmup mapping, and unwired Phase-2 voice type-list stay, so Hevy imports
+still load. Drop/failure tags remain in history for imported data. Also **withdrew #24 #25 #27 #30**
+(won't do — dropped per product call). `tsc` + web-export green; not yet on device. Prior: **Light theme
+(#17) COMPLETE — Phases 2 + 3 done; the toggle works app-wide.** The real light palette ("Greige + Moss", option 2a from `design_handoff_light_mode/`) is in
 `tokens.ts` (`themes.light` — warm off-white ground `#EBE8E1`, moss accent `#3F6B3B`, warm brown-black
 hairlines, flat glows + soft-warm CTA shadow). **All ~28 screens/components migrated** from the static
 `color`/`shadow` imports to `useTheme()` via a `makeStyles(color, shadow)` factory memoized per component
@@ -178,9 +183,9 @@ logging via an LLM pipeline, **3** TBD (PRs/charts).
 
 Static checks currently green: `tsc --noEmit` clean; `expo export --platform web` bundles all 15 routes;
 `xcodebuild -allowProvisioningUpdates` builds + installs Release to physical hardware.
-**Feedback pass (`FEEDBACK-LOG.md`): 18 of 30 done** — ✅ #1 #2 #3 #4 #6 #7 #9 #10 #11 #13 #14 #15 #16
-#17 #18 #20 #21 #26 (#12 dissolved by #13) · 🟡 #5 (fix applied — keyboard-avoidance; device-confirm
-pending) · ⬜ #8 #19 #22 #23 #24 #25 #27 #28 #30 #31 (#29 withdrawn — superseded by #31).
+**Feedback pass (`FEEDBACK-LOG.md`): 19 done** — ✅ #1 #2 #3 #4 #6 #7 #9 #10 #11 #13 #14 #15 #16
+#17 #18 #20 #21 #26 #31 (#12 dissolved by #13) · 🟡 #5 (fix applied — keyboard-avoidance; device-confirm
+pending) · ⬜ **open: #8 #19 #22 #23 #28** · **withdrawn (won't do): #24 #25 #27 #29 #30**.
 **#17 light theme: DONE** (full Greige+Moss light mode + System·Light·Dark toggle; device-confirm pending).
 
 ## Pending actions (owner: user / next session)
@@ -244,7 +249,8 @@ pending) · ⬜ #8 #19 #22 #23 #24 #25 #27 #28 #30 #31 (#29 withdrawn — supers
       iPhone — the installed Release build has old JS bundled, so it needs a rebuild+reinstall
       (`xcodebuild -allowProvisioningUpdates`) to show the light theme there.
 - [ ] **Remaining feedback items** (`FEEDBACK-LOG.md`): **#8** drag-reorder + the newer backlog
-      (#19 #22–#25 #27–#30). **#5/#18/#21 fixed 2026-08-08** (code) alongside earlier
+      (**#19 #22 #23 #28**; #24 #25 #27 #30 withdrawn). **#31 warmup-removal done 2026-08-08** (code).
+      **#5/#18/#21 fixed 2026-08-08** (code) alongside earlier
       #3/#14/#20 and #11/#13/#26 — **verify on device**: #5 open the picker and scroll with the keyboard
       up (should reach every row now); #18 multi-select add in the routine editor; #21 routine creation
       has no target inputs; plus #13 chip layout, #26 auto-advance feel, #11 long-press delete.

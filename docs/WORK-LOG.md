@@ -7,6 +7,28 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-08 — Remove the warmup feature (#31) + prune the feedback backlog
+
+**#31 — warmup removed from the manual UI (code).** The user asked to drop warmup entirely — no way to
+log a warmup set and no visible trace of the word. Scoped as a UI-removal, not a schema change:
+- `workout/[id].tsx`: deleted the `+ WARMUP` action button; collapsed `openAdd(setType)` → `openAdd()`
+  (always logs `normal`, always uses the normal prefill); removed the warmup-null prefill branch and the
+  `onKeypadLog` warmup auto-advance-skip; the live grid now numbers every row `i + 1` (dropped the `W`).
+- `history/[id].tsx`: rows number `i + 1` (no `W`); the set-type tag is hidden for warmup but **kept for
+  `drop`/`failure`**, which imported Hevy data can still carry.
+- **Left intact by design:** the `set_type` enum (`types/db.ts`) + its DB check, `lib/hevy.ts`'s warmup
+  mapping, and the unwired Phase-2 `VoiceConfirmationCard` type list — so Hevy imports with warmup rows
+  still load; those rows just render as plainly-numbered sets. `SetKeypad` had no warmup references, so it
+  needed no edit. `tsc` + web-export (15 routes) green; not yet run on device.
+
+**Backlog pruned.** Per a product call the user withdrew four open items — deleted from `FEEDBACK-LOG.md`
+(entries + summary rows): **#24** predictive exercise suggestions, **#25** swipe to toggle KG/REPS focus,
+**#27** superset linking, **#30** global rest timer. Open feedback backlog is now **#8 #19 #22 #23 #28**
+(plus #5 device-confirm). (Also cleared the stale "feedback-log-only" session memory — this chat now
+implements.)
+
+---
+
 ## 2026-08-08 — Light theme (#17) Phases 2 + 3: real light palette + full screen migration + toggle
 
 Finished the biggest backlog item. The user delivered the light design (`design_handoff_light_mode/` —

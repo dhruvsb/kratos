@@ -16,11 +16,11 @@ improving a feature we're deleting.
 
 | # | Item | Area | Done? | Sev | Effort |
 |---|------|------|-------|-----|--------|
-| 31 | Remove the warmup set feature — no "+ WARMUP" entry, no "W"/WARMUP labels anywhere | Logging UX / history | ⬜ OPEN | Med | S |
+| 31 | Remove the warmup set feature — no "+ WARMUP" entry, no "W"/WARMUP labels anywhere | Logging UX / history | ✅ DONE (code 2026-08-08) | Med | S |
 
 ---
 
-### 31. Remove warmup sets from the app ⬜ Med
+### 31. Remove warmup sets from the app ✅ Med — **done (code) 2026-08-08**
 **Requested:** drop warmup entirely — the ability to log a warmup set and every visible trace of the
 word "warmup".
 **Verified — the manual-UI footprint is small and self-contained:**
@@ -33,11 +33,15 @@ word "warmup".
 that contains warmup sets still loads (`lib/hevy.ts` maps `warmup`), and the Phase-2 voice
 correction UI (`VoiceConfirmationCard`) keeps the type list; voice is unwired from the manual screens
 today, so it's not a visible surface. So this is a **UI-removal**, not a schema change.
-**Fix (scope, not started):** remove the `+ WARMUP` button + `openAdd('warmup')` and the warmup-null /
-auto-advance-skip branches in `workout/[id].tsx`; render plain set numbers (drop the `W` special-case)
-in both the live grid and `history/[id].tsx` (and its `WARMUP` tag). Decide the display for any
-*existing* warmup rows (imported or already-logged): simplest is to just number them like any other set.
-(S)
+**Done (2026-08-08):** the manual UI no longer references warmup anywhere. In `workout/[id].tsx`:
+removed the `+ WARMUP` button, collapsed `openAdd(setType)` → `openAdd()` (always logs `normal`),
+dropped the warmup-null prefill branch and the auto-advance warmup-skip, and the live grid now numbers
+every row `i + 1` (no `W`). In `history/[id].tsx`: rows number `i + 1`, and the set-type tag is hidden
+for warmup while **drop/failure tags stay** (imported Hevy data can still carry those). Any *existing*
+warmup rows (imported/already-logged) now just show as plainly-numbered sets. As scoped, this is a
+**UI-removal only** — the `set_type` enum + DB check, `lib/hevy.ts`'s warmup mapping, and the unwired
+Phase-2 `VoiceConfirmationCard` type list are all untouched, so Hevy imports still load. `tsc` +
+web-export green; not yet run on device.
 
 ---
 
@@ -51,38 +55,15 @@ in full below; not all items need to be built.
 
 | # | Item | Area | Done? | Sev | Effort |
 |---|------|------|-------|-----|--------|
-| 24 | Contextual/predictive exercise suggestions in search (by muscle group) | Search | ⬜ OPEN | Low | M |
-| 25 | Swipe gesture to toggle KG/REPS focus instead of tapping | Logging UX | ⬜ OPEN | Low | S |
 | 26 | Auto-advance/reopen keypad for the next set after logging | Logging UX | ✅ DONE (code 2026-08-08) | Med | S |
-| 27 | Superset linking — group 2 exercises, cycle input between them | Logging UX | ⬜ OPEN | Low | M |
 | 28 | Progressive-overload ghost suggestion (vs. flat previous-best prefill) | Logging UX | ⬜ OPEN (builds on #3) | Low | M |
-| 30 | Global rest timer, auto-triggered on set-checkoff | Logging UX | ⬜ OPEN — **conflicts with #2, needs a call** | — | — |
 
-> **#29 (one-tap warmup ramp) was withdrawn 2026-08-08** — superseded by **#31**, which removes the
-> warmup feature entirely (see the top of this log). No point auto-generating a ramp for a thing
-> we're deleting.
+> **Withdrawn 2026-08-08 (won't do):** **#24** (predictive exercise suggestions), **#25** (swipe to
+> toggle KG/REPS focus), **#27** (superset linking), **#30** (global rest timer) — dropped per product
+> call. **#29** (one-tap warmup ramp) was already withdrawn, superseded by **#31** which removes warmup
+> entirely (see the top of this log).
 
 ---
-
-### 24. Contextual/predictive exercise suggestions in search ⬜ Low
-**Proposed:** surface likely-next exercises (e.g. "Chest Dip" right after logging "Bench Press")
-below the search bar, instead of requiring the user to type.
-**Verified:** `ExercisePickerModal` with an empty query falls back to `listExercises(30)`
-(`src/data/exercises.ts:12`) — a generic default list, not scoped to the muscle group of what's
-already logged in the workout. The file's own header comment already flags a "RECENT/muscle filter
-tabs are deferred" gap (also noted under feedback #4's verification).
-**Fix (scope, not started):** derive the active workout's dominant `body_region` from its
-already-logged exercises, and rank/pin same-region exercises above the default list when the
-picker opens with no query. (M)
-
-### 25. Swipe to toggle KG/REPS focus ⬜ Low
-**Proposed:** a horizontal swipe across the input card toggles between weight/rep entry, instead
-of tapping a specific field.
-**Verified:** `SetKeypad`'s `active` field state only changes via the `Field` component's
-`onPress` (`SetKeypad.tsx:131-139`) — tap-only, no gesture handler. (`react-native-gesture-handler`
-is already a dependency per feedback #11's note, so the primitive is available.)
-**Fix:** add a swipe gesture over the two `Field` rows that calls `setActive` on a threshold
-swipe, keeping tap as the primary/discoverable path. (S)
 
 ### 26. Auto-advance to the next set after logging ✅ Med — **done (code) 2026-08-08**
 **Proposed:** after tapping the checkmark, immediately move focus to the next set's weight field
@@ -96,18 +77,6 @@ the user dismisses the chain by tapping the backdrop. The grid's one-tap ✓ (`l
 — it stays on the grid, so the two frictionless paths (chained keypad vs. grid ✓) complement each
 other. Not yet run on device — verify the chain feels seamless (no sheet flicker / re-slide).
 
-### 27. Superset linking — cycle input between two linked exercises ⬜ Low
-**Proposed:** a "link" toggle to group exercises into supersets, so the active set input
-auto-cycles between the two linked movements instead of manually navigating between them.
-**Verified (one correction to the report):** exercise-to-exercise navigation in the workout screen
-is **tap-based** ‹/› buttons (`goExercise(dir)`, `workout/[id].tsx:172-175, 389-396`), not a swipe
-gesture as the report describes — same underlying friction (leaving the input to switch exercises)
-but via a different mechanism than reported. No superset/linking concept exists anywhere in the
-schema (`workout_exercises` has no pairing/group column) or UI.
-**Fix (scope, not started):** needs a schema change (a `superset_group_id` or ordering pair on
-`workout_exercises`) plus UI for creating the link (routine editor or mid-workout) and the
-cycling behavior itself. Bigger than the other items here — a real feature, not a tweak. (M–L)
-
 ### 28. Progressive-overload ghost suggestion ⬜ Low — builds on open item #3
 **Proposed:** instead of prefilling the exact previous-session numbers, show a ghosted suggested
 weight *increase* when the user hit all prescribed reps last time.
@@ -119,17 +88,6 @@ separate prefill changes.
 **Fix (scope, not started):** define the progression rule (e.g. +2.5kg if all sets hit the top of
 the rep range), compute it from the last session's sets vs. the routine's `target_reps_high`, show
 it as a ghosted/suggested value distinct from a hard prefill. (M)
-
-### 30. Global rest timer, auto-triggered on checkoff ⬜ — **conflicts with a shipped decision (#2)**
-**Asked:** "are you planning to integrate a global rest timer that automatically triggers the
-moment a working set is checked off?"
-**Verified — this was already built, then explicitly removed:** feedback **#2** ("Remove the rest
-timer. It is annoying and does not add any value.") shipped 2026-07-31 — the rest bar, `startRest()`
-calls, and `defaultRestSec`/`autoStartRest` settings were all deleted from `workout/[id].tsx` and
-`src/data/settings.ts`. Re-adding an auto-triggered rest timer would directly reverse that decision.
-**Not logging this as a build item — flagging for a call instead:** if there's a reason to revisit
-(e.g. an *optional*, dismissible timer vs. the old mandatory countdown-nag), that's a product
-decision to make explicitly before any code changes, not something to default back to.
 
 ---
 

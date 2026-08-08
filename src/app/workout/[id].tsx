@@ -165,7 +165,7 @@ export default function ActiveWorkoutScreen() {
     // pre-fill is off, or it's the first time on this lift with no weight to suggest
     // (a brand-new lift needs a working weight before one-tap logging kicks in).
     if (prefillReps == null || (prefillKg == null && noHistory && prevInSession == null)) {
-      openAdd('normal');
+      openAdd();
       return;
     }
     addSet.mutate({
@@ -174,13 +174,13 @@ export default function ActiveWorkoutScreen() {
     });
   }
 
-  function openAdd(setType: SetType) {
+  function openAdd() {
     setKeypad({
       mode: 'add',
       setNumber: nextSetNumber,
-      setType,
-      kg: setType === 'warmup' ? null : prefillKg,
-      reps: setType === 'warmup' ? null : prefillReps,
+      setType: 'normal',
+      kg: prefillKg,
+      reps: prefillReps,
     });
   }
 
@@ -197,12 +197,7 @@ export default function ActiveWorkoutScreen() {
     });
     // Auto-advance (feedback #26): keep the sheet open on the next set, pre-filled with
     // what was just logged, so a run of working sets is tap-tap-tap without reopening
-    // the keypad each time. Warmups don't chain this way (they ramp, not repeat), so
-    // they close as before; the user dismisses by tapping the backdrop when done.
-    if (keypad.setType === 'warmup') {
-      setKeypad(null);
-      return;
-    }
+    // the keypad each time. The user dismisses by tapping the backdrop when done.
     setKeypad({
       mode: 'add',
       setNumber: keypad.setNumber + 1,
@@ -376,7 +371,7 @@ export default function ActiveWorkoutScreen() {
                 // still opens the edit sheet, which now carries a prominent DELETE button.
                 onLongPress={() => !isFinished && confirmDeleteSet(s.id, i + 1)}
               >
-                <Text style={[styles.rNum, styles.cNum]}>{s.set_type === 'warmup' ? 'W' : i + 1}</Text>
+                <Text style={[styles.rNum, styles.cNum]}>{i + 1}</Text>
                 <Text style={[styles.rPrev, styles.cPrev]}>{prevLabel(lastSets[i], unit)}</Text>
                 <View style={[styles.cField, styles.cellDone]}>
                   <Text style={styles.valDone}>{formatWeight(s.weight_kg, unit)}</Text>
@@ -395,12 +390,12 @@ export default function ActiveWorkoutScreen() {
               <View style={[styles.row, { borderBottomWidth: 0, backgroundColor: color.acc06 }]}>
                 <Text style={[styles.rNum, styles.cNum, { color: color.acc }]}>{nextSetNumber}</Text>
                 <Text style={[styles.rPrev, styles.cPrev]}>{prevLabel(lastForNext, unit)}</Text>
-                <Pressable style={[styles.cField, styles.cellActive]} onPress={() => openAdd('normal')}>
+                <Pressable style={[styles.cField, styles.cellActive]} onPress={openAdd}>
                   <Text style={[styles.valActive, prefillKg == null && { color: color.t3 }]}>
                     {formatWeight(prefillKg, unit)}
                   </Text>
                 </Pressable>
-                <Pressable style={[styles.cField, styles.cellActive]} onPress={() => openAdd('normal')}>
+                <Pressable style={[styles.cField, styles.cellActive]} onPress={openAdd}>
                   <Text style={[styles.valActive, prefillReps == null && { color: color.t3 }]}>
                     {prefillReps ?? '—'}
                   </Text>
@@ -413,11 +408,8 @@ export default function ActiveWorkoutScreen() {
 
             {!isFinished && (
               <View style={styles.gridActions}>
-                <Pressable onPress={() => openAdd('normal')}>
+                <Pressable onPress={openAdd}>
                   <Text style={styles.actAcc}>+ ADD SET</Text>
-                </Pressable>
-                <Pressable onPress={() => openAdd('warmup')}>
-                  <Text style={styles.actDim}>+ WARMUP</Text>
                 </Pressable>
                 <Pressable onPress={() => router.push(`/exercise/${activeExercise.exercise_id}`)}>
                   <Text style={styles.actDim}>HISTORY</Text>
