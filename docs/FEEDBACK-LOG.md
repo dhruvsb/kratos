@@ -331,8 +331,11 @@ The handoff's four "not a straight swap" rules are carried by **semantic tokens*
 + `shadow.cta` for solid-fill primary CTAs; `checkBg/checkFg` for the filled current-set ✓) plus a
 `useThemeName()` branch in `KeyCap` (accent NEXT/FINISH), so **dark is byte-for-byte unchanged**. Settings
 → APPEARANCE → Theme cycles the three modes (`useThemeMode()`); `_layout`'s `AppContent` makes the canvas
-+ status bar theme-aware. `tsc` + web-export green; light mode and the enabled solid-moss CTA visually
-verified on the web sign-in screen. **Device-confirm still pending** (JS-only — no rebuild).
++ status bar theme-aware. `tsc` + web-export green; light mode + the enabled solid-moss CTA visually
+verified on the web sign-in screen, then **walked on the iOS simulator** (Home / active workout / Calendar /
+Settings — the solid-CTA and filled-✓-chip rules confirmed; the System·Light·Dark toggle flips the whole app
+live; dark unchanged). User confirmed it looks good hands-on. **Physical-device confirm still pending** (the
+installed Release build bundles old JS — needs a rebuild+reinstall to show light there).
 <details><summary>Earlier: decisions + Phase 1 (plumbing), 2026-08-08</summary>
 **Decisions (user):** (1) the user supplies the light **design** — not a mechanical invert; (2)
 behavior is **follow-system with a Settings override**. Building in phases: **1** theme

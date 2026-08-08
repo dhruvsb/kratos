@@ -22,8 +22,11 @@ with white ink on light (they'd read as disabled with a plain swap); the current
 becomes a filled accent chip; `KeyCap` accent tone (NEXT/FINISH) branches on `useThemeName()` for the same
 reason. **Phase 3:** Settings → APPEARANCE → **Theme** row cycles System·Light·Dark (`useThemeMode()`);
 `_layout`'s `AppContent` makes the canvas bg + status-bar style theme-aware. `tsc` + web-export green (15
-routes); light mode + the solid-CTA rule **visually verified** on the sign-in screen (web). Not yet run on
-device. Prior: **Feedback fixes #16 / #15 + warmup-removal logged (#31).**
+routes). **Verified on the iOS simulator (2026-08-08):** Home (solid moss START CTA), active workout (solid
+FINISH CTA + filled ✓ chip + completed plain-glyph ✓ — both hard rules), Calendar (computed cell colors incl.
+solid "today" cell), Settings; the System·Light·Dark toggle flips the whole app live and **dark renders
+byte-identical to before**. Not yet on physical device (the installed Release build bundles old JS — needs a
+rebuild). Prior: **Feedback fixes #16 / #15 + warmup-removal logged (#31).**
 **#16:** the finish summary now reads in **kg** regardless of the profile display unit
 (`finish/[id].tsx`) — kills the tonne-on-pounds label bug (a converted lb volume no longer gets a `t`
 suffix). **#15:** the plate-per-side hint moved from a 9.5px footer whisper to a readable line
@@ -163,7 +166,7 @@ logging via an LLM pipeline, **3** TBD (PRs/charts).
 | ↳ **Calendar (mockup 12, "five a week")** | ✅ **Built this session** — `src/app/calendar.tsx` + `src/data/calendar.ts` (finished-workout days → week card / month grid / streak stats / 12-week bars); wired into Home tab bar. Weekly goal driven by Settings (`useSettings().weeklyGoal`, default 5). |
 | **Hevy CSV import + export (in-app)** | ✅ **Built this session** — **Import**: `src/lib/hevy.ts` (pure parser) + `src/data/import.ts` (correctness-first matcher; auto-creates customs) + `src/app/import.tsx` (pick→preview→commit), idempotent via `external_id`. **Export**: `serializeHevyCsv` (inverse) + `src/data/export.ts` + `src/app/export.tsx` (summary → share `.csv` file). Round-trip verified exact on the real data (13 workouts / 239 sets). Both wired into Settings → DATA. **Needs a dev-client rebuild** for new native deps (`expo-document-picker`/`expo-file-system`/`expo-sharing`); not yet run on device. |
 | Two-theme white/dark patchwork | ✅ **Resolved** — every screen is now dark; `_layout` header config dropped |
-| **Light theme (#17) + System·Light·Dark toggle** | ✅ **Built 2026-08-08** — real "Greige + Moss" light palette (`design_handoff_light_mode/`) in `tokens.ts`; all ~28 screens/components read `useTheme()` (memoized `makeStyles` factory); semantic `cta*`/`check*` tokens + `KeyCap` theme-branch carry the 4 non-swap rules so **dark is unchanged**; Settings → APPEARANCE → Theme + theme-aware `_layout` chrome. `tsc` + web-export green; light + solid-CTA rule visually verified on the web sign-in screen. **Device-confirm pending** (JS-only — no dev-client rebuild). |
+| **Light theme (#17) + System·Light·Dark toggle** | ✅ **Built + simulator-verified 2026-08-08** — real "Greige + Moss" light palette (`design_handoff_light_mode/`) in `tokens.ts`; all ~28 screens/components read `useTheme()` (memoized `makeStyles` factory); semantic `cta*`/`check*` tokens + `KeyCap` theme-branch carry the 4 non-swap rules so **dark is unchanged**; Settings → APPEARANCE → Theme + theme-aware `_layout` chrome. **Walked on the iOS simulator** (Home / active workout / Calendar / Settings; both CTA + ✓-chip rules confirmed; toggle flips the app live; dark byte-identical). `tsc` + web-export green. Not yet on physical device (installed Release build has old JS bundled — needs a rebuild). |
 | Phase 2 voice pipeline (extraction → resolution → kg) | ✅ Built; edge fn deployed + auth-guarded; **unwired from manual UI** (returns later) |
 | Native iOS Release build on physical iPhone 15 | ✅ **Installed + running 2026-08-08** — free Apple Personal Team (`TUR974K866`), no cable needed day-to-day, 7-day cert (reinstall route in `WORK-LOG.md`). |
 | First OTP login + on-device smoke test of the manual loop | 🟡 **Partial** — app runs on real hardware, signed in via a persisted session, and **#1 History nav** + **#10 tab transitions** verified live. Still to do: a real OTP sign-in from scratch (8-digit code now supported) and walk the full loop (start routine → log sets via ✓ and keypad → finish → History → progress). |
@@ -235,9 +238,11 @@ pending) · ⬜ #8 #19 #22 #23 #24 #25 #27 #28 #30 #31 (#29 withdrawn — supers
       right against real workout days.
 - [ ] *(Phase 2, when voice resumes)* Apply migration `0003` to the live DB; run `npm run eval`.
 - [ ] Replace temporary Gmail SMTP with a dedicated provider before any external-user testing.
-- [ ] **See light mode on device** (Settings → APPEARANCE → Theme → Light / System) — the whole
-      light theme is static- + web-verified only; walk a few screens (Home, active workout with the
-      solid-fill NEXT/FINISH + filled ✓ chip, Rest, Calendar) and confirm contrast/feel on hardware.
+- [x] ~~See light mode on device~~ — **done on the iOS simulator 2026-08-08**: walked Home, active
+      workout (solid FINISH CTA + filled ✓ chip + completed plain ✓), Calendar (solid "today" cell),
+      Settings; toggle flips the whole app live; dark unchanged. **Still to do:** see it on the *physical*
+      iPhone — the installed Release build has old JS bundled, so it needs a rebuild+reinstall
+      (`xcodebuild -allowProvisioningUpdates`) to show the light theme there.
 - [ ] **Remaining feedback items** (`FEEDBACK-LOG.md`): **#8** drag-reorder + the newer backlog
       (#19 #22–#25 #27–#30). **#5/#18/#21 fixed 2026-08-08** (code) alongside earlier
       #3/#14/#20 and #11/#13/#26 — **verify on device**: #5 open the picker and scroll with the keyboard

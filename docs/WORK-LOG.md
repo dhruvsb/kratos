@@ -52,8 +52,18 @@ and the status-bar style are theme-aware (dark bar on dark, dark text on light) 
 export and forced `themeMode:'light'` (had to also clear the persisted RQ cache — the `settings` query is
 `staleTime: Infinity`, so a stale cached copy overrode the change) — the sign-in screen renders the greige
 ground + dark ink, and SEND CODE is the muted outline when disabled and a **solid moss fill with white
-ink** once a valid email is entered (rule 1 confirmed). The other screens need auth to view but use the
-identical pattern. **Not yet on device** (pure JS — no dev-client rebuild needed).
+ink** once a valid email is entered (rule 1 confirmed).
+
+**Then verified on the iOS simulator** (Debug build via the sim-build tool + Metro; iPhone 17): walked Home
+(solid moss START CTA), an active workout (**solid FINISH CTA + filled moss ✓ chip** for the current set,
+and after logging, the completed row's ✓ drops to a plain moss glyph — both hard rules confirmed, distinct),
+Calendar (worked-day `acc14` chips + **solid moss "today" cell** — the per-cell computed colors render right),
+and Settings. The **APPEARANCE → Theme** row cycles System·Light·Dark and **flips the whole app live**;
+switching to Dark showed the original lime-on-black LED theme **unchanged** — the byte-identical-dark promise
+holds on device. (Discarded the test sets afterward.) One coordinate gotcha for future sim work: the control
+tool's tap space is 402×874 *points*, but screenshots are 918-px wide — multiply screenshot coords by ~0.438.
+User confirmed it looks good hands-on. **Physical iPhone still pending** — the installed Release build has
+old JS bundled, so light mode needs a rebuild+reinstall to show there.
 
 ## 2026-08-08 — Light theme (#17) Phase 1: theme infrastructure (dark-only, zero visual change)
 
