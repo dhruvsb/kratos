@@ -10,7 +10,13 @@ codebase or a huge prior conversation.
 > issues**) *and* append a dated entry to [`WORK-LOG.md`](./WORK-LOG.md). This file is the
 > snapshot; `WORK-LOG.md` is the full history. Keep this file short.
 
-**Last updated:** 2026-08-08 — **Feedback fixes #21 / #18 / #5** (code only, not yet on device):
+**Last updated:** 2026-08-08 — **In-app account deletion** (App Store Guideline 5.1.1(v): an
+account-creating app that can't delete accounts in-app gets rejected). Settings → ACCOUNT → "Delete
+account" → two confirms → `deleteAccount()` → RPC `public.delete_own_account()` (migration **`0005`,
+applied live** — security-definer, no args, acts only on `auth.uid()`) → local sign-out wipes the
+persisted cache. Custom exercises are deleted explicitly (their FK is `set null`, so the cascade
+would strand them). Proven end-to-end on a throwaway live account; not yet seen on device.
+Prior: **Feedback fixes #21 / #18 / #5** (code only, not yet on device):
 **#21** dropped the SETS/REPS target inputs from the routine editor — creating a routine is now
 exercise-selection + order only (targets were write-only, read nowhere); this also retired the
 `InputAccessoryView` from **#20** (it existed only to dismiss the number-pad on those inputs).
@@ -134,6 +140,8 @@ logging via an LLM pipeline, **3** TBD (PRs/charts).
 | First OTP login + on-device smoke test of the manual loop | 🟡 **Partial** — app runs on real hardware, signed in via a persisted session, and **#1 History nav** + **#10 tab transitions** verified live. Still to do: a real OTP sign-in from scratch (8-digit code now supported) and walk the full loop (start routine → log sets via ✓ and keypad → finish → History → progress). |
 | Eval baseline (`npm run eval`) | ❌ Never run against the real API (Phase 2 concern) |
 | Migration `0003_alias_write_policy.sql` | ✅ **Applied this session** (was committed-but-unapplied; Phase 2 alias write-back policy now live) |
+| **In-app account deletion** (App Store 5.1.1(v)) | ✅ **Built + verified live 2026-08-08** — Settings → ACCOUNT → "Delete account" (two native confirms, completion alert) → `deleteAccount()` in `src/data/auth.ts` → RPC `delete_own_account()` (migration `0005`) → `signOut({ scope: 'local' })`. Verified on a throwaway live account: user, profile, routines, workouts, sets, voice_logs, custom exercises + aliases all gone; seeded 150 intact. Not yet rendered on device (pure JS — no dev-client rebuild needed). |
+| Migration `0005_delete_own_account.sql` | ✅ **Applied live 2026-08-08** |
 | Migration `0004_exercise_metadata.sql` | ✅ Applied — exercises table restructured (muscle arrays + body_region + mechanic + modality; dropped `primary_muscle`/`category`) |
 
 Static checks currently green: `tsc --noEmit` clean; `expo export --platform web` bundles all 15 routes;
@@ -175,6 +183,8 @@ Static checks currently green: `tsc --noEmit` clean; `expo export --platform web
       Import from Hevy → pick `workout_data.csv` → confirm preview → import; check History / Calendar /
       an exercise's progress light up; then Export workouts → share the `.csv` and confirm it re-imports
       cleanly (idempotent — should report all skipped).
+- [ ] **See "Delete account" on device** (Settings → ACCOUNT) — the row is static-verified only.
+      Don't smoke-test it on the real account; make a throwaway one, or re-run the live-DB check.
 - [ ] **Verify a real OTP sign-in from scratch** (sign out → enter email → 8-digit code). This
       session used a persisted session, so the end-to-end auth flow itself is still unconfirmed.
 - [ ] **Create + save a routine** on device (name, add exercises, targets, save) and confirm

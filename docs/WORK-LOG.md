@@ -7,6 +7,42 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-08 — In-app account deletion (App Store Guideline 5.1.1(v))
+
+Prompted by the App Store launch question: an app that creates accounts **must** let the user delete
+the account *and its data* from inside the app — deactivation doesn't count, and a "email us to
+delete" flow is only allowed for highly-regulated industries. RepVoice creates accounts (email OTP)
+and had no delete path, which is a near-certain 5.1.1(v) rejection. Built independently of the two
+parallel chats — no shared files.
+
+- **Server: migration `0005_delete_own_account.sql`.** A `security definer` RPC that reads
+  `auth.uid()` and takes **no arguments**, so a caller can only ever delete itself; `execute` granted
+  to `authenticated` only. Chosen over an edge function deliberately: same privilege story, but one
+  migration instead of a new function + deploy step + secret — the minimal-overhead ask.
+- **Why it has a body at all.** Most of the tree cascades off `auth.users`. Two things don't:
+  `exercises.created_by` is `on delete set null`, so custom exercises would outlive the cascade as
+  orphans (RLS then hides them from *everyone* — dead rows carrying user-authored names). They're
+  deleted explicitly, and the ordering is forced: after routines/workouts (whose FKs to `exercises`
+  are NO ACTION and would block the delete) but before `auth.users` (afterwards `created_by` is null
+  and the rows are unfindable).
+- **Client:** `deleteAccount()` in `src/data/auth.ts` = RPC + `signOut({ scope: 'local' })`. Local
+  scope on purpose — the user row is gone so a server logout would fail, but the local clear still
+  emits `SIGNED_OUT`, which is what wipes the persisted cache (and the paused offline-mutation queue)
+  in `_layout`. UI is one row in Settings → ACCOUNT under Sign out: two native alerts, no new screen,
+  no typed confirmation word (Apple allows confirmation steps, but not friction that makes deletion
+  hard); a completion alert lands over the sign-in screen as the required "deletion complete" notice.
+- **Verified against the live DB**, not just typechecked: a throwaway account was created, given a
+  routine + workout + set + custom exercise + alias + voice_log, then deleted through the RPC as
+  itself. Every row gone (user, profile, routines, routine_exercises, workouts, workout_exercises,
+  sets, voice_logs, exercises, exercise_aliases); the seeded 150-exercise library intact. One
+  non-finding: the pre-deletion JWT still validates until it expires (~1h) — stateless by design, and
+  it resolves to no rows under RLS, which is exactly why the client signs out locally straight away.
+  `tsc` clean; web export bundles.
+- **Not yet seen on device** — no dev-client rebuild was needed (pure JS), but the row hasn't been
+  rendered on hardware. Migration `0005` **is** applied to the live project.
+
+---
+
 ## 2026-08-08 — Feedback fixes: #21 routine targets dropped, #18 multi-select add, #5 picker scroll
 
 Three items across the routine editor + exercise picker, in the otherwise feedback-log-only chat (user

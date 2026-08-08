@@ -7,12 +7,13 @@
 // and "Weekly goal" feeds the calendar tally (mockup 12). Weight *unit* is the one
 // setting kept on the profile (it's read across the whole write path); the rest are
 // device-local (src/data/settings.ts).
+import { useState } from 'react';
 import { router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TabBar } from '@/components/voice/TabBar';
-import { getSession, signOut } from '@/data/auth';
+import { deleteAccount, getSession, signOut } from '@/data/auth';
 import { useProfile, useUpdateProfile } from '@/data/hooks';
 import { GOAL_PRESETS, useSettings, useUpdateSettings } from '@/data/settings';
 import { color, font, radius, space, tracking } from '@/theme/tokens';
@@ -26,12 +27,13 @@ type Row = {
   label: string;
   note?: string;
   value: string;
-  tone?: 'default' | 'on' | 'warn';
+  tone?: 'default' | 'on' | 'warn' | 'danger';
   onPress?: () => void;
 };
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
+  const [deleting, setDeleting] = useState(false);
   const profile = useProfile();
   const updateProfile = useUpdateProfile();
   const settings = useSettings();
@@ -50,6 +52,45 @@ export default function SettingsScreen() {
       { text: 'Cancel', style: 'cancel' },
       { text: 'Sign out', style: 'destructive', onPress: () => signOut() },
     ]);
+  }
+
+  // Account deletion — required in-app by App Store Review Guideline 5.1.1(v).
+  // Two taps, not one: it's irreversible and sits one row under "Sign out".
+  // Apple allows confirmation steps; it only forbids making deletion hard to
+  // reach, so this stays two native alerts — no extra screen, no typed word.
+  async function runDeleteAccount() {
+    setDeleting(true);
+    try {
+      await deleteAccount();
+      // The SIGNED_OUT that deleteAccount emits swaps this screen for sign-in;
+      // the alert lands on top of it as the "deletion complete" confirmation.
+      Alert.alert('Account deleted', 'Your account and all of its data have been removed.');
+    } catch (e) {
+      setDeleting(false);
+      Alert.alert(
+        'Could not delete account',
+        e instanceof Error ? e.message : 'Check your connection and try again.'
+      );
+    }
+  }
+
+  function confirmDeleteAccount() {
+    Alert.alert(
+      'Delete account?',
+      'This permanently deletes your account and every workout, routine and custom exercise on it. It cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () =>
+            Alert.alert('Delete everything, permanently?', email || undefined, [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Delete account', style: 'destructive', onPress: runDeleteAccount },
+            ]),
+        },
+      ]
+    );
   }
 
   const groups: { title: string; rows: Row[] }[] = s
@@ -113,6 +154,13 @@ export default function SettingsScreen() {
               tone: 'warn',
               onPress: confirmSignOut,
             },
+            {
+              label: 'Delete account',
+              note: 'erases every workout, routine and custom exercise',
+              value: deleting ? 'DELETING…' : 'DELETE',
+              tone: 'danger',
+              onPress: deleting ? undefined : confirmDeleteAccount,
+            },
           ],
         },
       ]
@@ -135,7 +183,12 @@ export default function SettingsScreen() {
                 disabled={r.onPress == null}
               >
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.rowLabel, r.tone === 'warn' && { color: color.warn }]}>
+                  <Text
+                    style={[
+                      styles.rowLabel,
+                      (r.tone === 'warn' || r.tone === 'danger') && { color: color.warn },
+                    ]}
+                  >
                     {r.label}
                   </Text>
                   {r.note ? (
@@ -149,6 +202,7 @@ export default function SettingsScreen() {
                     styles.rowValue,
                     r.tone === 'on' && { color: color.acc },
                     r.tone === 'warn' && { color: color.t3 },
+                    r.tone === 'danger' && { color: color.warn },
                   ]}
                 >
                   {r.value}

@@ -45,6 +45,7 @@ updatable record of what was actually built from it, not a copy of the spec.
 | Manual UI — 12 `RepVoice Manual` screens on the dark LED theme | ✅ Built (2026-07-30 s2; **Calendar** added s4). Incl. **manual set logging** (grid + keypad), which was previously **missing** (voice-only). Static-verified, not yet on device. |
 | ↳ Core files | `src/app/{index,workout/[id],routine/[id],history/index,history/[id],exercise/[id],exercises,finish/[id],calendar}.tsx`, `src/components/{ui,ExercisePickerModal,workout/SetKeypad,workout/Caret}.tsx`, `src/data/calendar.ts`, `src/lib/units.ts` |
 | Hevy import | ❌ **Descoped** — removed from the Phase 1 plan entirely |
+| **In-app account deletion** (App Store Guideline 5.1.1(v)) | ✅ **Built + verified live 2026-08-08** — Settings → ACCOUNT → "Delete account" (two confirms) → `deleteAccount()` → RPC `public.delete_own_account()` (migration `0005`, security-definer, `auth.uid()`-only) → local sign-out wipes the persisted cache. Proven end-to-end against the live DB on a throwaway account: user, profile, routines, workouts, sets, voice_logs, custom exercises + aliases all gone; the seeded 150 untouched. |
 | Native iPhone development client | ✅ Built, signed, installed, trusted, and launches to sign-in |
 | Email OTP delivery | ✅ Temporary Gmail SMTP + `{{ .Token }}` template; 8-digit delivery verified |
 | Typecheck / verify | ✅ `tsc --noEmit` clean; `expo export --platform web` bundles all routes; runs on the iOS simulator (manual loop + offline loop exercised live 2026-08-06). |

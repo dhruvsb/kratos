@@ -38,6 +38,23 @@ export async function signOut(): Promise<void> {
   if (error) throw error;
 }
 
+/**
+ * Permanently deletes the signed-in user's account and everything on it —
+ * required in-app by App Store Review Guideline 5.1.1(v) (deactivation doesn't
+ * count). The server side is `public.delete_own_account()` (migration 0005), a
+ * security-definer RPC that acts only on `auth.uid()`, so this call can never
+ * touch another account.
+ *
+ * The sign-out is `scope: 'local'` on purpose: the user row is already gone, so
+ * a server-side logout would fail — but the local clear still emits SIGNED_OUT,
+ * which is what wipes the persisted cache in `_layout`.
+ */
+export async function deleteAccount(): Promise<void> {
+  const { error } = await supabase.rpc('delete_own_account');
+  if (error) throw error;
+  await supabase.auth.signOut({ scope: 'local' });
+}
+
 export async function getProfile(): Promise<Profile | null> {
   const { data, error } = await supabase.from('profiles').select('*').maybeSingle();
   if (error) throw error;
