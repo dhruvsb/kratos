@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#EBE8E1;font-family:'Instrument Sans',sans-serif;padding:30px;
+--s0:#FBF7F0;--s1:#F5F1E9;--sin:#F6F3EC;--line:rgba(60,50,38,.11);--line2:rgba(60,50,38,.20);
+--t1:#2A2118;--t2:#6B6156;--t3:#A29A8E;--acc:#3F6B3B;--onAcc:#FFFFFF;
+--acc-06:color-mix(in oklab,var(--acc) 7%,transparent);
+--acc-14:color-mix(in oklab,var(--acc) 16%,transparent);
+--acc-30:color-mix(in oklab,var(--acc) 34%,transparent);
+--ok:#3F6B3B;--warn:#B23A2A;--sh:0 26px 54px -32px rgba(70,58,40,.45);
+--f-num:'Geist Mono',monospace;--f-ui:'Instrument Sans',sans-serif}
+a{color:#3F6B3B;text-decoration:none}a:hover{color:#2C4D29}
+</style>
+</helmet>
+
+<div data-screen-label="Rest light" style="width:384px;flex:none;background:var(--s0);border:1px solid var(--line2);border-radius:40px;overflow:hidden;font-family:var(--f-ui);color:var(--t1);display:flex;flex-direction:column;min-height:832px;box-shadow:var(--sh)">
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;padding:40px 24px 0">
+    <div style="font:600 19px var(--f-ui)">Push · A</div>
+    <div style="font:600 15px var(--f-num);color:var(--t2)">44:02</div>
+  </div>
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 24px">
+    <div style="font:600 13px var(--f-num);letter-spacing:.36em;color:var(--t3)">REST</div>
+    <div style="font:700 132px/1 var(--f-num);letter-spacing:-.03em;color:var(--acc);margin-top:16px">1:24</div>
+    <div style="width:100%;height:2px;background:var(--line);margin-top:34px"><div style="width:44%;height:2px;background:var(--acc)"></div></div>
+    <div style="display:flex;gap:9px;margin-top:26px;width:100%">
+      <div style="flex:1;height:44px;display:grid;place-items:center;border:1px solid var(--line2);border-radius:10px;font:600 10px var(--f-num);letter-spacing:.1em;color:var(--t2)">+30s</div>
+      <div style="flex:1;height:44px;display:grid;place-items:center;border:1px solid var(--line2);border-radius:10px;font:600 10px var(--f-num);letter-spacing:.1em;color:var(--t2)">−30s</div>
+      <div style="flex:1;height:44px;display:grid;place-items:center;background:var(--acc);border-radius:10px;font:600 10px var(--f-num);letter-spacing:.1em;color:var(--onAcc)">SKIP</div>
+    </div>
+  </div>
+  <div style="padding:0 24px 32px">
+    <div style="border-top:1px solid var(--line);padding-top:18px">
+      <div style="font:600 8px var(--f-num);letter-spacing:.26em;color:var(--t3)">JUST LOGGED</div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:11px">
+        <span style="font:700 19px var(--f-num)">85.0 × 8</span>
+        <span style="font:600 10px var(--f-num);letter-spacing:.12em;color:var(--acc)">▲ BEST · UNDO</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:22px;padding-top:16px;border-top:1px solid var(--line)">
+        <div><div style="font:600 8px var(--f-num);letter-spacing:.26em;color:var(--t3)">UP NEXT</div><div style="font:500 13.5px var(--f-ui);margin-top:8px">Bench · set 4 of 4</div></div>
+        <div style="font:700 16px var(--f-num);color:var(--t2)">85.0 × 8</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:444,&quot;height&quot;:892}}"></script>
+</body>
+</html>

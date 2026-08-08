@@ -11,7 +11,8 @@ import { useExercise, useExerciseHistory, useProfile } from '@/data/hooks';
 import type { ExerciseHistoryEntry } from '@/data/workouts';
 import type { WorkoutSet, Unit } from '@/types/db';
 import { formatWeight, kgToDisplay, trimWeight } from '@/lib/units';
-import { color, font, shadow, space, tracking } from '@/theme/tokens';
+import { font, space, tracking, type Theme } from '@/theme/tokens';
+import { useTheme } from '@/theme/ThemeProvider';
 
 const DAY_MS = 86_400_000;
 
@@ -27,6 +28,8 @@ function topSet(sets: WorkoutSet[]): WorkoutSet | null {
 }
 
 export default function ExerciseProgressScreen() {
+  const { color, shadow } = useTheme();
+  const styles = useMemo(() => makeStyles(color), [color]);
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const exercise = useExercise(id);
@@ -167,7 +170,7 @@ export default function ExerciseProgressScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (color: Theme['color']) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.bg },
   content: { paddingHorizontal: space.xxl, paddingBottom: space.xxl },
   back: { fontFamily: font.numSemibold, fontSize: 9.5, letterSpacing: tracking.label, color: color.t3 },

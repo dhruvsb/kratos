@@ -4,7 +4,7 @@
 // auto-advances and verifies on the last digit (CODE_LEN must match the Supabase
 // project's configured email-OTP length). On success the auth listener in
 // _layout swaps to the app.
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -17,11 +17,14 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Caret } from '@/components/workout/Caret';
 import { sendOtp, verifyOtp } from '@/data/auth';
-import { color, font, radius, space, tracking } from '@/theme/tokens';
+import { font, radius, space, tracking, type Theme } from '@/theme/tokens';
+import { useTheme } from '@/theme/ThemeProvider';
 
 const CODE_LEN = 8; // must match the Supabase project's email-OTP length (currently 8 digits)
 
 export function SignInScreen() {
+  const { color } = useTheme();
+  const styles = useMemo(() => makeStyles(color), [color]);
   const insets = useSafeAreaInsets();
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
@@ -189,7 +192,7 @@ export function SignInScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (color: Theme['color']) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.bg },
   body: { flex: 1, justifyContent: 'center', paddingHorizontal: 30 },
   logo: { fontFamily: font.uiSemibold, fontSize: 26, color: color.t1, letterSpacing: 0.4 },
@@ -221,14 +224,14 @@ const styles = StyleSheet.create({
     height: 52,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: color.s2,
+    backgroundColor: color.ctaBg,
     borderWidth: 1,
-    borderColor: color.acc35,
+    borderColor: color.ctaBorder,
     borderRadius: radius.ctl + 1,
     marginTop: 26,
   },
   ctaOff: { borderColor: color.line2, backgroundColor: color.s0 },
-  ctaText: { fontFamily: font.uiMedium, fontSize: 11, letterSpacing: tracking.label, color: color.acc },
+  ctaText: { fontFamily: font.uiMedium, fontSize: 11, letterSpacing: tracking.label, color: color.ctaFg },
 
   sentTo: { fontFamily: font.num, fontSize: 11.5, color: color.t3, marginTop: 11 },
   boxRow: { flexDirection: 'row', gap: 7, marginTop: 16 },

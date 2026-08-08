@@ -2,9 +2,10 @@
 // so any field can drop one in; step(1s) blink keeps it cheap and on-brand.
 import { useEffect, useRef } from 'react';
 import { Animated, type StyleProp, type ViewStyle } from 'react-native';
-import { color } from '@/theme/tokens';
+import { useTheme } from '@/theme/ThemeProvider';
 
 export function Caret({ height = 24, style }: { height?: number; style?: StyleProp<ViewStyle> }) {
+  const { color } = useTheme();
   const blink = useRef(new Animated.Value(1)).current;
   useEffect(() => {
     const loop = Animated.loop(

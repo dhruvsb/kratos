@@ -11,7 +11,8 @@ import { TabBar } from '@/components/voice/TabBar';
 import { ErrorText, Loading } from '@/components/ui';
 import { useWorkoutDays } from '@/data/calendar';
 import { useSettings } from '@/data/settings';
-import { color, font, radius, shadow, space, tracking } from '@/theme/tokens';
+import { font, radius, space, tracking, type Theme } from '@/theme/tokens';
+import { useTheme } from '@/theme/ThemeProvider';
 
 // Sessions/week the tally counts toward. A count, not a streak — see the header
 // note. Driven by Settings › Weekly goal (mockup 18); 5 is the default until the
@@ -38,6 +39,8 @@ type Cell = { key: string; n: string; bg: string; border: string; fg: string };
 type Week = { key: string; days: Cell[]; count: string; countColor: string };
 
 export default function CalendarScreen() {
+  const { color } = useTheme();
+  const styles = useMemo(() => makeStyles(color), [color]);
   const insets = useSafeAreaInsets();
   const query = useWorkoutDays();
   const settings = useSettings();
@@ -125,7 +128,7 @@ export default function CalendarScreen() {
       wStart = addDays(wStart, 7);
     }
     return out;
-  }, [view, doneDays, todayStart, WEEK_GOAL]);
+  }, [view, doneDays, todayStart, WEEK_GOAL, color]);
 
   // ---- Stats + 12-week bars ----
   const { stats, bars, barsFrom, weeksAtGoal } = useMemo(() => {
@@ -159,7 +162,7 @@ export default function CalendarScreen() {
       barsFrom: addDays(weekMonday, -11 * 7).toLocaleDateString('en-US', { month: 'short' }).toUpperCase(),
       weeksAtGoal: atGoal,
     };
-  }, [doneDays, today, weekMonday, WEEK_GOAL]);
+  }, [doneDays, today, weekMonday, WEEK_GOAL, color]);
 
   const monthLabel = new Date(view.year, view.month, 1)
     .toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
@@ -300,7 +303,7 @@ export default function CalendarScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (color: Theme['color']) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.bg },
   content: { paddingHorizontal: space.xxl, paddingBottom: space.xxl },
 

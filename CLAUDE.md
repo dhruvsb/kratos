@@ -31,14 +31,21 @@ changes what's built or decided — don't let the docs drift from reality.
   outside the token set. Fonts are Instrument Sans (UI) + Geist Mono (numbers) — the "type
   option 01" refresh (2026-07-31). The reference designs live in `docs/design/`
   (`RepVoice-Manual.dc.html` is what's implemented; the voice-first canvas is kept for Phase 2).
-  - **Theming (#17, in progress):** `color`/`shadow` are now **per-mode** — `tokens.ts` exports
-    `themes.{dark,light}`, resolved at runtime by `useTheme()` (`src/theme/ThemeProvider.tsx`,
-    preference persisted in `data/settings.ts`, `'system'` follows the OS). `radius`/`space`/
-    `font`/`tracking`/`timing` stay shared (not theme-dependent). **Dark is unchanged and still
-    the literal default**; the `light` palette is a placeholder clone until the design lands.
-    Screens still `import { color } from '@/theme/tokens'` (= dark) until migrated to `useTheme()`
-    — new/edited screens should read `color`/`shadow` from `useTheme()`, everything else from the
-    static token exports.
+  - **Theming (#17, DONE — light + dark both ship):** `color`/`shadow` are **per-mode** — `tokens.ts`
+    exports `themes.{dark,light}` (dark = the untouched LED palette; light = "Greige + Moss", from
+    `design_handoff_light_mode/`), resolved at runtime by `useTheme()` (`src/theme/ThemeProvider.tsx`,
+    preference persisted in `data/settings.ts` `themeMode`, `'system'` follows the OS; toggle in
+    Settings → APPEARANCE). `radius`/`space`/`font`/`tracking`/`timing` stay shared. **Every screen
+    reads `color`/`shadow` from `useTheme()`** and builds its StyleSheet through a per-component
+    `const styles = useMemo(() => makeStyles(color, shadow), [color, shadow])` factory — do the same in
+    any new/edited screen (never re-add a module-level `StyleSheet.create` that closes over a static
+    `color`). Four component treatments differ by theme and are carried by **semantic tokens** so a
+    single StyleSheet serves both and dark stays byte-identical: primary CTAs use
+    `ctaBg`/`ctaBorder`/`ctaFg` (+ `shadow.cta`) — solid accent fill on light; the current-set ✓ uses
+    `checkBg`/`checkFg`; `KeyCap` accent tone branches on `useThemeName()`. Reach for a semantic token
+    (or, rarely, a `useThemeName()` branch) whenever a plain value swap would misread on the other
+    canvas — don't hardcode a light-only or dark-only color. The static `color`/`shadow` exports remain
+    only as the dark reference; app code must not import them.
 - **All DB access goes through `src/data/` repository modules.** Screens and components
   never import `src/lib/supabase.ts` directly — auth is also wrapped, in `src/data/auth.ts`.
 - Security model is **Postgres RLS** (`user_id = auth.uid()`, child tables via join).

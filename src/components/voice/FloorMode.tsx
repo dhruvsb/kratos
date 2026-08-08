@@ -2,12 +2,13 @@
 // Resting (rest countdown + next/last/set summary) and PR (a thermal celebration,
 // the one place the system's color goes warm). Entered by the console's FLOOR key
 // or by laying the phone face-up and still; exits on pickup or tap.
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Accelerometer } from 'expo-sensors';
 import type { WorkoutExerciseDetail } from '@/data/workouts';
 import type { LastSessionSet } from '@/types/db';
-import { color, font, shadow, space, timing, tracking } from '@/theme/tokens';
+import { font, space, timing, tracking, type Theme } from '@/theme/tokens';
+import { useTheme } from '@/theme/ThemeProvider';
 import { LedDigits, LevelMeter, StatusPip, TickRule } from './primitives';
 
 function bestPrevious(sets: LastSessionSet[]): { weightKg: number; reps: number } | null {
@@ -31,6 +32,8 @@ export function FloorMode({
   lastSessionSets: LastSessionSet[];
   onClose: () => void;
 }) {
+  const { color, shadow } = useTheme();
+  const styles = useMemo(() => makeStyles(color, shadow), [color, shadow]);
   const [subState, setSubState] = useState<'resting' | 'pr'>('resting');
   const [restSecs, setRestSecs] = useState<number>(timing.restDefaultSec);
   const seenSetCount = useRef(exercise.sets.length);
@@ -125,6 +128,8 @@ export function FloorMode({
 }
 
 function SummaryCol({ label, value, dim }: { label: string; value: string; dim?: boolean }) {
+  const { color, shadow } = useTheme();
+  const styles = useMemo(() => makeStyles(color, shadow), [color, shadow]);
   return (
     <View style={{ alignItems: 'center' }}>
       <Text style={styles.summaryLabel}>{label}</Text>
@@ -133,7 +138,7 @@ function SummaryCol({ label, value, dim }: { label: string; value: string; dim?:
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (color: Theme['color'], shadow: Theme['shadow']) => StyleSheet.create({
   screen: {
     position: 'absolute',
     top: 0,

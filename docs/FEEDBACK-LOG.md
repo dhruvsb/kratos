@@ -318,11 +318,22 @@ reads sensibly with 7–8 regions instead of 6. Same-shape request likely applie
 
 | # | Item | Area | Done? | Sev | Effort |
 |---|------|------|-------|-----|--------|
-| 17 | Add a light theme (dark-only today) | Theming / design system | 🟡 IN PROGRESS (Phase 1 plumbing done) | Med | L |
+| 17 | Add a light theme (dark-only today) | Theming / design system | ✅ DONE (full light theme + System·Light·Dark toggle, 2026-08-08) | Med | L |
 
 ---
 
-### 17. Add a light theme 🟡 Med — **decisions made; Phase 1 (plumbing) landed 2026-08-08**
+### 17. Add a light theme ✅ Med — **DONE 2026-08-08 (Phases 1–3 complete)**
+**Shipped:** the full "Greige + Moss" light theme (design from `design_handoff_light_mode/`, option 2a)
+plus a System · Light · Dark toggle. `themes.light` in `tokens.ts` carries the real values; **all ~28
+screens/components** now read `color`/`shadow` from `useTheme()` through a memoized
+`makeStyles(color, shadow)` factory (styles rebuild only on an actual theme flip — no steady-state cost).
+The handoff's four "not a straight swap" rules are carried by **semantic tokens** (`ctaBg/ctaBorder/ctaFg`
++ `shadow.cta` for solid-fill primary CTAs; `checkBg/checkFg` for the filled current-set ✓) plus a
+`useThemeName()` branch in `KeyCap` (accent NEXT/FINISH), so **dark is byte-for-byte unchanged**. Settings
+→ APPEARANCE → Theme cycles the three modes (`useThemeMode()`); `_layout`'s `AppContent` makes the canvas
++ status bar theme-aware. `tsc` + web-export green; light mode and the enabled solid-moss CTA visually
+verified on the web sign-in screen. **Device-confirm still pending** (JS-only — no rebuild).
+<details><summary>Earlier: decisions + Phase 1 (plumbing), 2026-08-08</summary>
 **Decisions (user):** (1) the user supplies the light **design** — not a mechanical invert; (2)
 behavior is **follow-system with a Settings override**. Building in phases: **1** theme
 infrastructure (done), **2** migrate the ~28 screens off the static `color`/`shadow` imports to
@@ -349,6 +360,7 @@ outside the token set." That rule assumes a single palette; a light theme means 
 second full token set + a theme-context/provider that every one of those 27 call sites resolves
 through, or (b) a separate light "LED-instrument" design pass first — the lime-on-black accent,
 glow shadows, and meter-bar ramp in `tokens.ts` are dark-canvas-specific and wouldn't just invert.
+</details>
 </details>
 
 ---

@@ -3,11 +3,13 @@
 // onPress per tab (SETTINGS now routes to /settings, mockup 18). A tab with no
 // onPress is the active/no-op one and reads dim.
 import { Pressable, Text, View } from 'react-native';
-import { color, font, radius, shadow } from '@/theme/tokens';
+import { font, radius } from '@/theme/tokens';
+import { useTheme } from '@/theme/ThemeProvider';
 
 type Tab = { key: string; label: string; onPress?: () => void };
 
 export function TabBar({ active, tabs }: { active: string; tabs: Tab[] }) {
+  const { color, shadow } = useTheme();
   return (
     <View
       style={{

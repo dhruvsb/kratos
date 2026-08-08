@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#EBE8E1;font-family:'Instrument Sans',sans-serif;padding:30px;
+--s0:#FBF7F0;--s1:#F5F1E9;--sin:#F6F3EC;--line:rgba(60,50,38,.11);--line2:rgba(60,50,38,.20);
+--t1:#2A2118;--t2:#6B6156;--t3:#A29A8E;--acc:#3F6B3B;--onAcc:#FFFFFF;
+--acc-06:color-mix(in oklab,var(--acc) 7%,transparent);
+--acc-14:color-mix(in oklab,var(--acc) 16%,transparent);
+--acc-30:color-mix(in oklab,var(--acc) 34%,transparent);
+--ok:#3F6B3B;--warn:#B23A2A;--sh:0 26px 54px -32px rgba(70,58,40,.45);
+--f-num:'Geist Mono',monospace;--f-ui:'Instrument Sans',sans-serif}
+a{color:#3F6B3B;text-decoration:none}a:hover{color:#2C4D29}
+@keyframes led{0%,100%{opacity:1}50%{opacity:.35}}
+</style>
+</helmet>
+
+<div data-screen-label="Active workout light" style="width:384px;flex:none;background:var(--s0);border:1px solid var(--line2);border-radius:40px;overflow:hidden;font-family:var(--f-ui);color:var(--t1);display:flex;flex-direction:column;min-height:832px;box-shadow:var(--sh)">
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;padding:40px 24px 0">
+    <div>
+      <div style="font:600 9px var(--f-num);letter-spacing:.24em;color:var(--acc)">IN PROGRESS</div>
+      <div style="font:600 19px var(--f-ui);margin-top:6px">Push · A</div>
+    </div>
+    <div style="text-align:right"><div style="font:600 15px var(--f-num);color:var(--acc)">42:18</div><div style="font:600 9px var(--f-num);letter-spacing:.12em;color:var(--t3);margin-top:5px">7 SETS · 4,120 KG</div></div>
+  </div>
+  <div style="display:flex;gap:6px;padding:20px 24px 0;align-items:center">
+    <div style="flex:1;text-align:center;padding:10px 0;border:1px solid var(--line2);border-radius:7px;font:600 9.5px var(--f-num);color:var(--t3)">1</div>
+    <div style="flex:1;text-align:center;padding:10px 0;border:1px solid var(--line2);border-radius:7px;font:600 9.5px var(--f-num);color:var(--t3)">2</div>
+    <div style="flex:1;text-align:center;padding:10px 0;border:1px solid var(--acc);border-radius:7px;background:var(--acc-14);font:700 9.5px var(--f-num);color:var(--acc)">3</div>
+    <div style="flex:1;text-align:center;padding:10px 0;border:1px solid var(--line);border-radius:7px;font:600 9.5px var(--f-num);color:var(--t3)">4</div>
+    <div style="flex:1;text-align:center;padding:10px 0;border:1px solid var(--line);border-radius:7px;font:600 9.5px var(--f-num);color:var(--t3)">5</div>
+  </div>
+  <div style="padding:26px 24px 0">
+    <div style="display:flex;justify-content:space-between;align-items:baseline">
+      <div style="display:flex;align-items:baseline;gap:8px"><span style="font:600 18px var(--f-ui)">Barbell bench press</span><span style="font:600 14px var(--f-num);color:var(--acc)">›</span></div>
+      <div style="font:600 9.5px var(--f-num);letter-spacing:.1em;color:var(--t3)">3 OF 5</div>
+    </div>
+    <div style="display:flex;gap:14px;margin-top:9px">
+      <span style="font:600 10px var(--f-num);letter-spacing:.1em;color:var(--t2)">TARGET 4 × 6–8</span>
+      <span style="font:600 10px var(--f-num);letter-spacing:.1em;color:var(--t3)">LAST 82.5 × 8</span>
+    </div>
+  </div>
+  <div style="padding:22px 18px 0">
+    <div style="display:grid;grid-template-columns:24px 66px 1fr 1fr 40px;gap:8px;padding:0 6px 9px;font:600 8px var(--f-num);letter-spacing:.2em;color:var(--t3)">
+      <span>#</span><span>PREV</span><span style="text-align:center">KG</span><span style="text-align:center">REPS</span><span></span>
+    </div>
+    <div style="background:var(--sin);border:1px solid var(--line);border-radius:12px;overflow:hidden">
+      <div style="display:grid;grid-template-columns:24px 66px 1fr 1fr 40px;gap:8px;align-items:center;padding:15px 8px 15px 12px;border-bottom:1px solid var(--line)">
+        <span style="font:600 10px var(--f-num);color:var(--t3)">1</span>
+        <span style="font:600 10px var(--f-num);color:var(--t3)">60 × 10</span>
+        <div style="height:38px;display:grid;place-items:center;font:700 17px var(--f-num);color:var(--t2)">60.0</div>
+        <div style="height:38px;display:grid;place-items:center;font:700 17px var(--f-num);color:var(--t2)">10</div>
+        <div style="height:38px;display:grid;place-items:center;font:600 15px var(--f-num);color:var(--ok)">✓</div>
+      </div>
+      <div style="display:grid;grid-template-columns:24px 66px 1fr 1fr 40px;gap:8px;align-items:center;padding:15px 8px 15px 12px;border-bottom:1px solid var(--line)">
+        <span style="font:600 10px var(--f-num);color:var(--t3)">2</span>
+        <span style="font:600 10px var(--f-num);color:var(--t3)">80 × 8</span>
+        <div style="height:38px;display:grid;place-items:center;font:700 17px var(--f-num);color:var(--t2)">80.0</div>
+        <div style="height:38px;display:grid;place-items:center;font:700 17px var(--f-num);color:var(--t2)">8</div>
+        <div style="height:38px;display:grid;place-items:center;font:600 15px var(--f-num);color:var(--ok)">✓</div>
+      </div>
+      <div style="display:grid;grid-template-columns:24px 66px 1fr 1fr 40px;gap:8px;align-items:center;padding:15px 8px 15px 12px;border-bottom:1px solid var(--line);background:var(--acc-06)">
+        <span style="font:600 10px var(--f-num);color:var(--t3)">3</span>
+        <span style="font:600 10px var(--f-num);color:var(--t3)">82.5 × 8</span>
+        <div style="height:38px;display:grid;place-items:center;border:1px solid var(--acc);border-radius:8px;background:var(--s0);font:700 17px var(--f-num);color:var(--t1)">82.5</div>
+        <div style="height:38px;display:grid;place-items:center;border:1px solid var(--acc);border-radius:8px;background:var(--s0);font:700 17px var(--f-num);color:var(--t1)">8</div>
+        <div style="height:38px;display:grid;place-items:center;border-radius:8px;background:var(--acc);font:600 15px var(--f-num);color:var(--onAcc)">✓</div>
+      </div>
+      <div style="display:grid;grid-template-columns:24px 66px 1fr 1fr 40px;gap:8px;align-items:center;padding:15px 8px 15px 12px;border-bottom:1px solid var(--line)">
+        <span style="font:600 10px var(--f-num);color:var(--t3)">4</span>
+        <span style="font:600 10px var(--f-num);color:var(--t3)">82.5 × 7</span>
+        <div style="height:38px;display:grid;place-items:center;border:1px solid var(--line2);border-radius:8px;font:700 17px var(--f-num);color:var(--t3)">82.5</div>
+        <div style="height:38px;display:grid;place-items:center;border:1px solid var(--line2);border-radius:8px;font:700 17px var(--f-num);color:var(--t3)">7</div>
+        <div style="height:38px;display:grid;place-items:center;border:1px solid var(--line2);border-radius:8px;font:600 15px var(--f-num);color:var(--t3)">✓</div>
+      </div>
+      <div style="display:flex;gap:22px;padding:14px 12px">
+        <span style="font:600 10.5px var(--f-num);letter-spacing:.12em;color:var(--acc)">+ ADD SET</span>
+        <span style="font:600 10.5px var(--f-num);letter-spacing:.12em;color:var(--t3)">+ WARMUP</span>
+        <span style="font:600 10.5px var(--f-num);letter-spacing:.12em;color:var(--t3)">NOTE</span>
+      </div>
+    </div>
+  </div>
+  <div style="flex:1"></div>
+  <div style="border-top:1px solid var(--line2);background:var(--s1);padding:14px 16px;display:flex;align-items:center;gap:12px">
+    <div style="font:600 10px var(--f-num);letter-spacing:.16em;color:var(--t3)">REST</div>
+    <div style="font:700 22px var(--f-num);color:var(--t2)">2:00</div>
+    <div style="flex:1;height:1px;background:var(--line)"></div>
+    <div style="font:600 10px var(--f-num);letter-spacing:.12em;color:var(--t3)">AUTO-START</div>
+  </div>
+  <div style="display:flex;gap:8px;padding:16px 18px 32px">
+    <div style="width:104px;height:48px;display:grid;place-items:center;border:1px solid var(--line2);border-radius:10px;font:600 10px var(--f-num);letter-spacing:.1em;color:var(--t2)">← PREV</div>
+    <div style="flex:1;height:48px;display:grid;place-items:center;background:var(--acc);border-radius:10px;font:600 11px var(--f-ui);letter-spacing:.12em;color:var(--onAcc)">NEXT EXERCISE →</div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:444,&quot;height&quot;:892}}"></script>
+</body>
+</html>

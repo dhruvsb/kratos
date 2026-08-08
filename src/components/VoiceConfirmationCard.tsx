@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import {
   useConfirmVoiceEntries,
@@ -13,7 +13,8 @@ import type { ParseResult } from '@/types/parse';
 import type { VoiceParseResponse } from '@/data/voice';
 import { ExercisePickerModal } from './ExercisePickerModal';
 import { DrainBar, KeyCap, ParseChip } from './voice/primitives';
-import { color, font, radius, shadow, space, timing, tracking } from '@/theme/tokens';
+import { font, radius, space, timing, tracking, type Theme } from '@/theme/tokens';
+import { useTheme } from '@/theme/ThemeProvider';
 
 const SET_TYPES: SetType[] = ['normal', 'warmup', 'drop', 'failure'];
 const SET_TYPE_LABEL: Record<SetType, string> = {
@@ -81,6 +82,8 @@ export function VoiceConfirmationCard({
   autoCommit?: boolean;
   onClose: () => void;
 }) {
+  const { color, shadow } = useTheme();
+  const styles = useMemo(() => makeStyles(color, shadow), [color, shadow]);
   const visible = response != null || editSet != null;
 
   const [entries, setEntries] = useState<EditableEntry[]>([]);
@@ -493,6 +496,8 @@ function Stepper({
   big?: boolean;
   onChange: (v: number | null) => void;
 }) {
+  const { color, shadow } = useTheme();
+  const styles = useMemo(() => makeStyles(color, shadow), [color, shadow]);
   const display = value != null ? (Number.isInteger(value) ? String(value) : value.toFixed(1)) : '—';
   const size = big ? 46 : 38;
   return (
@@ -526,6 +531,8 @@ function AmbiguityChip({
   field: string;
   onAnswerNumeric: (value: number | null) => void;
 }) {
+  const { color, shadow } = useTheme();
+  const styles = useMemo(() => makeStyles(color, shadow), [color, shadow]);
   const [value, setValue] = useState('');
   const numericField = field === 'weight' || field === 'reps' || field === 'sets_count';
   return (
@@ -555,7 +562,7 @@ function AmbiguityChip({
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (color: Theme['color'], shadow: Theme['shadow']) => StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: 'rgba(2,6,9,0.7)', justifyContent: 'flex-end' },
   backdropTap: { flex: 1 },
   sheet: {

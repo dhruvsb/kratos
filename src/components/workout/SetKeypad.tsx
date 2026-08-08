@@ -2,7 +2,7 @@
 // fields (KG active / REPS), ±step + SAME-AS-LAST shortcuts, a numeric pad, and a
 // plate-math hint. Storage is kg; entry is in the profile's display unit and
 // converted on LOG. Used for both adding a new set and editing a logged one.
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Caret } from '@/components/workout/Caret';
@@ -14,7 +14,8 @@ import {
   step,
   trimWeight,
 } from '@/lib/units';
-import { color, font, radius, space, tracking } from '@/theme/tokens';
+import { font, radius, space, tracking, type Theme } from '@/theme/tokens';
+import { useTheme } from '@/theme/ThemeProvider';
 import type { Unit } from '@/types/db';
 
 type Field = 'kg' | 'reps';
@@ -56,6 +57,8 @@ const REP_CHIPS = [4, 6, 8, 10, 12] as const;
 const MAX_WEIGHT_KG = 1000;
 
 export function SetKeypad(props: SetKeypadProps) {
+  const { color } = useTheme();
+  const styles = useMemo(() => makeStyles(color), [color]);
   const { visible, unit, initialKg, initialReps, lastKg, lastReps } = props;
   const insets = useSafeAreaInsets();
   const [kgStr, setKgStr] = useState('');
@@ -254,6 +257,8 @@ function Field({
   active: boolean;
   onPress: () => void;
 }) {
+  const { color } = useTheme();
+  const styles = useMemo(() => makeStyles(color), [color]);
   return (
     <Pressable style={[styles.field, active && styles.fieldActive]} onPress={onPress}>
       <Text style={[styles.fieldLabel, active && { color: color.acc }]}>{label}</Text>
@@ -265,7 +270,7 @@ function Field({
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (color: Theme['color']) => StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: 'rgba(2,6,9,0.66)' },
   sheet: {
     backgroundColor: color.s1,
@@ -346,14 +351,16 @@ const styles = StyleSheet.create({
     height: 52,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: color.s2,
+    backgroundColor: color.ctaBg,
     borderWidth: 1,
-    borderColor: color.acc35,
+    borderColor: color.ctaBorder,
     borderRadius: radius.ctl + 1,
     marginTop: space.md,
   },
-  logBtnOff: { borderColor: color.line2 },
-  logText: { fontFamily: font.uiMedium, fontSize: 11, letterSpacing: tracking.label, color: color.acc },
+  // Disabled falls back to the plain surface — in dark that's the same s2 (no visual
+  // change); in light it neutralizes the solid accent fill to a clean outline.
+  logBtnOff: { backgroundColor: color.s2, borderColor: color.line2 },
+  logText: { fontFamily: font.uiMedium, fontSize: 11, letterSpacing: tracking.label, color: color.ctaFg },
 
   // Plate hint, promoted from a 9.5px footer whisper to a readable line right under
   // the fields (feedback #15). Reserve height so it doesn't shift the pad when it

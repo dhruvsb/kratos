@@ -2,11 +2,15 @@
 // hit. Presentational: it takes the already-computed shares (see lib/muscleSplit)
 // and renders a bar-per-region list (label · meter · %), heaviest first. On-theme
 // LED look, monochrome — the design's accent is border/glow only, never a fill.
+import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { RegionShare } from '@/lib/muscleSplit';
-import { color, font, radius, space, tracking } from '@/theme/tokens';
+import { font, radius, space, tracking, type Theme } from '@/theme/tokens';
+import { useTheme } from '@/theme/ThemeProvider';
 
 export function MuscleSplit({ regions }: { regions: RegionShare[] }) {
+  const { color } = useTheme();
+  const styles = useMemo(() => makeStyles(color), [color]);
   if (regions.length === 0) return null;
   const max = regions[0].fraction || 1; // scale bars to the leader for readable contrast
 
@@ -26,7 +30,7 @@ export function MuscleSplit({ regions }: { regions: RegionShare[] }) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (color: Theme['color']) => StyleSheet.create({
   wrap: { gap: space.sm },
   heading: {
     fontFamily: font.numSemibold,

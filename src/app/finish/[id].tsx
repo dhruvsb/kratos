@@ -3,13 +3,15 @@
 // Reached by router.replace after finishWorkout, so back doesn't return to the
 // now-finished live grid.
 import { router, useLocalSearchParams } from 'expo-router';
+import { useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Empty, Loading } from '@/components/ui';
 import { useExerciseBests, useWorkout } from '@/data/hooks';
 import type { WorkoutSet, Unit } from '@/types/db';
 import { formatSet, formatWeight, kgToDisplay } from '@/lib/units';
-import { color, font, radius, shadow, space, tracking } from '@/theme/tokens';
+import { font, radius, space, tracking, type Theme } from '@/theme/tokens';
+import { useTheme } from '@/theme/ThemeProvider';
 
 /** Session top set: heaviest weight wins, reps break ties. */
 function topSet(sets: WorkoutSet[]): WorkoutSet | null {
@@ -23,6 +25,8 @@ function topSet(sets: WorkoutSet[]): WorkoutSet | null {
 }
 
 export default function FinishScreen() {
+  const { color, shadow } = useTheme();
+  const styles = useMemo(() => makeStyles(color, shadow), [color, shadow]);
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const workout = useWorkout(id);
@@ -136,6 +140,8 @@ export default function FinishScreen() {
 }
 
 function Tile({ label, value, unit }: { label: string; value: string; unit?: string }) {
+  const { color, shadow } = useTheme();
+  const styles = useMemo(() => makeStyles(color, shadow), [color, shadow]);
   return (
     <View style={styles.tile}>
       <Text style={styles.tileLabel}>{label}</Text>
@@ -147,7 +153,7 @@ function Tile({ label, value, unit }: { label: string; value: string; unit?: str
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (color: Theme['color'], shadow: Theme['shadow']) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.bg },
   content: { paddingHorizontal: space.xxl, paddingBottom: space.xxl },
   saved: { fontFamily: font.numSemibold, fontSize: 9, letterSpacing: tracking.wide, color: color.ok },
@@ -191,17 +197,17 @@ const styles = StyleSheet.create({
     height: 52,
     borderRadius: radius.ctl + 1,
     borderWidth: 1,
-    borderColor: color.acc35,
-    backgroundColor: color.s2,
+    borderColor: color.ctaBorder,
+    backgroundColor: color.ctaBg,
     alignItems: 'center',
     justifyContent: 'center',
-    ...shadow.glowSm,
+    ...shadow.cta,
   },
   done: {
     fontFamily: font.uiMedium,
     fontSize: 11,
     letterSpacing: tracking.label,
-    color: color.acc,
+    color: color.ctaFg,
     paddingVertical: 18,
     paddingHorizontal: 40,
     textAlign: 'center',

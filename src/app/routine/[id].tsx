@@ -3,7 +3,7 @@
 // here but read nowhere in the app, so creating a routine is exercise selection
 // only. Weight/reps/sets are entered live during the workout.
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Pressable,
   ScrollView,
@@ -19,11 +19,14 @@ import { useRoutine } from '@/data/hooks';
 import { createRoutine, setRoutineExercises, updateRoutine } from '@/data/routines';
 import { useQueryClient } from '@tanstack/react-query';
 import type { Exercise } from '@/types/db';
-import { color, font, radius, shadow, space, tracking } from '@/theme/tokens';
+import { font, radius, space, tracking, type Theme } from '@/theme/tokens';
+import { useTheme } from '@/theme/ThemeProvider';
 
 type Item = { exercise: Exercise };
 
 export default function RoutineEditorScreen() {
+  const { color, shadow } = useTheme();
+  const styles = useMemo(() => makeStyles(color, shadow), [color, shadow]);
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const isNew = id === 'new';
@@ -189,7 +192,7 @@ export default function RoutineEditorScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (color: Theme['color'], shadow: Theme['shadow']) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.bg },
   content: { paddingHorizontal: space.xxl, paddingBottom: space.xxl, gap: 0 },
   topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
@@ -247,14 +250,16 @@ const styles = StyleSheet.create({
     height: 50,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: color.s2,
+    backgroundColor: color.ctaBg,
     borderWidth: 1,
-    borderColor: color.acc35,
+    borderColor: color.ctaBorder,
     borderRadius: radius.ctl + 1,
-    ...shadow.glowSm,
+    ...shadow.cta,
   },
-  saveOff: { borderColor: color.line2, ...({ shadowOpacity: 0 } as object) },
-  saveText: { fontFamily: font.uiMedium, fontSize: 11, letterSpacing: tracking.label, color: color.acc },
+  // Disabled: drop the solid accent fill back to the plain surface (unchanged s2 in
+  // dark) and kill the elevation.
+  saveOff: { backgroundColor: color.s2, borderColor: color.line2, ...({ shadowOpacity: 0 } as object) },
+  saveText: { fontFamily: font.uiMedium, fontSize: 11, letterSpacing: tracking.label, color: color.ctaFg },
   cancel: {
     width: 96,
     height: 50,

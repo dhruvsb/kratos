@@ -8,7 +8,8 @@ import { ErrorText, Loading } from '@/components/ui';
 import { TabBar } from '@/components/voice/TabBar';
 import { useWorkoutList } from '@/data/hooks';
 import type { WorkoutListItem } from '@/data/workouts';
-import { color, font, space, tracking } from '@/theme/tokens';
+import { font, space, tracking, type Theme } from '@/theme/tokens';
+import { useTheme } from '@/theme/ThemeProvider';
 
 const DAY_MS = 86_400_000;
 type Listed =
@@ -16,6 +17,8 @@ type Listed =
   | { type: 'row'; key: string; w: WorkoutListItem };
 
 export default function HistoryScreen() {
+  const { color } = useTheme();
+  const styles = useMemo(() => makeStyles(color), [color]);
   const insets = useSafeAreaInsets();
   const list = useWorkoutList();
   const workouts = useMemo(() => (list.data?.pages ?? []).flat(), [list.data]);
@@ -119,6 +122,8 @@ export default function HistoryScreen() {
 }
 
 function Stat({ label, value, unit }: { label: string; value: string; unit?: string }) {
+  const { color } = useTheme();
+  const styles = useMemo(() => makeStyles(color), [color]);
   return (
     <View>
       <Text style={styles.statLabel}>{label}</Text>
@@ -130,7 +135,7 @@ function Stat({ label, value, unit }: { label: string; value: string; unit?: str
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (color: Theme['color']) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.bg },
   head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', paddingHorizontal: space.xxl },
   title: { fontFamily: font.uiSemibold, fontSize: 22, color: color.t1 },

@@ -1,15 +1,18 @@
 // Exercise library (mockup 11) — search-first over the seeded names. Tapping a
 // row goes to that exercise's progress, not a description.
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { FlatList, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ErrorText } from '@/components/ui';
 import { useExerciseSearch } from '@/data/hooks';
 import { BODY_REGIONS, type BodyRegion } from '@/lib/muscles';
-import { color, font, radius, space, tracking } from '@/theme/tokens';
+import { font, radius, space, tracking, type Theme } from '@/theme/tokens';
+import { useTheme } from '@/theme/ThemeProvider';
 
 export default function ExerciseLibraryScreen() {
+  const { color } = useTheme();
+  const styles = useMemo(() => makeStyles(color), [color]);
   const insets = useSafeAreaInsets();
   const [query, setQuery] = useState('');
   const [region, setRegion] = useState<BodyRegion | null>(null);
@@ -97,7 +100,7 @@ export default function ExerciseLibraryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (color: Theme['color']) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.bg },
   head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', paddingHorizontal: space.xxl },
   back: { fontFamily: font.numSemibold, fontSize: 9.5, letterSpacing: tracking.label, color: color.t3 },

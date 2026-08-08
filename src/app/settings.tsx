@@ -7,7 +7,7 @@
 // and "Weekly goal" feeds the calendar tally (mockup 12). Weight *unit* is the one
 // setting kept on the profile (it's read across the whole write path); the rest are
 // device-local (src/data/settings.ts).
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useQuery } from '@tanstack/react-query';
@@ -16,8 +16,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TabBar } from '@/components/voice/TabBar';
 import { deleteAccount, getSession, signOut } from '@/data/auth';
 import { useProfile, useUpdateProfile } from '@/data/hooks';
-import { GOAL_PRESETS, useSettings, useUpdateSettings } from '@/data/settings';
-import { color, font, radius, space, tracking } from '@/theme/tokens';
+import { GOAL_PRESETS, THEME_MODES, useSettings, useUpdateSettings } from '@/data/settings';
+import { font, radius, space, tracking, type Theme } from '@/theme/tokens';
+import { useTheme, useThemeMode } from '@/theme/ThemeProvider';
 
 // App Store Review Guideline 5.1.1(i) wants the privacy policy reachable from
 // *inside* the app as well as from the App Store listing, so it gets a row here.
@@ -41,6 +42,9 @@ type Row = {
 };
 
 export default function SettingsScreen() {
+  const { color } = useTheme();
+  const styles = useMemo(() => makeStyles(color), [color]);
+  const { mode: themeMode, setMode: setThemeMode } = useThemeMode();
   const insets = useSafeAreaInsets();
   const [deleting, setDeleting] = useState(false);
   const profile = useProfile();
@@ -127,6 +131,18 @@ export default function SettingsScreen() {
               note: 'drives the calendar tally',
               value: `${s.weeklyGoal} DAYS`,
               onPress: () => updateSettings.mutate({ weeklyGoal: next(GOAL_PRESETS, s.weeklyGoal) }),
+            },
+          ],
+        },
+        {
+          title: 'APPEARANCE',
+          rows: [
+            {
+              label: 'Theme',
+              note: "'system' follows your device",
+              value: themeMode.toUpperCase(),
+              tone: themeMode === 'system' ? 'default' : 'on',
+              onPress: () => setThemeMode(next(THEME_MODES, themeMode)),
             },
           ],
         },
@@ -251,7 +267,7 @@ export default function SettingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (color: Theme['color']) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.bg },
   content: { paddingHorizontal: space.xxl, paddingBottom: space.xl },
   title: { fontFamily: font.uiSemibold, fontSize: 22, color: color.t1 },

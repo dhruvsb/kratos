@@ -5,13 +5,14 @@
 import * as DocumentPicker from 'expo-document-picker';
 import { File } from 'expo-file-system';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Btn } from '@/components/ui';
 import { useCommitImport } from '@/data/hooks';
 import { buildImportPlan, type ImportPlan, type ImportResult } from '@/data/import';
-import { color, font, radius, space, tracking } from '@/theme/tokens';
+import { font, radius, space, tracking, type Theme } from '@/theme/tokens';
+import { useTheme } from '@/theme/ThemeProvider';
 
 type Stage =
   | { name: 'idle' }
@@ -25,6 +26,8 @@ function fmtDate(iso: string): string {
 }
 
 export default function ImportScreen() {
+  const { color } = useTheme();
+  const styles = useMemo(() => makeStyles(color), [color]);
   const insets = useSafeAreaInsets();
   const commit = useCommitImport();
   const [stage, setStage] = useState<Stage>({ name: 'idle' });
@@ -114,6 +117,8 @@ export default function ImportScreen() {
 }
 
 function Stat({ value, label, tone }: { value: number | string; label: string; tone?: 'accent' | 'dim' }) {
+  const { color } = useTheme();
+  const styles = useMemo(() => makeStyles(color), [color]);
   return (
     <View style={styles.stat}>
       <Text style={[styles.statValue, tone === 'accent' && { color: color.acc }, tone === 'dim' && { color: color.t3 }]}>
@@ -137,6 +142,8 @@ function Preview({
   onConfirm: () => void;
   onCancel: () => void;
 }) {
+  const { color } = useTheme();
+  const styles = useMemo(() => makeStyles(color), [color]);
   const nothingNew = plan.newWorkouts.length === 0;
   const customs = [...plan.resolutions.values()].filter((r) => r.kind === 'custom');
   return (
@@ -200,6 +207,8 @@ function Preview({
 }
 
 function Done({ result }: { result: ImportResult }) {
+  const { color } = useTheme();
+  const styles = useMemo(() => makeStyles(color), [color]);
   return (
     <>
       <View style={styles.spacer} />
@@ -219,7 +228,7 @@ function Done({ result }: { result: ImportResult }) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (color: Theme['color']) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.bg, paddingHorizontal: space.xxl },
   head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   back: { fontFamily: font.numSemibold, fontSize: 10, letterSpacing: tracking.label, color: color.t2 },

@@ -7,6 +7,54 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-08 — Light theme (#17) Phases 2 + 3: real light palette + full screen migration + toggle
+
+Finished the biggest backlog item. The user delivered the light design (`design_handoff_light_mode/` —
+"Greige + Moss", option 2a, a full spec: token table + three reference screens + four "not a straight
+swap" rules). This session dropped in the real values, migrated every screen to `useTheme()`, and added
+the Settings control. Dark is untouched.
+
+**Palette (`tokens.ts` → `lightColor`/`lightShadow`).** Warm off-white ground (`bg #EBE8E1`), near-white
+cards (`s0 #FBF7F0`), moss accent (`acc #3F6B3B`), warm brown-black hairline alphas (`rgba(60,50,38,…)`),
+dark ink text ramp. Glows go flat on white (`glowSm/Lg` opacity 0 — accent marks render as solid fills);
+the raised keycap softens to a warm low-opacity drop; a new `shadow.cta` is the soft warm CTA elevation.
+To satisfy `typeof darkColor`/`typeof darkShadow` with different values, `darkColor`/`darkShadow` lost
+their `as const` (values widen to `string`/`number`; keys stay fixed).
+
+**Semantic tokens for the 4 non-straight-swap rules** (added to *both* palettes, dark = its current
+values, so dark is byte-for-byte unchanged; one StyleSheet serves both themes without per-screen theme
+branching):
+- `ctaBg` / `ctaBorder` / `ctaFg` + `shadow.cta` — **primary CTAs** (START, LOG SET, SAVE ROUTINE, DONE,
+  RESUME, SEND CODE, ADD n, CREATE, …). Dark = dark fill + accent border + accent text (unchanged); light
+  = solid moss fill + no border + white ink (a plain swap would read as disabled). Disabled states fall
+  back to the plain `s2`/`s0` surface (unchanged in dark, clean outline in light).
+- `checkBg` / `checkFg` — the **current-set ✓** (`workout/[id]`). Dark = accent border, no fill, accent
+  glyph; light = filled accent chip, white glyph. (Completed ✓ stays a plain `ok` glyph — straight swap.)
+- **`KeyCap` accent tone** (NEXT EXERCISE / FINISH WORKOUT) is a shared gradient keycap, so it branches on
+  `useThemeName()`: light + accent → solid moss fill + white ink + `shadow.cta`; dark unchanged.
+
+**Screen migration (~28 files).** Every screen/component that read the static `color`/`shadow` now reads
+them from `useTheme()`, and its module-level `StyleSheet.create({…})` became
+`makeStyles(color, shadow) => StyleSheet.create({…})` called per-component via
+`useMemo(() => makeStyles(color, shadow), [color, shadow])`. The theme object is stable per palette, so
+`makeStyles` runs once per mount and **only re-runs on an actual theme flip** — zero steady-state cost
+(confirmed the reasoning with the user before starting). Primitives that referenced `color` in default
+params (`LedDigits lit`, `StatusPip tone`) resolve it in-body instead. `calendar.tsx` computes cell/bar
+colors in `useMemo`s — added `color` to their deps. Nothing outside `tokens.ts` imports the static
+`color`/`shadow` anymore (kept exported as the dark reference + for the glow-shadow colors).
+
+**Phase 3 — the control + chrome.** Settings gained an **APPEARANCE → Theme** row cycling
+System·Light·Dark (`useThemeMode()` + `THEME_MODES`). `_layout` was refactored: the session/sign-in tree
+moved into an `AppContent` component *inside* `ThemeProvider`, so the `Stack` `contentStyle` background
+and the status-bar style are theme-aware (dark bar on dark, dark text on light) instead of hardcoded.
+
+**Verified.** `tsc --noEmit` clean; `expo export --platform web` bundles all 15 routes; served the web
+export and forced `themeMode:'light'` (had to also clear the persisted RQ cache — the `settings` query is
+`staleTime: Infinity`, so a stale cached copy overrode the change) — the sign-in screen renders the greige
+ground + dark ink, and SEND CODE is the muted outline when disabled and a **solid moss fill with white
+ink** once a valid email is entered (rule 1 confirmed). The other screens need auth to view but use the
+identical pattern. **Not yet on device** (pure JS — no dev-client rebuild needed).
+
 ## 2026-08-08 — Light theme (#17) Phase 1: theme infrastructure (dark-only, zero visual change)
 
 First slice of the biggest backlog item. Decisions locked with the user first: **the user supplies the

@@ -17,8 +17,7 @@ import {
   resetQueryCache,
 } from '@/lib/queryClient';
 import { useAppFonts } from '@/theme/fonts';
-import { ThemeProvider } from '@/theme/ThemeProvider';
-import { color } from '@/theme/tokens';
+import { ThemeProvider, useTheme, useThemeName } from '@/theme/ThemeProvider';
 
 // Hold the native splash until the session check, fonts, AND the persisted-cache
 // restore all resolve, so first paint is already themed (no flash of the system
@@ -89,43 +88,54 @@ export default function RootLayout() {
           void queryClient.resumePausedMutations();
         }}
       >
-        {/* Resolves the active palette from the persisted preference + OS appearance.
-            Phase 1: plumbing only (light === dark until the design lands), so this is
-            visually a no-op today — it just makes useTheme() available for Phase 2. */}
+        {/* Resolves the active palette from the persisted preference + OS appearance
+            (#17). AppContent reads it via useTheme() so the canvas + status bar follow
+            the chosen theme; screens theme themselves through the same hook. */}
         <ThemeProvider>
           <BootGate ready={ready} fontsReady={fontsReady}>
-          {session ? (
-            // Every screen is the dark LED theme and draws its own header +
-            // safe-area (back links live in-screen), so the native header stays
-            // off and first paint is dark end-to-end.
-            <>
-              <Stack
-                screenOptions={{
-                  headerShown: false,
-                  statusBarStyle: 'light',
-                  contentStyle: { backgroundColor: color.bg },
-                }}
-              >
-                <Stack.Screen name="index" options={TAB_SCREEN} />
-                <Stack.Screen name="calendar" options={TAB_SCREEN} />
-                <Stack.Screen name="history/index" options={TAB_SCREEN} />
-                <Stack.Screen name="settings" options={TAB_SCREEN} />
-              </Stack>
-              {/* Floats over every screen; only visible offline or while the
-                  offline queue is draining. */}
-              <OfflineBanner />
-            </>
-          ) : (
-            <>
-              {/* Sign-in is the dark LED theme (mockup 13), so the bar goes light. */}
-              <StatusBar style="light" />
-              <SignInScreen />
-            </>
-          )}
+            <AppContent session={session} />
           </BootGate>
         </ThemeProvider>
       </PersistQueryClientProvider>
     </SafeAreaProvider>
+  );
+}
+
+// The themed app tree. Lives under ThemeProvider so the canvas background and the
+// status-bar style follow the active palette (dark bar on the dark theme, dark text
+// on the light theme). Screens theme their own content via useTheme(); this only
+// owns the two chrome bits the Stack/StatusBar control globally.
+function AppContent({ session }: { session: Session | null }) {
+  const { color } = useTheme();
+  const barStyle = useThemeName() === 'light' ? 'dark' : 'light';
+
+  if (!session) {
+    return (
+      <>
+        <StatusBar style={barStyle} />
+        <SignInScreen />
+      </>
+    );
+  }
+
+  return (
+    <>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          statusBarStyle: barStyle,
+          contentStyle: { backgroundColor: color.bg },
+        }}
+      >
+        <Stack.Screen name="index" options={TAB_SCREEN} />
+        <Stack.Screen name="calendar" options={TAB_SCREEN} />
+        <Stack.Screen name="history/index" options={TAB_SCREEN} />
+        <Stack.Screen name="settings" options={TAB_SCREEN} />
+      </Stack>
+      {/* Floats over every screen; only visible offline or while the offline
+          queue is draining. */}
+      <OfflineBanner />
+    </>
   );
 }
 

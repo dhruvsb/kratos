@@ -5,12 +5,13 @@
 import { File, Paths } from 'expo-file-system';
 import { router } from 'expo-router';
 import * as Sharing from 'expo-sharing';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Btn } from '@/components/ui';
 import { buildHevyExport, type HevyExport } from '@/data/export';
-import { color, font, radius, space, tracking } from '@/theme/tokens';
+import { font, radius, space, tracking, type Theme } from '@/theme/tokens';
+import { useTheme } from '@/theme/ThemeProvider';
 
 type Stage =
   | { name: 'loading' }
@@ -30,6 +31,8 @@ function todayStamp(): string {
 }
 
 export default function ExportScreen() {
+  const { color } = useTheme();
+  const styles = useMemo(() => makeStyles(color), [color]);
   const insets = useSafeAreaInsets();
   const [stage, setStage] = useState<Stage>({ name: 'loading' });
   const [sharing, setSharing] = useState(false);
@@ -141,6 +144,8 @@ export default function ExportScreen() {
 }
 
 function Stat({ value, label, tone }: { value: number | string; label: string; tone?: 'accent' }) {
+  const { color } = useTheme();
+  const styles = useMemo(() => makeStyles(color), [color]);
   return (
     <View style={styles.stat}>
       <Text style={[styles.statValue, tone === 'accent' && { color: color.acc }]}>{value}</Text>
@@ -149,7 +154,7 @@ function Stat({ value, label, tone }: { value: number | string; label: string; t
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (color: Theme['color']) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.bg, paddingHorizontal: space.xxl },
   head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   back: { fontFamily: font.numSemibold, fontSize: 10, letterSpacing: tracking.label, color: color.t2 },

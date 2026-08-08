@@ -1,8 +1,10 @@
 // Shared primitives, on the LED-instrument theme (tokens.ts). Restyled from the
 // old black/white placeholders during the manual-first design pass — every
 // Phase-1 screen that leans on Btn/Loading/Empty/ErrorText darkens with this file.
+import { useMemo } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
-import { color, font, radius, space, tracking } from '@/theme/tokens';
+import { font, radius, space, tracking, type Theme } from '@/theme/tokens';
+import { useTheme } from '@/theme/ThemeProvider';
 
 export function Btn({
   title,
@@ -17,6 +19,8 @@ export function Btn({
   small?: boolean;
   tone?: 'neutral' | 'accent' | 'warn';
 }) {
+  const { color } = useTheme();
+  const styles = useMemo(() => makeStyles(color), [color]);
   const border = tone === 'accent' ? color.acc35 : color.line2;
   const text = tone === 'accent' ? color.acc : tone === 'warn' ? color.warn : color.t2;
   return (
@@ -39,6 +43,8 @@ export function Btn({
 }
 
 export function Loading() {
+  const { color } = useTheme();
+  const styles = useMemo(() => makeStyles(color), [color]);
   return (
     <View style={styles.center}>
       <ActivityIndicator color={color.acc} />
@@ -47,6 +53,8 @@ export function Loading() {
 }
 
 export function Empty({ text }: { text: string }) {
+  const { color } = useTheme();
+  const styles = useMemo(() => makeStyles(color), [color]);
   return (
     <View style={styles.center}>
       <Text style={styles.emptyText}>{text}</Text>
@@ -55,11 +63,13 @@ export function Empty({ text }: { text: string }) {
 }
 
 export function ErrorText({ error }: { error: unknown }) {
+  const { color } = useTheme();
+  const styles = useMemo(() => makeStyles(color), [color]);
   const message = error instanceof Error ? error.message : String(error);
   return <Text style={styles.errorText}>{message}</Text>;
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (color: Theme['color']) => StyleSheet.create({
   btn: {
     borderWidth: 1,
     borderRadius: radius.ctl,

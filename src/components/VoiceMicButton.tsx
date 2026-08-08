@@ -1,11 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useParseVoiceUtterance } from '@/data/hooks';
 import type { VoiceParseResponse } from '@/data/voice';
 import { STT_STRATEGY, useSpeechToText } from '@/lib/stt';
 import { parseContextSchema, type Unit } from '@/types/parse';
 import type { SetType } from '@/types/db';
-import { color, font, radius, space } from '@/theme/tokens';
+import { font, radius, space, type Theme } from '@/theme/tokens';
+import { useTheme } from '@/theme/ThemeProvider';
 import { KeyCap } from './voice/primitives';
 import { VoiceConfirmationCard } from './VoiceConfirmationCard';
 
@@ -36,6 +37,8 @@ export function VoiceMicButton({
   recentExercises?: string[];
   defaultUnit?: Unit;
 }) {
+  const { color } = useTheme();
+  const styles = useMemo(() => makeStyles(color), [color]);
   const stt = useSpeechToText();
   const parse = useParseVoiceUtterance();
   const [banner, setBanner] = useState<Banner | null>(null);
@@ -145,7 +148,7 @@ export function VoiceMicButton({
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (color: Theme['color']) => StyleSheet.create({
   row: { gap: space.sm },
   interim: { fontFamily: font.num, color: color.t2, fontStyle: 'italic', fontSize: 13 },
   banner: {

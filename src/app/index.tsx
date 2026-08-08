@@ -24,7 +24,8 @@ import {
   useWorkoutList,
 } from '@/data/hooks';
 import { useIsOnline } from '@/lib/network';
-import { color, font, radius, shadow, space, tracking } from '@/theme/tokens';
+import { font, radius, space, tracking, type Theme } from '@/theme/tokens';
+import { useTheme } from '@/theme/ThemeProvider';
 
 const DAY_MS = 86_400_000;
 
@@ -60,6 +61,8 @@ function minutesAgo(iso: string | undefined, now: number): string | null {
 }
 
 export default function HomeScreen() {
+  const { color, shadow } = useTheme();
+  const styles = useMemo(() => makeStyles(color, shadow), [color, shadow]);
   const insets = useSafeAreaInsets();
   const qc = useQueryClient();
   const routines = useRoutines();
@@ -433,6 +436,8 @@ function ResumeMeta({
   sets: number;
   lastSetAt: string | undefined;
 }) {
+  const { color, shadow } = useTheme();
+  const styles = useMemo(() => makeStyles(color, shadow), [color, shadow]);
   const now = useNowTick(1000);
   const ago = minutesAgo(lastSetAt, now);
   const text = [
@@ -445,7 +450,7 @@ function ResumeMeta({
   return <Text style={styles.resumeMeta}>{text}</Text>;
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (color: Theme['color'], shadow: Theme['shadow']) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.bg },
   content: { paddingHorizontal: space.xxl, paddingBottom: space.xl, flexGrow: 1 },
   topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
@@ -484,13 +489,13 @@ const styles = StyleSheet.create({
     height: 48,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: color.s2,
+    backgroundColor: color.ctaBg,
     borderWidth: 1,
-    borderColor: color.acc35,
+    borderColor: color.ctaBorder,
     borderRadius: radius.ctl,
-    ...shadow.glowSm,
+    ...shadow.cta,
   },
-  resumeMainText: { fontFamily: font.uiMedium, fontSize: 11, letterSpacing: tracking.label, color: color.acc },
+  resumeMainText: { fontFamily: font.uiMedium, fontSize: 11, letterSpacing: tracking.label, color: color.ctaFg },
   resumeSecondary: {
     width: 118,
     height: 48,
@@ -526,14 +531,14 @@ const styles = StyleSheet.create({
     height: 54,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: color.s2,
+    backgroundColor: color.ctaBg,
     borderWidth: 1,
-    borderColor: color.acc35,
+    borderColor: color.ctaBorder,
     borderRadius: radius.ctl + 1,
     marginTop: space.xl + 4,
-    ...shadow.glowSm,
+    ...shadow.cta,
   },
-  frPrimaryText: { fontFamily: font.uiMedium, fontSize: 11.5, letterSpacing: tracking.label, color: color.acc },
+  frPrimaryText: { fontFamily: font.uiMedium, fontSize: 11.5, letterSpacing: tracking.label, color: color.ctaFg },
   frSecondary: {
     height: 50,
     alignItems: 'center',
@@ -571,14 +576,14 @@ const styles = StyleSheet.create({
     height: 52,
     borderRadius: radius.ctl + 1,
     borderWidth: 1,
-    borderColor: color.acc35,
-    backgroundColor: color.s2,
+    borderColor: color.ctaBorder,
+    backgroundColor: color.ctaBg,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: space.lg,
-    ...shadow.glowSm,
+    ...shadow.cta,
   },
-  startText: { fontFamily: font.uiMedium, fontSize: 12, letterSpacing: tracking.label, color: color.acc },
+  startText: { fontFamily: font.uiMedium, fontSize: 12, letterSpacing: tracking.label, color: color.ctaFg },
 
   loading: { fontFamily: font.numSemibold, fontSize: 11, color: color.t3, marginTop: space.md },
 

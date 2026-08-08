@@ -15,7 +15,8 @@ import {
   type TextStyle,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { color, font, radius, shadow, tracking } from '@/theme/tokens';
+import { font, radius, tracking } from '@/theme/tokens';
+import { useTheme, useThemeName } from '@/theme/ThemeProvider';
 
 // ---------------------------------------------------------------------------
 // LedDigits — a lit value floating over its own dim "ghost segments" (--acc-07
@@ -25,7 +26,7 @@ export function LedDigits({
   value,
   ghost,
   size,
-  lit = color.t1,
+  lit,
   glow = true,
   style,
 }: {
@@ -37,6 +38,8 @@ export function LedDigits({
   glow?: boolean;
   style?: StyleProp<ViewStyle>;
 }) {
+  const { color } = useTheme();
+  const litColor = lit ?? color.t1;
   const ghostText = ghost ?? value.replace(/[0-9]/g, '8');
   const base: TextStyle = {
     fontFamily: font.numBold,
@@ -53,7 +56,7 @@ export function LedDigits({
           base,
           { position: 'absolute', top: 0, left: 0 },
           {
-            color: lit,
+            color: litColor,
             textShadowColor: glow ? color.acc35 : 'transparent',
             textShadowRadius: glow ? size * 0.22 : 0,
             textShadowOffset: { width: 0, height: 0 },
@@ -89,6 +92,7 @@ export function LevelMeter({
   opacity?: number;
   style?: StyleProp<ViewStyle>;
 }) {
+  const { color } = useTheme();
   const pulse = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -161,6 +165,7 @@ export function LevelMeter({
 // (the voice session), so this stays a dumb, controlled bar.
 // ---------------------------------------------------------------------------
 export function DrainBar({ progress }: { progress: number }) {
+  const { color, shadow } = useTheme();
   const pct = Math.max(0, Math.min(1, progress));
   return (
     <View style={{ height: 2, backgroundColor: color.acc07, borderRadius: 1, overflow: 'hidden' }}>
@@ -195,17 +200,29 @@ export function KeyCap({
   style?: StyleProp<ViewStyle>;
   labelStyle?: StyleProp<TextStyle>;
 }) {
-  const border =
-    tone === 'accent' ? color.acc : tone === 'ghost' ? color.line : color.line2;
-  const text =
-    tone === 'accent' ? color.acc : tone === 'warn' ? color.warn : tone === 'ghost' ? color.t3 : color.t2;
+  const { color, shadow } = useTheme();
+  const name = useThemeName();
+  // Handoff rule 1: on light an accent KeyCap is a *primary CTA* (NEXT EXERCISE /
+  // FINISH), so it becomes a solid accent fill with white ink instead of the dark
+  // theme's glowing accent-border keycap. Dark is untouched.
+  const accentSolid = tone === 'accent' && name === 'light';
+  const border = accentSolid
+    ? color.ctaBorder
+    : tone === 'accent' ? color.acc : tone === 'ghost' ? color.line : color.line2;
+  const text = accentSolid
+    ? color.ctaFg
+    : tone === 'accent' ? color.acc : tone === 'warn' ? color.warn : tone === 'ghost' ? color.t3 : color.t2;
   const pad = size === 'sm' ? { paddingVertical: 6, paddingHorizontal: 11 } : { paddingVertical: 10, paddingHorizontal: 14 };
 
   return (
     <Pressable onPress={onPress} disabled={!onPress}>
       {({ pressed }) => (
         <LinearGradient
-          colors={pressed ? [color.s1, color.sin] : [color.s2, color.s1]}
+          colors={
+            accentSolid
+              ? [color.ctaBg, color.ctaBg]
+              : pressed ? [color.s1, color.sin] : [color.s2, color.s1]
+          }
           start={{ x: 0, y: 0 }}
           end={{ x: 0, y: 1 }}
           style={[
@@ -218,7 +235,7 @@ export function KeyCap({
             },
             pad,
             tone === 'ghost' ? null : shadow.key,
-            tone === 'accent' ? shadow.glowSm : null,
+            accentSolid ? shadow.cta : tone === 'accent' ? shadow.glowSm : null,
             pressed && { transform: [{ translateY: 1 }] },
             style,
           ]}
@@ -247,7 +264,7 @@ export function KeyCap({
 // ---------------------------------------------------------------------------
 export function StatusPip({
   label,
-  tone = color.acc,
+  tone,
   on = true,
   spacing = tracking.wide,
 }: {
@@ -256,6 +273,8 @@ export function StatusPip({
   on?: boolean;
   spacing?: number;
 }) {
+  const { color } = useTheme();
+  const toneColor = tone ?? color.acc;
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
       <View
@@ -263,8 +282,8 @@ export function StatusPip({
           width: 7,
           height: 7,
           borderRadius: radius.pill,
-          backgroundColor: tone,
-          ...(on ? { shadowColor: tone, shadowOpacity: 0.35, shadowRadius: 8, shadowOffset: { width: 0, height: 0 } } : null),
+          backgroundColor: toneColor,
+          ...(on ? { shadowColor: toneColor, shadowOpacity: 0.35, shadowRadius: 8, shadowOffset: { width: 0, height: 0 } } : null),
         }}
       />
       <Text
@@ -272,7 +291,7 @@ export function StatusPip({
           fontFamily: font.numSemibold,
           fontSize: 9,
           letterSpacing: spacing,
-          color: tone,
+          color: toneColor,
         }}
       >
         {label}
@@ -286,6 +305,7 @@ export function StatusPip({
 // the mockup's repeating-linear-gradient with evenly spaced 1px marks.
 // ---------------------------------------------------------------------------
 export function TickRule({ width = 200, marks = 28 }: { width?: number; marks?: number }) {
+  const { color } = useTheme();
   return (
     <View style={{ width, height: 2, flexDirection: 'row', justifyContent: 'space-between' }}>
       {Array.from({ length: marks }).map((_, i) => (
@@ -306,6 +326,7 @@ export function ParseChip({
   label: string;
   state?: 'lit' | 'dashed' | 'idle';
 }) {
+  const { color, shadow } = useTheme();
   const lit = state === 'lit';
   return (
     <View
@@ -342,6 +363,7 @@ export function InsetWell({
   children?: React.ReactNode;
   style?: StyleProp<ViewStyle>;
 }) {
+  const { color } = useTheme();
   return (
     <View
       style={[

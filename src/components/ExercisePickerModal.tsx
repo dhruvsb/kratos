@@ -10,7 +10,7 @@
 //  - multi (`multiSelect`, routine editor): tapping toggles a checkmark, search
 //    and region persist so you keep browsing, and an "ADD (n)" bar commits the
 //    whole batch via `onPickMany` (feedback #18).
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   FlatList,
   KeyboardAvoidingView,
@@ -33,7 +33,8 @@ import { filterExercisesLocally } from '@/data/exercises';
 import { useIsOnline } from '@/lib/network';
 import { BODY_REGIONS, type BodyRegion } from '@/lib/muscles';
 import type { Exercise } from '@/types/db';
-import { color, font, radius, shadow, space, tracking } from '@/theme/tokens';
+import { font, radius, space, tracking, type Theme } from '@/theme/tokens';
+import { useTheme } from '@/theme/ThemeProvider';
 
 export function ExercisePickerModal({
   visible,
@@ -51,6 +52,8 @@ export function ExercisePickerModal({
   multiSelect?: boolean;
   onPickMany?: (exercises: Exercise[]) => void;
 }) {
+  const { color, shadow } = useTheme();
+  const styles = useMemo(() => makeStyles(color, shadow), [color, shadow]);
   const insets = useSafeAreaInsets();
   const [query, setQuery] = useState('');
   const [region, setRegion] = useState<BodyRegion | null>(null);
@@ -287,7 +290,7 @@ export function ExercisePickerModal({
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (color: Theme['color'], shadow: Theme['shadow']) => StyleSheet.create({
   fill: { flex: 1 },
   backdrop: { flex: 1, backgroundColor: 'rgba(2,6,9,0.66)' },
   sheet: {
@@ -351,14 +354,14 @@ const styles = StyleSheet.create({
     height: 50,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: color.s2,
+    backgroundColor: color.ctaBg,
     borderWidth: 1,
-    borderColor: color.acc35,
+    borderColor: color.ctaBorder,
     borderRadius: radius.ctl,
     marginTop: space.md,
-    ...shadow.glowSm,
+    ...shadow.cta,
   },
-  addBarText: { fontFamily: font.uiMedium, fontSize: 11, letterSpacing: tracking.label, color: color.acc },
+  addBarText: { fontFamily: font.uiMedium, fontSize: 11, letterSpacing: tracking.label, color: color.ctaFg },
 
   createBox: { gap: space.sm, paddingTop: space.md, borderTopWidth: 1, borderTopColor: color.line },
   createLink: { fontFamily: font.numMedium, fontSize: 12, color: color.acc, paddingVertical: 4 },
@@ -377,11 +380,11 @@ const styles = StyleSheet.create({
     height: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: color.s2,
+    backgroundColor: color.ctaBg,
     borderWidth: 1,
-    borderColor: color.acc35,
+    borderColor: color.ctaBorder,
     borderRadius: radius.ctl,
   },
-  createBtnText: { fontFamily: font.uiMedium, fontSize: 11, letterSpacing: tracking.label, color: color.acc },
+  createBtnText: { fontFamily: font.uiMedium, fontSize: 11, letterSpacing: tracking.label, color: color.ctaFg },
   err: { fontFamily: font.num, fontSize: 11, color: color.warn },
 });

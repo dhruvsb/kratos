@@ -3,13 +3,16 @@
 // not lost), and show a brief "syncing" beat when the connection returns and the
 // queued writes flush. Purely informational — pointerEvents none, never blocks a tap.
 import { useIsMutating } from '@tanstack/react-query';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useIsOnline } from '@/lib/network';
-import { color, font, radius, space, tracking } from '@/theme/tokens';
+import { font, radius, space, tracking, type Theme } from '@/theme/tokens';
+import { useTheme } from '@/theme/ThemeProvider';
 
 export function OfflineBanner() {
+  const { color } = useTheme();
+  const styles = useMemo(() => makeStyles(color), [color]);
   const insets = useSafeAreaInsets();
   const isOnline = useIsOnline();
   const inFlight = useIsMutating();
@@ -52,7 +55,7 @@ export function OfflineBanner() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (color: Theme['color']) => StyleSheet.create({
   wrap: {
     position: 'absolute',
     left: 0,

@@ -4,7 +4,7 @@
 // Edits reuse the optimistic set hooks (they key off the shared workout cache, so a
 // finished session patches instantly just like the active one).
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Empty, ErrorText, Loading } from '@/components/ui';
@@ -14,7 +14,8 @@ import { useDeleteSet, useDeleteWorkout, useProfile, useUpdateSet, useWorkout } 
 import type { WorkoutSet, Unit } from '@/types/db';
 import { formatSet, formatWeight } from '@/lib/units';
 import { muscleSplit } from '@/lib/muscleSplit';
-import { color, font, space, tracking } from '@/theme/tokens';
+import { font, space, tracking, type Theme } from '@/theme/tokens';
+import { useTheme } from '@/theme/ThemeProvider';
 
 type EditState = {
   setId: string;
@@ -25,6 +26,8 @@ type EditState = {
 };
 
 export default function WorkoutDetailScreen() {
+  const { color } = useTheme();
+  const styles = useMemo(() => makeStyles(color), [color]);
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const workout = useWorkout(id);
@@ -165,7 +168,7 @@ export default function WorkoutDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (color: Theme['color']) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.bg },
   content: { paddingHorizontal: space.xxl, paddingBottom: space.xxl },
   back: { fontFamily: font.numSemibold, fontSize: 9.5, letterSpacing: tracking.label, color: color.t3 },

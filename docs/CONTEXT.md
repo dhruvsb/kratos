@@ -10,17 +10,20 @@ codebase or a huge prior conversation.
 > issues**) *and* append a dated entry to [`WORK-LOG.md`](./WORK-LOG.md). This file is the
 > snapshot; `WORK-LOG.md` is the full history. Keep this file short.
 
-**Last updated:** 2026-08-08 — **Light theme (#17), Phase 1: theme plumbing (dark-only, zero visual
-change).** `tokens.ts` now exports `themes.{dark,light}` (each `{ color, shadow }`); `dark` is the
-untouched literal default, `light` is a placeholder clone until the user supplies the design.
-`src/theme/ThemeProvider.tsx` resolves the active palette from a persisted preference
-(`data/settings.ts` `themeMode`, default `'system'`) + RN `Appearance` (live), via `useTheme()` /
-`useThemeName()` / `useThemeMode()`; mounted in `_layout`. Back-compat: the static `color`/`shadow`
-exports still equal dark, so the ~28 unmigrated screens are byte-for-byte unchanged. `Appearance` is
-JS-only ⇒ no rebuild. `tsc` + web-export green. **Next:** Phase 2 (migrate screens to `useTheme()` +
-drop in real light values — **needs the light palette from the user**), Phase 3 (Settings
-Light·Dark·System control + theme-aware status bar). Decisions locked: user supplies the design (not a
-mechanical invert); follow-system + Settings override. Prior: **Feedback fixes #16 / #15 + warmup-removal logged (#31).**
+**Last updated:** 2026-08-08 — **Light theme (#17) COMPLETE — Phases 2 + 3 done; the toggle works
+app-wide.** The real light palette ("Greige + Moss", option 2a from `design_handoff_light_mode/`) is in
+`tokens.ts` (`themes.light` — warm off-white ground `#EBE8E1`, moss accent `#3F6B3B`, warm brown-black
+hairlines, flat glows + soft-warm CTA shadow). **All ~28 screens/components migrated** from the static
+`color`/`shadow` imports to `useTheme()` via a `makeStyles(color, shadow)` factory memoized per component
+(zero steady-state cost — styles rebuild only on an actual theme flip). Four non-straight-swap rules from
+the handoff are carried by **semantic tokens** so one StyleSheet serves both themes and **dark stays
+byte-for-byte unchanged**: primary CTAs (`ctaBg/ctaBorder/ctaFg` + `shadow.cta`) become a solid moss fill
+with white ink on light (they'd read as disabled with a plain swap); the current-set ✓ (`checkBg/checkFg`)
+becomes a filled accent chip; `KeyCap` accent tone (NEXT/FINISH) branches on `useThemeName()` for the same
+reason. **Phase 3:** Settings → APPEARANCE → **Theme** row cycles System·Light·Dark (`useThemeMode()`);
+`_layout`'s `AppContent` makes the canvas bg + status-bar style theme-aware. `tsc` + web-export green (15
+routes); light mode + the solid-CTA rule **visually verified** on the sign-in screen (web). Not yet run on
+device. Prior: **Feedback fixes #16 / #15 + warmup-removal logged (#31).**
 **#16:** the finish summary now reads in **kg** regardless of the profile display unit
 (`finish/[id].tsx`) — kills the tonne-on-pounds label bug (a converted lb volume no longer gets a `t`
 suffix). **#15:** the plate-per-side hint moved from a 9.5px footer whisper to a readable line
@@ -160,6 +163,7 @@ logging via an LLM pipeline, **3** TBD (PRs/charts).
 | ↳ **Calendar (mockup 12, "five a week")** | ✅ **Built this session** — `src/app/calendar.tsx` + `src/data/calendar.ts` (finished-workout days → week card / month grid / streak stats / 12-week bars); wired into Home tab bar. Weekly goal driven by Settings (`useSettings().weeklyGoal`, default 5). |
 | **Hevy CSV import + export (in-app)** | ✅ **Built this session** — **Import**: `src/lib/hevy.ts` (pure parser) + `src/data/import.ts` (correctness-first matcher; auto-creates customs) + `src/app/import.tsx` (pick→preview→commit), idempotent via `external_id`. **Export**: `serializeHevyCsv` (inverse) + `src/data/export.ts` + `src/app/export.tsx` (summary → share `.csv` file). Round-trip verified exact on the real data (13 workouts / 239 sets). Both wired into Settings → DATA. **Needs a dev-client rebuild** for new native deps (`expo-document-picker`/`expo-file-system`/`expo-sharing`); not yet run on device. |
 | Two-theme white/dark patchwork | ✅ **Resolved** — every screen is now dark; `_layout` header config dropped |
+| **Light theme (#17) + System·Light·Dark toggle** | ✅ **Built 2026-08-08** — real "Greige + Moss" light palette (`design_handoff_light_mode/`) in `tokens.ts`; all ~28 screens/components read `useTheme()` (memoized `makeStyles` factory); semantic `cta*`/`check*` tokens + `KeyCap` theme-branch carry the 4 non-swap rules so **dark is unchanged**; Settings → APPEARANCE → Theme + theme-aware `_layout` chrome. `tsc` + web-export green; light + solid-CTA rule visually verified on the web sign-in screen. **Device-confirm pending** (JS-only — no dev-client rebuild). |
 | Phase 2 voice pipeline (extraction → resolution → kg) | ✅ Built; edge fn deployed + auth-guarded; **unwired from manual UI** (returns later) |
 | Native iOS Release build on physical iPhone 15 | ✅ **Installed + running 2026-08-08** — free Apple Personal Team (`TUR974K866`), no cable needed day-to-day, 7-day cert (reinstall route in `WORK-LOG.md`). |
 | First OTP login + on-device smoke test of the manual loop | 🟡 **Partial** — app runs on real hardware, signed in via a persisted session, and **#1 History nav** + **#10 tab transitions** verified live. Still to do: a real OTP sign-in from scratch (8-digit code now supported) and walk the full loop (start routine → log sets via ✓ and keypad → finish → History → progress). |
@@ -171,10 +175,10 @@ logging via an LLM pipeline, **3** TBD (PRs/charts).
 
 Static checks currently green: `tsc --noEmit` clean; `expo export --platform web` bundles all 15 routes;
 `xcodebuild -allowProvisioningUpdates` builds + installs Release to physical hardware.
-**Feedback pass (`FEEDBACK-LOG.md`): 17 of 30 done** — ✅ #1 #2 #3 #4 #6 #7 #9 #10 #11 #13 #14 #15 #16
-#18 #20 #21 #26 (#12 dissolved by #13) · 🟡 #5 (fix applied — keyboard-avoidance; device-confirm
-pending) · 🟡 #17 light theme (Phase 1 plumbing done; Phase 2/3 need the light palette from the user)
-· ⬜ #8 #19 #22 #23 #24 #25 #27 #28 #30 #31 (#29 withdrawn — superseded by #31).
+**Feedback pass (`FEEDBACK-LOG.md`): 18 of 30 done** — ✅ #1 #2 #3 #4 #6 #7 #9 #10 #11 #13 #14 #15 #16
+#17 #18 #20 #21 #26 (#12 dissolved by #13) · 🟡 #5 (fix applied — keyboard-avoidance; device-confirm
+pending) · ⬜ #8 #19 #22 #23 #24 #25 #27 #28 #30 #31 (#29 withdrawn — superseded by #31).
+**#17 light theme: DONE** (full Greige+Moss light mode + System·Light·Dark toggle; device-confirm pending).
 
 ## Pending actions (owner: user / next session)
 
@@ -231,8 +235,11 @@ pending) · 🟡 #17 light theme (Phase 1 plumbing done; Phase 2/3 need the ligh
       right against real workout days.
 - [ ] *(Phase 2, when voice resumes)* Apply migration `0003` to the live DB; run `npm run eval`.
 - [ ] Replace temporary Gmail SMTP with a dedicated provider before any external-user testing.
+- [ ] **See light mode on device** (Settings → APPEARANCE → Theme → Light / System) — the whole
+      light theme is static- + web-verified only; walk a few screens (Home, active workout with the
+      solid-fill NEXT/FINISH + filled ✓ chip, Rest, Calendar) and confirm contrast/feel on hardware.
 - [ ] **Remaining feedback items** (`FEEDBACK-LOG.md`): **#8** drag-reorder + the newer backlog
-      (#15 #16 #17 #19 #22–#25 #27–#30). **#5/#18/#21 fixed 2026-08-08** (code) alongside earlier
+      (#19 #22–#25 #27–#30). **#5/#18/#21 fixed 2026-08-08** (code) alongside earlier
       #3/#14/#20 and #11/#13/#26 — **verify on device**: #5 open the picker and scroll with the keyboard
       up (should reach every row now); #18 multi-select add in the routine editor; #21 routine creation
       has no target inputs; plus #13 chip layout, #26 auto-advance feel, #11 long-press delete.

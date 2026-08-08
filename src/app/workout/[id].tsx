@@ -31,7 +31,8 @@ import type { LastSessionSet } from '@/types/db';
 import type { SetType, Unit } from '@/types/db';
 import { newUuid } from '@/lib/ids';
 import { formatSet, formatWeight } from '@/lib/units';
-import { color, font, radius, space, tracking } from '@/theme/tokens';
+import { font, radius, space, tracking, type Theme } from '@/theme/tokens';
+import { useTheme } from '@/theme/ThemeProvider';
 
 /** PREV cell: a lone em-dash when there's no matching last-session set (mockup 15),
  *  not "— × —" — no fake number to beat on a lift's first day. */
@@ -53,6 +54,8 @@ type KeypadState = {
 };
 
 export default function ActiveWorkoutScreen() {
+  const { color } = useTheme();
+  const styles = useMemo(() => makeStyles(color), [color]);
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const workout = useWorkout(id);
@@ -521,7 +524,7 @@ const NUM_W = 22;
 const PREV_W = 62;
 const CHECK_W = 42;
 
-const styles = StyleSheet.create({
+const makeStyles = (color: Theme['color']) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.bg },
   center: { flex: 1, backgroundColor: color.bg, alignItems: 'center', justifyContent: 'center' },
   dim: { fontFamily: font.numSemibold, fontSize: 12, letterSpacing: tracking.label, color: color.t3 },
@@ -606,13 +609,17 @@ const styles = StyleSheet.create({
   },
   valActive: { fontFamily: font.numBold, fontSize: 17, color: color.t1 },
   checkDone: { fontFamily: font.numSemibold, fontSize: 15, color: color.ok },
+  // Current-set ✓ (handoff rule 2). Dark: accent border, no fill, accent glyph.
+  // Light: a filled accent chip with white ink — the semantic checkBg/checkFg carry
+  // both without a theme branch here.
   checkBtn: {
     height: 38,
     borderWidth: 1,
     borderColor: color.acc,
     borderRadius: radius.key,
+    backgroundColor: color.checkBg,
   },
-  checkActive: { fontFamily: font.numSemibold, fontSize: 15, color: color.acc },
+  checkActive: { fontFamily: font.numSemibold, fontSize: 15, color: color.checkFg },
 
   firstNote: {
     flexDirection: 'row',
