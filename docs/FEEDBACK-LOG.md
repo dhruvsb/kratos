@@ -18,7 +18,7 @@ in full below; not all items need to be built.
 |---|------|------|-------|-----|--------|
 | 24 | Contextual/predictive exercise suggestions in search (by muscle group) | Search | ⬜ OPEN | Low | M |
 | 25 | Swipe gesture to toggle KG/REPS focus instead of tapping | Logging UX | ⬜ OPEN | Low | S |
-| 26 | Auto-advance/reopen keypad for the next set after logging | Logging UX | ⬜ OPEN | Med | S |
+| 26 | Auto-advance/reopen keypad for the next set after logging | Logging UX | ✅ DONE (code 2026-08-08) | Med | S |
 | 27 | Superset linking — group 2 exercises, cycle input between them | Logging UX | ⬜ OPEN | Low | M |
 | 28 | Progressive-overload ghost suggestion (vs. flat previous-best prefill) | Logging UX | ⬜ OPEN (builds on #3) | Low | M |
 | 29 | One-tap warmup ramp generator (50/70/90% of working weight) | Logging UX | ⬜ OPEN | Low | S |
@@ -46,15 +46,17 @@ is already a dependency per feedback #11's note, so the primitive is available.)
 **Fix:** add a swipe gesture over the two `Field` rows that calls `setActive` on a threshold
 swipe, keeping tap as the primary/discoverable path. (S)
 
-### 26. Auto-advance to the next set after logging ⬜ Med
+### 26. Auto-advance to the next set after logging ✅ Med — **done (code) 2026-08-08**
 **Proposed:** after tapping the checkmark, immediately move focus to the next set's weight field
 instead of requiring the user to manually reopen the keypad.
-**Verified:** `onKeypadLog` (`workout/[id].tsx:159-169`) mutates the set then unconditionally calls
-`setKeypad(null)`, closing the sheet — there is no re-open/re-prefill for the next set. Every set
-today is: tap a cell → keypad opens → log → sheet closes → tap the next cell.
-**Fix:** after a successful log, if there's a next planned/likely set, re-open the keypad
-pre-filled for it instead of closing to the grid. Ties directly into the "phone touched once or
-twice a session" principle behind feedback #3. (S)
+**Verified:** `onKeypadLog` (`workout/[id].tsx`) mutated the set then unconditionally called
+`setKeypad(null)`, closing the sheet — no re-open/re-prefill for the next set.
+**Done (2026-08-08):** after an **add** of a normal set, `onKeypadLog` now re-opens the keypad on the
+next set number, pre-filled with the weight+reps just logged — a run of working sets is tap-tap-tap
+without reopening. Warmups and edits still close (warmups ramp rather than repeat; edits are one-shot);
+the user dismisses the chain by tapping the backdrop. The grid's one-tap ✓ (`logPending`) is unchanged
+— it stays on the grid, so the two frictionless paths (chained keypad vs. grid ✓) complement each
+other. Not yet run on device — verify the chain feels seamless (no sheet flicker / re-slide).
 
 ### 27. Superset linking — cycle input between two linked exercises ⬜ Low
 **Proposed:** a "link" toggle to group exercises into supersets, so the active set input
@@ -374,9 +376,9 @@ came from a screen recording of the manual loop.
 | # | Item | Area | Done? | Sev | Effort |
 |---|------|------|-------|-----|--------|
 | 10 | Screen transitions feel wrong / not smooth | Navigation | ✅ DONE (verified live) | High | M |
-| 11 | No way to delete a set (actually: undiscoverable) | Logging UX | ⬜ OPEN | High | S |
-| 12 | Weight entry should auto-advance to reps | Logging UX | ⬜ OPEN (design conflict) | Med | S |
-| 13 | Reps should be 5 fixed buttons (4/6/8/10/12) | Logging UX | ⬜ OPEN | Med | S |
+| 11 | No way to delete a set (actually: undiscoverable) | Logging UX | ✅ DONE (code 2026-08-08) | High | S |
+| 12 | Weight entry should auto-advance to reps | Logging UX | ✅ RESOLVED — dissolved by #13 | Med | S |
+| 13 | Reps should be 5 fixed buttons (4/6/8/10/12) | Logging UX | ✅ DONE (code 2026-08-08) | Med | S |
 
 ---
 
@@ -401,40 +403,45 @@ the screen (no `Tabs` layout yet), so scroll position resets on return to a tab.
 an Expo Router `Tabs` layout (`(tabs)/_layout.tsx`) with the existing `TabBar` as a custom
 `tabBar`, which would also preserve per-tab state.
 
-### 11. No delete-set option ⬜ High
+### 11. No delete-set option ✅ High — **done (code) 2026-08-08**
 **User:** "no delete set option?"
-**Verified — the feature exists but is effectively invisible.** `SetKeypad.tsx:183-187` renders
-a `DELETE SET` link, but *only* when `mode === 'edit'`, which is reached solely by tapping an
-already-logged set in the grid (`workout/[id].tsx:309`). It is 9.5px text in the footer beside
-the plate hint, styled `color.warn`. The data path is fine — `useDeleteSet` (`hooks.ts:710`) →
-`sets.deleteSet` (`sets.ts:114`).
-**So this is a discoverability bug, not a missing capability.**
-**Fix options:** swipe-to-delete on the set row (most discoverable, matches Hevy/Strong), or a
-long-press on a logged set, or promote DELETE SET in the edit sheet to a real button. Swipe is
-the state-of-the-art answer and needs `react-native-gesture-handler`, already a dependency.
+**Verified — the feature existed but was effectively invisible.** `SetKeypad` rendered a `DELETE
+SET` link only in `mode === 'edit'` (reached by tapping a logged set), as 9.5px footer text beside
+the plate hint. Data path was fine — `useDeleteSet` → `sets.deleteSet`. A discoverability bug, not a
+missing capability.
+**Done (2026-08-08) — two discoverable paths, no accidental-delete risk:**
+1. **Long-press** a logged set row → `confirmDeleteSet` Alert → `deleteSet.mutate` (fast path from the
+   grid; `workout/[id].tsx`).
+2. The edit-sheet `DELETE SET` is now a real **outlined button** (11px, warn border) instead of 9.5px
+   footer text — unmissable once you tap a set to edit it (`SetKeypad.tsx`).
+**Swipe-to-delete deliberately deferred.** It's the flashiest option but the RNGH/reanimated stack,
+though installed (`react-native-gesture-handler`, `react-native-reanimated`), is **completely
+unexercised** — no `GestureHandlerRootView` at the root, no babel config, reanimated 4 needs the
+worklets plugin. Wiring + on-device-testing that is its own task; not worth shipping untested into a
+showcase build for one affordance when long-press already solves the discoverability complaint. Revisit
+if swipe gestures are wanted more broadly (also unblocks #25). Not yet run on device.
 
-### 12. Weight should auto-advance to reps after 2 digits ⬜ Med — **design conflict, needs a call**
+### 12. Weight should auto-advance to reps after 2 digits ✅ Med — **resolved by #13, not built as asked**
 **User:** "after double digit it should automatically go to reps… deadlift 60, type 6 and 0,
 cursor should automatically go to reps."
-**Verified:** `SetKeypad.pressPad` (`SetKeypad.tsx:63-80`) appends digits to whichever field is
-active and never moves focus; `active` only changes when a `Field` is tapped (`:132`, `:139`).
-**Conflict:** advancing at exactly 2 digits makes **3-digit weights unenterable** without
-tapping back — 100/105/120 kg are routine on deadlift and squat, the very lifts cited. The
-current cap is 5 digits (`:76`), and decimals (7.5, 2.5 plates) are also legal.
-**Recommended resolution:** implement #13 first. Once reps are fixed buttons, the numeric pad
-serves **only** weight, so the flow is *type weight → tap a rep chip → logged* — strictly fewer
-taps than auto-advance, with no ambiguity about when the weight is "finished". Auto-advance
-then becomes unnecessary rather than merely risky.
+**Why not built literally:** advancing at exactly 2 digits makes **3-digit weights unenterable**
+without tapping back — 100/105/120 kg are routine on deadlift/squat, the very lifts cited — and
+decimals (7.5, 2.5) are legal too. The recommended resolution was always "do #13 first."
+**Resolved (2026-08-08) by #13:** reps are now fixed chips, so the numeric pad serves **weight
+alone** — the flow is *type weight → tap a rep chip → LOG*, strictly fewer taps than auto-advance
+with no ambiguity about when the weight is "finished." The user's underlying goal (don't hand-type
+reps every set) is met without the 3-digit-weight regression, so no focus-advance logic was added.
 
-### 13. Reps should be a fixed set of 5 buttons ⬜ Med
+### 13. Reps should be a fixed set of 5 buttons ✅ Med — **done (code) 2026-08-08**
 **User:** "reps should be fixed set of 5 buttons -> 4,6,8,10,12"
-**Verified:** reps are currently free numeric entry through the shared pad, with a 3-digit cap
-(`SetKeypad.tsx:71`) and ± stepping (`adjust`, `:87-91`). `PAD`/`QUICK` (`:42-43`) are shared
-between both fields.
-**Fix:** replace the reps field's numeric entry with a 5-chip row (4 · 6 · 8 · 10 · 12). Open
-question to settle when building: these five cover most working sets but not all (singles,
-triples, 15s, 20s, AMRAP) — needs an escape hatch (keep ± stepping, or a "…" chip that reveals
-the pad) or the app silently cannot log a 3-rep top single. Ties into #3 (default reps = 12).
+**Done (2026-08-08):** `SetKeypad` now has an **always-visible rep-chip row** (`REP_CHIPS = [4, 6, 8,
+10, 12]`) between the fields and the quick row. Tapping a chip sets reps and hands focus back to KG,
+so the numeric pad serves weight alone and the common set is *type weight → tap chip → LOG* with no
+field switch. The selected chip is highlighted (accent border + `acc06` fill).
+**Escape hatch for odd counts (singles/triples/15s/20s/AMRAP):** tap the **REPS** field to focus it —
+the numeric pad + ± stepper then edit reps directly, exactly as before — so nothing is unloggable.
+Chips are always shown (not hidden behind a focus swap), which avoids a sheet-height jump when
+switching fields. Not yet run on device — verify chip sizing/spacing at 402pt width.
 
 ---
 

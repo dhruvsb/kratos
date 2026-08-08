@@ -42,6 +42,13 @@ export type SetKeypadProps = {
 const QUICK = ['−', '+', 'SAME', '⌫'] as const;
 const PAD = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', '⌫'] as const;
 
+// Reps are a fixed chip set (feedback #13) — the working-set rep counts that cover the
+// overwhelming majority of sets, so a full set is "type weight → tap a rep chip → LOG"
+// with the numeric pad serving weight alone. Odd counts (singles, triples, 15s, 20s,
+// AMRAP) stay reachable: tap the REPS field and the pad/± step edit reps directly, so
+// nothing is unloggable.
+const REP_CHIPS = [4, 6, 8, 10, 12] as const;
+
 // Sane upper bound on an entered weight (in kg). Covers every real barbell / dumbbell
 // / machine number with margin, and — critically — stays under weight_kg's
 // numeric(6,2) ceiling (9999.99) so a mistyped weight can't overflow the column and
@@ -149,6 +156,26 @@ export function SetKeypad(props: SetKeypadProps) {
           />
         </View>
 
+        <View style={styles.repChips}>
+          {REP_CHIPS.map((n) => {
+            const on = reps === n;
+            return (
+              <Pressable
+                key={n}
+                style={[styles.repChip, on && styles.repChipOn]}
+                // Set reps and hand focus back to KG so the pad stays weight — the
+                // common flow needs no field switch (feedback #13).
+                onPress={() => {
+                  setRepsStr(String(n));
+                  setActive('kg');
+                }}
+              >
+                <Text style={[styles.repChipText, on && styles.repChipTextOn]}>{n}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
         <View style={styles.quickRow}>
           {QUICK.map((q) => (
             <Pressable
@@ -192,7 +219,7 @@ export function SetKeypad(props: SetKeypadProps) {
             <Text style={styles.plateText}> </Text>
           )}
           {props.mode === 'edit' && props.onDelete && (
-            <Pressable onPress={props.onDelete} hitSlop={8}>
+            <Pressable onPress={props.onDelete} hitSlop={8} style={styles.deleteBtn}>
               <Text style={styles.deleteText}>DELETE SET</Text>
             </Pressable>
           )}
@@ -273,6 +300,20 @@ const styles = StyleSheet.create({
   fieldValRow: { flexDirection: 'row', alignItems: 'baseline', marginTop: 6 },
   fieldVal: { fontFamily: font.numBold, fontSize: 30, color: color.t1 },
 
+  repChips: { flexDirection: 'row', gap: 7, marginTop: space.md },
+  repChip: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 12,
+    backgroundColor: color.s2,
+    borderWidth: 1,
+    borderColor: color.line2,
+    borderRadius: radius.ctl,
+  },
+  repChipOn: { borderColor: color.acc, backgroundColor: color.acc06 },
+  repChipText: { fontFamily: font.numSemibold, fontSize: 17, color: color.t1 },
+  repChipTextOn: { color: color.acc },
+
   quickRow: { flexDirection: 'row', gap: 7, marginTop: space.md },
   quick: {
     flex: 1,
@@ -319,7 +360,17 @@ const styles = StyleSheet.create({
     minHeight: 14,
   },
   plateText: { fontFamily: font.num, fontSize: 9.5, letterSpacing: 0.6, color: color.t3 },
-  deleteText: { fontFamily: font.numSemibold, fontSize: 9.5, letterSpacing: tracking.label, color: color.warn },
+  // A real outlined button, not a whisper of footer text — feedback #11 was "no delete
+  // set option?" because the old 9.5px link went unseen. Long-press on the grid row is
+  // the fast path; this is the discoverable one you reach by tapping a set to edit it.
+  deleteBtn: {
+    borderWidth: 1,
+    borderColor: color.warn,
+    borderRadius: radius.key,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  deleteText: { fontFamily: font.numSemibold, fontSize: 11, letterSpacing: tracking.label, color: color.warn },
 
   deleteWorkoutRow: {
     flexDirection: 'row',

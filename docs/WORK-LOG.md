@@ -7,6 +7,37 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-08 — Feedback fixes: #13 rep chips, #26 keypad auto-advance, #11 delete-set
+
+Parallel chat to the #14/#20/#3 work below — took the three frictionless-logging items that build
+on the same set-grid/keypad, started after that chat committed (`294a9d5`) so the two didn't clobber
+`SetKeypad.tsx` / `workout/[id].tsx`.
+
+- **#13 — reps as fixed chips.** `SetKeypad` gains an always-visible `REP_CHIPS = [4,6,8,10,12]` row;
+  tapping a chip sets reps and returns focus to KG, so the numeric pad serves weight alone (flow:
+  type weight → tap chip → LOG). Selected chip highlighted. Odd reps (singles/triples/15s/20s/AMRAP)
+  stay loggable via the REPS field (pad + ± step edit reps directly). Chips always shown to avoid a
+  sheet-height jump on field switch.
+- **#12 — dissolved, not built.** Auto-advancing weight→reps at 2 digits breaks 3-digit weights
+  (100/105/120 kg). #13 makes it moot: the pad is weight-only, so no focus-advance is needed. Marked
+  RESOLVED.
+- **#26 — keypad auto-advance.** After an **add** of a normal set, `onKeypadLog` re-opens the keypad
+  on the next set number pre-filled with what was just logged, so a run of sets is tap-tap-tap without
+  reopening. Warmups + edits still close. The grid's one-tap ✓ (`logPending`) is untouched — the two
+  frictionless paths complement each other.
+- **#11 — delete-set discoverability.** Long-press a logged row → confirm Alert → `deleteSet`; and the
+  edit-sheet `DELETE SET` is now a real outlined button (was 9.5px footer text). **Swipe-to-delete
+  deferred:** RNGH/reanimated are installed but wholly unexercised (no `GestureHandlerRootView`, no
+  babel config, reanimated 4 needs worklets) — not worth wiring untested into a showcase build for one
+  affordance; long-press already answers "no delete set option?". Revisit if broader swipe gestures
+  are wanted (also unblocks #25).
+
+`tsc --noEmit` clean. Not yet run on device — the app isn't installed on the booted sim and sign-in
+needs an 8-digit OTP, so visual/interaction verification (chip layout, auto-advance feel, long-press
+delete) is a user device-check. Committed with the docs.
+
+---
+
 ## 2026-08-08 — Feedback fixes: #14 weight-cap, #20 keypad-dismiss, #3 frictionless defaults
 
 Fixed the three "must-fix" feedback items (this chat is otherwise feedback-log-only; user

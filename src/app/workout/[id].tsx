@@ -185,13 +185,42 @@ export default function ActiveWorkoutScreen() {
     if (!activeExercise || !keypad) return;
     if (keypad.mode === 'edit' && keypad.setId) {
       updateSet.mutate({ setId: keypad.setId, patch: { weight_kg: weightKg, reps } });
-    } else {
-      addSet.mutate({
-        workoutExerciseId: activeExercise.id,
-        set: { weight_kg: weightKg, reps, set_type: keypad.setType },
-      });
+      setKeypad(null);
+      return;
     }
-    setKeypad(null);
+    addSet.mutate({
+      workoutExerciseId: activeExercise.id,
+      set: { weight_kg: weightKg, reps, set_type: keypad.setType },
+    });
+    // Auto-advance (feedback #26): keep the sheet open on the next set, pre-filled with
+    // what was just logged, so a run of working sets is tap-tap-tap without reopening
+    // the keypad each time. Warmups don't chain this way (they ramp, not repeat), so
+    // they close as before; the user dismisses by tapping the backdrop when done.
+    if (keypad.setType === 'warmup') {
+      setKeypad(null);
+      return;
+    }
+    setKeypad({
+      mode: 'add',
+      setNumber: keypad.setNumber + 1,
+      setType: 'normal',
+      kg: weightKg,
+      reps,
+    });
+  }
+
+  function confirmDeleteSet(setId: string, displayNumber: number) {
+    Alert.alert(`Delete set ${displayNumber}?`, 'This removes the logged set.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () =>
+          deleteSet.mutate(setId, {
+            onError: (e) => Alert.alert("Couldn't delete set", e.message),
+          }),
+      },
+    ]);
   }
 
   function goExercise(dir: -1 | 1) {
@@ -340,6 +369,9 @@ export default function ActiveWorkoutScreen() {
                     reps: s.reps,
                   })
                 }
+                // Long-press = the fast delete path from the grid (feedback #11); tapping
+                // still opens the edit sheet, which now carries a prominent DELETE button.
+                onLongPress={() => !isFinished && confirmDeleteSet(s.id, i + 1)}
               >
                 <Text style={[styles.rNum, styles.cNum]}>{s.set_type === 'warmup' ? 'W' : i + 1}</Text>
                 <Text style={[styles.rPrev, styles.cPrev]}>{prevLabel(lastSets[i], unit)}</Text>
