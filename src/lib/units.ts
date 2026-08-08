@@ -48,10 +48,15 @@ export function formatSet(
 // keypad ("PLATES PER SIDE · 20 + 15 + 2.5"); never something the user has to enter.
 const BAR_KG = 20;
 const PLATES_KG = [25, 20, 15, 10, 5, 2.5, 1.25];
+// A real bar physically fits ~10 plates a side; past that the weight is a typo, not
+// a lift. Capping the greedy loop keeps a fat-fingered entry (feedback #14) from
+// emitting a plate string dozens long that runs off the sheet.
+const MAX_PLATES_PER_SIDE = 12;
 
 /**
  * Plates per side to reach `kg` on a `BAR_KG` bar. Returns null when the weight
- * isn't loadable (below the bar, or can't be made from the plate set within 0.05kg).
+ * isn't loadable (below the bar, can't be made from the plate set within 0.05kg,
+ * or needs more plates than a bar could ever hold — an absurd/typo weight).
  */
 export function platesPerSide(kg: number | null | undefined): number[] | null {
   if (kg == null || kg < BAR_KG) return null;
@@ -62,6 +67,7 @@ export function platesPerSide(kg: number | null | undefined): number[] | null {
     while (perSide + 1e-6 >= p) {
       out.push(p);
       perSide -= p;
+      if (out.length > MAX_PLATES_PER_SIDE) return null; // absurd weight — hide the hint
     }
   }
   return perSide < 0.05 ? out : null;

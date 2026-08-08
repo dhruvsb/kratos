@@ -42,6 +42,12 @@ export type SetKeypadProps = {
 const QUICK = ['−', '+', 'SAME', '⌫'] as const;
 const PAD = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', '⌫'] as const;
 
+// Sane upper bound on an entered weight (in kg). Covers every real barbell / dumbbell
+// / machine number with margin, and — critically — stays under weight_kg's
+// numeric(6,2) ceiling (9999.99) so a mistyped weight can't overflow the column and
+// throw on insert mid-workout (feedback #14).
+const MAX_WEIGHT_KG = 1000;
+
 export function SetKeypad(props: SetKeypadProps) {
   const { visible, unit, initialKg, initialReps, lastKg, lastReps } = props;
   const insets = useSafeAreaInsets();
@@ -74,6 +80,8 @@ export function SetKeypad(props: SetKeypadProps) {
         // one decimal place max
         if (next.includes('.') && next.split('.')[1].length > 1) return s;
         if (next.replace('.', '').length > 5) return s;
+        // hard weight ceiling — a typo can't overflow numeric(6,2) or the plate math
+        if (displayToKg(parseFloat(next) || 0, unit) > MAX_WEIGHT_KG) return s;
       }
       return s + key;
     });
@@ -82,7 +90,8 @@ export function SetKeypad(props: SetKeypadProps) {
   function adjust(sign: 1 | -1) {
     if (active === 'kg') {
       const cur = parseFloat(kgStr || '0') || 0;
-      const next = Math.max(0, Math.round((cur + sign * step(unit)) * 10) / 10);
+      const maxDisplay = kgToDisplay(MAX_WEIGHT_KG, unit);
+      const next = Math.min(maxDisplay, Math.max(0, Math.round((cur + sign * step(unit)) * 10) / 10));
       setKgStr(next === 0 && kgStr === '' ? '' : trimWeight(next));
     } else {
       const cur = parseInt(repsStr || '0', 10) || 0;
@@ -176,7 +185,9 @@ export function SetKeypad(props: SetKeypadProps) {
 
         <View style={styles.footNote}>
           {plates ? (
-            <Text style={styles.plateText}>PLATES PER SIDE · {plates}</Text>
+            <Text style={styles.plateText} numberOfLines={1} ellipsizeMode="tail">
+              PLATES PER SIDE · {plates}
+            </Text>
           ) : (
             <Text style={styles.plateText}> </Text>
           )}

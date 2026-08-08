@@ -7,6 +7,30 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-08 — Feedback fixes: #14 weight-cap, #20 keypad-dismiss, #3 frictionless defaults
+
+Fixed the three "must-fix" feedback items (this chat is otherwise feedback-log-only; user
+explicitly asked for these three).
+
+- **#14 — mistyped weight can crash / overflow the plate hint.** Three layers: `SetKeypad`
+  rejects kg entry over `MAX_WEIGHT_KG` (1000 kg, checked via `displayToKg` so lb is capped too)
+  and clamps `adjust`; `platesPerSide` (`units.ts`) caps at `MAX_PLATES_PER_SIDE` (12) → returns
+  null past it; `plateText` is `numberOfLines={1}`. Removes the mid-workout insert-throw risk on
+  `weight_kg numeric(6,2)` and the off-screen plate string.
+- **#20 — number-pad had no dismiss in the routine editor.** Added an iOS `InputAccessoryView`
+  DONE bar (shared `nativeID`) over the three numeric target inputs + `keyboardDismissMode="on-drag"`
+  on the editor ScrollView (cross-platform). iOS-gated so it's a no-op on Android.
+- **#3 — frictionless defaults (the biggest open logging win).** Pending row now pre-fills weight
+  from this-session's last set → **all-time previous best** (`useExerciseBests`, excludes current
+  workout, cached) → last-session same-index; reps from this-session → last-session → **12**. ✓ is
+  now a true one-tap log for any returning lift; keypad only opens for a brand-new lift with no
+  weight yet, or when pre-fill is off. Chose heaviest-ever for "previous best" (v1 call).
+
+`tsc --noEmit` clean; `expo export --platform web` bundles all routes. Not yet run on device.
+Not committed (awaiting user).
+
+---
+
 ## 2026-08-08 — First run on real hardware (iPhone 15) + tab-transition fix
 
 **First time the app ran on physical hardware**, not a simulator. Installed as a Release build

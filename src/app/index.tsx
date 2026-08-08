@@ -221,7 +221,10 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.screen}>
-      <ScrollView contentContainerStyle={[styles.content, { paddingTop: insets.top + space.xl }]}>
+      <ScrollView
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + space.xl }]}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.topRow}>
           <Text style={styles.logo}>
             REPVOICE<Text style={{ color: color.acc }}>.</Text>

@@ -3,7 +3,17 @@
 // shows "last time" when a target is left blank.
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  InputAccessoryView,
+  Keyboard,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ExercisePickerModal } from '@/components/ExercisePickerModal';
 import { ErrorText, Loading } from '@/components/ui';
@@ -19,6 +29,11 @@ type Item = {
   target_reps_low: string;
   target_reps_high: string;
 };
+
+// iOS number-pad has no built-in Done key, so a shared accessory bar over the
+// numeric target inputs is the only way to dismiss the keyboard (feedback #20).
+const KEYBOARD_ACCESSORY_ID = 'routine-targets-done';
+const numberPadAccessory = Platform.OS === 'ios' ? KEYBOARD_ACCESSORY_ID : undefined;
 
 export default function RoutineEditorScreen() {
   const insets = useSafeAreaInsets();
@@ -104,7 +119,11 @@ export default function RoutineEditorScreen() {
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top + space.md }]}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+      >
         <View style={styles.topRow}>
           <Pressable onPress={() => router.back()} hitSlop={10}>
             <Text style={styles.navLink}>← BACK</Text>
@@ -161,6 +180,7 @@ export default function RoutineEditorScreen() {
                   value={item.target_sets}
                   onChangeText={(t) => patchItem(index, { target_sets: t })}
                   keyboardType="number-pad"
+                  inputAccessoryViewID={numberPadAccessory}
                   placeholder="—"
                   placeholderTextColor={color.t3}
                   selectionColor={color.acc}
@@ -175,6 +195,7 @@ export default function RoutineEditorScreen() {
                     value={item.target_reps_low}
                     onChangeText={(t) => patchItem(index, { target_reps_low: t })}
                     keyboardType="number-pad"
+                    inputAccessoryViewID={numberPadAccessory}
                     placeholder="—"
                     placeholderTextColor={color.t3}
                     selectionColor={color.acc}
@@ -185,6 +206,7 @@ export default function RoutineEditorScreen() {
                     value={item.target_reps_high}
                     onChangeText={(t) => patchItem(index, { target_reps_high: t })}
                     keyboardType="number-pad"
+                    inputAccessoryViewID={numberPadAccessory}
                     placeholder="—"
                     placeholderTextColor={color.t3}
                     selectionColor={color.acc}
@@ -240,6 +262,16 @@ export default function RoutineEditorScreen() {
           setPickerOpen(false);
         }}
       />
+
+      {Platform.OS === 'ios' && (
+        <InputAccessoryView nativeID={KEYBOARD_ACCESSORY_ID}>
+          <View style={styles.accessoryBar}>
+            <Pressable onPress={() => Keyboard.dismiss()} hitSlop={10}>
+              <Text style={styles.accessoryDone}>DONE</Text>
+            </Pressable>
+          </View>
+        </InputAccessoryView>
+      )}
     </View>
   );
 }
@@ -293,6 +325,25 @@ const styles = StyleSheet.create({
   tSep: { fontFamily: font.num, fontSize: 11, color: color.t3 },
   rowBtns: { flexDirection: 'row', gap: 10, marginLeft: 4 },
   rowBtn: { fontFamily: font.numSemibold, fontSize: 14, color: color.t2 },
+
+  accessoryBar: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    paddingHorizontal: space.lg,
+    paddingVertical: space.sm,
+    backgroundColor: color.s1,
+    borderTopWidth: 1,
+    borderTopColor: color.line2,
+  },
+  accessoryDone: {
+    fontFamily: font.numSemibold,
+    fontSize: 12,
+    letterSpacing: tracking.label,
+    color: color.acc,
+    paddingHorizontal: space.sm,
+    paddingVertical: 2,
+  },
 
   addEx: {
     height: 46,

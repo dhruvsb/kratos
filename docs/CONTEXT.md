@@ -10,7 +10,12 @@ codebase or a huge prior conversation.
 > issues**) *and* append a dated entry to [`WORK-LOG.md`](./WORK-LOG.md). This file is the
 > snapshot; `WORK-LOG.md` is the full history. Keep this file short.
 
-**Last updated:** 2026-08-08 — **First run on real hardware** (iPhone 15, free Apple Personal
+**Last updated:** 2026-08-08 — **Feedback fixes #14 / #20 / #3** (code only, not yet on device):
+**#14** weight entry now capped at 1000 kg + plate math capped + plate hint clamped to one line (no
+more insert-overflow crash or off-screen plate string); **#20** routine-editor number-pad now
+dismissable (iOS DONE accessory + drag-to-dismiss); **#3** frictionless defaults — pending row
+pre-fills weight from all-time previous best and reps default to 12, so ✓ is a true one-tap log.
+`tsc` + web-export green. Prior: **First run on real hardware** (iPhone 15, free Apple Personal
 Team `TUR974K866` — no paid dev account, 7-day cert, see `WORK-LOG.md` for the signing route).
 Fixed feedback **#10** (tab transitions): the 4 top-level tabs are plain Stack routes (no `Tabs`
 layout) that were navigating via `router.push()`, playing the wrong "going deeper" slide and
@@ -120,7 +125,8 @@ logging via an LLM pipeline, **3** TBD (PRs/charts).
 
 Static checks currently green: `tsc --noEmit` clean; `expo export --platform web` bundles all 15 routes;
 `xcodebuild -allowProvisioningUpdates` builds + installs Release to physical hardware.
-**Feedback pass (`FEEDBACK-LOG.md`): 7 of 13 done** — ✅ #1 #2 #4 #6 #7 #9 #10 · ⬜ #3 #5 #8 #11 #12 #13.
+**Feedback pass (`FEEDBACK-LOG.md`): 10 of 30 done** — ✅ #1 #2 #3 #4 #6 #7 #9 #10 #14 #20 · ⬜ #5 #8
+#11 #12 #13 #15 #16 #17 #18 #19 #21 #22 #23 #24 #25 #26 #27 #28 #29 #30.
 
 ## Pending actions (owner: user / next session)
 
@@ -161,9 +167,9 @@ Static checks currently green: `tsc --noEmit` clean; `expo export --platform web
       right against real workout days.
 - [ ] *(Phase 2, when voice resumes)* Apply migration `0003` to the live DB; run `npm run eval`.
 - [ ] Replace temporary Gmail SMTP with a dedicated provider before any external-user testing.
-- [ ] **Remaining feedback items** (`FEEDBACK-LOG.md`): **#3** frictionless defaults (reps 12 /
-      previous-best; the biggest logging win), **#5** exercise-list scroll (reproduce then fix),
-      **#8** drag-reorder in the routine editor.
+- [ ] **Remaining feedback items** (`FEEDBACK-LOG.md`): **#5** exercise-list scroll (reproduce then
+      fix), **#8** drag-reorder, **#11** delete-set discoverability, **#12/#13** rep chips, plus the
+      newer backlog (#15–#30). **#3/#14/#20 fixed 2026-08-08** — verify all three on device.
 - [x] ~~Wire `useSettings().weeklyGoal` into the Calendar tally~~ — **done**: `calendar.tsx` now reads
       the Settings "Weekly goal" pref (default 5 until the query resolves); every tally, label, and the
       12-week goal line follow it. (If a longer OTP length is ever configured, bump `CODE_LEN` in

@@ -16,6 +16,7 @@ import {
   useAddSet,
   useDeleteSet,
   useDiscardWorkout,
+  useExerciseBests,
   useFinishWorkout,
   useLastSession,
   usePrefetchExerciseDirectory,
@@ -25,6 +26,7 @@ import {
   useWorkout,
 } from '@/data/hooks';
 import { useSettings } from '@/data/settings';
+import type { ExerciseBest } from '@/data/workouts';
 import type { LastSessionSet } from '@/types/db';
 import type { SetType, Unit } from '@/types/db';
 import { newUuid } from '@/lib/ids';
@@ -36,6 +38,10 @@ import { color, font, radius, space, tracking } from '@/theme/tokens';
 function prevLabel(set: LastSessionSet | undefined, unit: Unit): string {
   return set ? formatSet(set.weight_kg, set.reps, unit) : '—';
 }
+
+// Frictionless default (feedback #3): when there's no prior rep signal, suggest 12
+// so the pending row is one-tap-loggable instead of blank.
+const DEFAULT_REPS = 12;
 
 type KeypadState = {
   mode: 'add' | 'edit';
@@ -76,6 +82,15 @@ export default function ActiveWorkoutScreen() {
     [detail]
   );
   usePrefetchLastSessions(id, exerciseIds);
+  // All-time top set per exercise (excludes this workout) — the "previous best" the
+  // pending weight pre-fills to (feedback #3). Cached 30min; offline it simply never
+  // resolves and prefill falls back to the last-session value.
+  const bests = useExerciseBests(id, exerciseIds);
+  const bestByExercise = useMemo(() => {
+    const m = new Map<string, ExerciseBest>();
+    for (const b of bests.data ?? []) m.set(b.exercise_id, b);
+    return m;
+  }, [bests.data]);
   // Warm the exercise directory so the picker can add exercises even if the
   // connection drops mid-workout (the picker filters this list locally offline).
   usePrefetchExerciseDirectory();
@@ -128,15 +143,25 @@ export default function ActiveWorkoutScreen() {
   const noHistory = lastSets.length === 0; // first time on this lift (mockup 15)
   const lastForNext = lastSets[logged.length];
   const prevInSession = logged[logged.length - 1];
+  const best = activeExerciseId ? bestByExercise.get(activeExerciseId) : undefined;
   // "Pre-fill from last session" (Settings) gates the pending row: off ⇒ blank
   // fields every set, the same treatment a brand-new lift gets (mockup 15).
-  const prefillKg = prefillEnabled ? lastForNext?.weight_kg ?? prevInSession?.weight_kg ?? null : null;
-  const prefillReps = prefillEnabled ? lastForNext?.reps ?? prevInSession?.reps ?? null : null;
+  // When on (feedback #3): weight suggests what you're lifting today (this session's
+  // last set) → your all-time previous best → last session's same-index set; reps
+  // repeat what you did → else default to 12, so ✓ is a true one-tap log.
+  const prefillKg = prefillEnabled
+    ? prevInSession?.weight_kg ?? best?.weight_kg ?? lastForNext?.weight_kg ?? null
+    : null;
+  const prefillReps = prefillEnabled
+    ? prevInSession?.reps ?? lastForNext?.reps ?? DEFAULT_REPS
+    : null;
 
   function logPending() {
     if (!activeExercise) return;
-    if (prefillReps == null) {
-      // Nothing to repeat — open the keypad instead of logging a blank set.
+    // Open the keypad instead of logging when there's genuinely nothing to repeat:
+    // pre-fill is off, or it's the first time on this lift with no weight to suggest
+    // (a brand-new lift needs a working weight before one-tap logging kicks in).
+    if (prefillReps == null || (prefillKg == null && noHistory && prevInSession == null)) {
       openAdd('normal');
       return;
     }
