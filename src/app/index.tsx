@@ -1,14 +1,14 @@
 // Home — "Rolling Weeks" (RepVoice Home Rolling Weeks.dc.html). Streak-first: a big
 // day-streak numeral, a rolling five-week heatmap of the days you showed up, and the
-// recent history inline. Routine-picking moved to a quick-start sheet behind a FAB
-// (Phase 2) and to the ROUTINES tab; the scroll-pinned streak bar arrives in Phase 3.
+// recent history inline. Routine-picking lives in a quick-start sheet behind a FAB
+// (Phase 2) and on the ROUTINES tab. A compact streak bar pins to the top and fades in
+// as you scroll the hero away (Phase 3).
 //
-// Phase 1 (this file): the static, scrollable content + real data. The running-workout
-// resume state and the day-zero first-run state are deferred — see docs/FEEDBACK-LOG.md
-// (a live workout is still resumable via the ROUTINES tab's start flow).
+// The running-workout resume state and the day-zero first-run state are deferred — see
+// docs/FEEDBACK-LOG.md #33/#34 (a live workout is still resumable via the shared start flow).
 import { router } from 'expo-router';
-import { useMemo } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useMemo, useRef } from 'react';
+import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HomeQuickStart } from '@/components/home/HomeQuickStart';
 import { HomeTabBar } from '@/components/voice/TabBar';
@@ -22,6 +22,25 @@ import { useTheme } from '@/theme/ThemeProvider';
 const DAY_MS = 86_400_000;
 const DOW = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+
+// Scroll window over which the pinned bar fades in — as the hero streak numeral leaves
+// the top. Mirrors the mockup's 92→150 handoff (the numeral has cleared the edge by then,
+// so the two are never both at full strength).
+const PIN_START = 96;
+const PIN_END = 154;
+
+// Micro-bar look per heat state, for the pinned sparkline (mockup: worked 12 / rest 5 /
+// skipped 2, coloured accent / faint / hairline).
+function microBar(state: CellState, color: Theme['color']) {
+  switch (state) {
+    case 'worked':
+      return { h: 12, bg: color.acc };
+    case 'rest':
+      return { h: 5, bg: color.acc14 };
+    default:
+      return { h: 2, bg: color.line2 };
+  }
+}
 
 export default function HomeScreen() {
   const { color, shadow } = useTheme();
@@ -37,7 +56,7 @@ export default function HomeScreen() {
     return s;
   }, [days.data]);
 
-  const { streak, best, cells } = useMemo(() => computeStreak(doneDays), [doneDays]);
+  const { streak, best, cells, micro } = useMemo(() => computeStreak(doneDays), [doneDays]);
 
   const inThirty = useMemo(() => {
     const cutoff = startOfDay(new Date()) - 29 * DAY_MS;
@@ -59,11 +78,28 @@ export default function HomeScreen() {
     .toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })
     .toUpperCase();
 
+  // Scroll-driven pinned bar. One native-driven value feeds the fade/slide of the bar
+  // (content) and its background — the bg reaches full opacity in the first quarter of
+  // the window so it masks the scrolling content instead of letting it read through.
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const onScroll = Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
+    useNativeDriver: true,
+  });
+  const barOpacity = scrollY.interpolate({ inputRange: [PIN_START, PIN_END], outputRange: [0, 1], extrapolate: 'clamp' });
+  const bgOpacity = scrollY.interpolate({
+    inputRange: [PIN_START, PIN_START + (PIN_END - PIN_START) / 4],
+    outputRange: [0, 1],
+    extrapolate: 'clamp',
+  });
+  const barShift = scrollY.interpolate({ inputRange: [PIN_START, PIN_END], outputRange: [-10, 0], extrapolate: 'clamp' });
+
   return (
     <View style={styles.screen}>
-      <ScrollView
+      <Animated.ScrollView
         contentContainerStyle={[styles.content, { paddingTop: insets.top + space.xl }]}
         showsVerticalScrollIndicator={false}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
       >
         {/* Header */}
         <View style={styles.topRow}>
@@ -140,7 +176,28 @@ export default function HomeScreen() {
             );
           })
         )}
-      </ScrollView>
+      </Animated.ScrollView>
+
+      {/* Scroll-pinned compact streak bar — fades in as the hero scrolls away.
+          Purely informational, so it never intercepts touches. */}
+      <View pointerEvents="none" style={[styles.pinBar, { paddingTop: insets.top, height: insets.top + 56 }]}>
+        <Animated.View style={[styles.pinBg, { opacity: bgOpacity }]} />
+        <Animated.View style={[styles.pinInner, { opacity: barOpacity, transform: [{ translateY: barShift }] }]}>
+          <View style={styles.pinRow}>
+            <View style={styles.pinStreakWrap}>
+              <Text style={styles.pinStreak}>{streak}</Text>
+              <Text style={styles.pinStreakLabel}>DAY STREAK</Text>
+            </View>
+            <Text style={styles.pinBest}>BEST {best}</Text>
+          </View>
+          <View style={styles.pinSpark}>
+            {micro.map((state, i) => {
+              const b = microBar(state, color);
+              return <View key={i} style={{ flex: 1, height: b.h, borderRadius: 2, backgroundColor: b.bg }} />;
+            })}
+          </View>
+        </Animated.View>
+      </View>
 
       <HomeTabBar active="home" />
 
@@ -198,10 +255,31 @@ function cellLook(state: CellState | 'future', color: Theme['color']) {
   }
 }
 
-const makeStyles = (color: Theme['color'], _shadow: Theme['shadow']) =>
+const makeStyles = (color: Theme['color'], shadow: Theme['shadow']) =>
   StyleSheet.create({
     screen: { flex: 1, backgroundColor: color.bg },
     content: { paddingHorizontal: space.xxl, paddingBottom: space.xl },
+
+    // Pinned streak bar (Phase 3)
+    pinBar: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 3 },
+    pinBg: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: color.s0,
+      borderBottomWidth: 1,
+      borderBottomColor: color.line,
+      ...shadow.key,
+    },
+    pinInner: { flex: 1, paddingHorizontal: space.xxl, justifyContent: 'center', gap: 9 },
+    pinRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
+    pinStreakWrap: { flexDirection: 'row', alignItems: 'baseline', gap: 6 },
+    pinStreak: { fontFamily: font.numSemibold, fontSize: 24, letterSpacing: -0.7, color: color.acc },
+    pinStreakLabel: { fontFamily: font.numBold, fontSize: 8, letterSpacing: 1.6, color: color.t3 },
+    pinBest: { fontFamily: font.numSemibold, fontSize: 9, letterSpacing: 1.2, color: color.t3 },
+    pinSpark: { flexDirection: 'row', gap: 2, alignItems: 'flex-end', height: 12 },
 
     topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
     logo: { fontFamily: font.uiSemibold, fontSize: 22, color: color.t1, letterSpacing: 0.4 },

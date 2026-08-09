@@ -10,8 +10,12 @@ codebase or a huge prior conversation.
 > issues**) *and* append a dated entry to [`WORK-LOG.md`](./WORK-LOG.md). This file is the
 > snapshot; `WORK-LOG.md` is the full history. Keep this file short.
 
-**Last updated:** 2026-08-09 — **"Rolling Weeks" Home redesign, Phases 1–2 (of 3) — DONE + simulator-verified
-both themes.** **Phase 2:** a `+` **FAB** (`components/home/HomeQuickStart.tsx`) opens a **"MOST USED"
+**Last updated:** 2026-08-09 — **"Rolling Weeks" Home redesign — ALL 3 PHASES DONE + simulator-verified both
+themes.** The full `RepVoice Home Rolling Weeks.dc.html` is implemented. **Phase 3:** a **scroll-pinned
+compact streak bar** (`{streak} DAY STREAK · BEST n` + a 30-day micro sparkline from `computeStreak().micro`)
+that fades/slides in as the hero scrolls away — `Animated.ScrollView` + one native-driven `scrollY` (bar
+opacity, bg opacity reaching full in the first quarter to mask content, and a small slide); `pointerEvents:
+none` so it never blocks touches. **Phase 2:** a `+` **FAB** (`components/home/HomeQuickStart.tsx`) opens a **"MOST USED"
 bottom sheet** — routines ranked by 90-day usage, each `START →`, plus `+ NEW ROUTINE` / `EMPTY WORKOUT`;
 the FAB rotates to `×` and lifts above the sheet as its close control (dynamic-height positioned via
 `onLayout`), scrim closes it too, all `Animated` (native driver). FAB uses the semantic `cta*` tokens (dark =
@@ -177,7 +181,7 @@ logging via an LLM pipeline, **3** TBD (PRs/charts).
 
 | Area | Status |
 |---|---|
-| **"Rolling Weeks" Home redesign — Phases 1–2/3** | ✅ **Built + simulator-verified 2026-08-09** — **P1:** streak-first Home (streak hero + rest-tolerant 5-week heatmap + inline history) on the new **3-tab** IA (HOME · ROUTINES · ACCOUNT); new `/routines` screen; `src/lib/streak.ts` (unit-tested) + `dates.ts` + `useStartWorkoutFlow.ts`. **P2:** `+` FAB + "MOST USED" quick-start sheet (`components/home/HomeQuickStart.tsx`; Animated slide/rotate, usage-ranked, START/new/empty). Both themes walked; dark unchanged. **Phase 3** (scroll-pinned streak bar) pending. Deferred states = backlog #33–35. |
+| **"Rolling Weeks" Home redesign — ALL 3 PHASES** | ✅ **Built + simulator-verified 2026-08-09** — **P1:** streak-first Home (streak hero + rest-tolerant 5-week heatmap + inline history) on the new **3-tab** IA (HOME · ROUTINES · ACCOUNT); new `/routines` screen; `src/lib/streak.ts` (unit-tested) + `dates.ts` + `useStartWorkoutFlow.ts`. **P2:** `+` FAB + "MOST USED" quick-start sheet (`components/home/HomeQuickStart.tsx`; Animated slide/rotate, usage-ranked, START/new/empty). **P3:** scroll-pinned compact streak bar + 30-day sparkline (`Animated.ScrollView`, native-driven fade/slide). Both themes walked; dark unchanged. Deferred states = backlog #33–35. |
 | Phase 1 backbone (schema, RLS, repos) | ✅ Built; backend verified live (**150 curated exercises** / 156 aliases seeded; RLS test passed) |
 | **Local-first cache (persisted React Query)** | ✅ **Built 2026-07-31** — cold start hydrates last-known data from AsyncStorage (`src/lib/queryClient.ts`), revalidates in background; `staleTime` tiered; cache wiped on sign-out/account-switch. Warm-relaunch hydration **proven live 2026-08-06** (instant paint from disk even offline). |
 | **Offline-first logging (write while disconnected + sync)** | ✅ **Built + verified on-device 2026-08-06** — start→pick→log/edit/delete sets→finish all work offline and sync on reconnect, surviving app kill. NetInfo→`onlineManager` (writes pause, not roll back); replay-safe writes (client `set_number`/`position`/ids in mutation *variables*); persisted+resumable queue (`src/data/offlineSync.ts`, `resumePausedMutations`); offline picker (`useExerciseDirectory` + local filter); `OfflineBanner`. History/calendar/progress/voice stay online-only. `npm run test:offline` **8/8** on live DB **and the full loop proven on the simulator** (offline log → kill → relaunch → reconnect → rows verified in Supabase). **QA'd 2026-08-06 (6 fixes)**: banner cold-start seed, SYNCING-pill latch, offline cold-cache START alert, **serial resume** (`SerialResumeQueryClient` — RQ 5.101's own resume is concurrent `Promise.all`), foreground re-seed + 10s poll, and an **authoritative reachability probe** (HEAD `/auth/v1/health` — NetInfo can lie in both directions; a stale "online" makes writes fire→fail→roll back). Deep scenarios verified vs the live DB: offline edit/delete of unsynced sets, offline discard (net no-trace), stuck-queue recovery; harness `test:offline` **11/11**. |

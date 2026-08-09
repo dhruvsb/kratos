@@ -7,6 +7,33 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-09 — "Rolling Weeks" Home redesign, Phase 3 of 3 (scroll-pinned streak bar) — redesign COMPLETE
+
+The finishing flourish, and the last piece of `RepVoice Home Rolling Weeks.dc.html`: a compact streak bar
+that pins to the top and fades in as the hero scrolls out of view, so the streak stays glanceable while you
+read history.
+
+**Built (all in `src/app/index.tsx`):**
+- Converted Home's `ScrollView` → **`Animated.ScrollView`**, capturing `contentOffset.y` into one
+  native-driven `scrollY` (`scrollEventThrottle=16`, `useNativeDriver`).
+- An absolutely-positioned top bar (respecting `insets.top`) with two layers: a **background** (`s0` +
+  hairline + soft key shadow) whose opacity ramps to full in the first quarter of the scroll window (so it
+  masks the content scrolling under it, not letting it ghost through), and a **content** layer (compact
+  `{streak} DAY STREAK` + `BEST {best}` + a 30-day micro sparkline) that fades + slides down `−10→0` across
+  the window. Thresholds `PIN_START 96 → PIN_END 154` mirror the mockup's 92→150 handoff so the big hero
+  numeral and the compact one are never both at full strength.
+- The sparkline reads `computeStreak().micro` (last 30 days) mapped to the mockup's heights/colours
+  (worked 12/acc · rest 5/acc14 · skipped 2/line2). `pointerEvents: none` on the whole bar — it's purely
+  informational and must never intercept a scroll or tap.
+
+**Verified:** `tsc` clean; `expo export` bundles (routes unchanged). **Walked on the iOS simulator
+(light + dark):** scrolling the heatmap/history away fades the bar in with the compact streak + sparkline
+and the bg masks the list beneath; scrolling back to the top fades it cleanly out with no overlap on the
+hero; dark keeps the LED look. **The Rolling Weeks Home redesign is now complete** (Phases 1–3). Remaining
+follow-ups are the deferred edge states (`FEEDBACK-LOG.md` #33–35).
+
+---
+
 ## 2026-08-09 — "Rolling Weeks" Home redesign, Phase 2 of 3 (+ FAB + "MOST USED" sheet)
 
 The quick-start layer on the streak Home. `+` FAB → a "MOST USED" bottom sheet, so the routines you
