@@ -289,7 +289,9 @@ const makeStyles = (color: Theme['color'], shadow: Theme['shadow']) =>
 
     // Streak hero
     hero: { flexDirection: 'row', alignItems: 'flex-end', gap: 11, marginTop: space.xl + 2 },
-    heroNum: { fontFamily: font.numSemibold, fontSize: 62, lineHeight: 52, letterSpacing: -2.4, color: color.acc },
+    // lineHeight must be >= fontSize or RN clips the glyph's top/bottom (unlike CSS,
+    // where a short line-height just overflows visually). Keep it snug but uncut.
+    heroNum: { fontFamily: font.numSemibold, fontSize: 62, lineHeight: 68, letterSpacing: -2.4, color: color.acc },
     heroLabels: { paddingBottom: 7 },
     heroTitle: { fontFamily: font.numBold, fontSize: 10, letterSpacing: 2, color: color.t1 },
     heroSub: { fontFamily: font.numSemibold, fontSize: 10, letterSpacing: 1.2, color: color.t3, marginTop: 5 },
