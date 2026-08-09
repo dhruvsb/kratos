@@ -13,7 +13,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { useQuery } from '@tanstack/react-query';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { TabBar } from '@/components/voice/TabBar';
+import { HomeTabBar } from '@/components/voice/TabBar';
 import { deleteAccount, getSession, signOut } from '@/data/auth';
 import { useProfile, useUpdateProfile } from '@/data/hooks';
 import { GOAL_PRESETS, THEME_MODES, useSettings, useUpdateSettings } from '@/data/settings';
@@ -254,15 +254,7 @@ export default function SettingsScreen() {
         </Text>
       </ScrollView>
 
-      <TabBar
-        active="settings"
-        tabs={[
-          { key: 'home', label: 'HOME', onPress: () => router.replace('/') },
-          { key: 'calendar', label: 'CALENDAR', onPress: () => router.replace('/calendar') },
-          { key: 'history', label: 'HISTORY', onPress: () => router.replace('/history') },
-          { key: 'settings', label: 'SETTINGS' },
-        ]}
-      />
+      <HomeTabBar active="account" />
     </View>
   );
 }

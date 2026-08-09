@@ -10,7 +10,20 @@ codebase or a huge prior conversation.
 > issues**) *and* append a dated entry to [`WORK-LOG.md`](./WORK-LOG.md). This file is the
 > snapshot; `WORK-LOG.md` is the full history. Keep this file short.
 
-**Last updated:** 2026-08-08 — **Warmup feature removed (#31) + backlog pruned.** The manual UI no
+**Last updated:** 2026-08-09 — **"Rolling Weeks" Home redesign, Phase 1 (of 3) — DONE + simulator-verified
+both themes.** New streak-first Home (`RepVoice Home Rolling Weeks.dc.html`): a big day-streak numeral, a
+rolling **five-week weekday-aligned heatmap** (worked = accent fill, rest = faint, skipped = dashed, today =
+accent ring), and the recent **history inline** — the calendar + history folded into Home. Bottom bar cut to
+**3 tabs: HOME · ROUTINES · ACCOUNT** (`HomeTabBar` in `components/voice/TabBar.tsx`); the routine list moved
+to a **new `/routines` screen**; ACCOUNT → Settings. Streak is **rest-tolerant** (an isolated non-worked day
+keeps the chain and counts; a 2+-day gap breaks it) — pure, unit-tested logic in `src/lib/streak.ts` (+
+shared date helpers `src/lib/dates.ts`; shared start flow `src/data/useStartWorkoutFlow.ts`). Calendar/History
+screens stay on disk but are off the tab bar. **Deferred + logged as backlog #33–35** (`FEEDBACK-LOG.md`):
+running-workout resume state, day-zero first-run state, history PR/REST tags — a live workout is still
+resumable via the shared start flow. **Phases 2–3 next:** the `+` FAB + "MOST USED" quick-start sheet, then
+the scroll-pinned streak bar. `tsc` + web-export (16 routes incl. `/routines`) green; **walked on the iOS
+simulator (light + dark; dark LED look unchanged; all 3 tabs navigate).** Prior: **Warmup feature removed
+(#31) + backlog pruned.** The manual UI no
 longer references warmup anywhere: no `+ WARMUP` button, no `W`/`WARMUP` labels in the live grid or
 history — every set numbers plainly (`workout/[id].tsx`, `history/[id].tsx`). UI-removal only; the
 `set_type` enum, `lib/hevy.ts` warmup mapping, and unwired Phase-2 voice type-list stay, so Hevy imports
@@ -159,6 +172,7 @@ logging via an LLM pipeline, **3** TBD (PRs/charts).
 
 | Area | Status |
 |---|---|
+| **"Rolling Weeks" Home redesign — Phase 1/3** | ✅ **Built + simulator-verified 2026-08-09** — streak-first Home (streak hero + rest-tolerant 5-week heatmap + inline history) on the new **3-tab** IA (HOME · ROUTINES · ACCOUNT); new `/routines` screen; `src/lib/streak.ts` (unit-tested) + `dates.ts` + `useStartWorkoutFlow.ts`. Both themes walked; dark unchanged. **Phase 2** (`+` FAB + MOST-USED sheet) + **Phase 3** (scroll-pinned bar) pending. Deferred states = backlog #33–35. |
 | Phase 1 backbone (schema, RLS, repos) | ✅ Built; backend verified live (**150 curated exercises** / 156 aliases seeded; RLS test passed) |
 | **Local-first cache (persisted React Query)** | ✅ **Built 2026-07-31** — cold start hydrates last-known data from AsyncStorage (`src/lib/queryClient.ts`), revalidates in background; `staleTime` tiered; cache wiped on sign-out/account-switch. Warm-relaunch hydration **proven live 2026-08-06** (instant paint from disk even offline). |
 | **Offline-first logging (write while disconnected + sync)** | ✅ **Built + verified on-device 2026-08-06** — start→pick→log/edit/delete sets→finish all work offline and sync on reconnect, surviving app kill. NetInfo→`onlineManager` (writes pause, not roll back); replay-safe writes (client `set_number`/`position`/ids in mutation *variables*); persisted+resumable queue (`src/data/offlineSync.ts`, `resumePausedMutations`); offline picker (`useExerciseDirectory` + local filter); `OfflineBanner`. History/calendar/progress/voice stay online-only. `npm run test:offline` **8/8** on live DB **and the full loop proven on the simulator** (offline log → kill → relaunch → reconnect → rows verified in Supabase). **QA'd 2026-08-06 (6 fixes)**: banner cold-start seed, SYNCING-pill latch, offline cold-cache START alert, **serial resume** (`SerialResumeQueryClient` — RQ 5.101's own resume is concurrent `Promise.all`), foreground re-seed + 10s poll, and an **authoritative reachability probe** (HEAD `/auth/v1/health` — NetInfo can lie in both directions; a stale "online" makes writes fire→fail→roll back). Deep scenarios verified vs the live DB: offline edit/delete of unsynced sets, offline discard (net no-trace), stuck-queue recovery; harness `test:offline` **11/11**. |
@@ -185,7 +199,8 @@ Static checks currently green: `tsc --noEmit` clean; `expo export --platform web
 `xcodebuild -allowProvisioningUpdates` builds + installs Release to physical hardware.
 **Feedback pass (`FEEDBACK-LOG.md`): 19 done** — ✅ #1 #2 #3 #4 #6 #7 #9 #10 #11 #13 #14 #15 #16
 #17 #18 #20 #21 #26 #31 (#12 dissolved by #13) · 🟡 #5 (fix applied — keyboard-avoidance; device-confirm
-pending) · ⬜ **open: #8 #19 #22 #23 #28** · **withdrawn (won't do): #24 #25 #27 #29 #30**.
+pending), #32 (data durability — largely mitigated by local-first; verify + close gaps, **high priority**)
+· ⬜ **open: #8 #19 #22 #23 #28** · **withdrawn (won't do): #24 #25 #27 #29 #30**.
 **#17 light theme: DONE** (full Greige+Moss light mode + System·Light·Dark toggle; device-confirm pending).
 
 ## Pending actions (owner: user / next session)

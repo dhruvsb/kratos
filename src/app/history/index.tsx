@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ErrorText, Loading } from '@/components/ui';
-import { TabBar } from '@/components/voice/TabBar';
+import { HomeTabBar } from '@/components/voice/TabBar';
 import { useWorkoutList } from '@/data/hooks';
 import type { WorkoutListItem } from '@/data/workouts';
 import { font, space, tracking, type Theme } from '@/theme/tokens';
@@ -108,15 +108,7 @@ export default function HistoryScreen() {
         }
       />
 
-      <TabBar
-        active="history"
-        tabs={[
-          { key: 'home', label: 'HOME', onPress: () => router.replace('/') },
-          { key: 'calendar', label: 'CALENDAR', onPress: () => router.replace('/calendar') },
-          { key: 'history', label: 'HISTORY' },
-          { key: 'settings', label: 'SETTINGS', onPress: () => router.replace('/settings') },
-        ]}
-      />
+      <HomeTabBar active="home" />
     </View>
   );
 }

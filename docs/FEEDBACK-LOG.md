@@ -6,6 +6,103 @@ entry at top. When an item is fixed, mark it and move the detail into `WORK-LOG.
 
 ---
 
+## 2026-08-09 (10) — "Rolling Weeks" Home redesign: deferred edge states
+
+**Context:** implementing the `RepVoice Home Rolling Weeks.dc.html` redesign (streak-first Home:
+streak hero + rolling five-week heatmap + inline history + `+` quick-start sheet + 3-tab bar
+HOME · ROUTINES · ACCOUNT). Per product call, we ship the **normal-case visuals first** and track
+the two states the mockup doesn't draw, plus one data nicety, as backlog.
+
+| # | Item | Area | Done? | Sev | Effort |
+|---|------|------|-------|-----|--------|
+| 33 | Running-workout resume state absent from the new Home | Home / active workout | ⬜ Open | Med | S–M |
+| 34 | Day-zero (first-run) state absent from the new Home | Home / onboarding | ⬜ Open | Low–Med | S |
+| 35 | History rows lack the mockup's `+N PR` / `REST` tags | Home / history | ⬜ Open | Low | M |
+
+### 33. Bring back the running-workout resume affordance ⬜ Med
+The old Home (mockup 16) showed a "STILL RUNNING" card — resume / finish now / discard — when a
+workout was left active. The Rolling Weeks Home doesn't draw one. **Interim safeguard in place:** a
+live workout is never a hard dead-end — the shared start flow (`src/data/useStartWorkoutFlow.ts`,
+used by the ROUTINES tab and the Phase-2 `+` sheet) routes straight to the active workout if one
+exists (`if (activeId) router.push('/workout/'+activeId)`). Follow-up: a first-class resume banner
+atop the new Home (or a state on the streak hero) so it's visible, not just reachable.
+
+### 34. Day-zero (first-run) state on the new Home ⬜ Low–Med
+The old Home had a mockup-14 empty state (two doors into the first workout + starter templates). On
+the new Home a brand-new user sees streak `0`, an all-empty heatmap, and an empty-history line
+(`No workouts yet…`) — functional but not a designed welcome. Follow-up: a proper day-zero treatment
+(and the ROUTINES tab already has its own empty state).
+
+### 35. History PR / REST tags ⬜ Low
+The mockup tags rows `+2 PR` (accent) / `REST` (dim). The `useWorkoutList()` payload
+(`WorkoutListItem`) doesn't carry PR info, and there are no "rest day" rows in real history (history
+is finished workouts only). Rows currently show date · name · `N EXERCISES · N SETS · N MIN`.
+Follow-up: compute per-workout PRs (cf. `getExerciseBests` used by the finish summary) if we want
+the tag — cost/benefit TBD.
+
+---
+
+## 2026-08-08 (9) — Data durability across backgrounding / app termination
+
+**Context:** user concern — a workout can run 60+ min, and the phone won't stay on the app the
+whole time (messages, other apps, screen lock). Losing logged sets when iOS suspends/kills the
+app in the background is unacceptable. User flagged this **very high priority.**
+
+### Summary
+
+| # | Item | Area | Done? | Sev | Effort |
+|---|------|------|-------|-----|--------|
+| 32 | No logging data may be lost when the app is backgrounded/killed mid-workout | Data durability | 🟡 LARGELY MITIGATED — verify + close gaps | **High** | S–M |
+
+---
+
+### 32. Don't lose logged sets when the app is backgrounded or killed mid-workout 🟡 High
+**Reported:** start a workout, log 10–12 sets, switch to another app / get a message / lock the
+screen for 20–30 min; iOS may suspend or terminate the app in the background. None of the logging
+done so far should be lost.
+**Important framing correction (the right lever isn't "keep it running"):** a normal iOS app
+*cannot* keep executing in the background for 20–30 min — iOS suspends apps within seconds of
+backgrounding unless they hold a specific background mode (audio, location, VoIP…), and none of
+those legitimately apply to a set logger; requesting one to "stay alive" is an App Store rejection
+risk and still wouldn't guarantee survival against the OS memory killer. So the correct goal is
+**not** fighting the OS to stay running — it's making backgrounding *and* outright termination
+completely safe through **durable persistence**, so a kill is a non-event.
+**Verified — this is largely already built (local-first architecture), which is why this is a
+"verify + close the gaps" item, not a from-scratch build:**
+- The React Query cache persists to AsyncStorage via `PersistQueryClientProvider`
+  (`_layout.tsx:28-32`, `src/lib/queryClient.ts`). Every set-log optimistically patches the cache
+  (`useAddSet` `onMutate`), and the persister flushes to disk on a short throttle (RQ default
+  ~1s). So logged sets land on durable storage within ~1s, independent of the network.
+- Offline writes are **paused** (not rolled back) and persisted as paused mutations that survive an
+  app kill, then replay **serially** in FK order on relaunch (`SerialResumeQueryClient`,
+  `resumePausedMutations` in `_layout.tsx:88`; `src/data/offlineSync.ts`).
+- On relaunch the persisted cache hydrates behind the splash (`BootGate`), so the in-progress
+  workout + its logged sets are already on screen, and `useActiveWorkout` + the resume Home state
+  (mockup 16) surface it.
+- **This exact scenario was proven on-device 2026-08-06** (offline QA): logged sets → force-quit →
+  relaunch → all sets intact from cache → reconnect → serial flush to Supabase. See CONTEXT.md /
+  WORK-LOG 2026-08-06.
+**Real residual gaps worth closing (why this stays open, not ✅):**
+1. **No forced flush on background.** The persist throttle is ~1s and the AppState listener only
+   re-seeds *online state* on foreground (`network.ts:77-79`) — nothing forces a synchronous cache
+   persist when the app goes to `background`/`inactive`. A set logged in the ~1s before an immediate
+   background→kill could miss the on-disk snapshot. Fix: on AppState `background`, trigger
+   `persistQueryClient`/flush (and consider dropping the throttle to near-0 for the active-workout
+   window). (S)
+2. **Online in-flight writes interrupted by a kill.** When online, a set-log mutation runs
+   immediately (not paused), so it isn't in the paused-mutation queue. If iOS kills the app
+   mid-request, the *optimistic cache* still hydrates on relaunch (good), but there's no paused
+   mutation to re-drive the network write — the row could be missing server-side until something
+   re-invalidates. Fix: confirm behavior and, if needed, treat interrupted-in-flight the same as
+   paused (re-enqueue on relaunch when the cached optimistic state has no confirmed server id). (M)
+3. **Explicit test for this scenario.** `npm run test:offline` covers the offline queue; add/confirm
+   a case for *online* mid-workout background→kill→relaunch with the last set landing server-side.
+**Bottom line:** the architecture already protects the common case; this item is (a) add the
+background-flush safety net, (b) verify the online-kill path, (c) lock it with a test — then it can
+close. Do **not** pursue background-execution / "keep running" approaches.
+
+---
+
 ## 2026-08-08 (8) — Feature request: remove warmup sets entirely
 
 **Context:** user-requested. "I don't want to log the warmup set, and I don't want to see any

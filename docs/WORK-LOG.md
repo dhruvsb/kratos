@@ -7,6 +7,48 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-09 — "Rolling Weeks" Home redesign, Phase 1 of 3 (streak Home + 3-tab IA)
+
+First slice of the big main-screen redesign imported from the Claude Design project
+(`RepVoice Home Rolling Weeks.dc.html`, via the design MCP). The mockup reworks Home into a
+streak-first surface and folds the calendar heatmap + history into it, cutting the bottom bar to three
+tabs. Locked with the user: **adopt the 3-tab bar**, **rest-tolerant streak**, and **ship the visuals
+first, defer the edge states to backlog**.
+
+**Built (Phase 1 — static content + IA + data):**
+- **`src/lib/streak.ts`** (new, pure) — the rest-tolerant streak engine. A single non-worked day between
+  workouts is a *rest* day (keeps the chain, counts toward the number); two+ consecutive non-worked days
+  are *skipped* (break it). Returns `{ streak, best, cells, micro }`: `cells` is a **weekday-aligned**
+  5-week grid (Mon–Sun, current week last, future days blank — the mockup's static M–S header only lined
+  up because its "today" was a Sunday), `micro` is the last 30 days for Phase 3's sparkline.
+  **Unit-verified** via a throwaway tsx harness (7 cases: isolated-rest-keeps-streak, 2-day-gap-breaks,
+  pending-today, empty history, best-run).
+- **`src/lib/dates.ts`** (new) — shared `startOfDay`/`addDays`/`mondayOf`/`agoLabel` (lifted from the old
+  Home + calendar so the math lives once); `streak.ts` imports from it.
+- **`src/data/useStartWorkoutFlow.ts`** (new) — the optimistic "start a workout" flow extracted verbatim
+  from the old Home, so the ROUTINES screen and (Phase 2) the `+` sheet share identical behaviour. Also the
+  **interim safeguard** for deferred item #33: a live workout is still resumable (routes straight to it).
+- **`src/app/index.tsx`** (rewritten) — header, streak hero (big Geist-Mono numeral + `BEST n · REST DAYS
+  COUNT`), the rolling heatmap (cell colours via `useTheme()` tokens, same recipe as `calendar.tsx`), and
+  the inline history list (`useWorkoutList()` rows: date · name · `N EXERCISES · N SETS · N MIN`; PR/REST
+  tags deferred). Reads all finished-workout days via `useWorkoutDays()` for accurate streak/heatmap.
+- **`src/app/routines.tsx`** (new, ROUTINES tab) — the full routine list lifted out of the old Home
+  (name · `N EX · ago`, EDIT, START →, + NEW ROUTINE / EMPTY WORKOUT), using the shared start flow.
+- **3-tab bar** — new `HomeTabBar` wrapper in `components/voice/TabBar.tsx` (HOME · ROUTINES · ACCOUNT,
+  `router.replace` so depth stays 1); swapped into Home, `settings.tsx` (active=account), and the now-retired
+  `calendar.tsx` / `history/index.tsx` (active=home). Those two screens stay routable, just off the bar.
+
+**Deferred → backlog (`FEEDBACK-LOG.md` #33–35):** running-workout resume state on the new Home (#33,
+safeguarded), day-zero first-run state (#34), history PR/REST tags (#35).
+
+**Verified:** `tsc --noEmit` clean; `expo export --platform web` bundles 16 routes (incl. `/routines`).
+**Walked on the iOS simulator (iPhone 17, Debug):** Home in light *and* dark — streak `6` / `BEST 43`,
+heatmap states render correctly against seeded demo data (worked/rest/skipped/today-ring), history rows,
+and all three tabs navigate (ROUTINES → the new list, ACCOUNT → Settings). Dark keeps the LED-lime look
+unchanged. **Phases 2 (`+` FAB + MOST-USED sheet) and 3 (scroll-pinned streak bar) are next.**
+
+---
+
 ## 2026-08-08 — Remove the warmup feature (#31) + prune the feedback backlog
 
 **#31 — warmup removed from the manual UI (code).** The user asked to drop warmup entirely — no way to

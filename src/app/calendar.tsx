@@ -3,11 +3,10 @@
 // the month grid tallies each week on its own row, three stats read the recent past,
 // and a 12-week bar chart plots weeks against the goal line. All derived from the
 // finished-workout days — no separate streak table.
-import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { TabBar } from '@/components/voice/TabBar';
+import { HomeTabBar } from '@/components/voice/TabBar';
 import { ErrorText, Loading } from '@/components/ui';
 import { useWorkoutDays } from '@/data/calendar';
 import { useSettings } from '@/data/settings';
@@ -290,15 +289,7 @@ export default function CalendarScreen() {
         </Text>
       </ScrollView>
 
-      <TabBar
-        active="calendar"
-        tabs={[
-          { key: 'home', label: 'HOME', onPress: () => router.replace('/') },
-          { key: 'calendar', label: 'CALENDAR' },
-          { key: 'history', label: 'HISTORY', onPress: () => router.replace('/history') },
-          { key: 'settings', label: 'SETTINGS', onPress: () => router.replace('/settings') },
-        ]}
-      />
+      <HomeTabBar active="home" />
     </View>
   );
 }
