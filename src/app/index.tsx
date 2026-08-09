@@ -10,6 +10,7 @@ import { router } from 'expo-router';
 import { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { HomeQuickStart } from '@/components/home/HomeQuickStart';
 import { HomeTabBar } from '@/components/voice/TabBar';
 import { useWorkoutDays } from '@/data/calendar';
 import { useWorkoutList } from '@/data/hooks';
@@ -142,6 +143,9 @@ export default function HomeScreen() {
       </ScrollView>
 
       <HomeTabBar active="home" />
+
+      {/* FAB + "MOST USED" quick-start sheet — overlays everything, incl. the tab bar. */}
+      <HomeQuickStart />
     </View>
   );
 }

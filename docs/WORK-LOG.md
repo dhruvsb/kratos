@@ -7,6 +7,30 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-09 — "Rolling Weeks" Home redesign, Phase 2 of 3 (+ FAB + "MOST USED" sheet)
+
+The quick-start layer on the streak Home. `+` FAB → a "MOST USED" bottom sheet, so the routines you
+actually run are one tap from Home without going to the ROUTINES tab.
+
+**Built — `src/components/home/HomeQuickStart.tsx` (new), rendered as Home's top-most overlay:**
+- **FAB** bottom-right using the semantic `cta*` tokens (dark = dark circle + accent glyph/border/glow,
+  light = solid moss fill + white glyph — the "no accent fill on dark" rule holds). Two-bar `+` glyph.
+- On open it **rotates to `×` and lifts above the sheet** to double as the close control — the lift
+  distance is derived from the sheet's real height (`onLayout`), so it's robust across content/devices,
+  not the mockup's hardcoded −448px. The scrim also closes it. All motion is `Animated` (native driver:
+  translate/rotate/opacity) off one shared value.
+- **Sheet content:** `MOST USED · LAST 90 DAYS`; routine rows ranked by 90-day usage (finished workouts
+  per `routine_id` from the loaded history pages), each `name · N EXERCISES · ago · N× · START →` (top 6);
+  footer `+ NEW ROUTINE` (`/routine/new`) / `EMPTY WORKOUT`. START/empty route through the shared
+  `useStartWorkoutFlow`, so a live workout resumes instead of double-starting.
+
+**Verified:** `tsc` clean. **Walked on the iOS simulator (light + dark):** FAB renders, opens the sheet
+(scrim + slide), the FAB rotates to `×` and sits at the sheet's top-right, rows are usage-ranked
+(Pull 3× / Leg 3× / Push 2× …), buttons present; dark keeps the LED look (dark FAB + lime `×`/glow).
+**Phase 3 (scroll-pinned compact streak bar + 30-day sparkline) is next.**
+
+---
+
 ## 2026-08-09 — "Rolling Weeks" Home redesign, Phase 1 of 3 (streak Home + 3-tab IA)
 
 First slice of the big main-screen redesign imported from the Claude Design project
