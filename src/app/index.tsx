@@ -86,11 +86,6 @@ export default function HomeScreen() {
     useNativeDriver: true,
   });
   const barOpacity = scrollY.interpolate({ inputRange: [PIN_START, PIN_END], outputRange: [0, 1], extrapolate: 'clamp' });
-  const bgOpacity = scrollY.interpolate({
-    inputRange: [PIN_START, PIN_START + (PIN_END - PIN_START) / 4],
-    outputRange: [0, 1],
-    extrapolate: 'clamp',
-  });
   const barShift = scrollY.interpolate({ inputRange: [PIN_START, PIN_END], outputRange: [-10, 0], extrapolate: 'clamp' });
 
   return (
@@ -178,26 +173,31 @@ export default function HomeScreen() {
         )}
       </Animated.ScrollView>
 
-      {/* Scroll-pinned compact streak bar — fades in as the hero scrolls away.
-          Purely informational, so it never intercepts touches. */}
-      <View pointerEvents="none" style={[styles.pinBar, { paddingTop: insets.top, height: insets.top + 56 }]}>
-        <Animated.View style={[styles.pinBg, { opacity: bgOpacity }]} />
-        <Animated.View style={[styles.pinInner, { opacity: barOpacity, transform: [{ translateY: barShift }] }]}>
-          <View style={styles.pinRow}>
-            <View style={styles.pinStreakWrap}>
-              <Text style={styles.pinStreak}>{streak}</Text>
-              <Text style={styles.pinStreakLabel}>DAY STREAK</Text>
-            </View>
-            <Text style={styles.pinBest}>BEST {best}</Text>
+      {/* Scroll-pinned compact streak bar — fades in as the hero scrolls away. The
+          whole bar (opaque background + content) fades as one layer so it always masks
+          the list scrolling underneath. Purely informational, so it never intercepts
+          touches. */}
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.pinBar,
+          { paddingTop: insets.top, height: insets.top + 62, opacity: barOpacity, transform: [{ translateY: barShift }] },
+        ]}
+      >
+        <View style={styles.pinRow}>
+          <View style={styles.pinStreakWrap}>
+            <Text style={styles.pinStreak}>{streak}</Text>
+            <Text style={styles.pinStreakLabel}>DAY STREAK</Text>
           </View>
-          <View style={styles.pinSpark}>
-            {micro.map((state, i) => {
-              const b = microBar(state, color);
-              return <View key={i} style={{ flex: 1, height: b.h, borderRadius: 2, backgroundColor: b.bg }} />;
-            })}
-          </View>
-        </Animated.View>
-      </View>
+          <Text style={styles.pinBest}>BEST {best}</Text>
+        </View>
+        <View style={styles.pinSpark}>
+          {micro.map((state, i) => {
+            const b = microBar(state, color);
+            return <View key={i} style={{ flex: 1, height: b.h, borderRadius: 2, backgroundColor: b.bg }} />;
+          })}
+        </View>
+      </Animated.View>
 
       <HomeTabBar active="home" />
 
@@ -260,20 +260,22 @@ const makeStyles = (color: Theme['color'], shadow: Theme['shadow']) =>
     screen: { flex: 1, backgroundColor: color.bg },
     content: { paddingHorizontal: space.xxl, paddingBottom: space.xl },
 
-    // Pinned streak bar (Phase 3)
-    pinBar: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 3 },
-    pinBg: {
+    // Pinned streak bar (Phase 3) — opaque background lives on the bar itself so it
+    // always masks the list scrolling under it.
+    pinBar: {
       position: 'absolute',
       top: 0,
       left: 0,
       right: 0,
-      bottom: 0,
+      zIndex: 3,
+      paddingHorizontal: space.xxl,
+      justifyContent: 'center',
+      gap: 9,
       backgroundColor: color.s0,
       borderBottomWidth: 1,
       borderBottomColor: color.line,
       ...shadow.key,
     },
-    pinInner: { flex: 1, paddingHorizontal: space.xxl, justifyContent: 'center', gap: 9 },
     pinRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
     pinStreakWrap: { flexDirection: 'row', alignItems: 'baseline', gap: 6 },
     pinStreak: { fontFamily: font.numSemibold, fontSize: 24, letterSpacing: -0.7, color: color.acc },

@@ -7,6 +7,20 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-09 — Fix: pinned streak bar bled the list through its background
+
+On the physical device the scroll-pinned bar (Phase 3) let the history list read *through* its lower
+half — the `HISTORY · N IN 30 DAYS` header and rows showed behind the sparkline. Cause: the bar's
+opaque background was a separate absolutely-positioned layer that (in practice) didn't cover the full
+bar height, so only the top portion masked. Fix: fold the background onto the `pinBar` container itself
+(`backgroundColor`/border/shadow on the bar, single `opacity` + slide for the whole thing) and drop the
+separate `pinBg` layer + its `bgOpacity` — the background is now intrinsic to the bar and always covers
+it. The hero has already scrolled away before the bar fades in (`PIN_START 96`), so fading bg+content
+together doesn't reintroduce the "ghosted double streak". Verified on the simulator (light + dark) at the
+worst-case scroll positions: the bar fully masks the list; top fade-out is clean.
+
+---
+
 ## 2026-08-09 — Clean up empty finished workouts (0 exercises / 0 sets)
 
 Two stray finished workouts on the dev account (`Leg Day`, `Test 2`, both 2026-08-08) had zero sets —
