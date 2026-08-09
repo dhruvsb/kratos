@@ -92,15 +92,29 @@ export async function startWorkout(
 }
 
 /** Ends the workout; removes exercises that never got a set (skips). */
-export async function finishWorkout(workoutId: string): Promise<void> {
+/** Finish an in-progress workout. Zero-set exercises are dropped; a workout that
+ *  logged *nothing at all* is discarded rather than finished (returns
+ *  `{ discarded: true }`) — an empty finished workout is meaningless data and would
+ *  show as "0 EXERCISES · 0 SETS" in History. Callers navigate to the summary only
+ *  when it actually finished. This is the backstop guard: the workout screen also
+ *  blocks a zero-set finish at the UI, but enforcing it here means no caller (offline
+ *  replay, a future resume-from-Home action) can ever leave an empty shell. */
+export async function finishWorkout(workoutId: string): Promise<{ discarded: boolean }> {
   const { data: exercises, error: weError } = await supabase
     .from('workout_exercises')
     .select('id, sets(count)')
     .eq('workout_id', workoutId);
   if (weError) throw weError;
-  const emptyIds = (exercises ?? [])
-    .filter((we: any) => (we.sets?.[0]?.count ?? 0) === 0)
-    .map((we: any) => we.id);
+  const setCount = (we: any) => we.sets?.[0]?.count ?? 0;
+  const totalSets = (exercises ?? []).reduce((n: number, we: any) => n + setCount(we), 0);
+
+  if (totalSets === 0) {
+    const { error } = await supabase.from('workouts').delete().eq('id', workoutId);
+    if (error) throw error;
+    return { discarded: true };
+  }
+
+  const emptyIds = (exercises ?? []).filter((we: any) => setCount(we) === 0).map((we: any) => we.id);
   if (emptyIds.length > 0) {
     const { error } = await supabase.from('workout_exercises').delete().in('id', emptyIds);
     if (error) throw error;
@@ -110,6 +124,7 @@ export async function finishWorkout(workoutId: string): Promise<void> {
     .update({ ended_at: new Date().toISOString() })
     .eq('id', workoutId);
   if (error) throw error;
+  return { discarded: false };
 }
 
 /** Discards an in-progress workout entirely (cascades to exercises/sets). */

@@ -16,8 +16,15 @@ in the new Home history. Added **`scripts/cleanup-empty-workouts.ts`** (dry-run 
 delete; scoped to one user; deletes the workout row only, sets/exercises cascade — a workout with any
 logged set is never touched) and ran it: 2 deleted, 38 finished workouts remain, history now clean.
 Neither was demo data (no `demo:` external_id), and both fell on a day that had other real workouts, so the
-heatmap/streak are unaffected. **Follow-up worth considering:** `finishWorkout` currently lets a
-zero-set workout finish into an empty shell — could auto-discard (or block finish) instead.
+heatmap/streak are unaffected.
+
+**Guard added (root-cause fix):** `finishWorkout` (`src/data/workouts.ts`) now **auto-discards** a workout
+with zero total sets instead of finishing it into a shell — it deletes the row (sets/exercises cascade) and
+returns `{ discarded: true }` (vs `{ discarded: false }` for a real finish). The workout screen already
+blocks a zero-set finish at the UI ("Nothing logged" alert), so this is the **backstop**: it guarantees no
+caller — offline replay, or the deferred resume-from-Home action (#33) — can ever leave an empty shell.
+Verified on the simulator: an empty workout's FINISH still shows the "Nothing logged" prompt and DISCARD
+returns home with no History row added; `tsc` clean.
 
 ---
 
