@@ -7,6 +7,20 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-09 — Clean up empty finished workouts (0 exercises / 0 sets)
+
+Two stray finished workouts on the dev account (`Leg Day`, `Test 2`, both 2026-08-08) had zero sets —
+empty shells from testing (an empty workout, or a routine-started workout finished before any set was
+logged; `finishWorkout` drops zero-set exercises, leaving nothing). They showed as `0 EXERCISES · 0 SETS`
+in the new Home history. Added **`scripts/cleanup-empty-workouts.ts`** (dry-run by default, `--commit` to
+delete; scoped to one user; deletes the workout row only, sets/exercises cascade — a workout with any
+logged set is never touched) and ran it: 2 deleted, 38 finished workouts remain, history now clean.
+Neither was demo data (no `demo:` external_id), and both fell on a day that had other real workouts, so the
+heatmap/streak are unaffected. **Follow-up worth considering:** `finishWorkout` currently lets a
+zero-set workout finish into an empty shell — could auto-discard (or block finish) instead.
+
+---
+
 ## 2026-08-09 — "Rolling Weeks" Home redesign, Phase 3 of 3 (scroll-pinned streak bar) — redesign COMPLETE
 
 The finishing flourish, and the last piece of `RepVoice Home Rolling Weeks.dc.html`: a compact streak bar
