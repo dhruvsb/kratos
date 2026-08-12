@@ -221,7 +221,8 @@ logging via an LLM pipeline, **3** TBD (PRs/charts).
 | Eval baseline (`npm run eval`) | ❌ Never run against the real API (Phase 2 concern) |
 | Migration `0003_alias_write_policy.sql` | ✅ **Applied this session** (was committed-but-unapplied; Phase 2 alias write-back policy now live) |
 | **In-app account deletion** (App Store 5.1.1(v)) | ✅ **Built + verified live 2026-08-08** — Settings → ACCOUNT → "Delete account" (two native confirms, completion alert) → `deleteAccount()` in `src/data/auth.ts` → RPC `delete_own_account()` (migration `0005`) → `signOut({ scope: 'local' })`. Verified on a throwaway live account: user, profile, routines, workouts, sets, voice_logs, custom exercises + aliases all gone; seeded 150 intact. Not yet rendered on device (pure JS — no dev-client rebuild needed). |
-| Migration `0007_workout_pr_counts.sql` (PR-counts RPC, #35) | ✅ **Applied live 2026-08-13** (0006 still unapplied) |
+| Migration `0006_sets_unique_set_number.sql` (`set_number` UNIQUE + dedupe) | ✅ **Applied live 2026-08-13** (had real dups; migration now dedupes first) |
+| Migration `0007_workout_pr_counts.sql` (PR-counts RPC, #35) | ✅ **Applied live 2026-08-13** |
 | Migration `0005_delete_own_account.sql` | ✅ **Applied live 2026-08-08** |
 | Migration `0004_exercise_metadata.sql` | ✅ Applied — exercises table restructured (muscle arrays + body_region + mechanic + modality; dropped `primary_muscle`/`category`) |
 
@@ -238,12 +239,11 @@ native-`UITabBar` drag-lens glass — deferred, keeping the custom pill+FAB.
 
 ## Pending actions (owner: user / next session)
 
-- [ ] **Apply migration `0006_sets_unique_set_number.sql`** to the live DB (`supabase db push` or the
-      SQL editor). If any existing `(workout_exercise_id, set_number)` duplicates exist, the constraint
-      will fail to create — dedupe first (snippet in the migration header). `insertSet` already tolerates
-      the constraint, so applying it is safe for the running app.
-- [ ] **Re-seed the exercise library (`npm run seed`)** so the new Biceps/Triceps `body_region[]` values
-      (feedback #19) take effect live — only the local `exercises-curated.json` was regenerated.
+- [x] ~~Apply migration `0006`~~ — **done live 2026-08-13** (had real dups; migration now dedupes via a
+      contiguous `row_number()` renumber, atomic with the constraint).
+- [x] ~~Re-seed the exercise library (`npm run seed`)~~ — **done 2026-08-13**; Biceps/Triceps `body_region`
+      live. Side effect: the seed wiped `routine_exercises`/`workout_exercises` (test data) — run
+      `npm run seed:demo` to repopulate showcase history if wanted.
 - [ ] **Move `DEVELOPMENT_TEAM` into `app.config.ts`** (`ios` plugin config) — right now it's
       hand-edited into the gitignored `ios/RepVoice.xcodeproj/project.pbxproj`, which any
       `expo prebuild` will wipe, re-breaking signing.
@@ -328,7 +328,7 @@ optimistic** (instant ✓, rollback on error) · ✅ **kg/lb unit toggle** in Se
 |---|---|---|
 | ~~Med~~ | ✅ **Done 2026-08-12** — `sets.set_number` now has `UNIQUE(workout_exercise_id, set_number)` (migration `0006`, **not yet applied**); `insertSet` retries/idempotent on `23505`. | `0006_sets_unique_set_number.sql`, `src/data/sets.ts` |
 | ~~Med~~ | ✅ **Done 2026-08-12** — mid-workout **remove exercise** wired into the set grid (REMOVE control + long-press → `useRemoveWorkoutExercise`, destructive confirm). | `src/app/workout/[id].tsx` |
-| Med | `db.ts` `z.coerce` numeric guards are dead — repos `return data as X`, never `.parse()`; a numeric-as-string would make `weight_kg` a string | `src/data/*`, `src/types/db.ts` |
+| ~~Med~~ | ✅ **Done 2026-08-13** — repo reads now `.parse()` through the zod schemas (flat rows + the numeric-bearing nested `sets`/`last_session` arrays); partial selects (`listWorkouts` volume, `getExerciseBests`) coerce `weight_kg` via `Number()`. A numeric-as-string can no longer make `weight_kg` a string. `tsc` + `test:offline` 16/16 green. | `src/data/*`, `src/types/db.ts` |
 | ~~Low~~ | ✅ **Done 2026-07-31** — body-region **muscle filter** chip row added to the picker *and* the library (`exercises.tsx`); `searchExercises(query, region?)` + `listExercisesByRegion()`. (RECENT tab still deferred.) Also new: per-workout **muscle split** on `history/[id].tsx` (`lib/muscleSplit.ts` + `components/MuscleSplit.tsx`). | `ExercisePickerModal.tsx` |
 | Low | Routine editor uses ↑/↓ reorder, not drag (= FEEDBACK **#8**, still open) | `src/app/routine/[id].tsx` |
 | ~~Low~~ | ✅ **Done 2026-08-12** — `addExerciseToWorkout` now dedupes `(workout_id, exercise_id)` (returns the existing row as a no-op) | `src/data/workouts.ts` |

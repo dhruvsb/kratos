@@ -7,6 +7,21 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-13 — Applied 0006 (set_number UNIQUE, with dedupe) + re-seeded #19 split
+
+- **0006 applied live.** First attempt failed (real duplicate `(workout_exercise_id, set_number)` rows
+  existed from set-logging races — `23505`, rolled back cleanly). Added a **dedupe** to the migration: a
+  `row_number()` renumber of every workout_exercise's sets to a contiguous 1..N in current order (relabels
+  `set_number` only — no weight/reps/order change), atomic with the constraint. Re-applied via
+  `supabase db push --include-all` (0006 sorts before the already-applied 0007). `set_number` is now unique.
+- **Re-seeded the exercise library (#19).** `npm run seed` → 150 exercises + 156 aliases with the
+  Biceps/Triceps `body_region` split now live. **Side effect (accepted — test data):** the seed clears all
+  `routine_exercises` + `workout_exercises` first (they reference exercises without cascade), so routines are
+  now empty and workout history has no sets/volume. The exercise *library* (what #19 needed) is intact. Run
+  `npm run seed:demo` to repopulate showcase history/routines if wanted.
+
+---
+
 ## 2026-08-13 — PR "records" badge on history rows (#35)
 
 Built the deferred records badge. **PR = heaviest weight among a session's reps-≥-6 sets strictly beating

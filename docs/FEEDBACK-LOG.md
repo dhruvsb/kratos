@@ -407,7 +407,7 @@ log weight/reps/sets during the workout." `tsc` + web-export green; not yet on d
 | # | Item | Area | Done? | Sev | Effort |
 |---|------|------|-------|-----|--------|
 | 18 | Multi-select exercises when adding to a routine | Routine editor | ✅ DONE | Med | M |
-| 19 | Split "Arms" filter into Biceps / Triceps | Search / taxonomy | ✅ DONE (code 2026-08-12; re-seed pending) | Med | M |
+| 19 | Split "Arms" filter into Biceps / Triceps | Search / taxonomy | ✅ DONE (2026-08-13; re-seeded live) | Med | M |
 
 ---
 
