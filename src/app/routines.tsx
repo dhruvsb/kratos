@@ -6,7 +6,7 @@ import { router } from 'expo-router';
 import { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { HomeTabBar } from '@/components/voice/TabBar';
+import { HomeTabBar, TAB_BAR_HEIGHT } from '@/components/voice/TabBar';
 import { useRoutines, useWorkoutList } from '@/data/hooks';
 import { useStartWorkoutFlow } from '@/data/useStartWorkoutFlow';
 import { agoLabel } from '@/lib/dates';
@@ -36,7 +36,7 @@ export default function RoutinesScreen() {
   return (
     <View style={styles.screen}>
       <ScrollView
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + space.xl }]}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + space.xl, paddingBottom: space.xl + TAB_BAR_HEIGHT }]}
         showsVerticalScrollIndicator={false}
       >
         <Text style={styles.title}>Routines</Text>

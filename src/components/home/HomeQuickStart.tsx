@@ -6,6 +6,7 @@
 // Self-contained: it reads its own (react-query-cached) data and owns the animation +
 // open state, so Home just drops it in above the tab bar. START routes through the
 // shared start flow, so a live workout is resumed rather than double-started.
+import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import { router } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -16,12 +17,16 @@ import { font, radius, space, tracking, type Theme } from '@/theme/tokens';
 import { useTheme } from '@/theme/ThemeProvider';
 
 const DAY_MS = 86_400_000;
-const FAB_BOTTOM = 96; // FAB bottom offset (above the tab bar)
+const FAB_BOTTOM = 24; // FAB bottom offset — sits in the bottom row beside the glass pill
 const MAX_ROWS = 6;
+// Near-white glyph on the saturated moss/lime glass FAB (material contrast, both themes).
+const FAB_GLYPH_ON_GLASS = '#F4F2EA';
 
 export function HomeQuickStart() {
   const { color, shadow } = useTheme();
   const styles = useMemo(() => makeStyles(color, shadow), [color, shadow]);
+  const glass = isLiquidGlassAvailable();
+  const glyphColor = glass ? FAB_GLYPH_ON_GLASS : color.ctaFg;
   const routines = useRoutines();
   const history = useWorkoutList();
   const { start, busy } = useStartWorkoutFlow();
@@ -127,15 +132,22 @@ export function HomeQuickStart() {
         </View>
       </Animated.View>
 
-      <Animated.View style={[styles.fab, { transform: [{ translateY: fabTranslate }, { rotate: fabRotate }] }]}>
+      <Animated.View
+        style={[
+          styles.fab,
+          glass ? styles.fabGlassWrap : styles.fabSolid,
+          { transform: [{ translateY: fabTranslate }, { rotate: fabRotate }] },
+        ]}
+      >
+        {glass && <GlassView glassEffectStyle="regular" tintColor={color.acc} style={styles.fabGlass} />}
         <Pressable
           onPress={() => toggle(!open)}
           style={styles.fabPress}
           accessibilityLabel={open ? 'Close quick start' : 'Quick start'}
         >
           <View style={styles.glyph}>
-            <View style={styles.glyphH} />
-            <View style={styles.glyphV} />
+            <View style={[styles.glyphH, { backgroundColor: glyphColor }]} />
+            <View style={[styles.glyphV, { backgroundColor: glyphColor }]} />
           </View>
         </Pressable>
       </Animated.View>
@@ -200,23 +212,24 @@ const makeStyles = (color: Theme['color'], shadow: Theme['shadow']) =>
     ctaAcc: { fontFamily: font.numSemibold, fontSize: 10.5, letterSpacing: tracking.label, color: color.t2 },
     ctaDim: { fontFamily: font.numSemibold, fontSize: 10.5, letterSpacing: tracking.label, color: color.t3 },
 
-    // FAB — semantic CTA tokens: dark keeps the dark-fill/accent look, light gets the
-    // solid moss fill (never an accent fill on dark — hard rule).
+    // FAB — the design's green-glass circle beside the tab pill. On iOS 26 a GlassView
+    // tinted with the accent (moss on light, LED lime on dark) fills it; older OSes fall
+    // back to the semantic CTA tokens (never an accent fill on dark — hard rule).
     fab: {
       position: 'absolute',
-      right: 22,
+      right: 14,
       bottom: FAB_BOTTOM,
       zIndex: 8,
       width: 62,
       height: 62,
       borderRadius: 31,
-      backgroundColor: color.ctaBg,
-      borderWidth: 1,
-      borderColor: color.ctaBorder,
       ...shadow.cta,
     },
+    fabSolid: { backgroundColor: color.ctaBg, borderWidth: 1, borderColor: color.ctaBorder },
+    fabGlassWrap: {}, // glass surface is the GlassView child below; wrapper stays transparent for the shadow
+    fabGlass: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 31 },
     fabPress: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     glyph: { width: 22, height: 22 },
-    glyphH: { position: 'absolute', top: 10, left: 0, width: 22, height: 2.5, borderRadius: 2, backgroundColor: color.ctaFg },
-    glyphV: { position: 'absolute', left: 10, top: 0, width: 2.5, height: 22, borderRadius: 2, backgroundColor: color.ctaFg },
+    glyphH: { position: 'absolute', top: 10, left: 0, width: 22, height: 2.5, borderRadius: 2 },
+    glyphV: { position: 'absolute', left: 10, top: 0, width: 2.5, height: 22, borderRadius: 2 },
   });

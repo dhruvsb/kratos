@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ErrorText, Loading } from '@/components/ui';
-import { HomeTabBar } from '@/components/voice/TabBar';
+import { HomeTabBar, TAB_BAR_HEIGHT } from '@/components/voice/TabBar';
 import { useWorkoutList } from '@/data/hooks';
 import type { WorkoutListItem } from '@/data/workouts';
 import { font, space, tracking, type Theme } from '@/theme/tokens';
@@ -74,7 +74,7 @@ export default function HistoryScreen() {
         data={rows}
         style={{ flex: 1 }}
         keyExtractor={(item) => item.key}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: space.xxl + TAB_BAR_HEIGHT }]}
         onEndReached={() => {
           if (list.hasNextPage && !list.isFetchingNextPage) list.fetchNextPage();
         }}

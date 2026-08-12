@@ -211,12 +211,27 @@ it as a ghosted/suggested value distinct from a hard prefill. (M)
 
 | # | Item | Area | Done? | Sev | Effort |
 |---|------|------|-------|-----|--------|
-| 22 | Adopt iOS Liquid Glass, specifically for Home / Calendar / History chrome | Theming / design system | ⬜ OPEN | Med | L |
+| 22 | Adopt iOS Liquid Glass, specifically for Home / Calendar / History chrome | Theming / design system | ✅ DONE (code 2026-08-12, iOS-26 sim-verified) | Med | L |
 | 23 | Collapse to 3 tabs (Home · Calendar · Account) — move History content into Calendar, below the calendar | Navigation | ⬜ OPEN | Med | M |
 
 ---
 
-### 22. Adopt iOS Liquid Glass (Home / Calendar / History) ⬜ Med — **conflicts with a hard rule, needs a call**
+### 22. Adopt iOS Liquid Glass (Home / Calendar / History) ✅ Med — **done (code) 2026-08-12, iOS-26 sim-verified**
+
+**Done (2026-08-12):** implemented via the `RepVoice Home.dc.html` design (single-line + liquid-glass
+tabs). The bottom chrome is now a floating **glass pill** (HOME · ROUTINES · SETTINGS, SVG icons +
+active-tab glass chip) plus a **green-glass `+` FAB** — real iOS-26 `GlassView` (`glassEffectStyle
+="regular"`) with `colorScheme` bound to the **in-app** theme (`useThemeName()`), so the material matches
+Light/Dark even when the OS differs (verified). `isLiquidGlassAvailable()` falls back to an opaque token
+pill off iOS 26 (Android / older iOS / the physical iPhone 15 unchanged). `TabBar.tsx` (pill) +
+`HomeQuickStart.tsx` (FAB) + `index.tsx` (Home reflow: fixed single-line streak header, scrolling feed,
+bottom fade). New dep `react-native-svg` for the icons (native rebuild). The original "Calendar / History
+chrome" ask is moot post-Rolling-Weeks (those are folded into Home). **Walked both themes on the iOS 26.5
+simulator** — glass renders, taps pass through, FAB sheet intact, theme-tracking confirmed. Not yet on the
+physical device (needs a rebuild+reinstall). The hard-rule note below still holds — glass is a *material*,
+carried by `GlassView` with the opaque token pill as the literal fallback, so no color leaves the token set.
+
+<details><summary>Original scope / hard-rule analysis (2026-08-08)</summary>
 **Requested:** implement the latest iOS Liquid Glass material, specifically for the Home, Calendar,
 and History screens.
 **Verified:** `expo-glass-effect` (`~57.0.1`) is **already an installed dependency**
@@ -241,6 +256,7 @@ obvious first target; calendar cards / history rows are the "specially for" ask)
 `GlassView` behind `isLiquidGlassAvailable()`, keeping current flat token colors as the non-glass
 fallback. Largest-scope item in the open backlog alongside #17 — both change the *rendering model*,
 not just values, worth sequencing together rather than separately.
+</details>
 
 ### 23. Collapse to 3 tabs — merge History into Calendar ⬜ Med
 **Requested:** bottom nav should be **Home / Calendar / Account (Settings)** — History moves inside

@@ -6,7 +6,7 @@
 import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { HomeTabBar } from '@/components/voice/TabBar';
+import { HomeTabBar, TAB_BAR_HEIGHT } from '@/components/voice/TabBar';
 import { ErrorText, Loading } from '@/components/ui';
 import { useWorkoutDays } from '@/data/calendar';
 import { useSettings } from '@/data/settings';
@@ -172,7 +172,7 @@ export default function CalendarScreen() {
 
   return (
     <View style={styles.screen}>
-      <ScrollView contentContainerStyle={[styles.content, { paddingTop: insets.top + space.xl }]}>
+      <ScrollView contentContainerStyle={[styles.content, { paddingTop: insets.top + space.xl, paddingBottom: space.xxl + TAB_BAR_HEIGHT }]}>
         {/* Header + month nav */}
         <View style={styles.head}>
           <Text style={styles.title}>Calendar</Text>

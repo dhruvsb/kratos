@@ -7,6 +7,33 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-12 — "RepVoice Home" redesign: single-line streak + liquid-glass tabs (#22)
+
+Implemented the `RepVoice Home.dc.html` design (claude.ai/design project "Whitespace reduction design
+options"). **Verified on the iOS 26.5 simulator (iPhone 17 Pro), both themes.**
+
+- **Liquid-glass tab bar (#22).** `TabBar.tsx` rewritten as a floating **glass pill** — HOME · ROUTINES ·
+  SETTINGS, each an SVG icon (`react-native-svg`, new dep) + mono label, the active tab lit by a
+  brighter inner glass chip. Real iOS-26 `GlassView` (`glassEffectStyle="regular"`, `colorScheme` bound
+  to the **in-app** theme via `useThemeName()` — verified: dark glass renders while the OS is light);
+  `isLiquidGlassAvailable()` falls back to an opaque token pill off iOS 26. `withFab` shrinks the pill's
+  right edge on Home to seat the FAB. The retired calendar/history routes keep working via a `TabBar`
+  shim. `TAB_BAR_HEIGHT` 60→100 (floating chrome clearance); all 5 tab screens inset accordingly.
+- **Green-glass FAB.** `HomeQuickStart.tsx` FAB restyled to the design's accent-tinted glass circle
+  (moss on light, LED lime on dark) and moved into the bottom row beside the pill (`right:14 bottom:24`,
+  `FAB_BOTTOM` 96→24). Its MOST USED sheet + rotate-to-× open animation are unchanged and verified.
+- **Whitespace reduction.** `index.tsx` reflowed: a **fixed single-line streak header**
+  (`● N DAY STREAK ──── BEST n`) above a scrolling feed (heatmap + history) that **dissolves under a
+  bottom fade** (`expo-linear-gradient`) into the tabs. Drops the big streak numeral, the `REPVOICE.`
+  wordmark, and the scroll-pinned streak bar (the streak is always visible now).
+
+**Two design calls to revisit if wanted:** the design drops the `REPVOICE.` wordmark from Home
+entirely, and labels the third tab **SETTINGS** (was ACCOUNT) — both followed as drawn. Needed a native
+rebuild for `react-native-svg` (hit + fixed a CocoaPods UTF-8 locale error: export `LANG=en_US.UTF-8`).
+`tsc` green; walked both themes on the simulator.
+
+---
+
 ## 2026-08-12 — Three parallel agents: data durability (#32), logging robustness, Biceps/Triceps split (#19)
 
 Ran three file-disjoint agents in the shared tree, one integration + commit. All landed `tsc`-clean;

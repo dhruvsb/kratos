@@ -10,7 +10,15 @@ codebase or a huge prior conversation.
 > issues**) *and* append a dated entry to [`WORK-LOG.md`](./WORK-LOG.md). This file is the
 > snapshot; `WORK-LOG.md` is the full history. Keep this file short.
 
-**Last updated:** 2026-08-12 — **Three parallel agents landed (one commit): #32 data durability, logging
+**Last updated:** 2026-08-12 — **"RepVoice Home" redesign shipped: single-line streak + liquid-glass tabs
+(#22).** Implemented the `RepVoice Home.dc.html` design — a floating **glass tab pill** (HOME · ROUTINES ·
+SETTINGS, SVG icons via new `react-native-svg`, active-tab glass chip) + a **green-glass `+` FAB** beside
+it, real iOS-26 `GlassView` with `colorScheme` bound to the in-app theme and an opaque-token fallback off
+iOS 26 (`TabBar.tsx`, `HomeQuickStart.tsx`). Home reflowed to a **fixed single-line streak header** over a
+scrolling feed that dissolves under a bottom fade (`index.tsx`). **Verified on the iOS 26.5 simulator, both
+themes** (dark glass renders while OS is light; taps pass through; FAB sheet intact). Design calls
+followed as drawn: dropped the `REPVOICE.` wordmark; third tab labelled SETTINGS (was ACCOUNT). Prior:
+**Three parallel agents landed (one commit): #32 data durability, logging
 robustness, #19 Biceps/Triceps split.** All `tsc`-clean; `test:offline` **16/16** (5 new online-kill
 checks). **#32 (High) DONE (code):** forced cache flush on AppState background (`flushCache()`
 bypasses the ~1s throttle, `_layout.tsx`); online in-flight writes now persist + re-drive on relaunch
@@ -220,7 +228,8 @@ Static checks currently green: `tsc --noEmit` clean; `expo export --platform web
 `xcodebuild -allowProvisioningUpdates` builds + installs Release to physical hardware.
 **Feedback pass (`FEEDBACK-LOG.md`): 22 done** — ✅ #1 #2 #3 #4 #6 #7 #9 #10 #11 #13 #14 #15 #16
 #17 #18 #19 #20 #21 #26 #31 #32 (#12 dissolved by #13) · 🟡 #5 (fix applied — keyboard-avoidance;
-device-confirm pending) · ⬜ **open: #8 #22 #23 #28** · **withdrawn (won't do): #24 #25 #27 #29 #30**.
+device-confirm pending) · ⬜ **open: #8 #23 #28** · **withdrawn (won't do): #24 #25 #27 #29 #30**.
+**#22 (Liquid Glass): DONE 2026-08-12** — glass tab pill + FAB, iOS-26-verified (see banner).
 **#17 light theme: DONE** (full Greige+Moss light mode + System·Light·Dark toggle; device-confirm pending).
 
 ## Pending actions (owner: user / next session)

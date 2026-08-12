@@ -13,7 +13,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { useQuery } from '@tanstack/react-query';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { HomeTabBar } from '@/components/voice/TabBar';
+import { HomeTabBar, TAB_BAR_HEIGHT } from '@/components/voice/TabBar';
 import { deleteAccount, getSession, signOut } from '@/data/auth';
 import { useProfile, useUpdateProfile } from '@/data/hooks';
 import { GOAL_PRESETS, THEME_MODES, useSettings, useUpdateSettings } from '@/data/settings';
@@ -204,7 +204,7 @@ export default function SettingsScreen() {
 
   return (
     <View style={styles.screen}>
-      <ScrollView contentContainerStyle={[styles.content, { paddingTop: insets.top + space.xl }]}>
+      <ScrollView contentContainerStyle={[styles.content, { paddingTop: insets.top + space.xl, paddingBottom: space.xl + TAB_BAR_HEIGHT }]}>
         <Text style={styles.title}>Settings</Text>
         <Text style={styles.email}>{email || ' '}</Text>
 

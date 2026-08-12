@@ -1,46 +1,28 @@
-// Home — "Rolling Weeks" (RepVoice Home Rolling Weeks.dc.html). Streak-first: a big
-// day-streak numeral, a rolling five-week heatmap of the days you showed up, and the
-// recent history inline. Routine-picking lives in a quick-start sheet behind a FAB
-// (Phase 2) and on the ROUTINES tab. A compact streak bar pins to the top and fades in
-// as you scroll the hero away (Phase 3).
+// Home — "RepVoice Home" (single-line + liquid-glass tabs). Whitespace-reduced: a fixed
+// single-line streak header (dot · N DAY STREAK · BEST n) sits above a scrolling feed —
+// the rolling five-week heatmap then the recent history — which dissolves under a bottom
+// fade into the floating glass tab pill + green FAB. Replaces the earlier big-numeral
+// hero + scroll-pinned bar (docs/design: RepVoice Home.dc.html).
 //
 // The running-workout resume state and the day-zero first-run state are deferred — see
 // docs/FEEDBACK-LOG.md #33/#34 (a live workout is still resumable via the shared start flow).
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { useMemo, useRef } from 'react';
-import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useMemo } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HomeQuickStart } from '@/components/home/HomeQuickStart';
-import { HomeTabBar } from '@/components/voice/TabBar';
+import { HomeTabBar, TAB_BAR_HEIGHT } from '@/components/voice/TabBar';
 import { useWorkoutDays } from '@/data/calendar';
 import { useWorkoutList } from '@/data/hooks';
 import { startOfDay } from '@/lib/dates';
 import { computeStreak, type CellState, type HeatCell } from '@/lib/streak';
-import { font, radius, space, tracking, type Theme } from '@/theme/tokens';
+import { font, space, tracking, type Theme } from '@/theme/tokens';
 import { useTheme } from '@/theme/ThemeProvider';
 
 const DAY_MS = 86_400_000;
 const DOW = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-
-// Scroll window over which the pinned bar fades in — as the hero streak numeral leaves
-// the top. Mirrors the mockup's 92→150 handoff (the numeral has cleared the edge by then,
-// so the two are never both at full strength).
-const PIN_START = 96;
-const PIN_END = 154;
-
-// Micro-bar look per heat state, for the pinned sparkline (mockup: worked 12 / rest 5 /
-// skipped 2, coloured accent / faint / hairline).
-function microBar(state: CellState, color: Theme['color']) {
-  switch (state) {
-    case 'worked':
-      return { h: 12, bg: color.acc };
-    case 'rest':
-      return { h: 5, bg: color.acc14 };
-    default:
-      return { h: 2, bg: color.line2 };
-  }
-}
 
 export default function HomeScreen() {
   const { color, shadow } = useTheme();
@@ -56,7 +38,7 @@ export default function HomeScreen() {
     return s;
   }, [days.data]);
 
-  const { streak, best, cells, micro } = useMemo(() => computeStreak(doneDays), [doneDays]);
+  const { streak, best, cells } = useMemo(() => computeStreak(doneDays), [doneDays]);
 
   const inThirty = useMemo(() => {
     const cutoff = startOfDay(new Date()) - 29 * DAY_MS;
@@ -74,45 +56,21 @@ export default function HomeScreen() {
     return out;
   }, [cells]);
 
-  const dateLabel = new Date()
-    .toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })
-    .toUpperCase();
-
-  // Scroll-driven pinned bar. One native-driven value feeds the fade/slide of the bar
-  // (content) and its background — the bg reaches full opacity in the first quarter of
-  // the window so it masks the scrolling content instead of letting it read through.
-  const scrollY = useRef(new Animated.Value(0)).current;
-  const onScroll = Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
-    useNativeDriver: true,
-  });
-  const barOpacity = scrollY.interpolate({ inputRange: [PIN_START, PIN_END], outputRange: [0, 1], extrapolate: 'clamp' });
-  const barShift = scrollY.interpolate({ inputRange: [PIN_START, PIN_END], outputRange: [-10, 0], extrapolate: 'clamp' });
-
   return (
     <View style={styles.screen}>
-      <Animated.ScrollView
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + space.xl }]}
+      {/* Fixed single-line streak header — always visible above the scrolling feed. */}
+      <View style={[styles.streakHead, { paddingTop: insets.top + 14 }]}>
+        <View style={styles.streakDot} />
+        <Text style={styles.streakText}>{streak} DAY STREAK</Text>
+        <View style={styles.streakRule} />
+        <Text style={styles.streakBest}>BEST {best}</Text>
+      </View>
+
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={[styles.content, { paddingBottom: space.xl + TAB_BAR_HEIGHT }]}
         showsVerticalScrollIndicator={false}
-        onScroll={onScroll}
-        scrollEventThrottle={16}
       >
-        {/* Header */}
-        <View style={styles.topRow}>
-          <Text style={styles.logo}>
-            REPVOICE<Text style={{ color: color.acc }}>.</Text>
-          </Text>
-          <Text style={styles.date}>{dateLabel}</Text>
-        </View>
-
-        {/* Streak hero */}
-        <View style={styles.hero}>
-          <Text style={styles.heroNum}>{streak}</Text>
-          <View style={styles.heroLabels}>
-            <Text style={styles.heroTitle}>DAY STREAK</Text>
-            <Text style={styles.heroSub}>BEST {best} · REST DAYS COUNT</Text>
-          </View>
-        </View>
-
         {/* Rolling five-week heatmap */}
         <View style={styles.dowRow}>
           {DOW.map((d, i) => (
@@ -171,37 +129,19 @@ export default function HomeScreen() {
             );
           })
         )}
-      </Animated.ScrollView>
+      </ScrollView>
 
-      {/* Scroll-pinned compact streak bar — fades in as the hero scrolls away. The
-          whole bar (opaque background + content) fades as one layer so it always masks
-          the list scrolling underneath. Purely informational, so it never intercepts
-          touches. */}
-      <Animated.View
+      {/* Bottom fade — the feed dissolves into the ground under the floating tabs. */}
+      <LinearGradient
         pointerEvents="none"
-        style={[
-          styles.pinBar,
-          { paddingTop: insets.top, height: insets.top + 62, opacity: barOpacity, transform: [{ translateY: barShift }] },
-        ]}
-      >
-        <View style={styles.pinRow}>
-          <View style={styles.pinStreakWrap}>
-            <Text style={styles.pinStreak}>{streak}</Text>
-            <Text style={styles.pinStreakLabel}>DAY STREAK</Text>
-          </View>
-          <Text style={styles.pinBest}>BEST {best}</Text>
-        </View>
-        <View style={styles.pinSpark}>
-          {micro.map((state, i) => {
-            const b = microBar(state, color);
-            return <View key={i} style={{ flex: 1, height: b.h, borderRadius: 2, backgroundColor: b.bg }} />;
-          })}
-        </View>
-      </Animated.View>
+        colors={[`${color.bg}00`, `${color.bg}E6`, color.bg] as const}
+        locations={[0, 0.55, 1] as const}
+        style={styles.fade}
+      />
 
-      <HomeTabBar active="home" />
+      <HomeTabBar active="home" withFab />
 
-      {/* FAB + "MOST USED" quick-start sheet — overlays everything, incl. the tab bar. */}
+      {/* FAB + "MOST USED" quick-start sheet — overlays everything, incl. the tab pill. */}
       <HomeQuickStart />
     </View>
   );
@@ -258,46 +198,20 @@ function cellLook(state: CellState | 'future', color: Theme['color']) {
 const makeStyles = (color: Theme['color'], shadow: Theme['shadow']) =>
   StyleSheet.create({
     screen: { flex: 1, backgroundColor: color.bg },
-    content: { paddingHorizontal: space.xxl, paddingBottom: space.xl },
+    content: { paddingHorizontal: space.xxl, paddingTop: space.lg },
 
-    // Pinned streak bar (Phase 3) — opaque background lives on the bar itself so it
-    // always masks the list scrolling under it.
-    pinBar: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      zIndex: 3,
-      paddingHorizontal: space.xxl,
-      justifyContent: 'center',
-      gap: 9,
-      backgroundColor: color.s0,
-      borderBottomWidth: 1,
-      borderBottomColor: color.line,
-      ...shadow.key,
-    },
-    pinRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
-    pinStreakWrap: { flexDirection: 'row', alignItems: 'baseline', gap: 6 },
-    pinStreak: { fontFamily: font.numSemibold, fontSize: 24, letterSpacing: -0.7, color: color.acc },
-    pinStreakLabel: { fontFamily: font.numBold, fontSize: 8, letterSpacing: 1.6, color: color.t3 },
-    pinBest: { fontFamily: font.numSemibold, fontSize: 9, letterSpacing: 1.2, color: color.t3 },
-    pinSpark: { flexDirection: 'row', gap: 2, alignItems: 'flex-end', height: 12 },
+    // Fixed single-line streak header
+    streakHead: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: space.xxl, paddingBottom: space.md },
+    streakDot: { width: 9, height: 9, borderRadius: 5, backgroundColor: color.acc },
+    streakText: { fontFamily: font.numBold, fontSize: 15, letterSpacing: 1.4, color: color.t1 },
+    streakRule: { flex: 1, height: 1, backgroundColor: color.line },
+    streakBest: { fontFamily: font.num, fontSize: 15, letterSpacing: 1.4, color: color.t3 },
 
-    topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
-    logo: { fontFamily: font.uiSemibold, fontSize: 22, color: color.t1, letterSpacing: 0.4 },
-    date: { fontFamily: font.numSemibold, fontSize: 10, letterSpacing: tracking.label, color: color.t3 },
-
-    // Streak hero
-    hero: { flexDirection: 'row', alignItems: 'flex-end', gap: 11, marginTop: space.xl + 2 },
-    // lineHeight must be >= fontSize or RN clips the glyph's top/bottom (unlike CSS,
-    // where a short line-height just overflows visually). Keep it snug but uncut.
-    heroNum: { fontFamily: font.numSemibold, fontSize: 62, lineHeight: 68, letterSpacing: -2.4, color: color.acc },
-    heroLabels: { paddingBottom: 7 },
-    heroTitle: { fontFamily: font.numBold, fontSize: 10, letterSpacing: 2, color: color.t1 },
-    heroSub: { fontFamily: font.numSemibold, fontSize: 10, letterSpacing: 1.2, color: color.t3, marginTop: 5 },
+    // Bottom fade over the feed (height covers the floating chrome + a little above it).
+    fade: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 140 },
 
     // Heatmap
-    dowRow: { flexDirection: 'row', gap: 6, marginTop: space.xl + 2 },
+    dowRow: { flexDirection: 'row', gap: 6, marginTop: space.sm },
     dow: { flex: 1, textAlign: 'center', fontFamily: font.numSemibold, fontSize: 8, letterSpacing: 1, color: color.t3 },
     grid: { marginTop: 8, gap: 6 },
     gridRow: { flexDirection: 'row', gap: 6 },
