@@ -6,6 +6,31 @@ entry at top. When an item is fixed, mark it and move the detail into `WORK-LOG.
 
 ---
 
+## 2026-08-12 (11) — Glass tabs: device QA + native-tab-bar option
+
+**Context:** hands-on testing of the liquid-glass tabs (#22) on the iPhone 15 / iOS 26.5.2. Four fixes
+landed same-day (refraction/fade, consistent FAB, routines cross-fade, `isInteractive`) — see WORK-LOG
+2026-08-12. One item deferred to backlog by product call:
+
+| # | Item | Area | Done? | Sev | Effort |
+|---|------|------|-------|-----|--------|
+| 36 | Authentic Apple-Music drag-"lens" glass (magnify-follow across tabs) | Navigation / theming | ⬜ OPEN (deferred — keep custom pill+FAB for now) | Low | L |
+
+### 36. Native-tab-bar drag-lens glass ⬜ Low — **deferred (kept custom pill+FAB)**
+**Reported:** in Apple Music you can press a tab and drag your finger across the bar; a magnifying liquid-
+glass "lens" follows and morphs. Our custom floating **pill + separate FAB** (the `RepVoice Home.dc.html`
+design) uses `GlassView` with `isInteractive` (tap-morph) but **cannot reproduce the finger-drag-follow
+lens** — that's a built-in behavior of the native iOS 26 `UITabBar`, not the `GlassView` primitive.
+**Decision (2026-08-12):** keep the custom pill+FAB design (option 2); log the native route as backlog.
+**Fix (scope, not started):** switch the tab chrome to a native tab bar (Expo Router
+`unstable-native-tabs` / `NativeTabs`, which wraps `UITabBar` + Liquid Glass on iOS 26) to get the
+authentic drag-lens. **Cost:** it's a **full-width native bar**, so it gives up the floating-pill +
+separate-FAB layout (the FAB would need to move elsewhere, e.g. a Home header action or a docked overlay),
+and it's a routing refactor from the current plain-Stack + custom `TabBar`. Weigh the authentic
+interaction against losing the bespoke design before doing this.
+
+---
+
 ## 2026-08-09 (10) — "Rolling Weeks" Home redesign: deferred edge states
 
 **Context:** implementing the `RepVoice Home Rolling Weeks.dc.html` redesign (streak-first Home:

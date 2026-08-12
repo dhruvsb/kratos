@@ -228,8 +228,10 @@ Static checks currently green: `tsc --noEmit` clean; `expo export --platform web
 `xcodebuild -allowProvisioningUpdates` builds + installs Release to physical hardware.
 **Feedback pass (`FEEDBACK-LOG.md`): 22 done** — ✅ #1 #2 #3 #4 #6 #7 #9 #10 #11 #13 #14 #15 #16
 #17 #18 #19 #20 #21 #26 #31 #32 (#12 dissolved by #13) · 🟡 #5 (fix applied — keyboard-avoidance;
-device-confirm pending) · ⬜ **open: #8 #23 #28** · **withdrawn (won't do): #24 #25 #27 #29 #30**.
-**#22 (Liquid Glass): DONE 2026-08-12** — glass tab pill + FAB, iOS-26-verified (see banner).
+device-confirm pending) · ⬜ **open: #8 #23 #28 #36** · **withdrawn (won't do): #24 #25 #27 #29 #30**.
+**#22 (Liquid Glass): DONE 2026-08-12** — glass tab pill + FAB, device-verified on the iPhone 15 (iOS
+26.5.2); device-QA fixes landed (refraction, consistent FAB, cross-fade). **#36 (backlog):** authentic
+native-`UITabBar` drag-lens glass — deferred, keeping the custom pill+FAB.
 **#17 light theme: DONE** (full Greige+Moss light mode + System·Light·Dark toggle; device-confirm pending).
 
 ## Pending actions (owner: user / next session)
