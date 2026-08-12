@@ -139,7 +139,7 @@ export function HomeQuickStart() {
           { transform: [{ translateY: fabTranslate }, { rotate: fabRotate }] },
         ]}
       >
-        {glass && <GlassView glassEffectStyle="regular" tintColor={color.acc} style={styles.fabGlass} />}
+        {glass && <GlassView glassEffectStyle="regular" isInteractive tintColor={color.acc} style={styles.fabGlass} />}
         <Pressable
           onPress={() => toggle(!open)}
           style={styles.fabPress}

@@ -6,7 +6,6 @@
 //
 // The running-workout resume state and the day-zero first-run state are deferred — see
 // docs/FEEDBACK-LOG.md #33/#34 (a live workout is still resumable via the shared start flow).
-import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -131,14 +130,8 @@ export default function HomeScreen() {
         )}
       </ScrollView>
 
-      {/* Bottom fade — the feed dissolves into the ground under the floating tabs. */}
-      <LinearGradient
-        pointerEvents="none"
-        colors={[`${color.bg}00`, `${color.bg}E6`, color.bg] as const}
-        locations={[0, 0.55, 1] as const}
-        style={styles.fade}
-      />
-
+      {/* No bottom fade — the feed scrolls *under* the glass pill so the Liquid Glass has
+          live content to refract (a fade would blank the area behind it). */}
       <HomeTabBar active="home" withFab />
 
       {/* FAB + "MOST USED" quick-start sheet — overlays everything, incl. the tab pill. */}
@@ -206,9 +199,6 @@ const makeStyles = (color: Theme['color'], shadow: Theme['shadow']) =>
     streakText: { fontFamily: font.numBold, fontSize: 15, letterSpacing: 1.4, color: color.t1 },
     streakRule: { flex: 1, height: 1, backgroundColor: color.line },
     streakBest: { fontFamily: font.num, fontSize: 15, letterSpacing: 1.4, color: color.t3 },
-
-    // Bottom fade over the feed (height covers the floating chrome + a little above it).
-    fade: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 140 },
 
     // Heatmap
     dowRow: { flexDirection: 'row', gap: 6, marginTop: space.sm },

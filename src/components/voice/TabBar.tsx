@@ -120,7 +120,9 @@ export function HomeTabBar({ active, withFab = false }: { active: TabKey; withFa
 
   if (glass) {
     return (
-      <GlassView glassEffectStyle="regular" colorScheme={themeName} style={pillLayout}>
+      // isInteractive lets the material react to touch (the liquid morph/highlight),
+      // closer to the native tab bar's feel than a static frosted panel.
+      <GlassView glassEffectStyle="regular" isInteractive colorScheme={themeName} style={pillLayout}>
         {items}
       </GlassView>
     );

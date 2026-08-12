@@ -148,6 +148,7 @@ function AppContent({ session }: { session: Session | null }) {
         }}
       >
         <Stack.Screen name="index" options={TAB_SCREEN} />
+        <Stack.Screen name="routines" options={TAB_SCREEN} />
         <Stack.Screen name="calendar" options={TAB_SCREEN} />
         <Stack.Screen name="history/index" options={TAB_SCREEN} />
         <Stack.Screen name="settings" options={TAB_SCREEN} />

@@ -13,6 +13,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { useQuery } from '@tanstack/react-query';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { HomeQuickStart } from '@/components/home/HomeQuickStart';
 import { HomeTabBar, TAB_BAR_HEIGHT } from '@/components/voice/TabBar';
 import { deleteAccount, getSession, signOut } from '@/data/auth';
 import { useProfile, useUpdateProfile } from '@/data/hooks';
@@ -254,7 +255,8 @@ export default function SettingsScreen() {
         </Text>
       </ScrollView>
 
-      <HomeTabBar active="account" />
+      <HomeTabBar active="account" withFab />
+      <HomeQuickStart />
     </View>
   );
 }

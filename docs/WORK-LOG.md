@@ -27,6 +27,16 @@ options"). **Verified on the iOS 26.5 simulator (iPhone 17 Pro), both themes.**
   bottom fade** (`expo-linear-gradient`) into the tabs. Drops the big streak numeral, the `REPVOICE.`
   wordmark, and the scroll-pinned streak bar (the streak is always visible now).
 
+**Device-QA follow-up (same day, on the iPhone 15 / iOS 26.5.2 — glass renders on-device):** four
+fixes from hands-on feedback. (1) **Glass had nothing to refract** — the bottom fade blanked the area
+behind the pill; removed it so the feed scrolls *under* the glass (`index.tsx`). (2) **FAB inconsistency**
+— it was Home-only, so the chrome changed shape ("3 tabs vs 4"); now the FAB + full-width pill render on
+Routines + Settings too (`routines.tsx`, `settings.tsx`, `withFab` everywhere). (3) **Routines slid
+instead of cross-fading** — `routines` was never registered with `TAB_SCREEN` in `_layout.tsx`; added it.
+(4) `isInteractive` on the pill + FAB glass for tap-morph. **Open:** the Apple-Music finger-drag "lens"
+(magnify-follow across tabs) is a native `UITabBar` behavior our custom pill+FAB can't fully reproduce —
+pending a call on custom-pill vs. native-tab-bar. Sim-verified; device rebuild in flight.
+
 **Two design calls to revisit if wanted:** the design drops the `REPVOICE.` wordmark from Home
 entirely, and labels the third tab **SETTINGS** (was ACCOUNT) — both followed as drawn. Needed a native
 rebuild for `react-native-svg` (hit + fixed a CocoaPods UTF-8 locale error: export `LANG=en_US.UTF-8`).

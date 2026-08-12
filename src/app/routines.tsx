@@ -6,6 +6,7 @@ import { router } from 'expo-router';
 import { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { HomeQuickStart } from '@/components/home/HomeQuickStart';
 import { HomeTabBar, TAB_BAR_HEIGHT } from '@/components/voice/TabBar';
 import { useRoutines, useWorkoutList } from '@/data/hooks';
 import { useStartWorkoutFlow } from '@/data/useStartWorkoutFlow';
@@ -81,7 +82,8 @@ export default function RoutinesScreen() {
         </View>
       </ScrollView>
 
-      <HomeTabBar active="routines" />
+      <HomeTabBar active="routines" withFab />
+      <HomeQuickStart />
     </View>
   );
 }
