@@ -7,6 +7,31 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-13 — Repo reads validate through zod (kill the dead `z.coerce` guards)
+
+Closed the open backlog item "`db.ts` `z.coerce` numeric guards are dead." Every repo returned
+`data as X` and never called `.parse()`, so a numeric column PostgREST serialized as a **string**
+would have silently made `weight_kg` a string — breaking volume sums and PR/best comparisons.
+
+- **Flat, schema-exact reads now `.parse()`** through their zod schema: `getProfile`
+  (`auth.ts`); `searchExercises`/`listExercises*`/`getExercise`/`createCustomExercise`
+  (`exercises.ts`); `createRoutine` (`routines.ts`); `insertSet` returns + `listSets` (`sets.ts`);
+  `startWorkout`/`getActiveWorkout`/`addExerciseToWorkout`/`getLastSession` (`workouts.ts`);
+  `listRecentVoiceLogs`/`listVoiceLogsSince` (`voice.ts`).
+- **Composite joins parse their numeric-bearing nested rows:** `getWorkout` +
+  `getExerciseHistory` parse the nested `sets(*)` arrays via `workoutSetSchema` (and `getWorkout`
+  the joined exercise + base workout); the rest of the join shape stays as-is.
+- **Partial selects can't schema-parse, so coerce with `Number()`:** `listWorkouts` volume math
+  and `getExerciseBests` `weight_kg` (both select only a subset of set columns).
+- Left as casts where there's genuinely no schema: `listRoutines`/`getRoutine` composites,
+  `calendar.ts` `{started_at}`, the edge-fn `VoiceParseResponse`, RPC id strings.
+
+`tsc --noEmit` clean; `npm run test:offline` 16/16 (that suite drives real PostgREST reads through
+these repos, so the parses are validated against live serialized data). Backlog row flipped to done
+in `CONTEXT.md`.
+
+---
+
 ## 2026-08-13 — Applied 0006 (set_number UNIQUE, with dedupe) + re-seeded #19 split
 
 - **0006 applied live.** First attempt failed (real duplicate `(workout_exercise_id, set_number)` rows

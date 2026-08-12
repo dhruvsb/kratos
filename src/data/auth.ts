@@ -2,7 +2,7 @@
 // client directly.
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
-import type { Profile, Unit } from '@/types/db';
+import { profileSchema, type Profile, type Unit } from '@/types/db';
 
 export async function getSession(): Promise<Session | null> {
   const { data, error } = await supabase.auth.getSession();
@@ -58,7 +58,7 @@ export async function deleteAccount(): Promise<void> {
 export async function getProfile(): Promise<Profile | null> {
   const { data, error } = await supabase.from('profiles').select('*').maybeSingle();
   if (error) throw error;
-  return data as Profile | null;
+  return data ? profileSchema.parse(data) : null;
 }
 
 export async function updateProfile(patch: {

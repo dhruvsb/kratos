@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import type { Exercise, ExerciseModality } from '@/types/db';
+import { exerciseSchema, type Exercise, type ExerciseModality } from '@/types/db';
 import { deriveBodyRegion, type BodyRegion } from '@/lib/muscles';
 import { requireUserId } from './auth';
 
@@ -23,7 +23,7 @@ export async function searchExercises(
     max_results: limit,
   });
   if (error) throw error;
-  const results = (data ?? []) as Exercise[];
+  const results = exerciseSchema.array().parse(data ?? []);
   return region ? results.filter((e) => e.body_region?.includes(region)) : results;
 }
 
@@ -36,7 +36,7 @@ export async function listExercisesByRegion(region: BodyRegion, limit = 60): Pro
     .order('canonical_name')
     .limit(limit);
   if (error) throw error;
-  return (data ?? []) as Exercise[];
+  return exerciseSchema.array().parse(data ?? []);
 }
 
 export async function listExercises(limit = 50, offset = 0): Promise<Exercise[]> {
@@ -46,7 +46,7 @@ export async function listExercises(limit = 50, offset = 0): Promise<Exercise[]>
     .order('canonical_name')
     .range(offset, offset + limit - 1);
   if (error) throw error;
-  return (data ?? []) as Exercise[];
+  return exerciseSchema.array().parse(data ?? []);
 }
 
 /**
@@ -62,7 +62,7 @@ export async function listAllExercises(): Promise<Exercise[]> {
     .order('canonical_name')
     .limit(500);
   if (error) throw error;
-  return (data ?? []) as Exercise[];
+  return exerciseSchema.array().parse(data ?? []);
 }
 
 /**
@@ -91,7 +91,7 @@ export async function getExercise(id: string): Promise<Exercise> {
     .eq('id', id)
     .single();
   if (error) throw error;
-  return data as Exercise;
+  return exerciseSchema.parse(data);
 }
 
 /** Custom exercises behave identically to seeded ones everywhere downstream. */
@@ -121,5 +121,5 @@ export async function createCustomExercise(input: {
     .select()
     .single();
   if (error) throw error;
-  return data as Exercise;
+  return exerciseSchema.parse(data);
 }

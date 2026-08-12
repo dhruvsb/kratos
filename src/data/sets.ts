@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import type { SetType, WorkoutSet } from '@/types/db';
+import { workoutSetSchema, type SetType, type WorkoutSet } from '@/types/db';
 
 export type AddSetInput = {
   weight_kg: number | null;
@@ -114,7 +114,7 @@ async function insertSet(
       })
       .select()
       .single();
-    if (!error) return data as WorkoutSet;
+    if (!error) return workoutSetSchema.parse(data);
     if (error.code !== '23505') throw error;
 
     // Duplicate primary key → the row is already there (replay). Return it.
@@ -125,7 +125,7 @@ async function insertSet(
         .eq('id', id)
         .maybeSingle();
       if (fetchError) throw fetchError;
-      if (existing) return existing as WorkoutSet;
+      if (existing) return workoutSetSchema.parse(existing);
       throw error;
     }
 
@@ -155,5 +155,5 @@ export async function listSets(workoutExerciseId: string): Promise<WorkoutSet[]>
     .eq('workout_exercise_id', workoutExerciseId)
     .order('set_number');
   if (error) throw error;
-  return (data ?? []) as WorkoutSet[];
+  return workoutSetSchema.array().parse(data ?? []);
 }

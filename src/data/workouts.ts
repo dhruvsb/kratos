@@ -1,10 +1,15 @@
 import { supabase } from '@/lib/supabase';
-import type {
-  Exercise,
-  LastSessionSet,
-  Workout,
-  WorkoutExercise,
-  WorkoutSet,
+import {
+  exerciseSchema,
+  lastSessionSetSchema,
+  workoutSchema,
+  workoutExerciseSchema,
+  workoutSetSchema,
+  type Exercise,
+  type LastSessionSet,
+  type Workout,
+  type WorkoutExercise,
+  type WorkoutSet,
 } from '@/types/db';
 import { requireUserId } from './auth';
 
@@ -90,7 +95,7 @@ export async function startWorkout(
       if (weError) throw weError;
     }
   }
-  return workout as Workout;
+  return workoutSchema.parse(workout);
 }
 
 /** Ends the workout; removes exercises that never got a set (skips). */
@@ -145,7 +150,7 @@ export async function getActiveWorkout(): Promise<Workout | null> {
     .limit(1)
     .maybeSingle();
   if (error) throw error;
-  return data as Workout | null;
+  return data ? workoutSchema.parse(data) : null;
 }
 
 export async function getWorkout(id: string): Promise<WorkoutDetail> {
@@ -160,11 +165,15 @@ export async function getWorkout(id: string): Promise<WorkoutDetail> {
     .sort((a: any, b: any) => a.position - b.position)
     .map((we: any) => ({
       ...we,
-      sets: [...(we.sets ?? [])].sort(
-        (a: WorkoutSet, b: WorkoutSet) => a.set_number - b.set_number
-      ),
+      exercise: exerciseSchema.parse(we.exercise),
+      // Parse the sets: weight_kg/rpe are numeric columns PostgREST may serialize
+      // as strings, and these rows drive the live grid + volume math downstream.
+      sets: workoutSetSchema
+        .array()
+        .parse(we.sets ?? [])
+        .sort((a, b) => a.set_number - b.set_number),
     }));
-  return { ...workout, routine_name: routine?.name ?? null, exercises };
+  return { ...workoutSchema.parse(workout), routine_name: routine?.name ?? null, exercises };
 }
 
 /** Reverse-chronological completed workouts, paginated. */
@@ -185,7 +194,10 @@ export async function listWorkouts(page = 0, pageSize = 20): Promise<WorkoutList
     for (const we of wes) {
       for (const s of we.sets ?? []) {
         setCount += 1;
-        volume += (s.weight_kg ?? 0) * (s.reps ?? 0);
+        // weight_kg is a numeric column PostgREST may return as a string; Number()
+        // guards the volume sum against string concatenation / NaN (this select is
+        // partial, so it can't go through workoutSetSchema).
+        volume += Number(s.weight_kg ?? 0) * Number(s.reps ?? 0);
       }
     }
     return {
@@ -232,7 +244,7 @@ export async function addExerciseToWorkout(
     .limit(1)
     .maybeSingle();
   if (existingError) throw existingError;
-  if (existing) return existing as WorkoutExercise;
+  if (existing) return workoutExerciseSchema.parse(existing);
 
   let position = preset?.position;
   if (position == null) {
@@ -256,7 +268,7 @@ export async function addExerciseToWorkout(
     .select()
     .single();
   if (error) throw error;
-  return data as WorkoutExercise;
+  return workoutExerciseSchema.parse(data);
 }
 
 export async function removeWorkoutExercise(workoutExerciseId: string): Promise<void> {
@@ -309,7 +321,7 @@ export async function getLastSession(
     p_exclude_workout_id: excludeWorkoutId ?? null,
   });
   if (error) throw error;
-  return (data ?? []) as LastSessionSet[];
+  return lastSessionSetSchema.array().parse(data ?? []);
 }
 
 export type ExerciseBest = { exercise_id: string; weight_kg: number; reps: number | null };
@@ -342,7 +354,9 @@ export async function getExerciseBests(
       const { data, error } = await query.maybeSingle();
       if (error) throw error;
       if (!data || data.weight_kg == null) return null;
-      return { exercise_id: exerciseId, weight_kg: data.weight_kg, reps: data.reps };
+      // weight_kg numeric may arrive as a string; coerce so the NEW BESTS
+      // comparison in finish/[id].tsx is a numeric compare, not string ordering.
+      return { exercise_id: exerciseId, weight_kg: Number(data.weight_kg), reps: data.reps };
     })
   );
   return bests.filter((b): b is ExerciseBest => b != null);
@@ -372,8 +386,9 @@ export async function getExerciseHistory(
   return (data ?? []).map((w: any) => ({
     workout_id: w.id,
     started_at: w.started_at,
-    sets: (w.workout_exercises ?? [])
-      .flatMap((we: any) => we.sets ?? [])
-      .sort((a: WorkoutSet, b: WorkoutSet) => a.set_number - b.set_number),
+    sets: workoutSetSchema
+      .array()
+      .parse((w.workout_exercises ?? []).flatMap((we: any) => we.sets ?? []))
+      .sort((a, b) => a.set_number - b.set_number),
   }));
 }

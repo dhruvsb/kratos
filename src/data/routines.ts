@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import type { Exercise, Routine, RoutineExercise } from '@/types/db';
+import { routineSchema, type Exercise, type Routine, type RoutineExercise } from '@/types/db';
 import { requireUserId } from './auth';
 
 export type RoutineWithCount = Routine & { exercise_count: number };
@@ -51,7 +51,7 @@ export async function createRoutine(name: string): Promise<Routine> {
     .select()
     .single();
   if (error) throw error;
-  return data as Routine;
+  return routineSchema.parse(data);
 }
 
 export async function updateRoutine(

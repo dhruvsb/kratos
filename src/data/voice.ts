@@ -3,7 +3,7 @@
 // eval harness can later harvest real corrections (see eval/README.md).
 import { supabase } from '@/lib/supabase';
 import { addVoiceSet } from './sets';
-import type { SetType, VoiceLog } from '@/types/db';
+import { voiceLogSchema, type SetType, type VoiceLog } from '@/types/db';
 import type { ParseContext, ParseResult, ParseTelemetry } from '@/types/parse';
 
 export interface VoiceParseResponse {
@@ -130,7 +130,7 @@ export async function listRecentVoiceLogs(limit = 50): Promise<VoiceLog[]> {
     .order('created_at', { ascending: false })
     .limit(limit);
   if (error) throw error;
-  return (data ?? []) as VoiceLog[];
+  return voiceLogSchema.array().parse(data ?? []);
 }
 
 /** Every voice_logs row since `sinceIso` — backs the telemetry screen's aggregates. */
@@ -141,7 +141,7 @@ export async function listVoiceLogsSince(sinceIso: string): Promise<VoiceLog[]> 
     .gte('created_at', sinceIso)
     .order('created_at', { ascending: true });
   if (error) throw error;
-  return (data ?? []) as VoiceLog[];
+  return voiceLogSchema.array().parse(data ?? []);
 }
 
 async function findOrCreateWorkoutExercise(
