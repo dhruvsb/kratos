@@ -9,6 +9,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ExercisePickerModal } from '@/components/ExercisePickerModal';
 import { SetKeypad } from '@/components/workout/SetKeypad';
+import { haptics } from '@/lib/haptics';
 import { ElapsedClock } from '@/components/workout/LiveClock';
 import { InsetWell, KeyCap, StatusPip } from '@/components/voice/primitives';
 import {
@@ -190,6 +191,9 @@ export default function ActiveWorkoutScreen() {
       openAdd();
       return;
     }
+    // Fire alongside the optimistic cache patch, not after it — the tap, the row
+    // appearing, and the tick should read as one event.
+    haptics.log();
     addSet.mutate({
       workoutExerciseId: activeExercise.id,
       set: { weight_kg: prefillKg, reps: prefillReps, set_type: 'normal' },
@@ -235,10 +239,13 @@ export default function ActiveWorkoutScreen() {
       {
         text: 'Delete',
         style: 'destructive',
-        onPress: () =>
+        onPress: () => {
+          // Warning, not the log tick — a set leaving must not feel like one landing.
+          haptics.warn();
           deleteSet.mutate(setId, {
             onError: (e) => Alert.alert("Couldn't delete set", e.message),
-          }),
+          });
+        },
       },
     ]);
   }
@@ -258,6 +265,7 @@ export default function ActiveWorkoutScreen() {
           text: 'Remove',
           style: 'destructive',
           onPress: () => {
+            haptics.warn();
             if (activeExerciseId === we.exercise_id) {
               const remaining = (detail?.exercises ?? []).filter((e) => e.id !== we.id);
               setActiveExerciseId(remaining[remaining.length - 1]?.exercise_id ?? null);
@@ -284,6 +292,8 @@ export default function ActiveWorkoutScreen() {
     // Optimistic finish (useFinishWorkout patches the cache to look finished), so
     // replace to the summary NOW; on failure, roll back and return to the grid.
     // replace (not push) so Back from the summary doesn't return to the dead grid.
+    // The payoff haptic lands with the transition, not on the summary's mount.
+    haptics.success();
     finish.mutate({
       onError: (e) => {
         Alert.alert("Couldn't finish workout", e.message);
@@ -300,6 +310,7 @@ export default function ActiveWorkoutScreen() {
         text: 'Discard',
         style: 'destructive',
         onPress: () => {
+          haptics.warn();
           discard.mutate({
             onError: (e) => Alert.alert("Couldn't discard workout", e.message),
           });
@@ -591,6 +602,9 @@ export default function ActiveWorkoutScreen() {
           onDelete={
             keypad.mode === 'edit' && keypad.setId
               ? () => {
+                  // DELETE SET commits straight from the sheet (no Alert), so this
+                  // is the confirm — same warning tone as the long-press path.
+                  haptics.warn();
                   deleteSet.mutate(keypad.setId!);
                   setKeypad(null);
                 }

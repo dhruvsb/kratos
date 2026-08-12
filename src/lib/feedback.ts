@@ -40,7 +40,12 @@ const canHaptic = Platform.OS === 'ios' || Platform.OS === 'android';
 function safeHaptic(fn: () => Promise<void> | void) {
   if (!canHaptic || muted) return;
   try {
-    void fn();
+    // Must catch the *rejection*, not just a synchronous throw: several earcons
+    // below are async (awaited multi-note patterns), so a bare `void fn()` would
+    // let a denied/unavailable engine surface as an unhandled promise rejection.
+    Promise.resolve(fn()).catch(() => {
+      /* haptics engine unavailable — ignore */
+    });
   } catch {
     /* haptics engine unavailable — ignore */
   }

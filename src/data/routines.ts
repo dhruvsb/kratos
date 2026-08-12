@@ -1,5 +1,12 @@
 import { supabase } from '@/lib/supabase';
-import { routineSchema, type Exercise, type Routine, type RoutineExercise } from '@/types/db';
+import {
+  exerciseSchema,
+  routineExerciseSchema,
+  routineSchema,
+  type Exercise,
+  type Routine,
+  type RoutineExercise,
+} from '@/types/db';
 import { requireUserId } from './auth';
 
 export type RoutineWithCount = Routine & { exercise_count: number };
@@ -15,11 +22,16 @@ export async function listRoutines(includeArchived = false): Promise<RoutineWith
   if (!includeArchived) query = query.eq('archived', false);
   const { data, error } = await query;
   if (error) throw error;
-  return (data ?? []).map((r: any) => ({
-    ...r,
-    exercise_count: r.routine_exercises?.[0]?.count ?? 0,
-    routine_exercises: undefined,
-  }));
+  // The base row goes through the schema (a numeric-as-string `position` from
+  // PostgREST would otherwise slip through typed as a number); the aggregate
+  // `routine_exercises(count)` join is derived here and dropped from the result.
+  return (data ?? []).map((r: any) => {
+    const { routine_exercises, ...routine } = r;
+    return {
+      ...routineSchema.parse(routine),
+      exercise_count: routine_exercises?.[0]?.count ?? 0,
+    };
+  });
 }
 
 export async function getRoutine(id: string): Promise<RoutineDetail> {
@@ -30,10 +42,17 @@ export async function getRoutine(id: string): Promise<RoutineDetail> {
     .single();
   if (error) throw error;
   const { routine_exercises, ...routine } = data as any;
-  const exercises = [...(routine_exercises ?? [])].sort(
-    (a: RoutineExercise, b: RoutineExercise) => a.position - b.position
-  );
-  return { ...routine, exercises };
+  // Parse every level of the join — routine row, each routine_exercise, and its
+  // joined exercise — instead of casting the whole tree (same shape as
+  // workouts.getWorkout). `.parse` strips the nested `exercise` key off the
+  // routine_exercise, so it's re-attached from its own schema.
+  const exercises: RoutineExerciseWithExercise[] = [...(routine_exercises ?? [])]
+    .sort((a: any, b: any) => a.position - b.position)
+    .map((re: any) => ({
+      ...routineExerciseSchema.parse(re),
+      exercise: exerciseSchema.parse(re.exercise),
+    }));
+  return { ...routineSchema.parse(routine), exercises };
 }
 
 export async function createRoutine(name: string): Promise<Routine> {
@@ -98,4 +117,29 @@ export async function setRoutineExercises(
     }))
   );
   if (error) throw error;
+}
+
+/**
+ * Copy a routine — name + its ordered exercise list — as a brand-new routine
+ * ("Push A" → "Push A (copy)"). The real gym flow is "start from a similar day
+ * and tweak it", so this is pure reuse: no re-picking 8 exercises by hand.
+ * `archived` is never copied; the copy lands at the end of the list via
+ * createRoutine, and order is preserved because setRoutineExercises re-derives
+ * positions from the array index.
+ */
+export async function duplicateRoutine(routineId: string): Promise<Routine> {
+  const source = await getRoutine(routineId);
+  const copy = await createRoutine(`${source.name} (copy)`);
+  if (source.exercises.length > 0) {
+    await setRoutineExercises(
+      copy.id,
+      source.exercises.map((re) => ({
+        exercise_id: re.exercise_id,
+        target_sets: re.target_sets,
+        target_reps_low: re.target_reps_low,
+        target_reps_high: re.target_reps_high,
+      }))
+    );
+  }
+  return copy;
 }

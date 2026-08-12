@@ -290,6 +290,44 @@ export function useUpdateRoutine(routineId: string) {
   });
 }
 
+// Routine-list actions (long-press menu on the Routines tab). These take the id in
+// the mutation variables — unlike useUpdateRoutine above, which is bound to the one
+// routine an editor screen owns — because the list acts on whichever row was held.
+// `['routines']` is a prefix invalidation: keys.routines() is parameterized by
+// includeArchived, so both variants refresh.
+
+export function useDuplicateRoutine() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (routineId: string) => routines.duplicateRoutine(routineId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['routines'] }),
+  });
+}
+
+export function useRenameRoutine() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, name }: { id: string; name: string }) =>
+      routines.updateRoutine(id, { name }),
+    onSuccess: (_data, { id }) => {
+      qc.invalidateQueries({ queryKey: ['routines'] });
+      qc.invalidateQueries({ queryKey: keys.routine(id) });
+    },
+  });
+}
+
+export function useArchiveRoutine() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, archived }: { id: string; archived: boolean }) =>
+      routines.setRoutineArchived(id, archived),
+    onSuccess: (_data, { id }) => {
+      qc.invalidateQueries({ queryKey: ['routines'] });
+      qc.invalidateQueries({ queryKey: keys.routine(id) });
+    },
+  });
+}
+
 export function useSetRoutineExercises(routineId: string) {
   const qc = useQueryClient();
   return useMutation({

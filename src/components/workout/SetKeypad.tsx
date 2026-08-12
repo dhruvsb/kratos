@@ -3,9 +3,10 @@
 // plate-math hint. Storage is kg; entry is in the profile's display unit and
 // converted on LOG. Used for both adding a new set and editing a logged one.
 import { useEffect, useMemo, useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Caret } from '@/components/workout/Caret';
+import { haptics } from '@/lib/haptics';
 import {
   displayToKg,
   formatSet,
@@ -123,6 +124,7 @@ export function SetKeypad(props: SetKeypadProps) {
 
   function log() {
     if (!canLog) return;
+    haptics.log();
     props.onLog(weightKg, reps);
   }
 
@@ -179,6 +181,10 @@ export function SetKeypad(props: SetKeypadProps) {
                 // Set reps and hand focus back to KG so the pad stays weight — the
                 // common flow needs no field switch (feedback #13).
                 onPress={() => {
+                  // Detent tick only when the value actually moves — re-tapping the
+                  // chip you're already on stays silent, so a tap-tap-tap run of
+                  // identical sets buzzes once per LOG, not once per touch.
+                  if (!on) haptics.tick();
                   setRepsStr(String(n));
                   setActive('kg');
                 }}
