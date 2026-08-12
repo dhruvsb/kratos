@@ -244,10 +244,9 @@ native-`UITabBar` drag-lens glass — deferred, keeping the custom pill+FAB.
 
 ## Pending actions (owner: user / next session)
 
-- [ ] **Apply migration `0008_clear_own_workouts.sql`** (`supabase db push`) so Settings → DATA → "Clear
-      all history" works live — it calls the `clear_own_workouts()` RPC this migration creates. Written +
-      `tsc`/`test:offline`-verified, not applied. (Additive, non-destructive to apply — it only defines a
-      function.)
+- [x] ~~**Apply migration `0008_clear_own_workouts.sql`**~~ — **applied live 2026-08-13** (`supabase db
+      push`; 0001–0008 all on remote). The `clear_own_workouts()` RPC is live, so Settings → DATA → "Clear
+      all history" works. Not yet exercised on device.
 - [x] ~~Apply migration `0006`~~ — **done live 2026-08-13** (had real dups; migration now dedupes via a
       contiguous `row_number()` renumber, atomic with the constraint).
 - [x] ~~Re-seed the exercise library (`npm run seed`)~~ — **done 2026-08-13**; Biceps/Triceps `body_region`
