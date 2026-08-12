@@ -20,7 +20,11 @@ export function useStartWorkoutFlow() {
 
   const activeId = activeWorkout.data?.id;
   const hasActive = !!activeId;
-  const busy = hasActive || startWorkout.isPending;
+  // Only disable the trigger while a start is genuinely in flight. Do NOT disable just
+  // because a workout is already active — tapping is meant to *resume* it (start() routes
+  // to activeId below), and disabling the row swallowed that tap, leaving every START
+  // button dead whenever a workout was in progress.
+  const busy = startWorkout.isPending;
 
   function start(routineId?: string) {
     if (activeId) {

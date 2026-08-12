@@ -7,6 +7,18 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-12 — Fix: START buttons dead whenever a workout is active
+
+Device report: "can't click any start button for any routine." Root cause (pre-existing, not the
+Home redesign): `useStartWorkoutFlow`'s `busy = hasActive || isPending` disabled every routine row
+(`disabled={busy}`) as soon as an in-progress workout existed — and the disabled Pressable swallowed
+the very tap meant to *resume* it (`start()` routes to `activeId`). Fix: `busy = startWorkout.isPending`
+only; `start()` already prevents a second live workout, so an active workout no longer disables the
+trigger — tapping now resumes it. Reproduced + fixed on the sim (tap → routed into the active "Leg Day").
+Follow-up still open: a first-class **resume banner** (#33) so resuming isn't disguised as "start X".
+
+---
+
 ## 2026-08-12 — "RepVoice Home Final": ring-date heatmap + volume rows (records deferred)
 
 Implemented the `RepVoice Home Final.dc.html` design (claude.ai/design), minus the PR records badge
