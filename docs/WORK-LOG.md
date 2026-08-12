@@ -7,6 +7,41 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-12 — Three parallel agents: data durability (#32), logging robustness, Biceps/Triceps split (#19)
+
+Ran three file-disjoint agents in the shared tree, one integration + commit. All landed `tsc`-clean;
+`npm run test:offline` green at **16/16** (5 new online-kill checks).
+
+- **#32 data durability (High) — 3 residual gaps closed.** (1) Forced cache flush on AppState
+  `background`/`inactive` (`flushCache()` → `persistQueryClientSave`, bypassing the ~1s throttle),
+  wired in `_layout.tsx`. (2) Online in-flight writes now reach disk: `dehydrateOptions`
+  (`queryClient.ts`) persists still-*running* offline-logging mutations (not just RQ's paused ones),
+  identified via `isOfflineMutationKey` (`offlineSync.ts`); on relaunch `resumeInterruptedMutations()`
+  serially re-drives every restored-pending write in FK order (paused queue + interrupted-in-flight),
+  leaving RQ's reconnect/focus paths paused-only. (3) `scripts/test-offline-sync.ts` gained the
+  online mid-workout background→kill→relaunch scenario. Re-drive safety rests on client-chosen UUIDs.
+  Left undone: runtime throttle-tightening for the active-workout window (background-flush is the
+  targeted fix). Deferred approach explicitly *not* taken: background-execution / "keep running".
+- **Logging robustness.** New migration `0006_sets_unique_set_number.sql` adds
+  `UNIQUE(workout_exercise_id, set_number)` + drops the redundant 0001 index (**written, not
+  applied**). `sets.ts` `insertSet` made resilient: on `23505`, PK collision → idempotent return of
+  the existing row (offline replay), tuple collision → re-pick max+1 and retry (bounded). This
+  composes with #32's re-drive path — an already-landed re-drive now returns idempotently instead of
+  erroring. `workouts.ts` `addExerciseToWorkout` dedupes `(workout_id, exercise_id)`. `workout/[id].tsx`
+  wired the existing `useRemoveWorkoutExercise` via a REMOVE control + long-press on the exercise chip
+  (destructive confirm, active-exercise reassignment; `actWarn`/`color.warn` per-mode token).
+- **#19 Biceps/Triceps split.** `muscles.ts` `BODY_REGIONS` now splits Arms → **Biceps + Triceps**
+  (forearms folded into Biceps) → 7 regions; `MUSCLE_TO_REGION` updated. `build-curated-exercises.py`
+  matched + its output path fixed (was writing `curated-exercises.json` to cwd, not
+  `scripts/data/`); regenerated `exercises-curated.json` (Biceps 18 / Triceps 10, 150 exercises, no
+  `Arms`). Muscle-split view + picker/library chip rows derive from `BODY_REGIONS` dynamically —
+  render fine at 7. **Live DB re-seed (`npm run seed`) left for the user.**
+
+**User follow-ups:** apply `0006` migration to Supabase; `npm run seed` to publish the new
+`body_region[]`. Nothing verified on device yet.
+
+---
+
 ## 2026-08-09 — Fix: pinned streak bar bled the list through its background
 
 On the physical device the scroll-pinned bar (Phase 3) let the history list read *through* its lower

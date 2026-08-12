@@ -52,11 +52,25 @@ app in the background is unacceptable. User flagged this **very high priority.**
 
 | # | Item | Area | Done? | Sev | Effort |
 |---|------|------|-------|-----|--------|
-| 32 | No logging data may be lost when the app is backgrounded/killed mid-workout | Data durability | 🟡 LARGELY MITIGATED — verify + close gaps | **High** | S–M |
+| 32 | No logging data may be lost when the app is backgrounded/killed mid-workout | Data durability | ✅ DONE (code 2026-08-12 — 3 gaps closed, test 16/16) | **High** | S–M |
 
 ---
 
-### 32. Don't lose logged sets when the app is backgrounded or killed mid-workout 🟡 High
+### 32. Don't lose logged sets when the app is backgrounded or killed mid-workout ✅ High — **done (code) 2026-08-12**
+
+**Done (2026-08-12):** all three residual gaps below closed (code only, not yet on device). (1)
+Background flush: `_layout.tsx` now `flushCache()`es (`persistQueryClientSave`, bypassing the ~1s
+throttle) on AppState `background`/`inactive`. (2) Online in-flight writes: `dehydrateOptions`
+(`queryClient.ts`) persists still-*running* offline-logging mutations, not just RQ's paused ones
+(`isOfflineMutationKey` in `offlineSync.ts`); `resumeInterruptedMutations()` serially re-drives every
+restored-pending write (paused queue + interrupted-in-flight) on relaunch, FK-ordered, leaving RQ's
+reconnect/focus paths paused-only. (3) `scripts/test-offline-sync.ts` gained the online
+background→kill→relaunch case (`test:offline` now 16/16). Re-drive safety = client-chosen UUIDs +
+`insertSet`'s idempotent PK-collision return (logging-robustness work, same batch). Not implemented:
+runtime throttle-tightening for the active-workout window (background-flush is the targeted fix); the
+"keep running" background-execution approach was explicitly avoided. **On-device verification pending.**
+
+<details><summary>Original verification (2026-08-08)</summary>
 **Reported:** start a workout, log 10–12 sets, switch to another app / get a message / lock the
 screen for 20–30 min; iOS may suspend or terminate the app in the background. None of the logging
 done so far should be lost.
@@ -100,6 +114,7 @@ completely safe through **durable persistence**, so a kill is a non-event.
 **Bottom line:** the architecture already protects the common case; this item is (a) add the
 background-flush safety net, (b) verify the online-kill path, (c) lock it with a test — then it can
 close. Do **not** pursue background-execution / "keep running" approaches.
+</details>
 
 ---
 
@@ -319,7 +334,7 @@ log weight/reps/sets during the workout." `tsc` + web-export green; not yet on d
 | # | Item | Area | Done? | Sev | Effort |
 |---|------|------|-------|-----|--------|
 | 18 | Multi-select exercises when adding to a routine | Routine editor | ✅ DONE | Med | M |
-| 19 | Split "Arms" filter into Biceps / Triceps | Search / taxonomy | ⬜ OPEN | Med | M |
+| 19 | Split "Arms" filter into Biceps / Triceps | Search / taxonomy | ✅ DONE (code 2026-08-12; re-seed pending) | Med | M |
 
 ---
 
@@ -346,7 +361,21 @@ joins the selection rather than closing. The routine editor (`routine/[id].tsx`)
 unchanged, so `workout/[id].tsx` needed no edit (deliberate, to avoid clobbering the parallel
 #11/#13/#26 chat editing that file). `tsc` + web-export green; not yet on device.
 
-### 19. Split "Arms" into Biceps / Triceps in the region filter ⬜ Med
+### 19. Split "Arms" into Biceps / Triceps in the region filter ✅ Med — **done (code) 2026-08-12**
+
+**Done (2026-08-12):** `src/lib/muscles.ts` `BODY_REGIONS` now lists **Biceps** and **Triceps** in
+place of `Arms` (7 regions); `MUSCLE_TO_REGION` maps `biceps→Biceps`, `triceps→Triceps`, and
+**`forearms→Biceps`** (folded in rather than its own chip — grip/curl work clusters with biceps,
+avoids a 3-item region). `scripts/build-curated-exercises.py` got the same split (and a fixed output
+path — it was writing `curated-exercises.json` to cwd instead of `scripts/data/`), and
+`scripts/data/exercises-curated.json` was regenerated (Biceps 18 / Triceps 10 by primary muscle, 150
+exercises, no `Arms` left). The History muscle-split (`lib/muscleSplit.ts` + `components/MuscleSplit.tsx`)
+and the picker/library chip rows derive from `BODY_REGIONS` dynamically, so they render fine at 7 with
+no change. `tsc` + `test:offline` green. **User follow-up: `npm run seed` to publish the new
+`body_region[]` to the live DB** — only the local JSON was regenerated; not yet on device. "Legs"
+(quads/hams/glutes/calves) staying one bucket for now, as noted below.
+
+<details><summary>Original scope (2026-08-08)</summary>
 **Requested:** the body-region filter should let you pick Triceps or Biceps specifically, not just
 a combined "Arms".
 **Verified:** `src/lib/muscles.ts` — `BODY_REGIONS` is a fixed 6-item list (`Chest, Back,
@@ -362,6 +391,7 @@ regenerate `body_region[]` on the curated exercise set (`scripts/build-curated-e
 `scripts/data/exercises-curated.json`, then re-seed), and check the History muscle-split view still
 reads sensibly with 7–8 regions instead of 6. Same-shape request likely applies to "Legs" later
 (quads/hamstrings/glutes/calves currently one bucket) — out of scope for this item but worth noting.
+</details>
 
 ---
 

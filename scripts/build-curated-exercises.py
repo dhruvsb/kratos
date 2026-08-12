@@ -7,14 +7,14 @@ Each row: canonical_name, primary_muscles[], secondary_muscles[], body_region[]
 Muscle vocabulary is the 17-value free-exercise-db set so a future re-seed can
 cross-reference. body_region is derived from PRIMARY muscles only.
 """
-import json, collections, sys
+import json, collections, sys, os
 
-# 17 source muscles -> 6 body regions
+# 17 source muscles -> 7 body regions (forearms fold into Biceps)
 REGION = {
     'chest': 'Chest',
     'lats': 'Back', 'middle back': 'Back', 'lower back': 'Back', 'traps': 'Back',
     'shoulders': 'Shoulders', 'neck': 'Shoulders',
-    'biceps': 'Arms', 'triceps': 'Arms', 'forearms': 'Arms',
+    'biceps': 'Biceps', 'triceps': 'Triceps', 'forearms': 'Biceps',
     'quadriceps': 'Legs', 'hamstrings': 'Legs', 'glutes': 'Legs',
     'calves': 'Legs', 'abductors': 'Legs', 'adductors': 'Legs',
     'abdominals': 'Core',
@@ -240,7 +240,8 @@ if errors:
         print("  -", e, file=sys.stderr)
     sys.exit(1)
 
-json.dump(rows, open("curated-exercises.json", "w"), indent=2)
+out_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "exercises-curated.json")
+json.dump(rows, open(out_path, "w"), indent=2)
 
 # ---- report ----
 print(f"TOTAL EXERCISES: {len(rows)}\n")

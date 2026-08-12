@@ -1,7 +1,7 @@
 // Exercise picker (mockup 03) — a dark search sheet shared by the routine editor
 // and mid-workout. Canonical names + aliases + fuzzy match, with an inline
 // "create custom exercise" when nothing fits. A body-region chip row narrows the
-// list by muscle group (all 6 regions from the exercise metadata); it composes
+// list by muscle group (all BODY_REGIONS from the exercise metadata); it composes
 // with search — with a query typed, it filters the ranked matches.
 //
 // Two selection modes:

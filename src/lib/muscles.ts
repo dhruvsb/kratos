@@ -4,10 +4,11 @@
  * uses, so imports and the curated set stay interoperable.
  */
 
-export const BODY_REGIONS = ['Chest', 'Back', 'Shoulders', 'Arms', 'Legs', 'Core'] as const;
+export const BODY_REGIONS = ['Chest', 'Back', 'Shoulders', 'Biceps', 'Triceps', 'Legs', 'Core'] as const;
 export type BodyRegion = (typeof BODY_REGIONS)[number];
 
-/** 17 source muscles → 6 body-region rollup used for grouping in charts. */
+/** 17 source muscles → 7 body-region rollup used for grouping in charts.
+ *  Forearms fold into Biceps (grip/curl work clusters with biceps training). */
 export const MUSCLE_TO_REGION: Record<string, BodyRegion> = {
   chest: 'Chest',
   lats: 'Back',
@@ -16,9 +17,9 @@ export const MUSCLE_TO_REGION: Record<string, BodyRegion> = {
   traps: 'Back',
   shoulders: 'Shoulders',
   neck: 'Shoulders',
-  biceps: 'Arms',
-  triceps: 'Arms',
-  forearms: 'Arms',
+  biceps: 'Biceps',
+  triceps: 'Triceps',
+  forearms: 'Biceps',
   quadriceps: 'Legs',
   hamstrings: 'Legs',
   glutes: 'Legs',

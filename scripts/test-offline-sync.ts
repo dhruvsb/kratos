@@ -243,6 +243,63 @@ async function main() {
     check('discarded offline workout leaves no rows', (gone ?? []).length === 0);
     const { data: orphanSets } = await u.client.from('sets').select('id').eq('id', SC);
     check('discard cascaded to its sets', (orphanSets ?? []).length === 0);
+
+    // --- Fourth scenario: ONLINE mid-workout, backgrounded then killed with a
+    // set-log in flight. This is the gap #2 path — an online write runs immediately
+    // (not paused), so a kill mid-request leaves the optimistic set in the restored
+    // cache with no confirmed server row. On relaunch resumeInterruptedMutations()
+    // re-drives every restored-pending write via its offline default fn. Two
+    // invariants must hold: (a) a set that DID reach the server before the kill is
+    // NOT duplicated when re-driven (same client id → PK conflict, which the app
+    // swallows), and (b) a set whose request never completed lands on re-drive. ---
+    const W4 = randomUUID();
+    const ED = randomUUID();
+    const SLanded = randomUUID(); // reached the server before the kill
+    const SInflight = randomUUID(); // request cut off by the kill — never landed
+    await replayStart(u.client, u.id, W4, [{ id: ED, exerciseId: X }]);
+    // The last set that actually made it server-side during the online session.
+    await replayAddSet(u.client, ED, SLanded, 1, 80, 5);
+    // At kill time the server holds only SLanded; SInflight lived in the optimistic
+    // cache but its insert never completed.
+    const { data: preRelaunch } = await u.client
+      .from('sets')
+      .select('id')
+      .eq('workout_exercise_id', ED);
+    check(
+      'online-kill: before relaunch only the landed set is server-side',
+      (preRelaunch ?? []).length === 1 && (preRelaunch as any)[0].id === SLanded
+    );
+    // Relaunch re-drive of BOTH restored-pending writes:
+    // (a) SLanded re-drives onto its own client id → duplicate, rejected & swallowed.
+    const { error: dupErr } = await u.client.from('sets').insert({
+      id: SLanded,
+      workout_exercise_id: ED,
+      set_number: 1,
+      weight_kg: 80,
+      reps: 5,
+      set_type: 'normal',
+      logged_via: 'manual',
+    });
+    check('online-kill: re-driving an already-landed set is rejected as a duplicate', !!dupErr);
+    // (b) SInflight re-drives and lands for the first time.
+    await replayAddSet(u.client, ED, SInflight, 2, 80, 5);
+    const { data: afterSets } = await u.client
+      .from('sets')
+      .select('id')
+      .eq('workout_exercise_id', ED);
+    const afterIds = (afterSets ?? []).map((s: any) => s.id);
+    check(
+      'online-kill: landed set present exactly once after re-drive',
+      afterIds.filter((id) => id === SLanded).length === 1
+    );
+    check(
+      'online-kill: interrupted-in-flight last set re-driven and now server-side',
+      afterIds.includes(SInflight)
+    );
+    check(
+      'online-kill: no phantom duplicates (exactly two sets)',
+      (afterSets ?? []).length === 2
+    );
   } finally {
     await admin.auth.admin.deleteUser(u.id);
     console.log('\nCleaned up test user.');

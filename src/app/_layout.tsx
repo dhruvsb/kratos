@@ -5,6 +5,7 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { AppState } from 'react-native';
 import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { SignInScreen } from '@/components/SignInScreen';
@@ -12,9 +13,12 @@ import { getSession, onAuthStateChange } from '@/data/auth';
 import {
   CACHE_BUSTER,
   CACHE_MAX_AGE,
+  dehydrateOptions,
+  flushCache,
   persister,
   queryClient,
   resetQueryCache,
+  resumeInterruptedMutations,
 } from '@/lib/queryClient';
 import { useAppFonts } from '@/theme/fonts';
 import { ThemeProvider, useTheme, useThemeName } from '@/theme/ThemeProvider';
@@ -29,6 +33,9 @@ const persistOptions = {
   persister,
   maxAge: CACHE_MAX_AGE,
   buster: CACHE_BUSTER,
+  // Persist running logging writes too (not just paused ones) so an online set-log
+  // interrupted by a kill survives to be re-driven — must match flushCache()'s config.
+  dehydrateOptions,
 };
 
 // The four TabBar destinations are *lateral* moves, not "deeper" ones, so they
@@ -74,6 +81,18 @@ export default function RootLayout() {
     });
   }, []);
 
+  // Safety net for the ~1s persist throttle: the moment iOS moves us off-screen
+  // (backgrounded, or 'inactive' — app switcher / incoming call / lock), force a
+  // synchronous snapshot to disk so the last set logged before an OS suspend or kill
+  // can't be lost in the throttle window (gap #1). Cheap and idempotent; a transient
+  // inactive→active blip just writes one extra snapshot.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'background' || state === 'inactive') void flushCache();
+    });
+    return () => sub.remove();
+  }, []);
+
   const fontsReady = fontsLoaded || fontError != null;
 
   return (
@@ -81,11 +100,12 @@ export default function RootLayout() {
       <PersistQueryClientProvider
         client={queryClient}
         persistOptions={persistOptions}
-        // Restoration is done: flush any writes that were logged offline in a
-        // previous run and persisted as paused mutations. resumePausedMutations
-        // replays them in order; still-offline, they simply re-pause.
+        // Restoration is done: re-drive every write persisted from a previous run —
+        // both the paused offline queue AND any write left in-flight by a kill —
+        // serially in FK order. Still-offline, they simply re-pause. (Boot-only; the
+        // reconnect/focus resume paths stay paused-only inside SerialResumeQueryClient.)
         onSuccess={() => {
-          void queryClient.resumePausedMutations();
+          void resumeInterruptedMutations();
         }}
       >
         {/* Resolves the active palette from the persisted preference + OS appearance

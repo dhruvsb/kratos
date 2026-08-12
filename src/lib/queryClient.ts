@@ -7,8 +7,9 @@
 // staleTime. Nothing here is a native module, so this needs no dev-client rebuild.
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
-import { QueryClient } from '@tanstack/react-query';
-import { registerOfflineMutationDefaults } from '@/data/offlineSync';
+import { QueryClient, type DehydrateOptions } from '@tanstack/react-query';
+import { persistQueryClientSave } from '@tanstack/react-query-persist-client';
+import { isOfflineMutationKey, registerOfflineMutationDefaults } from '@/data/offlineSync';
 import { registerOnlineManager } from './network';
 
 // Teach React Query to read connectivity from NetInfo. Must run before any
@@ -71,6 +72,54 @@ export const persister = createAsyncStoragePersister({
   storage: AsyncStorage,
   key: 'repvoice.rq-cache.v1',
 });
+
+// What gets written to disk. RQ's default persists only *paused* mutations (the
+// offline write queue). We ALSO persist still-running writes on the offline-logging
+// keys, so an ONLINE set-log that is mid-request when iOS kills the app survives on
+// disk and can be re-driven on relaunch (gap #2 — otherwise the optimistic set
+// hydrates from cache but the matching server row is missing, and the next refetch
+// silently drops it). A write that completes flips to 'success' and is dropped from
+// the next snapshot, so only a genuine mid-flight kill ever leaves one behind. This
+// SAME object must feed both the provider's throttled persist (_layout persistOptions)
+// and the forced flush below, or the two would disagree on what to save.
+export const dehydrateOptions: DehydrateOptions = {
+  shouldDehydrateMutation: (m) =>
+    m.state.isPaused ||
+    (m.state.status === 'pending' && isOfflineMutationKey(m.options.mutationKey)),
+};
+
+/** Force a synchronous cache snapshot to disk, bypassing the provider's ~1s persist
+ *  throttle. Called when the app backgrounds/inactivates so a set logged in the last
+ *  second before an iOS suspend/kill can't miss the on-disk snapshot (gap #1). */
+export function flushCache(): Promise<void> {
+  return persistQueryClientSave({
+    queryClient,
+    persister,
+    buster: CACHE_BUSTER,
+    dehydrateOptions,
+  });
+}
+
+/** Boot-only recovery, run once right after the persisted cache is restored (when no
+ *  mutation is running yet). Re-drives EVERY restored-pending write — RQ's paused
+ *  offline queue AND any write still in-flight when the app was killed — serially in
+ *  creation (FK-safe) order via each key's registered offline default fn. This
+ *  supersedes the plain resumePausedMutations() at boot: paused writes are pending too,
+ *  so it's a strict superset that also covers the interrupted-online case. Errors are
+ *  swallowed — re-driving a write that DID land before the kill just hits a duplicate
+ *  client-id insert, a no-op on end state (the row already exists). Do NOT call this on
+ *  the reconnect/focus resume paths (those must stay paused-only — a write may be
+ *  genuinely running); it is safe only at boot, before any in-session mutation exists. */
+export function resumeInterruptedMutations(): Promise<unknown> {
+  const pending = queryClient
+    .getMutationCache()
+    .getAll()
+    .filter((m) => m.state.status === 'pending');
+  return pending.reduce<Promise<unknown>>(
+    (chain, mutation) => chain.then(() => mutation.continue().catch(() => {})),
+    Promise.resolve()
+  );
+}
 
 /** Wipe both the in-memory and on-disk cache. Call on sign-out / account switch
  *  so one user's data can never hydrate into another user's session. */

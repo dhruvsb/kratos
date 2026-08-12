@@ -197,6 +197,21 @@ export async function addExerciseToWorkout(
   exerciseId: string,
   preset?: { id: string; position: number }
 ): Promise<WorkoutExercise> {
+  // Dedupe: the same exercise is only ever in a workout once. A second add (double-
+  // tap in the picker, or a re-add of one already present) returns the existing row
+  // as a no-op — the optimistic cache's transient duplicate collapses on the next
+  // refetch. Keeps the set grid from splitting one lift across two chips.
+  const { data: existing, error: existingError } = await supabase
+    .from('workout_exercises')
+    .select('*')
+    .eq('workout_id', workoutId)
+    .eq('exercise_id', exerciseId)
+    .order('position')
+    .limit(1)
+    .maybeSingle();
+  if (existingError) throw existingError;
+  if (existing) return existing as WorkoutExercise;
+
   let position = preset?.position;
   if (position == null) {
     const { data: last } = await supabase

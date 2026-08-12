@@ -46,6 +46,18 @@ export type DeleteSetVars = string;
 export type FinishVars = { workoutId: string };
 export type DiscardVars = { workoutId: string };
 
+// First-segment strings of every offline-capable mutation key, for a cheap
+// membership test when deciding which mutations may be persisted / re-driven.
+const offlineMutationKeySet = new Set<string>(Object.values(mutationKeys).map((k) => k[0]));
+
+/** True if a mutationKey belongs to the offline-capable logging path — i.e. it has a
+ *  registered replay default and is safe to re-drive from its (serializable) variables
+ *  after an app kill. Used to persist *running* logging writes (not just paused ones)
+ *  so an online set-log interrupted mid-request survives to be re-driven on relaunch. */
+export function isOfflineMutationKey(key: unknown): boolean {
+  return Array.isArray(key) && typeof key[0] === 'string' && offlineMutationKeySet.has(key[0]);
+}
+
 // The replay functions. Each is a pure insert/update/delete built entirely from
 // variables — no server read, no in-memory state — so it is safe to run cold.
 export const offlineMutationFns = {

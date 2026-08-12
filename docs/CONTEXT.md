@@ -10,7 +10,19 @@ codebase or a huge prior conversation.
 > issues**) *and* append a dated entry to [`WORK-LOG.md`](./WORK-LOG.md). This file is the
 > snapshot; `WORK-LOG.md` is the full history. Keep this file short.
 
-**Last updated:** 2026-08-09 — **"Rolling Weeks" Home redesign — ALL 3 PHASES DONE + simulator-verified both
+**Last updated:** 2026-08-12 — **Three parallel agents landed (one commit): #32 data durability, logging
+robustness, #19 Biceps/Triceps split.** All `tsc`-clean; `test:offline` **16/16** (5 new online-kill
+checks). **#32 (High) DONE (code):** forced cache flush on AppState background (`flushCache()`
+bypasses the ~1s throttle, `_layout.tsx`); online in-flight writes now persist + re-drive on relaunch
+(`dehydrateOptions` keeps *running* offline-logging mutations, `resumeInterruptedMutations()` serially
+re-drives paused + interrupted, FK-ordered); new online background→kill→relaunch test case. **Logging
+robustness:** migration `0006_sets_unique_set_number.sql` adds `UNIQUE(workout_exercise_id, set_number)`
+(**written, not applied**) + `insertSet` made idempotent/retrying on `23505` (composes with #32's
+re-drive); `addExerciseToWorkout` dedupes `(workout_id, exercise_id)`; mid-workout **remove exercise**
+wired into `workout/[id].tsx` (REMOVE control + long-press, `useRemoveWorkoutExercise`). **#19:** Arms →
+**Biceps + Triceps** (forearms folded into Biceps) = 7 regions in `muscles.ts`; curated JSON regenerated
+(re-seed `npm run seed` **left for the user**). **Two user follow-ups: apply `0006`; `npm run seed`.**
+Not yet on device. Prior: **"Rolling Weeks" Home redesign — ALL 3 PHASES DONE + simulator-verified both
 themes.** The full `RepVoice Home Rolling Weeks.dc.html` is implemented. **Phase 3:** a **scroll-pinned
 compact streak bar** (`{streak} DAY STREAK · BEST n` + a 30-day micro sparkline from `computeStreak().micro`)
 that fades/slides in as the hero scrolls away — `Animated.ScrollView` + one native-driven `scrollY` (bar
@@ -206,14 +218,19 @@ logging via an LLM pipeline, **3** TBD (PRs/charts).
 
 Static checks currently green: `tsc --noEmit` clean; `expo export --platform web` bundles all 15 routes;
 `xcodebuild -allowProvisioningUpdates` builds + installs Release to physical hardware.
-**Feedback pass (`FEEDBACK-LOG.md`): 19 done** — ✅ #1 #2 #3 #4 #6 #7 #9 #10 #11 #13 #14 #15 #16
-#17 #18 #20 #21 #26 #31 (#12 dissolved by #13) · 🟡 #5 (fix applied — keyboard-avoidance; device-confirm
-pending), #32 (data durability — largely mitigated by local-first; verify + close gaps, **high priority**)
-· ⬜ **open: #8 #19 #22 #23 #28** · **withdrawn (won't do): #24 #25 #27 #29 #30**.
+**Feedback pass (`FEEDBACK-LOG.md`): 22 done** — ✅ #1 #2 #3 #4 #6 #7 #9 #10 #11 #13 #14 #15 #16
+#17 #18 #19 #20 #21 #26 #31 #32 (#12 dissolved by #13) · 🟡 #5 (fix applied — keyboard-avoidance;
+device-confirm pending) · ⬜ **open: #8 #22 #23 #28** · **withdrawn (won't do): #24 #25 #27 #29 #30**.
 **#17 light theme: DONE** (full Greige+Moss light mode + System·Light·Dark toggle; device-confirm pending).
 
 ## Pending actions (owner: user / next session)
 
+- [ ] **Apply migration `0006_sets_unique_set_number.sql`** to the live DB (`supabase db push` or the
+      SQL editor). If any existing `(workout_exercise_id, set_number)` duplicates exist, the constraint
+      will fail to create — dedupe first (snippet in the migration header). `insertSet` already tolerates
+      the constraint, so applying it is safe for the running app.
+- [ ] **Re-seed the exercise library (`npm run seed`)** so the new Biceps/Triceps `body_region[]` values
+      (feedback #19) take effect live — only the local `exercises-curated.json` was regenerated.
 - [ ] **Move `DEVELOPMENT_TEAM` into `app.config.ts`** (`ios` plugin config) — right now it's
       hand-edited into the gitignored `ios/RepVoice.xcodeproj/project.pbxproj`, which any
       `expo prebuild` will wipe, re-breaking signing.
@@ -296,12 +313,12 @@ optimistic** (instant ✓, rollback on error) · ✅ **kg/lb unit toggle** in Se
 
 | Sev | Issue | Where |
 |---|---|---|
-| **Med** | `sets.set_number` has no `UNIQUE(workout_exercise_id, set_number)`; computed client-side (max+1) → race-prone dupes. **More relevant now** that manual logging is the primary write path. | `0001_init.sql`, `src/data/sets.ts` |
-| Med | No way to **remove an exercise** added by mistake mid-workout — `useRemoveWorkoutExercise` exists but isn't wired into the set-grid screen (potential dead-end: add wrong exercise, can't undo) | `src/app/workout/[id].tsx` |
+| ~~Med~~ | ✅ **Done 2026-08-12** — `sets.set_number` now has `UNIQUE(workout_exercise_id, set_number)` (migration `0006`, **not yet applied**); `insertSet` retries/idempotent on `23505`. | `0006_sets_unique_set_number.sql`, `src/data/sets.ts` |
+| ~~Med~~ | ✅ **Done 2026-08-12** — mid-workout **remove exercise** wired into the set grid (REMOVE control + long-press → `useRemoveWorkoutExercise`, destructive confirm). | `src/app/workout/[id].tsx` |
 | Med | `db.ts` `z.coerce` numeric guards are dead — repos `return data as X`, never `.parse()`; a numeric-as-string would make `weight_kg` a string | `src/data/*`, `src/types/db.ts` |
 | ~~Low~~ | ✅ **Done 2026-07-31** — body-region **muscle filter** chip row added to the picker *and* the library (`exercises.tsx`); `searchExercises(query, region?)` + `listExercisesByRegion()`. (RECENT tab still deferred.) Also new: per-workout **muscle split** on `history/[id].tsx` (`lib/muscleSplit.ts` + `components/MuscleSplit.tsx`). | `ExercisePickerModal.tsx` |
 | Low | Routine editor uses ↑/↓ reorder, not drag (= FEEDBACK **#8**, still open) | `src/app/routine/[id].tsx` |
-| Low | `addExerciseToWorkout` doesn't dedupe `(workout_id, exercise_id)` | `src/data/workouts.ts` |
+| ~~Low~~ | ✅ **Done 2026-08-12** — `addExerciseToWorkout` now dedupes `(workout_id, exercise_id)` (returns the existing row as a no-op) | `src/data/workouts.ts` |
 | — | *(Phase 2 / voice — parked until voice resumes)* model IDs `gpt-5.6-luna/terra` unverified + eval never run; floor-mode auto-exit & PR-celebration wiring; voice dead code (`useVoiceSession.ts`, `useSessionSpeech`, `floorSensor.ts`); telemetry queries never invalidated; duplicated zod enums; `eval/README.md` stale `gpt-4o` refs | Phase 2 files |
 
 ---

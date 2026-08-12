@@ -22,11 +22,12 @@ import {
   usePrefetchExerciseDirectory,
   usePrefetchLastSessions,
   useProfile,
+  useRemoveWorkoutExercise,
   useUpdateSet,
   useWorkout,
 } from '@/data/hooks';
 import { useSettings } from '@/data/settings';
-import type { ExerciseBest } from '@/data/workouts';
+import type { ExerciseBest, WorkoutExerciseDetail } from '@/data/workouts';
 import type { LastSessionSet } from '@/types/db';
 import type { SetType, Unit } from '@/types/db';
 import { newUuid } from '@/lib/ids';
@@ -70,6 +71,7 @@ export default function ActiveWorkoutScreen() {
   const deleteSet = useDeleteSet(id!);
   const finish = useFinishWorkout(id!);
   const discard = useDiscardWorkout(id!);
+  const removeExercise = useRemoveWorkoutExercise(id!);
 
   const [pickerOpen, setPickerOpen] = useState(false);
   const [activeExerciseId, setActiveExerciseId] = useState<string | null>(null);
@@ -221,6 +223,34 @@ export default function ActiveWorkoutScreen() {
     ]);
   }
 
+  // Remove an exercise added by mistake mid-workout. Long-press its chip or tap the
+  // explicit REMOVE control — both land here. Deleting the active exercise moves the
+  // selection to a neighbour so the grid never points at a gone row.
+  function confirmRemoveExercise(we: WorkoutExerciseDetail) {
+    Alert.alert(
+      `Remove ${we.exercise.canonical_name}?`,
+      we.sets.length > 0
+        ? `This deletes it and its ${we.sets.length} logged set${we.sets.length === 1 ? '' : 's'}.`
+        : 'This removes the exercise from the workout.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: () => {
+            if (activeExerciseId === we.exercise_id) {
+              const remaining = (detail?.exercises ?? []).filter((e) => e.id !== we.id);
+              setActiveExerciseId(remaining[remaining.length - 1]?.exercise_id ?? null);
+            }
+            removeExercise.mutate(we.id, {
+              onError: (e) => Alert.alert("Couldn't remove exercise", e.message),
+            });
+          },
+        },
+      ]
+    );
+  }
+
   function goExercise(dir: -1 | 1) {
     const next = detail!.exercises[activeIndex + dir];
     if (next) setActiveExerciseId(next.exercise_id);
@@ -297,6 +327,9 @@ export default function ActiveWorkoutScreen() {
               <Pressable
                 key={we.id}
                 onPress={() => setActiveExerciseId(we.exercise_id)}
+                // Long-press a chip to remove that exercise — same fast-delete gesture
+                // the set rows use; the explicit REMOVE control below is the discoverable path.
+                onLongPress={() => !isFinished && confirmRemoveExercise(we)}
                 style={[styles.chip, on && styles.chipOn]}
               >
                 <Text style={[styles.chipText, on && { color: color.acc }]}>{i + 1}</Text>
@@ -413,6 +446,9 @@ export default function ActiveWorkoutScreen() {
                 </Pressable>
                 <Pressable onPress={() => router.push(`/exercise/${activeExercise.exercise_id}`)}>
                   <Text style={styles.actDim}>HISTORY</Text>
+                </Pressable>
+                <Pressable onPress={() => confirmRemoveExercise(activeExercise)}>
+                  <Text style={styles.actWarn}>REMOVE</Text>
                 </Pressable>
               </View>
             )}
@@ -628,6 +664,7 @@ const makeStyles = (color: Theme['color']) => StyleSheet.create({
   gridActions: { flexDirection: 'row', gap: 22, paddingVertical: 14, paddingHorizontal: 12 },
   actAcc: { fontFamily: font.numSemibold, fontSize: 10.5, letterSpacing: tracking.label, color: color.acc },
   actDim: { fontFamily: font.numSemibold, fontSize: 10.5, letterSpacing: tracking.label, color: color.t3 },
+  actWarn: { fontFamily: font.numSemibold, fontSize: 10.5, letterSpacing: tracking.label, color: color.warn },
 
   footer: { paddingHorizontal: space.lg, paddingTop: space.sm, gap: space.sm },
   navRow: { flexDirection: 'row', gap: space.sm, alignItems: 'stretch' },
