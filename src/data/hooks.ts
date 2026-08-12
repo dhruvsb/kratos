@@ -519,6 +519,39 @@ export function useDeleteWorkout(workoutId: string) {
   });
 }
 
+/** Wipe *all* finished-workout history for the signed-in user (Settings → DATA →
+ *  "Clear all history"), keeping routines / custom exercises / profile. Backed by
+ *  the `clear_own_workouts` RPC (migration 0008, auth.uid()-scoped).
+ *
+ *  This is a local-first app with a persisted React Query cache, so the DB delete
+ *  alone would leave stale rows on screen — every workout-facing query is
+ *  invalidated (and the now-dangling per-workout detail / bests caches removed) so
+ *  History, Home, the PR badges and the Calendar all empty immediately. The caller
+ *  is expected to block this while a workout is active (see settings.tsx), so the
+ *  active-workout slot is invalidated defensively rather than optimistically cleared. */
+export function useClearAllWorkouts() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => workouts.clearAllWorkouts(),
+    onSuccess: () => {
+      // History / Home feed + per-session PR badges.
+      qc.invalidateQueries({ queryKey: keys.workoutList });
+      qc.invalidateQueries({ queryKey: keys.workoutPrCounts });
+      // Calendar heatmap (its hook lives in data/calendar.ts under ['workoutDays']).
+      qc.invalidateQueries({ queryKey: ['workoutDays'] });
+      // Active-workout pointer (defensive — clear is blocked while one is running).
+      qc.invalidateQueries({ queryKey: keys.activeWorkout });
+      // Per-exercise recall + progress views.
+      qc.invalidateQueries({ queryKey: ['lastSession'] });
+      qc.invalidateQueries({ queryKey: ['exerciseHistory'] });
+      // Every workout row is gone — drop the now-dangling per-workout detail and
+      // finish-summary bests caches so nothing refetches a 404.
+      qc.removeQueries({ queryKey: ['workout'] });
+      qc.removeQueries({ queryKey: ['exerciseBests'] });
+    },
+  });
+}
+
 /** Commit a Hevy import plan. Touches history, calendar, progress and the
  *  exercise directory (customs), so it invalidates the cache wholesale. */
 export function useCommitImport() {

@@ -41,7 +41,7 @@ the two states the mockup doesn't draw, plus one data nicety, as backlog.
 | # | Item | Area | Done? | Sev | Effort |
 |---|------|------|-------|-----|--------|
 | 33 | Running-workout resume state absent from the new Home | Home / active workout | ✅ DONE (persistent active-workout bar, 2026-08-13) | Med | S–M |
-| 34 | Day-zero (first-run) state absent from the new Home | Home / onboarding | ⬜ Open | Low–Med | S |
+| 34 | Day-zero (first-run) state absent from the new Home | Home / onboarding | ✅ DONE (code 2026-08-13) | Low–Med | S |
 | 35 | Per-session **PR "records" badge** on history rows (medal + count) | Home / history | ✅ DONE (2026-08-13; migration 0007 applied + sim-verified) | **High** | M |
 
 ### 33. Bring back the running-workout resume affordance ✅ Med — **done 2026-08-13**
@@ -63,11 +63,19 @@ exists (`if (activeId) router.push('/workout/'+activeId)`). Follow-up: a first-c
 atop the new Home (or a state on the streak hero) so it's visible, not just reachable.
 </details>
 
-### 34. Day-zero (first-run) state on the new Home ⬜ Low–Med
+### 34. Day-zero (first-run) state on the new Home ✅ Low–Med — **done (code) 2026-08-13**
+**Done (2026-08-13):** new `src/components/home/HomeDayZero.tsx` (no props, self-contained,
+`useTheme()`+`makeStyles` factory, tokens only) — a welcome kicker + headline + one calming line, over
+two entry points: **START EMPTY WORKOUT** (solid `cta*` CTA → shared `useStartWorkoutFlow`) and **CREATE
+A ROUTINE** (`router.push('/routines')`). `index.tsx` early-returns it when `doneDays.size === 0 &&
+!isLoading` (gated on load so it never flashes over a hydrating cache), keeping the tab pill / FAB /
+active-workout bar rendered and the non-empty Home path unchanged. `tsc` green; not yet on device.
+<details><summary>Original scope (2026-08-09)</summary>
 The old Home had a mockup-14 empty state (two doors into the first workout + starter templates). On
 the new Home a brand-new user sees streak `0`, an all-empty heatmap, and an empty-history line
 (`No workouts yet…`) — functional but not a designed welcome. Follow-up: a proper day-zero treatment
 (and the ROUTINES tab already has its own empty state).
+</details>
 
 ### 35. Per-session PR "records" badge ✅ **High** — done (code) 2026-08-13; **apply migration 0007**
 **Done (2026-08-13):** medal badge + PR count in the reserved right slot of each Home history row
@@ -225,7 +233,7 @@ in full below; not all items need to be built.
 | # | Item | Area | Done? | Sev | Effort |
 |---|------|------|-------|-----|--------|
 | 26 | Auto-advance/reopen keypad for the next set after logging | Logging UX | ✅ DONE (code 2026-08-08) | Med | S |
-| 28 | Progressive-overload ghost suggestion (vs. flat previous-best prefill) | Logging UX | ⬜ OPEN (builds on #3) | Low | M |
+| 28 | Progressive-overload ghost suggestion (vs. flat previous-best prefill) | Logging UX | ✅ DONE (code 2026-08-13) | Low | M |
 
 > **Withdrawn 2026-08-08 (won't do):** **#24** (predictive exercise suggestions), **#25** (swipe to
 > toggle KG/REPS focus), **#27** (superset linking), **#30** (global rest timer) — dropped per product
@@ -246,7 +254,15 @@ the user dismisses the chain by tapping the backdrop. The grid's one-tap ✓ (`l
 — it stays on the grid, so the two frictionless paths (chained keypad vs. grid ✓) complement each
 other. Not yet run on device — verify the chain feels seamless (no sheet flicker / re-slide).
 
-### 28. Progressive-overload ghost suggestion ⬜ Low — builds on open item #3
+### 28. Progressive-overload ghost suggestion ✅ Low — **done (code) 2026-08-13**
+**Done (2026-08-13):** additive ghost hint in `workout/[id].tsx` (SetKeypad untouched). Rule (target-
+independent, since #21 nulled routine targets): offered only when prefill is on, **no set logged yet this
+session** for the exercise, a prior session exists with ≥1 normal set, **every** such set last time hit
+reps ≥ 10, and `topLast.weight_kg + 2.5` exceeds the flat prefill. Renders as a dimmed opt-in row under
+the pending row (`STRONG LAST TIME · TRY {w} · TAP TO USE`), tokens-only, both themes; tap-to-accept opens
+the keypad primed with the bump and flows through the normal LOG path. The real prefill and what a normal
+✓ writes are unchanged. `tsc` green; not yet on device.
+<details><summary>Original scope</summary>
 **Proposed:** instead of prefilling the exact previous-session numbers, show a ghosted suggested
 weight *increase* when the user hit all prescribed reps last time.
 **Verified:** current prefill (`workout/[id].tsx:138-139`, `settings.prefillFromLastSession`) is a
@@ -257,6 +273,7 @@ separate prefill changes.
 **Fix (scope, not started):** define the progression rule (e.g. +2.5kg if all sets hit the top of
 the rep range), compute it from the last session's sets vs. the routine's `target_reps_high`, show
 it as a ghosted/suggested value distinct from a hard prefill. (M)
+</details>
 
 ---
 

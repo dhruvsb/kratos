@@ -45,6 +45,26 @@ function prevLabel(set: LastSessionSet | undefined, unit: Unit): string {
 // so the pending row is one-tap-loggable instead of blank.
 const DEFAULT_REPS = 12;
 
+// Progressive-overload ghost (feedback #28). A visually distinct, ghosted hint that
+// suggests adding a little load when last session was clearly a strong, complete one.
+// It is ADDITIVE: it never touches the real prefill (prefillKg/prefillReps), so ✓
+// still logs the flat previous number — the user opts in by tapping the ghost.
+//
+// Rule — deliberately independent of routine targets (removed in #21, so
+// target_reps_high is null everywhere): suggest a bump only when
+//   1. prefill is on (the row is showing suggested numbers at all), AND
+//   2. no set is logged yet this session for the exercise (we're picking the
+//      opening weight — a mid-session bump would fight the auto-advance prefill), AND
+//   3. a previous session exists with at least one normal set, AND
+//   4. EVERY normal set last session (both weight & reps present) hit reps >=
+//      OVERLOAD_REP_THRESHOLD — i.e. the whole session was completed strongly, AND
+//   5. there is a top weight to build on.
+// Then suggest topWeight + OVERLOAD_STEP_KG (a barbell-friendly +2.5 kg jump,
+// matching the keypad's kg step). Values are stored/computed in kg and converted for
+// display via lib/units (kgToDisplay / formatWeight).
+const OVERLOAD_STEP_KG = 2.5;
+const OVERLOAD_REP_THRESHOLD = 10;
+
 type KeypadState = {
   mode: 'add' | 'edit';
   setId?: string;
@@ -295,6 +315,38 @@ export default function ActiveWorkoutScreen() {
     null
   );
 
+  // Progressive-overload ghost weight (kg) — null unless the rule above holds. See the
+  // OVERLOAD_* comment for the exact criteria. Only offered before the first set of the
+  // exercise this session, and only when it would actually exceed the flat prefill.
+  const normalLastSets = lastSets.filter(
+    (s) => s.set_type === 'normal' && s.weight_kg != null && s.reps != null
+  );
+  const strongLastSession =
+    normalLastSets.length > 0 &&
+    normalLastSets.every((s) => (s.reps ?? 0) >= OVERLOAD_REP_THRESHOLD);
+  const ghostKg =
+    prefillEnabled &&
+    logged.length === 0 &&
+    strongLastSession &&
+    topLast?.weight_kg != null &&
+    topLast.weight_kg + OVERLOAD_STEP_KG > (prefillKg ?? -1)
+      ? topLast.weight_kg + OVERLOAD_STEP_KG
+      : null;
+
+  // Tap-to-accept: open the keypad primed with the bumped weight (keeping the suggested
+  // reps), so accepting the overload is one tap and still passes through the normal
+  // LOG path — nothing about how a set is written changes.
+  function acceptGhost() {
+    if (ghostKg == null) return;
+    setKeypad({
+      mode: 'add',
+      setNumber: nextSetNumber,
+      setType: 'normal',
+      kg: ghostKg,
+      reps: prefillReps,
+    });
+  }
+
   return (
     <View style={[styles.screen, { paddingTop: insets.top + space.sm }]}>
       {/* Header */}
@@ -437,6 +489,18 @@ export default function ActiveWorkoutScreen() {
                   <Text style={styles.checkActive}>✓</Text>
                 </Pressable>
               </View>
+            )}
+
+            {/* Progressive-overload ghost (feedback #28) — a dimmed, opt-in hint that
+                sits under the pending row without changing its real prefill. Tapping
+                opens the keypad primed with the bumped weight. */}
+            {!isFinished && ghostKg != null && (
+              <Pressable style={styles.ghostRow} onPress={acceptGhost}>
+                <Text style={styles.ghostText}>
+                  STRONG LAST TIME · TRY {formatWeight(ghostKg, unit)} {unit.toUpperCase()}
+                </Text>
+                <Text style={styles.ghostAccept}>TAP TO USE</Text>
+              </Pressable>
             )}
 
             {!isFinished && (
@@ -660,6 +724,25 @@ const makeStyles = (color: Theme['color']) => StyleSheet.create({
   },
   firstNoteBar: { width: 2, backgroundColor: color.acc35, borderRadius: 1 },
   firstNoteText: { flex: 1, fontFamily: font.num, fontSize: 10.5, lineHeight: 18, color: color.t2 },
+
+  // Overload ghost: a low-emphasis, opt-in suggestion — dimmed ink (t3) on a barely
+  // tinted accent well, clearly distinct from the solid pending row it hints about.
+  ghostRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: space.md,
+    marginHorizontal: 12,
+    marginTop: 10,
+    paddingVertical: 9,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: color.acc14,
+    borderRadius: radius.key,
+    backgroundColor: color.acc06,
+  },
+  ghostText: { fontFamily: font.numSemibold, fontSize: 9.5, letterSpacing: tracking.label, color: color.t3, flexShrink: 1 },
+  ghostAccept: { fontFamily: font.numSemibold, fontSize: 9.5, letterSpacing: tracking.label, color: color.acc },
 
   gridActions: { flexDirection: 'row', gap: 22, paddingVertical: 14, paddingHorizontal: 12 },
   actAcc: { fontFamily: font.numSemibold, fontSize: 10.5, letterSpacing: tracking.label, color: color.acc },

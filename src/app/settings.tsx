@@ -17,7 +17,12 @@ import { HomeQuickStart } from '@/components/home/HomeQuickStart';
 import { HomeTabBar, TAB_BAR_HEIGHT } from '@/components/voice/TabBar';
 import { ActiveWorkoutBar } from '@/components/workout/ActiveWorkoutBar';
 import { deleteAccount, getSession, signOut } from '@/data/auth';
-import { useProfile, useUpdateProfile } from '@/data/hooks';
+import {
+  useActiveWorkout,
+  useClearAllWorkouts,
+  useProfile,
+  useUpdateProfile,
+} from '@/data/hooks';
 import { GOAL_PRESETS, THEME_MODES, useSettings, useUpdateSettings } from '@/data/settings';
 import { font, radius, space, tracking, type Theme } from '@/theme/tokens';
 import { useTheme, useThemeMode } from '@/theme/ThemeProvider';
@@ -49,8 +54,11 @@ export default function SettingsScreen() {
   const { mode: themeMode, setMode: setThemeMode } = useThemeMode();
   const insets = useSafeAreaInsets();
   const [deleting, setDeleting] = useState(false);
+  const [clearing, setClearing] = useState(false);
   const profile = useProfile();
   const updateProfile = useUpdateProfile();
+  const activeWorkout = useActiveWorkout();
+  const clearAllWorkouts = useClearAllWorkouts();
   const settings = useSettings();
   const updateSettings = useUpdateSettings();
   const sessionEmail = useQuery({
@@ -102,6 +110,53 @@ export default function SettingsScreen() {
             Alert.alert('Delete everything, permanently?', email || undefined, [
               { text: 'Cancel', style: 'cancel' },
               { text: 'Delete account', style: 'destructive', onPress: runDeleteAccount },
+            ]),
+        },
+      ]
+    );
+  }
+
+  // "Clear all history" — permanently wipes every workout + its sets, keeping
+  // routines, custom exercises and the profile (the "wipe test data, re-import
+  // fresh from Hevy" flow). Two taps like Delete account, since it's irreversible.
+  async function runClearAllWorkouts() {
+    setClearing(true);
+    try {
+      await clearAllWorkouts.mutateAsync();
+      setClearing(false);
+      Alert.alert('History cleared', 'Every workout has been deleted. Your routines and exercises are untouched.');
+    } catch (e) {
+      setClearing(false);
+      Alert.alert(
+        'Could not clear history',
+        e instanceof Error ? e.message : 'Check your connection and try again.'
+      );
+    }
+  }
+
+  function confirmClearAllWorkouts() {
+    // Edge case (chosen: block, not wipe): deleting the in-progress workout out from
+    // under an active session is jarring, so if one is running we refuse and point
+    // the user at it rather than yanking it mid-set.
+    if (activeWorkout.data) {
+      Alert.alert(
+        'Finish your workout first',
+        'You have a workout in progress. Finish or discard it before clearing your history.'
+      );
+      return;
+    }
+    Alert.alert(
+      'Clear all history?',
+      'This permanently deletes every workout and all of its sets. Your routines and custom exercises are kept. It cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Clear',
+          style: 'destructive',
+          onPress: () =>
+            Alert.alert('Delete every workout, permanently?', undefined, [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Clear history', style: 'destructive', onPress: runClearAllWorkouts },
             ]),
         },
       ]
@@ -168,6 +223,13 @@ export default function SettingsScreen() {
               note: 'Hevy-compatible CSV file',
               value: 'EXPORT',
               onPress: () => router.push('/export'),
+            },
+            {
+              label: 'Clear all history',
+              note: 'deletes every workout; keeps routines & exercises',
+              value: clearing ? 'CLEARING…' : 'CLEAR',
+              tone: 'danger',
+              onPress: clearing ? undefined : confirmClearAllWorkouts,
             },
           ],
         },

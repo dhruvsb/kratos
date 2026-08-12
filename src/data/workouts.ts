@@ -140,6 +140,18 @@ export async function discardWorkout(workoutId: string): Promise<void> {
   if (error) throw error;
 }
 
+/**
+ * Permanently deletes every workout (and thus every logged set) for the signed-in
+ * user, leaving routines, custom exercises and the profile intact — the "wipe my
+ * test data, start clean" action. Server side is `public.clear_own_workouts()`
+ * (migration 0008), a security-definer RPC scoped to `auth.uid()`, so this can
+ * never touch another account. The FK cascade handles the children.
+ */
+export async function clearAllWorkouts(): Promise<void> {
+  const { error } = await supabase.rpc('clear_own_workouts');
+  if (error) throw error;
+}
+
 /** The one unfinished workout, if any (single-device assumption). */
 export async function getActiveWorkout(): Promise<Workout | null> {
   const { data, error } = await supabase

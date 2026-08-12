@@ -10,7 +10,12 @@ codebase or a huge prior conversation.
 > issues**) *and* append a dated entry to [`WORK-LOG.md`](./WORK-LOG.md). This file is the
 > snapshot; `WORK-LOG.md` is the full history. Keep this file short.
 
-**Last updated:** 2026-08-12 — **"RepVoice Home" redesign shipped: single-line streak + liquid-glass tabs
+**Last updated:** 2026-08-13 — **Backlog batch (5 fixes, code):** repo reads now `.parse()` through zod
+(dead `z.coerce` guards killed; numeric-as-string can't corrupt `weight_kg`); **#34** day-zero Home welcome
+(`HomeDayZero.tsx`); `ios.appleTeamId` moved into `app.config.ts` (survives prebuild); **#28** progressive-
+overload ghost in the set grid; **Task 5** in-app "Clear all history" (Settings → DATA; keeps routines) via
+new RPC `clear_own_workouts()` — **migration `0008` written, NOT applied** (apply before the row works live).
+`tsc` + `test:offline` 16/16 green; none on device yet. Prior: **"RepVoice Home" redesign shipped: single-line streak + liquid-glass tabs
 (#22).** Implemented the `RepVoice Home.dc.html` design — a floating **glass tab pill** (HOME · ROUTINES ·
 SETTINGS, SVG icons via new `react-native-svg`, active-tab glass chip) + a **green-glass `+` FAB** beside
 it, real iOS-26 `GlassView` with `colorScheme` bound to the in-app theme and an opaque-token fallback off
@@ -239,14 +244,19 @@ native-`UITabBar` drag-lens glass — deferred, keeping the custom pill+FAB.
 
 ## Pending actions (owner: user / next session)
 
+- [ ] **Apply migration `0008_clear_own_workouts.sql`** (`supabase db push`) so Settings → DATA → "Clear
+      all history" works live — it calls the `clear_own_workouts()` RPC this migration creates. Written +
+      `tsc`/`test:offline`-verified, not applied. (Additive, non-destructive to apply — it only defines a
+      function.)
 - [x] ~~Apply migration `0006`~~ — **done live 2026-08-13** (had real dups; migration now dedupes via a
       contiguous `row_number()` renumber, atomic with the constraint).
 - [x] ~~Re-seed the exercise library (`npm run seed`)~~ — **done 2026-08-13**; Biceps/Triceps `body_region`
       live. Side effect: the seed wiped `routine_exercises`/`workout_exercises` (test data) — run
       `npm run seed:demo` to repopulate showcase history if wanted.
-- [ ] **Move `DEVELOPMENT_TEAM` into `app.config.ts`** (`ios` plugin config) — right now it's
-      hand-edited into the gitignored `ios/RepVoice.xcodeproj/project.pbxproj`, which any
-      `expo prebuild` will wipe, re-breaking signing.
+- [x] ~~**Move `DEVELOPMENT_TEAM` into `app.config.ts`**~~ — **done 2026-08-13**: added
+      `ios.appleTeamId: 'TUR974K866'` to `app.config.ts` (the config-schema field; `expo-build-properties`
+      has no `developmentTeam`/team option in SDK 57). A prebuild now bakes it into the Xcode project's
+      `DEVELOPMENT_TEAM` instead of wiping the hand-edited `project.pbxproj`.
 - [x] ~~**Fix #11 (delete-set discoverability)**~~ — **done 2026-08-08 (code)**: long-press a logged
       row → confirm-delete + a prominent DELETE button in the edit sheet. Swipe-to-delete deferred —
       the RNGH/reanimated stack is installed but unwired (no `GestureHandlerRootView`/babel plugin);

@@ -11,6 +11,7 @@ import { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Path } from 'react-native-svg';
+import { HomeDayZero } from '@/components/home/HomeDayZero';
 import { HomeQuickStart } from '@/components/home/HomeQuickStart';
 import { HomeTabBar, TAB_BAR_HEIGHT } from '@/components/voice/TabBar';
 import { ActiveWorkoutBar } from '@/components/workout/ActiveWorkoutBar';
@@ -40,6 +41,11 @@ export default function HomeScreen() {
 
   const { streak, best, cells } = useMemo(() => computeStreak(doneDays), [doneDays]);
 
+  // Day-zero: a brand-new user with zero finished workouts gets a proper welcome instead of
+  // an empty streak/heatmap/history feed. Wait for the days query to settle so we never flash
+  // day-zero over a hydrating cache (#34).
+  const isDayZero = !days.isLoading && doneDays.size === 0;
+
   const workouts = history.data?.pages.flat() ?? [];
 
   // 5 rows of 7 for the heatmap.
@@ -48,6 +54,27 @@ export default function HomeScreen() {
     for (let i = 0; i < cells.length; i += 7) out.push(cells.slice(i, i + 7));
     return out;
   }, [cells]);
+
+  if (isDayZero) {
+    return (
+      <View style={styles.screen}>
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={[
+            styles.content,
+            { paddingTop: insets.top + 14, paddingBottom: space.xl + TAB_BAR_HEIGHT },
+          ]}
+          showsVerticalScrollIndicator={false}
+        >
+          <HomeDayZero />
+        </ScrollView>
+
+        <HomeTabBar active="home" withFab />
+        <ActiveWorkoutBar />
+        <HomeQuickStart />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.screen}>

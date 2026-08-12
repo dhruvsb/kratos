@@ -7,6 +7,32 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-13 — Four parallel-agent backlog fixes (day-zero Home, signing config, overload ghost, clear-history)
+
+Ran four file-disjoint agents at once (on top of the zod fix below), one coherent commit. All `tsc`-clean;
+`test:offline` 16/16 with the combined tree.
+
+- **#34 Day-zero Home (code):** new `src/components/home/HomeDayZero.tsx` — welcome + two doors (START EMPTY
+  WORKOUT via `useStartWorkoutFlow`, CREATE A ROUTINE → `/routines`), tokens-only. `index.tsx` early-returns
+  it when `doneDays.size === 0 && !isLoading`; tab pill / FAB / active-workout bar stay, non-empty path
+  unchanged.
+- **Signing config (pending action):** `app.config.ts` gained `ios.appleTeamId: 'TUR974K866'` (the config-
+  schema field — `expo-build-properties` has no team option in SDK 57), so a prebuild bakes `DEVELOPMENT_TEAM`
+  instead of wiping the hand-edited `project.pbxproj`. No dep added.
+- **#28 Progressive-overload ghost (code):** `workout/[id].tsx` only. A dimmed opt-in row suggests
+  `top_last + 2.5 kg` only when prefill is on, no set logged yet this session, and *every* normal set last
+  session hit reps ≥ 10 (rule is routine-target-independent, since #21 nulled targets). Tap-to-accept primes
+  the keypad + flows through normal LOG; real prefill and normal-✓ writes unchanged.
+- **Task 5 Clear-all-history (new):** migration `0008_clear_own_workouts.sql` (**written, NOT applied**) — a
+  security-definer `clear_own_workouts()` RPC, `auth.uid()`-scoped, one `delete from workouts` (FK cascade
+  handles workout_exercises→sets; nulls voice_logs.workout_id; routines/exercises/profile untouched). Repo
+  `clearAllWorkouts()` + hook `useClearAllWorkouts()` (invalidates workoutList / workoutDays / workoutPrCounts
+  / activeWorkout / lastSession / exerciseHistory, removes `['workout']`+`['exerciseBests']`). Settings → DATA
+  → "Clear all history" destructive row, two confirms; **blocks** if a workout is in progress ("Finish your
+  workout first"). **User follow-up: apply `0008`** (`supabase db push`) before the row works live.
+
+---
+
 ## 2026-08-13 — Repo reads validate through zod (kill the dead `z.coerce` guards)
 
 Closed the open backlog item "`db.ts` `z.coerce` numeric guards are dead." Every repo returned
