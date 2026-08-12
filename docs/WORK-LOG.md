@@ -16,8 +16,9 @@ DEFINER RPC **`workout_pr_counts()`** (migration `0007`, auth.uid()-scoped, wind
 unbounded preceding and 1 preceding` for the prior-session best) — server-side because it must see all
 history. Wired `getWorkoutPrCounts` → `useWorkoutPrCounts` (invalidated on finish/discard/delete); the Home
 history row's reserved right slot now shows a medal + count (`PrBadge`, the design's SVG) or `—`. `tsc`
-green. **Needs migration `0007` applied to the live DB** — until then the RPC 404s and rows show `—`.
-Closes #35 (pending apply).
+green. **Migration `0007` applied to the live DB** (2026-08-13, via `supabase db push` with 0006 stashed so
+only 0007 went — 0006 stays unapplied). **Sim-verified**: real discriminating counts (Arms 5 · Back 4 ·
+Biceps 1 · Chest/Push Day —). Closes #35.
 
 ---
 

@@ -42,7 +42,7 @@ the two states the mockup doesn't draw, plus one data nicety, as backlog.
 |---|------|------|-------|-----|--------|
 | 33 | Running-workout resume state absent from the new Home | Home / active workout | ✅ DONE (persistent active-workout bar, 2026-08-13) | Med | S–M |
 | 34 | Day-zero (first-run) state absent from the new Home | Home / onboarding | ⬜ Open | Low–Med | S |
-| 35 | Per-session **PR "records" badge** on history rows (medal + count) | Home / history | ✅ DONE (code 2026-08-13) — **needs migration 0007 applied** | **High** | M |
+| 35 | Per-session **PR "records" badge** on history rows (medal + count) | Home / history | ✅ DONE (2026-08-13; migration 0007 applied + sim-verified) | **High** | M |
 
 ### 33. Bring back the running-workout resume affordance ✅ Med — **done 2026-08-13**
 **Done (2026-08-13):** a persistent **active-workout bar** (Hevy-style; `components/workout/ActiveWorkoutBar.tsx`)
@@ -78,8 +78,10 @@ null reps / null weight are excluded. A workout's badge = how many of its exerci
 Computed server-side by **`workout_pr_counts()` RPC (migration `0007`, SECURITY DEFINER, auth.uid()-scoped)**
 — accurate over all history (a client compute over loaded pages would over-count the oldest). Wired via
 `getWorkoutPrCounts` → `useWorkoutPrCounts` (`['workoutPrCounts']`), invalidated on finish/discard/delete.
-Rows with 0 PRs show `—`. **User action: apply `supabase/migrations/0007_workout_pr_counts.sql` to the live
-DB** — until then the RPC 404s, the query errors, and every row shows `—` (harmless). `tsc` green.
+Rows with 0 PRs show `—`. **Migration `0007` applied to the live DB 2026-08-13** (via `supabase db push`
+with 0006 temporarily stashed so only 0007 pushed — 0006 stays unapplied). **Sim-verified**: badges render
+with real, discriminating counts (Arms 5 · Back 4 · Biceps 1 · Chest/Push Day —), confirming the
+prior-session comparison works. `tsc` green.
 <details><summary>Original scope + earlier deferral note</summary>
 The `RepVoice Home Final.dc.html` design puts a **medal badge + PR count** (e.g. `🏅 3`, or `—` when
 none) at the right of each history row. **Deferred by product call (2026-08-12): do PR later, HIGH pri.**

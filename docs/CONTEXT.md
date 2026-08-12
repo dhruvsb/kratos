@@ -221,6 +221,7 @@ logging via an LLM pipeline, **3** TBD (PRs/charts).
 | Eval baseline (`npm run eval`) | ❌ Never run against the real API (Phase 2 concern) |
 | Migration `0003_alias_write_policy.sql` | ✅ **Applied this session** (was committed-but-unapplied; Phase 2 alias write-back policy now live) |
 | **In-app account deletion** (App Store 5.1.1(v)) | ✅ **Built + verified live 2026-08-08** — Settings → ACCOUNT → "Delete account" (two native confirms, completion alert) → `deleteAccount()` in `src/data/auth.ts` → RPC `delete_own_account()` (migration `0005`) → `signOut({ scope: 'local' })`. Verified on a throwaway live account: user, profile, routines, workouts, sets, voice_logs, custom exercises + aliases all gone; seeded 150 intact. Not yet rendered on device (pure JS — no dev-client rebuild needed). |
+| Migration `0007_workout_pr_counts.sql` (PR-counts RPC, #35) | ✅ **Applied live 2026-08-13** (0006 still unapplied) |
 | Migration `0005_delete_own_account.sql` | ✅ **Applied live 2026-08-08** |
 | Migration `0004_exercise_metadata.sql` | ✅ Applied — exercises table restructured (muscle arrays + body_region + mechanic + modality; dropped `primary_muscle`/`category`) |
 
@@ -228,8 +229,9 @@ Static checks currently green: `tsc --noEmit` clean; `expo export --platform web
 `xcodebuild -allowProvisioningUpdates` builds + installs Release to physical hardware.
 **Feedback pass (`FEEDBACK-LOG.md`): 22 done** — ✅ #1 #2 #3 #4 #6 #7 #9 #10 #11 #13 #14 #15 #16
 #17 #18 #19 #20 #21 #26 #31 #32 (#12 dissolved by #13) · 🟡 #5 (fix applied — keyboard-avoidance;
-device-confirm pending) · ⬜ **open: #8 #23 #28 #36** · **withdrawn (won't do): #24 #25 #27 #29 #30**.
-**#22 (Liquid Glass): DONE 2026-08-12** — glass tab pill + FAB, device-verified on the iPhone 15 (iOS
+device-confirm pending) · ⬜ **open: #8 #23 #28 #34 #36** · **withdrawn (won't do): #24 #25 #27 #29 #30**.
+**#33 (active-workout resume bar) + #35 (PR records badge) DONE 2026-08-13** (bar sim+device-verified;
+badge sim-verified, RPC 0007 applied). **#22 (Liquid Glass): DONE 2026-08-12** — glass tab pill + FAB, device-verified on the iPhone 15 (iOS
 26.5.2); device-QA fixes landed (refraction, consistent FAB, cross-fade). **#36 (backlog):** authentic
 native-`UITabBar` drag-lens glass — deferred, keeping the custom pill+FAB.
 **#17 light theme: DONE** (full Greige+Moss light mode + System·Light·Dark toggle; device-confirm pending).
