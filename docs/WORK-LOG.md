@@ -7,6 +7,31 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-12 — "RepVoice Home Final": ring-date heatmap + volume rows (records deferred)
+
+Implemented the `RepVoice Home Final.dc.html` design (claude.ai/design), minus the PR records badge
+(deferred — see below). Sim-verified (light).
+
+- **Ring-date heatmap.** The heatmap cells are now **circles** (`HeatDot` in `index.tsx`): a worked day =
+  solid accent ring + faint `acc14` tint fill + accent number; **today** = dashed accent ring; every
+  other day = bare number in `t3`. Weekday labels kept. Dropped the rounded-square cells + the
+  worked/rest/skipped shading (design distinguishes only trained / today / other) and the today-glow.
+- **History rows recut to volume.** Rows are now `date · DOW · name · session volume` (`4.1k KG`),
+  replacing `N EXERCISES · N SETS · N MIN`. Added **`WorkoutListItem.volume_kg`** (Σ weight_kg × reps)
+  to `listWorkouts` (`workout_exercises(id, sets(weight_kg, reps))`, summed client-side). Dropped the
+  `HISTORY / N IN 30 DAYS` header (design omits it).
+- **Cache buster `rq-v1`→`rq-v2`** — the persisted `WorkoutListItem` shape changed (added `volume_kg`);
+  without the bump, hydrated old rows rendered `NaNk` (caught + fixed on the sim). UI also guards a
+  non-finite `volume_kg` → `—`.
+- **Deferred (backlog #35, bumped to HIGH):** the per-session PR "records" medal badge — needs accurate
+  per-session PR computation (RPC / full-history pass, not a loaded-pages approximation). Row's right
+  slot reserved.
+- **Kept the fade removed** (design re-includes a 150px bottom fade; left out per the device feedback
+  that it blanks the glass refraction). **Dark rings use the app's LED-lime `acc`**, not the design's
+  softer `#8FB877` — consistency with the established dark theme over the mockup's exact swatch.
+
+---
+
 ## 2026-08-12 — "RepVoice Home" redesign: single-line streak + liquid-glass tabs (#22)
 
 Implemented the `RepVoice Home.dc.html` design (claude.ai/design project "Whitespace reduction design

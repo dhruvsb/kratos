@@ -19,7 +19,7 @@ registerOnlineManager();
 // Bump this whenever a persisted row/query shape changes (the zod types in
 // src/types/db.ts). A changed buster makes PersistQueryClientProvider discard the
 // whole on-disk snapshot on restore instead of hydrating stale-shaped data.
-export const CACHE_BUSTER = 'rq-v1';
+export const CACHE_BUSTER = 'rq-v2'; // v2: WorkoutListItem gained volume_kg
 
 // How old a persisted snapshot may be before it's thrown away wholesale on cold
 // start and refetched. Generous so a returning user still gets instant paint days

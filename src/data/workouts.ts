@@ -20,6 +20,8 @@ export type WorkoutListItem = Workout & {
   routine_name: string | null;
   exercise_count: number;
   set_count: number;
+  /** Total volume for the session in kg: Σ weight_kg × reps across every set. */
+  volume_kg: number;
 };
 
 /** Client-chosen ids for an optimistic start: the UI seeds its cache with these
@@ -170,21 +172,28 @@ export async function listWorkouts(page = 0, pageSize = 20): Promise<WorkoutList
   const from = page * pageSize;
   const { data, error } = await supabase
     .from('workouts')
-    .select('*, routine:routines(name), workout_exercises(id, sets(count))')
+    .select('*, routine:routines(name), workout_exercises(id, sets(weight_kg, reps))')
     .not('ended_at', 'is', null)
     .order('started_at', { ascending: false })
     .range(from, from + pageSize - 1);
   if (error) throw error;
   return (data ?? []).map((w: any) => {
     const { workout_exercises, routine, ...workout } = w;
+    const wes = workout_exercises ?? [];
+    let setCount = 0;
+    let volume = 0;
+    for (const we of wes) {
+      for (const s of we.sets ?? []) {
+        setCount += 1;
+        volume += (s.weight_kg ?? 0) * (s.reps ?? 0);
+      }
+    }
     return {
       ...workout,
       routine_name: routine?.name ?? null,
-      exercise_count: (workout_exercises ?? []).length,
-      set_count: (workout_exercises ?? []).reduce(
-        (sum: number, we: any) => sum + (we.sets?.[0]?.count ?? 0),
-        0
-      ),
+      exercise_count: wes.length,
+      set_count: setCount,
+      volume_kg: volume,
     };
   });
 }

@@ -1,11 +1,11 @@
-// Home — "RepVoice Home" (single-line + liquid-glass tabs). Whitespace-reduced: a fixed
-// single-line streak header (dot · N DAY STREAK · BEST n) sits above a scrolling feed —
-// the rolling five-week heatmap then the recent history — which dissolves under a bottom
-// fade into the floating glass tab pill + green FAB. Replaces the earlier big-numeral
-// hero + scroll-pinned bar (docs/design: RepVoice Home.dc.html).
+// Home — "RepVoice Home Final" (ring dates + records). Whitespace-reduced: a fixed
+// single-line streak header, then a rolling five-week **ring-date** heatmap (each day a
+// circle — trained days get a filled accent ring, today a dashed ring), then the recent
+// workouts as rows of date · name · session volume. The floating glass tab pill + green
+// FAB dock at the bottom (content scrolls under the glass — no fade, so it has something
+// to refract). Per-session PR "records" badges are deferred (backlog #35, high pri).
 //
-// The running-workout resume state and the day-zero first-run state are deferred — see
-// docs/FEEDBACK-LOG.md #33/#34 (a live workout is still resumable via the shared start flow).
+// Running-workout resume + day-zero states are deferred — see docs/FEEDBACK-LOG.md #33/#34.
 import { router } from 'expo-router';
 import { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -15,17 +15,15 @@ import { HomeTabBar, TAB_BAR_HEIGHT } from '@/components/voice/TabBar';
 import { useWorkoutDays } from '@/data/calendar';
 import { useWorkoutList } from '@/data/hooks';
 import { startOfDay } from '@/lib/dates';
-import { computeStreak, type CellState, type HeatCell } from '@/lib/streak';
+import { computeStreak, type HeatCell } from '@/lib/streak';
 import { font, space, tracking, type Theme } from '@/theme/tokens';
 import { useTheme } from '@/theme/ThemeProvider';
 
-const DAY_MS = 86_400_000;
 const DOW = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 
 export default function HomeScreen() {
-  const { color, shadow } = useTheme();
-  const styles = useMemo(() => makeStyles(color, shadow), [color, shadow]);
+  const { color } = useTheme();
+  const styles = useMemo(() => makeStyles(color), [color]);
   const insets = useSafeAreaInsets();
   const days = useWorkoutDays(); // all finished-workout days — accurate streak + heatmap
   const history = useWorkoutList(); // paginated rows for the inline history list
@@ -38,13 +36,6 @@ export default function HomeScreen() {
   }, [days.data]);
 
   const { streak, best, cells } = useMemo(() => computeStreak(doneDays), [doneDays]);
-
-  const inThirty = useMemo(() => {
-    const cutoff = startOfDay(new Date()) - 29 * DAY_MS;
-    let c = 0;
-    for (const d of doneDays) if (d >= cutoff) c++;
-    return c;
-  }, [doneDays]);
 
   const workouts = history.data?.pages.flat() ?? [];
 
@@ -70,7 +61,7 @@ export default function HomeScreen() {
         contentContainerStyle={[styles.content, { paddingBottom: space.xl + TAB_BAR_HEIGHT }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Rolling five-week heatmap */}
+        {/* Rolling five-week ring-date heatmap */}
         <View style={styles.dowRow}>
           {DOW.map((d, i) => (
             <Text key={i} style={styles.dow}>
@@ -82,56 +73,46 @@ export default function HomeScreen() {
           {rows.map((row, ri) => (
             <View key={ri} style={styles.gridRow}>
               {row.map((cell, ci) => (
-                <HeatSquare key={ci} cell={cell} color={color} shadow={shadow} styles={styles} />
+                <HeatDot key={ci} cell={cell} color={color} styles={styles} />
               ))}
             </View>
           ))}
         </View>
 
-        {/* History */}
-        <View style={styles.histHead}>
-          <Text style={styles.section}>HISTORY</Text>
-          <Text style={styles.histCount}>{inThirty} IN 30 DAYS</Text>
-        </View>
-        {history.isLoading ? (
-          <Text style={styles.loading}>LOADING…</Text>
-        ) : workouts.length === 0 ? (
-          <Text style={styles.empty}>No workouts yet. Your history will fill in here.</Text>
-        ) : (
-          workouts.map((w) => {
-            const started = new Date(w.started_at);
-            const mins =
-              w.ended_at != null
-                ? Math.max(1, Math.round((new Date(w.ended_at).getTime() - started.getTime()) / 60000))
-                : null;
-            const meta = [
-              `${w.exercise_count} EXERCISE${w.exercise_count === 1 ? '' : 'S'}`,
-              `${w.set_count} SET${w.set_count === 1 ? '' : 'S'}`,
-              mins != null ? `${mins} MIN` : null,
-            ]
-              .filter(Boolean)
-              .join(' · ');
-            return (
-              <Pressable key={w.id} style={styles.histRow} onPress={() => router.push(`/history/${w.id}`)}>
-                <View style={styles.histDate}>
-                  <Text style={styles.histDd}>{String(started.getDate()).padStart(2, '0')}</Text>
-                  <Text style={styles.histMo}>{MONTHS[started.getMonth()]}</Text>
-                </View>
-                <View style={styles.histDivider} />
-                <View style={{ flex: 1, minWidth: 0 }}>
+        {/* Recent workouts — date · name · session volume (records badge = backlog #35) */}
+        <View style={styles.rowsBlock}>
+          {history.isLoading ? (
+            <Text style={styles.loading}>LOADING…</Text>
+          ) : workouts.length === 0 ? (
+            <Text style={styles.empty}>No workouts yet. Your history will fill in here.</Text>
+          ) : (
+            workouts.map((w) => {
+              const started = new Date(w.started_at);
+              const dow = started.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
+              // Guard a pre-volume_kg cached row (or a null) from rendering "NaNk".
+              const vol = Number.isFinite(w.volume_kg) ? `${(w.volume_kg / 1000).toFixed(1)}k` : '—';
+              return (
+                <Pressable key={w.id} style={styles.histRow} onPress={() => router.push(`/history/${w.id}`)}>
+                  <View style={styles.histDate}>
+                    <Text style={styles.histDd}>{String(started.getDate()).padStart(2, '0')}</Text>
+                    <Text style={styles.histDow}>{dow}</Text>
+                  </View>
                   <Text style={styles.histName} numberOfLines={1}>
                     {w.routine_name ?? 'Empty workout'}
                   </Text>
-                  <Text style={styles.histMeta}>{meta}</Text>
-                </View>
-              </Pressable>
-            );
-          })
-        )}
+                  <View style={styles.histVol}>
+                    <Text style={styles.histVolNum}>{vol}</Text>
+                    <Text style={styles.histVolUnit}>KG</Text>
+                  </View>
+                </Pressable>
+              );
+            })
+          )}
+        </View>
       </ScrollView>
 
-      {/* No bottom fade — the feed scrolls *under* the glass pill so the Liquid Glass has
-          live content to refract (a fade would blank the area behind it). */}
+      {/* No bottom fade — the feed scrolls *under* the glass pill so it has live content
+          to refract (a fade would blank the area behind it). */}
       <HomeTabBar active="home" withFab />
 
       {/* FAB + "MOST USED" quick-start sheet — overlays everything, incl. the tab pill. */}
@@ -140,32 +121,24 @@ export default function HomeScreen() {
   );
 }
 
-// One heatmap square. Its fill/border/text depend on the day's rest-tolerant state;
-// today keeps its state colour and gains an accent ring.
-function HeatSquare({
+// One heatmap day as a ring-date circle: worked days get a solid accent ring + faint
+// tint fill, today a dashed accent ring, every other day just its number.
+function HeatDot({
   cell,
   color,
-  shadow,
   styles,
 }: {
   cell: HeatCell;
   color: Theme['color'];
-  shadow: Theme['shadow'];
   styles: ReturnType<typeof makeStyles>;
 }) {
-  const look = cellLook(cell.state, color);
+  const look = cellLook(cell, color);
   return (
     <View style={styles.cellWrap}>
       <View
         style={[
           styles.cell,
-          {
-            backgroundColor: look.bg,
-            borderColor: cell.isToday ? color.acc : look.border,
-            borderStyle: look.dashed ? 'dashed' : 'solid',
-            borderWidth: cell.isToday ? 1.5 : 1,
-          },
-          cell.isToday && cell.state === 'worked' && shadow.glowSm,
+          { borderColor: look.ring, borderStyle: look.dashed ? 'dashed' : 'solid', backgroundColor: look.bg },
         ]}
       >
         <Text style={[styles.cellNum, { color: look.fg }]}>{cell.n}</Text>
@@ -174,21 +147,13 @@ function HeatSquare({
   );
 }
 
-function cellLook(state: CellState | 'future', color: Theme['color']) {
-  switch (state) {
-    case 'worked':
-      return { bg: color.acc, border: color.acc, fg: color.accInk, dashed: false };
-    case 'rest':
-      return { bg: color.acc06, border: color.acc14, fg: color.t2, dashed: false };
-    case 'skipped':
-      return { bg: 'transparent', border: color.line2, fg: color.t3, dashed: true };
-    case 'future':
-    default:
-      return { bg: 'transparent', border: color.line, fg: color.t3, dashed: false };
-  }
+function cellLook(cell: HeatCell, color: Theme['color']) {
+  if (cell.isToday) return { ring: color.acc, dashed: true, bg: 'transparent', fg: color.acc };
+  if (cell.state === 'worked') return { ring: color.acc, dashed: false, bg: color.acc14, fg: color.acc };
+  return { ring: 'transparent', dashed: false, bg: 'transparent', fg: color.t3 };
 }
 
-const makeStyles = (color: Theme['color'], shadow: Theme['shadow']) =>
+const makeStyles = (color: Theme['color']) =>
   StyleSheet.create({
     screen: { flex: 1, backgroundColor: color.bg },
     content: { paddingHorizontal: space.xxl, paddingTop: space.lg },
@@ -200,39 +165,39 @@ const makeStyles = (color: Theme['color'], shadow: Theme['shadow']) =>
     streakRule: { flex: 1, height: 1, backgroundColor: color.line },
     streakBest: { fontFamily: font.num, fontSize: 15, letterSpacing: 1.4, color: color.t3 },
 
-    // Heatmap
-    dowRow: { flexDirection: 'row', gap: 6, marginTop: space.sm },
-    dow: { flex: 1, textAlign: 'center', fontFamily: font.numSemibold, fontSize: 8, letterSpacing: 1, color: color.t3 },
-    grid: { marginTop: 8, gap: 6 },
-    gridRow: { flexDirection: 'row', gap: 6 },
-    cellWrap: { flex: 1 },
-    cell: { aspectRatio: 1, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
-    cellNum: { fontFamily: font.numSemibold, fontSize: 11 },
-
-    // History
-    section: { fontFamily: font.numSemibold, fontSize: 8, letterSpacing: tracking.wide, color: color.t3 },
-    histHead: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'baseline',
-      marginTop: space.xxl + 6,
-      marginBottom: 2,
+    // Ring-date heatmap
+    dowRow: { flexDirection: 'row', marginTop: space.sm, marginBottom: 4 },
+    dow: { flex: 1, textAlign: 'center', fontFamily: font.num, fontSize: 10, letterSpacing: 0.6, color: color.t3 },
+    grid: { marginTop: 6, gap: 8 },
+    gridRow: { flexDirection: 'row', gap: 4 },
+    cellWrap: { flex: 1, alignItems: 'center' },
+    cell: {
+      width: 42,
+      height: 42,
+      borderRadius: 21,
+      borderWidth: 2,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
-    histCount: { fontFamily: font.numSemibold, fontSize: 9, letterSpacing: 1.2, color: color.t3 },
+    cellNum: { fontFamily: font.uiSemibold, fontSize: 14 },
+
+    // Recent workouts
+    rowsBlock: { marginTop: space.xxl },
     loading: { fontFamily: font.numSemibold, fontSize: 11, color: color.t3, marginTop: space.md },
     empty: { fontFamily: font.num, fontSize: 11.5, lineHeight: 20, color: color.t2, marginTop: space.md },
     histRow: {
       flexDirection: 'row',
-      gap: 14,
       alignItems: 'center',
-      paddingVertical: 16,
-      borderBottomWidth: 1,
-      borderBottomColor: color.line,
+      gap: 14,
+      paddingVertical: 13,
+      borderTopWidth: 1,
+      borderTopColor: color.line,
     },
-    histDate: { width: 34, alignItems: 'center' },
-    histDd: { fontFamily: font.numSemibold, fontSize: 14, color: color.t1 },
-    histMo: { fontFamily: font.numSemibold, fontSize: 8, letterSpacing: 1, color: color.t3, marginTop: 3 },
-    histDivider: { width: 1, alignSelf: 'stretch', backgroundColor: color.line },
-    histName: { fontFamily: font.uiMedium, fontSize: 14, color: color.t1 },
-    histMeta: { fontFamily: font.num, fontSize: 9.5, letterSpacing: 0.6, color: color.t3, marginTop: 5 },
+    histDate: { width: 44 },
+    histDd: { fontFamily: font.uiSemibold, fontSize: 15, color: color.t1 },
+    histDow: { fontFamily: font.num, fontSize: 9, letterSpacing: 1, color: color.t3, marginTop: 5 },
+    histName: { flex: 1, fontFamily: font.ui, fontSize: 17, color: color.t1 },
+    histVol: { width: 76, alignItems: 'flex-end' },
+    histVolNum: { fontFamily: font.uiSemibold, fontSize: 14, color: color.t1 },
+    histVolUnit: { fontFamily: font.num, fontSize: 9, letterSpacing: 1, color: color.t3, marginTop: 5 },
   });

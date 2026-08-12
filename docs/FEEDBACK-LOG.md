@@ -42,7 +42,7 @@ the two states the mockup doesn't draw, plus one data nicety, as backlog.
 |---|------|------|-------|-----|--------|
 | 33 | Running-workout resume state absent from the new Home | Home / active workout | ⬜ Open | Med | S–M |
 | 34 | Day-zero (first-run) state absent from the new Home | Home / onboarding | ⬜ Open | Low–Med | S |
-| 35 | History rows lack the mockup's `+N PR` / `REST` tags | Home / history | ⬜ Open | Low | M |
+| 35 | Per-session **PR "records" badge** on history rows (medal + count) | Home / history | ⬜ Open (**HIGH pri** — deferred from `RepVoice Home Final`) | **High** | M |
 
 ### 33. Bring back the running-workout resume affordance ⬜ Med
 The old Home (mockup 16) showed a "STILL RUNNING" card — resume / finish now / discard — when a
@@ -58,12 +58,19 @@ the new Home a brand-new user sees streak `0`, an all-empty heatmap, and an empt
 (`No workouts yet…`) — functional but not a designed welcome. Follow-up: a proper day-zero treatment
 (and the ROUTINES tab already has its own empty state).
 
-### 35. History PR / REST tags ⬜ Low
-The mockup tags rows `+2 PR` (accent) / `REST` (dim). The `useWorkoutList()` payload
-(`WorkoutListItem`) doesn't carry PR info, and there are no "rest day" rows in real history (history
-is finished workouts only). Rows currently show date · name · `N EXERCISES · N SETS · N MIN`.
-Follow-up: compute per-workout PRs (cf. `getExerciseBests` used by the finish summary) if we want
-the tag — cost/benefit TBD.
+### 35. Per-session PR "records" badge ⬜ **High** — deferred from `RepVoice Home Final` (2026-08-12)
+The `RepVoice Home Final.dc.html` design puts a **medal badge + PR count** (e.g. `🏅 3`, or `—` when
+none) at the right of each history row. **Deferred by product call (2026-08-12): do PR later, HIGH pri.**
+The rest of that design shipped same-day: **ring-date circular heatmap** and history rows recut to
+**date · DOW · name · session volume** (`WorkoutListItem.volume_kg`, Σ weight_kg × reps, added to
+`listWorkouts`). What's missing is only the records badge.
+**Why it's non-trivial:** `WorkoutListItem` carries no PR info, and a per-session PR count means, for
+each exercise in the session, deciding whether that day beat its all-time best *before* that day. Doing
+it accurately over paginated history needs either an RPC (`getExerciseBests` in `workouts.ts` is the
+single-exercise primitive to generalize) or a full-history pass — a naive client compute over only the
+loaded pages over-counts the oldest loaded session. Build it right (RPC or a dedicated aggregate) rather
+than approximate, since it's a headline "records" feature. When done, drop the badge into the reserved
+right slot of the history row in `src/app/index.tsx`.
 
 ---
 
