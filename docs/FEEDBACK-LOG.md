@@ -40,17 +40,28 @@ the two states the mockup doesn't draw, plus one data nicety, as backlog.
 
 | # | Item | Area | Done? | Sev | Effort |
 |---|------|------|-------|-----|--------|
-| 33 | Running-workout resume state absent from the new Home | Home / active workout | ⬜ Open | Med | S–M |
+| 33 | Running-workout resume state absent from the new Home | Home / active workout | ✅ DONE (persistent active-workout bar, 2026-08-13) | Med | S–M |
 | 34 | Day-zero (first-run) state absent from the new Home | Home / onboarding | ⬜ Open | Low–Med | S |
 | 35 | Per-session **PR "records" badge** on history rows (medal + count) | Home / history | ⬜ Open (**HIGH pri** — deferred from `RepVoice Home Final`) | **High** | M |
 
-### 33. Bring back the running-workout resume affordance ⬜ Med
+### 33. Bring back the running-workout resume affordance ✅ Med — **done 2026-08-13**
+**Done (2026-08-13):** a persistent **active-workout bar** (Hevy-style; `components/workout/ActiveWorkoutBar.tsx`)
+floats just above the tab pill on Home / Routines / Settings whenever a workout is in progress — green dot ·
+routine name · `IN PROGRESS · {live ElapsedClock}` · `RESUME →` · a trash/discard control (confirm →
+`useDiscardWorkout`). Tapping the bar `router.push`es back into `/workout/[id]`. It's driven by
+`useActiveWorkout`, so it **re-appears automatically after an app kill/relaunch** (the workout is persisted,
+#32) — verified on the simulator (bar present on a cold start, timer ticking). Rendered per-screen (before
+each screen's `HomeQuickStart`, so the MOST USED sheet layers over it); an earlier global `_layout` render
+was dropped because `usePathname()` in the root-layout position didn't resolve the tab route. Device pass
+next. Sim-verified on Home + Routines.
+<details><summary>Original interim note (2026-08-09)</summary>
 The old Home (mockup 16) showed a "STILL RUNNING" card — resume / finish now / discard — when a
 workout was left active. The Rolling Weeks Home doesn't draw one. **Interim safeguard in place:** a
 live workout is never a hard dead-end — the shared start flow (`src/data/useStartWorkoutFlow.ts`,
 used by the ROUTINES tab and the Phase-2 `+` sheet) routes straight to the active workout if one
 exists (`if (activeId) router.push('/workout/'+activeId)`). Follow-up: a first-class resume banner
 atop the new Home (or a state on the streak hero) so it's visible, not just reachable.
+</details>
 
 ### 34. Day-zero (first-run) state on the new Home ⬜ Low–Med
 The old Home had a mockup-14 empty state (two doors into the first workout + starter templates). On

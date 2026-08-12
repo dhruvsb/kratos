@@ -8,6 +8,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HomeQuickStart } from '@/components/home/HomeQuickStart';
 import { HomeTabBar, TAB_BAR_HEIGHT } from '@/components/voice/TabBar';
+import { ActiveWorkoutBar } from '@/components/workout/ActiveWorkoutBar';
 import { useRoutines, useWorkoutList } from '@/data/hooks';
 import { useStartWorkoutFlow } from '@/data/useStartWorkoutFlow';
 import { agoLabel } from '@/lib/dates';
@@ -83,6 +84,7 @@ export default function RoutinesScreen() {
       </ScrollView>
 
       <HomeTabBar active="routines" withFab />
+      <ActiveWorkoutBar />
       <HomeQuickStart />
     </View>
   );

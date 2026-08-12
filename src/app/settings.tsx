@@ -15,6 +15,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HomeQuickStart } from '@/components/home/HomeQuickStart';
 import { HomeTabBar, TAB_BAR_HEIGHT } from '@/components/voice/TabBar';
+import { ActiveWorkoutBar } from '@/components/workout/ActiveWorkoutBar';
 import { deleteAccount, getSession, signOut } from '@/data/auth';
 import { useProfile, useUpdateProfile } from '@/data/hooks';
 import { GOAL_PRESETS, THEME_MODES, useSettings, useUpdateSettings } from '@/data/settings';
@@ -256,6 +257,7 @@ export default function SettingsScreen() {
       </ScrollView>
 
       <HomeTabBar active="account" withFab />
+      <ActiveWorkoutBar />
       <HomeQuickStart />
     </View>
   );

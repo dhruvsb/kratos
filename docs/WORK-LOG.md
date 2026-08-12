@@ -7,6 +7,22 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-13 — Persistent active-workout bar (#33, Hevy-style)
+
+User ask (Hevy inspiration): a persistent bar showing the in-progress workout so it's never lost /
+accidentally closed. Reassurance given: durability is already handled (#32 — sets persist to disk, survive
+a kill); what was missing is the *visible* affordance. Built `components/workout/ActiveWorkoutBar.tsx`: a
+pill above the tab chrome (green dot · routine name · `IN PROGRESS · {live ElapsedClock}` · `RESUME →` ·
+trash→`useDiscardWorkout` with confirm), tap → `router.push('/workout/[id]')`. Driven by `useActiveWorkout`,
+so it re-appears after a relaunch (persisted workout). **First tried global in `_layout`** with a
+`usePathname()` tab-route guard — the bar never showed because `usePathname()` in the root-layout position
+(sibling of `<Stack>`) didn't resolve to the active route. **Switched to per-screen**: rendered in
+`index`/`routines`/`settings` before each `HomeQuickStart` (so the MOST USED sheet layers over it), no
+pathname dependency. Sim-verified: bar on Home + Routines, timer ticking, present on a cold start, sheet
+covers it. Closes feedback #33. Device pass next.
+
+---
+
 ## 2026-08-12 — Fix: START buttons dead whenever a workout is active
 
 Device report: "can't click any start button for any routine." Root cause (pre-existing, not the

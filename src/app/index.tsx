@@ -12,6 +12,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HomeQuickStart } from '@/components/home/HomeQuickStart';
 import { HomeTabBar, TAB_BAR_HEIGHT } from '@/components/voice/TabBar';
+import { ActiveWorkoutBar } from '@/components/workout/ActiveWorkoutBar';
 import { useWorkoutDays } from '@/data/calendar';
 import { useWorkoutList } from '@/data/hooks';
 import { startOfDay } from '@/lib/dates';
@@ -114,6 +115,9 @@ export default function HomeScreen() {
       {/* No bottom fade — the feed scrolls *under* the glass pill so it has live content
           to refract (a fade would blank the area behind it). */}
       <HomeTabBar active="home" withFab />
+
+      {/* Persistent active-workout bar (above the pill; null when nothing's running). */}
+      <ActiveWorkoutBar />
 
       {/* FAB + "MOST USED" quick-start sheet — overlays everything, incl. the tab pill. */}
       <HomeQuickStart />
