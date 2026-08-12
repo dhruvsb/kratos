@@ -37,6 +37,7 @@ export const keys = {
   activeWorkout: ['activeWorkout'] as const,
   workout: (id: string) => ['workout', id] as const,
   workoutList: ['workoutList'] as const,
+  workoutPrCounts: ['workoutPrCounts'] as const,
   lastSession: (exerciseId: string, exclude?: string) =>
     ['lastSession', exerciseId, exclude ?? null] as const,
   exerciseHistory: (exerciseId: string) => ['exerciseHistory', exerciseId] as const,
@@ -60,6 +61,7 @@ const STALE = {
   activeWorkout: 30 * 1000, // cheap pointer; keep it fairly fresh
   workout: MINUTE, // set writes invalidate; this just stops the remount refetch-flash
   workoutList: 5 * MINUTE, // finishing / deleting a workout invalidates
+  workoutPrCounts: 5 * MINUTE, // recomputed on finish/discard/delete (same as the list)
   lastSession: 5 * MINUTE, // doesn't change mid-workout
   exerciseHistory: 5 * MINUTE, // finishing / deleting invalidates
 } as const;
@@ -177,6 +179,16 @@ export function useWorkoutList() {
     getNextPageParam: (lastPage, pages) =>
       lastPage.length < PAGE_SIZE ? undefined : pages.length,
     staleTime: STALE.workoutList,
+  });
+}
+
+/** Per-workout PR counts (feedback #35), keyed by workout id. Recomputed whenever a
+ *  workout finishes/discards/deletes (those invalidate this key alongside the list). */
+export function useWorkoutPrCounts() {
+  return useQuery({
+    queryKey: keys.workoutPrCounts,
+    queryFn: workouts.getWorkoutPrCounts,
+    staleTime: STALE.workoutPrCounts,
   });
 }
 
@@ -439,6 +451,7 @@ export function useFinishWorkout(workoutId: string) {
     onSettled: () => {
       void qc.invalidateQueries({ queryKey: keys.activeWorkout });
       void qc.invalidateQueries({ queryKey: keys.workoutList });
+      void qc.invalidateQueries({ queryKey: keys.workoutPrCounts }); // this session may set PRs
       void qc.invalidateQueries({ queryKey: keys.workout(workoutId) });
       // Finished workout becomes someone's "last session".
       void qc.invalidateQueries({ queryKey: ['lastSession'] });
@@ -478,6 +491,8 @@ export function useDiscardWorkout(workoutId: string) {
     onSettled: () => {
       void qc.invalidateQueries({ queryKey: keys.activeWorkout });
       void qc.invalidateQueries({ queryKey: keys.workoutList });
+      // Removing a workout can change whether *later* sessions were PRs.
+      void qc.invalidateQueries({ queryKey: keys.workoutPrCounts });
     },
   });
 
@@ -495,6 +510,7 @@ export function useDeleteWorkout(workoutId: string) {
     mutationFn: () => workouts.discardWorkout(workoutId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: keys.workoutList });
+      qc.invalidateQueries({ queryKey: keys.workoutPrCounts });
       qc.invalidateQueries({ queryKey: keys.activeWorkout });
       qc.removeQueries({ queryKey: keys.workout(workoutId) });
       qc.invalidateQueries({ queryKey: ['lastSession'] });

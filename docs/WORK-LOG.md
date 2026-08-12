@@ -7,6 +7,20 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-13 — PR "records" badge on history rows (#35)
+
+Built the deferred records badge. **PR = heaviest weight among a session's reps-≥-6 sets strictly beating
+every earlier session of that exercise** (user's definition — the rep floor filters ego singles; first
+qualifying session counts; reps<6 / null-weight excluded). Per-workout counts come from a new SECURITY
+DEFINER RPC **`workout_pr_counts()`** (migration `0007`, auth.uid()-scoped, window `max(...) rows between
+unbounded preceding and 1 preceding` for the prior-session best) — server-side because it must see all
+history. Wired `getWorkoutPrCounts` → `useWorkoutPrCounts` (invalidated on finish/discard/delete); the Home
+history row's reserved right slot now shows a medal + count (`PrBadge`, the design's SVG) or `—`. `tsc`
+green. **Needs migration `0007` applied to the live DB** — until then the RPC 404s and rows show `—`.
+Closes #35 (pending apply).
+
+---
+
 ## 2026-08-13 — Persistent active-workout bar (#33, Hevy-style)
 
 User ask (Hevy inspiration): a persistent bar showing the in-progress workout so it's never lost /

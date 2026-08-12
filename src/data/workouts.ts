@@ -198,6 +198,19 @@ export async function listWorkouts(page = 0, pageSize = 20): Promise<WorkoutList
   });
 }
 
+/** Per-workout PR ("records") counts, keyed by workout id (feedback #35). A workout not
+ *  in the map has 0 PRs. Computed by the `workout_pr_counts` RPC (migration 0007) —
+ *  heaviest weight among reps-≥-6 sets beating every earlier session of that exercise. */
+export async function getWorkoutPrCounts(): Promise<Record<string, number>> {
+  const { data, error } = await supabase.rpc('workout_pr_counts');
+  if (error) throw error;
+  const map: Record<string, number> = {};
+  for (const row of (data ?? []) as { workout_id: string; pr_count: number }[]) {
+    map[row.workout_id] = row.pr_count;
+  }
+  return map;
+}
+
 /** With a `preset` (id + position chosen from the cached workout detail) the
  *  position SELECT is skipped and the row lands under the client's id — same
  *  optimistic contract as startWorkout's preset. */

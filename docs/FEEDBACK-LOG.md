@@ -42,7 +42,7 @@ the two states the mockup doesn't draw, plus one data nicety, as backlog.
 |---|------|------|-------|-----|--------|
 | 33 | Running-workout resume state absent from the new Home | Home / active workout | ✅ DONE (persistent active-workout bar, 2026-08-13) | Med | S–M |
 | 34 | Day-zero (first-run) state absent from the new Home | Home / onboarding | ⬜ Open | Low–Med | S |
-| 35 | Per-session **PR "records" badge** on history rows (medal + count) | Home / history | ⬜ Open (**HIGH pri** — deferred from `RepVoice Home Final`) | **High** | M |
+| 35 | Per-session **PR "records" badge** on history rows (medal + count) | Home / history | ✅ DONE (code 2026-08-13) — **needs migration 0007 applied** | **High** | M |
 
 ### 33. Bring back the running-workout resume affordance ✅ Med — **done 2026-08-13**
 **Done (2026-08-13):** a persistent **active-workout bar** (Hevy-style; `components/workout/ActiveWorkoutBar.tsx`)
@@ -69,7 +69,18 @@ the new Home a brand-new user sees streak `0`, an all-empty heatmap, and an empt
 (`No workouts yet…`) — functional but not a designed welcome. Follow-up: a proper day-zero treatment
 (and the ROUTINES tab already has its own empty state).
 
-### 35. Per-session PR "records" badge ⬜ **High** — deferred from `RepVoice Home Final` (2026-08-12)
+### 35. Per-session PR "records" badge ✅ **High** — done (code) 2026-08-13; **apply migration 0007**
+**Done (2026-08-13):** medal badge + PR count in the reserved right slot of each Home history row
+(`PrBadge` in `index.tsx`; the design's medal SVG). **PR definition (product decision):** for an exercise,
+a finished session PRs when the heaviest weight among its **reps-≥-6** sets is strictly greater than the
+heaviest such weight of every *earlier* session; the first qualifying session counts; sets with reps < 6 /
+null reps / null weight are excluded. A workout's badge = how many of its exercises PR'd that day.
+Computed server-side by **`workout_pr_counts()` RPC (migration `0007`, SECURITY DEFINER, auth.uid()-scoped)**
+— accurate over all history (a client compute over loaded pages would over-count the oldest). Wired via
+`getWorkoutPrCounts` → `useWorkoutPrCounts` (`['workoutPrCounts']`), invalidated on finish/discard/delete.
+Rows with 0 PRs show `—`. **User action: apply `supabase/migrations/0007_workout_pr_counts.sql` to the live
+DB** — until then the RPC 404s, the query errors, and every row shows `—` (harmless). `tsc` green.
+<details><summary>Original scope + earlier deferral note</summary>
 The `RepVoice Home Final.dc.html` design puts a **medal badge + PR count** (e.g. `🏅 3`, or `—` when
 none) at the right of each history row. **Deferred by product call (2026-08-12): do PR later, HIGH pri.**
 The rest of that design shipped same-day: **ring-date circular heatmap** and history rows recut to
@@ -82,6 +93,7 @@ single-exercise primitive to generalize) or a full-history pass — a naive clie
 loaded pages over-counts the oldest loaded session. Build it right (RPC or a dedicated aggregate) rather
 than approximate, since it's a headline "records" feature. When done, drop the badge into the reserved
 right slot of the history row in `src/app/index.tsx`.
+</details>
 
 ---
 
