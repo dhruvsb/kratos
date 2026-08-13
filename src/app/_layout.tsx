@@ -140,10 +140,15 @@ function AppContent({ session }: { session: Session | null }) {
 
   return (
     <>
+      {/* No `statusBarStyle` here: that's react-native-screens' per-screen control,
+          which needs UIViewControllerBasedStatusBarAppearance=YES — but the global
+          <StatusBar> above (expo-status-bar → RCTStatusBarManager) requires NO, and
+          the two together threw at every launch. The app only ever wants one
+          theme-derived style, so the global one owns it (and covers the sign-in
+          screen, which renders outside this Stack). */}
       <Stack
         screenOptions={{
           headerShown: false,
-          statusBarStyle: barStyle,
           contentStyle: { backgroundColor: color.bg },
         }}
       >

@@ -34,6 +34,12 @@ import { haptics } from '@/lib/haptics';
 import { font, radius, space, tracking, type Theme } from '@/theme/tokens';
 import { useTheme } from '@/theme/ThemeProvider';
 
+// MUST be module-level: `useAudioRecorder` re-creates the recorder whenever the
+// options identity changes, and `useAudioRecorderState` re-renders this screen
+// every 100ms — an inline object would build a new recorder on every one of those
+// renders, saturating the JS thread (frozen timer/meter, dead buttons).
+const RECORDING_OPTIONS = { ...RecordingPresets.HIGH_QUALITY, isMeteringEnabled: true };
+
 function mmss(totalSec: number): string {
   const m = Math.floor(totalSec / 60);
   const s = totalSec % 60;
@@ -58,8 +64,9 @@ export default function VoiceRecordScreen() {
   const [error, setError] = useState<string | null>(null);
 
   // Real recorder (only driven when !MOCK_VOICE). Hooks must run unconditionally.
-  const recorder = useAudioRecorder({ ...RecordingPresets.HIGH_QUALITY, isMeteringEnabled: true });
-  const recorderState = useAudioRecorderState(recorder, 100);
+  const recorder = useAudioRecorder(RECORDING_OPTIONS);
+  // 250ms is plenty for a timer + level meter, and a third of the re-renders.
+  const recorderState = useAudioRecorderState(recorder, 250);
   const startedRef = useRef(false);
 
   // Mock timer/meter (only driven when MOCK_VOICE).
