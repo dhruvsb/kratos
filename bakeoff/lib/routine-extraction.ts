@@ -25,7 +25,9 @@ export async function extractRoutine(
     system: ROUTINE_EXTRACTION_SYSTEM_PROMPT,
     user: JSON.stringify({ transcript }),
     schema: ROUTINE_JSON_SCHEMA,
-    maxTokens: 1024,
+    // A 12-exercise routine with evidence-ish mention strings can exceed 1024
+    // (Groq's 01.m4a transcript hit the cap and threw "output truncated").
+    maxTokens: 4096,
   });
   return { extraction: routineExtractionSchema.parse(json), usage };
 }

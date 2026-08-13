@@ -9,11 +9,13 @@
  *              ('en-IN' -> 'en').
  *
  * TWO variants are registered so they can be compared head-to-head:
- *   - `openai`           gpt-4o-transcribe   (released 2025-03-20)
- *   - `openai-next`      gpt-transcribe      (released 2026-07-28; OpenAI's
- *                        currently RECOMMENDED transcription model, and cheaper
- *                        — ~$0.0045/min vs ~$0.006/min)
- * Override either with BAKEOFF_OPENAI_MODEL / BAKEOFF_OPENAI_NEXT_MODEL.
+ *   - `openai`      gpt-transcribe     ← THE CHOSEN ASR (decided 2026-08-13).
+ *                   Released 2026-07-28; OpenAI's currently recommended
+ *                   transcription model, ~$0.0045/min, ~20% faster than the 4o
+ *                   model on this corpus. See PROJECT-SUMMARY-PHASE2.md §5.
+ *   - `openai-4o`   gpt-4o-transcribe  (released 2025-03-20) — kept as the
+ *                   comparison baseline; it was the previous default.
+ * Override either with BAKEOFF_OPENAI_MODEL / BAKEOFF_OPENAI_4O_MODEL.
  */
 import type { AsrProvider } from './types.ts';
 import { baseLanguage, errored, fetchWithRetry, ok, readAudio, safeText, skipped } from './http.ts';
@@ -65,14 +67,16 @@ function makeOpenAiProvider(id: string, label: string, model: string): AsrProvid
   };
 }
 
+/** The chosen ASR — see the header note. */
 export const openaiProvider = makeOpenAiProvider(
   'openai',
-  'OpenAI',
-  process.env.BAKEOFF_OPENAI_MODEL ?? 'gpt-4o-transcribe'
+  'OpenAI (GPT-Transcribe)',
+  process.env.BAKEOFF_OPENAI_MODEL ?? 'gpt-transcribe'
 );
 
-export const openaiNextProvider = makeOpenAiProvider(
-  'openai-next',
-  'OpenAI (GPT-Transcribe)',
-  process.env.BAKEOFF_OPENAI_NEXT_MODEL ?? 'gpt-transcribe'
+/** Previous default, kept as the comparison baseline. */
+export const openai4oProvider = makeOpenAiProvider(
+  'openai-4o',
+  'OpenAI (GPT-4o Transcribe)',
+  process.env.BAKEOFF_OPENAI_4O_MODEL ?? 'gpt-4o-transcribe'
 );

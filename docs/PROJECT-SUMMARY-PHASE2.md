@@ -105,20 +105,44 @@ answer, which keeps typical cost near a single LLM call.
 
 ## 5. Key decisions & rationale
 
-- **ASR (speech→text) provider: OpenAI `gpt-4o-transcribe`** (decided 2026-08-13 from the
-  `bakeoff/` harness — see WORK-LOG). Chosen over Groq (Whisper), Deepgram Nova-3, and
-  AssemblyAI on a 10-recording personal corpus (Indian-accented English, background gym
-  noise). Rationale: (1) tied for best on the product metric — 100% workout exact-match,
-  same as AssemblyAI + Deepgram; (2) **one vendor** — it's already the extraction provider,
-  so ASR+parse share a key/Edge Function; (3) it is **not a Whisper model**, and the one
-  dangerous failure the bakeoff found — Groq/Whisper **silently dropping a whole exercise**
-  (valid-looking JSON, no flag) — didn't occur on it. Low-regret because the STT seam
-  (`src/lib/stt.ts`) + the `bakeoff/providers/` adapters make switching a config change.
-  **Standing caveat:** silent omission is invisible to WER/NEER *and* to "just watch it in
-  real use" — so the real flow must keep a **glanceable commit-time confirmation** (enough
-  that a *missing exercise* is visible), not blind auto-commit. n=5 workouts chose the
-  direction, doesn't certify reliability; keep harvesting (`voice_logs` +
-  `scripts/harvest-eval-cases.ts`) and re-run `npm run bake` if OpenAI ever disappoints.
+- **ASR (speech→text): OpenAI `gpt-transcribe`** — FINAL as of 2026-08-13 (released
+  2026-07-28; OpenAI's current recommended transcription model, ~$0.0045/min). Decided from
+  the `bakeoff/` harness on a 10-recording personal corpus (Indian-accented English, **with
+  background gym noise**) vs Groq/Whisper, Deepgram Nova-3, AssemblyAI, and the older
+  `gpt-4o-transcribe`. It is the `openai` provider in `bakeoff/providers/openai.ts`;
+  `openai-4o` is kept as the comparison baseline.
+  **Chosen on structural grounds, NOT on a measured accuracy win** — see the honesty note
+  below. Reasons: newest + vendor-recommended; ~20% faster than gpt-4o-transcribe (2135ms vs
+  2631ms); cheaper; **one vendor** (already the extraction provider, so ASR+parse share a key
+  and Edge Function); and it is **not a Whisper model** — Groq/Whisper produced the one
+  genuinely dangerous failure below. Low-regret: the `src/lib/stt.ts` seam + the
+  `bakeoff/providers/` adapters make switching a config change.
+- **LLM (extraction): OpenAI `gpt-5.6-luna`** — FINAL, unchanged. Re-confirmed 2026-08-13
+  that GPT-5.6 is still the current generation (no successor family) and Luna is the cheapest
+  tier that supports structured outputs, which is the hard requirement. ⚠ **Its price was cut
+  ~80% on 2026-07-30** — `prices.ts` was updated (Luna $1.00/$6.00 → **$0.20/$1.20**), so cost
+  telemetry before 2026-08-13 overstated spend ~5×.
+- **Bakeoff results + the honesty caveat (read before trusting any number above).** On the
+  final clean run (0 failures): `gpt-transcribe` and AssemblyAI hit 100% workout exact-match,
+  `gpt-4o-transcribe`/Groq/Deepgram 80%. **But the same cached transcripts scored differently
+  across two runs** (gpt-4o-transcribe moved 100% → 80%), because the extraction LLM is
+  non-deterministic — at n=5 one flip is 20 points. **These five models are NOT
+  distinguishable on this corpus.** Suspected cause: `llm.ts` never sets `temperature`, so it
+  runs at the API default (1.0) for a task that should be deterministic — **fixing that to 0
+  is the top open follow-up.** Findings that WERE stable across every run:
+  1. **Groq silently dropped a whole exercise** (valid JSON, perfect numbers, one exercise
+     gone) — the scariest failure class, and invisible to WER/NEER *and* to "I'll notice it
+     in real use." ⇒ the real flow must keep a **glanceable commit-time confirmation** where a
+     *missing exercise* is visible; never blind auto-commit.
+  2. **Routine-name extraction is the weak spot for every provider** ("Leg Day" → "leg day
+     routine", "Pull Day" → "full day"). ⇒ when routine-creation is built, resolve the name
+     against the user's existing routines (a closed set), exactly like exercises.
+  3. **The closed-vocabulary exercise resolver is excellent** — 98–100% everywhere, every run.
+     The never-free-generate design works; don't weaken it.
+  4. Self-corrections mid-utterance are genuinely hard (file 06 flipped intent to
+     `correct_last`) — worth explicit prompt coverage.
+  n=5 per intent chose a direction; it does not certify reliability. Keep harvesting
+  (`voice_logs` + `scripts/harvest-eval-cases.ts`) and re-run `npm run bake`.
 - **Provider: OpenAI, GPT-5.6 family** (switched from Anthropic on 2026-07-19 — user has an
   OpenAI key, not an Anthropic one). Day-to-day parsing uses `gpt-5.6-luna`
   (`PARSE_MODEL_DEFAULT` in `prices.ts` — the cheap $1/$6-per-1M high-volume tier); the

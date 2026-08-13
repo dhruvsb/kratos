@@ -7,7 +7,49 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
-## 2026-08-13 — Voice-model bakeoff: ASR chosen (OpenAI `gpt-4o-transcribe`)
+## 2026-08-13 (later) — Bakeoff corrected; models FINALISED (`gpt-transcribe` + `gpt-5.6-luna`)
+
+Supersedes the entry below, which reported numbers produced by a **broken harness**. A
+question about whether `gpt-4o-transcribe` was current turned up three separate problems.
+
+**Bugs found and fixed (all committed):**
+1. **`bakeoff/lib/catalog.ts` — unbound method.** `const rpc = this.db.rpc` detached the
+   method from the Supabase client (`this === undefined` → "Cannot read properties of
+   undefined (reading 'rest')"). Every transcript needing a fuzzy exercise lookup threw.
+2. **`bakeoff/commands/score.ts` — percentages hid the failures.** Those throws were
+   swallowed into a console warning and the percentages computed over only the survivors, so
+   a run where **3 of 5 workouts crashed displayed as "100% workout EM."** The earlier
+   entry's headline numbers were therefore invalid. Tables now carry `scored` + `FAILED`
+   columns and print a warning banner whenever anything throws.
+3. **Transcription cache key omitted the model** — switching a `BAKEOFF_*_MODEL` override
+   would have silently replayed the previous model's transcripts and faked any comparison.
+   `model` is now part of the `AsrProvider` contract and the cache key.
+   (Also: `routine-extraction.ts` maxTokens 1024 → 4096; a 12-exercise routine truncated.)
+
+**Model decisions (both FINAL — detail + caveats in `PROJECT-SUMMARY-PHASE2.md` §5):**
+- **ASR = `gpt-transcribe`** (released 2026-07-28, after the previous entry's default was
+  chosen). Now the `openai` provider; `openai-4o` kept as baseline.
+- **LLM = `gpt-5.6-luna`**, unchanged — verified still the current generation and the
+  cheapest structured-outputs tier. **`prices.ts` corrected**: an ~80% price cut on
+  2026-07-30 meant cost telemetry was overstating spend ~5× (Luna $1.00/$6.00 → $0.20/$1.20;
+  Terra $2.50/$15 → $2/$12; added Sol).
+
+**The result that matters most:** on the clean run, the *same cached transcripts* scored
+differently between two runs (gpt-4o-transcribe 100% → 80%) — **the extraction LLM is
+non-deterministic and at n=5 the run-to-run noise exceeds the between-model gap, so these
+models are not distinguishable on this corpus.** The models were therefore chosen on
+structural grounds (newest/cheapest/faster/one-vendor), not a measured accuracy win.
+**Top open follow-up: `llm.ts` never sets `temperature`, so production structured extraction
+runs at the API default (1.0). Set it to 0 and re-run.** Second: the scorer is fully
+sequential (~700 round-trips, ~8 min) — parallelise per provider.
+
+Stable across every run: Groq **silently drops a whole exercise** (⇒ keep a glanceable
+commit-time confirmation); routine-*name* extraction is weak for every provider (⇒ resolve
+names against the closed routine list); the exercise resolver is 98–100% (⇒ don't weaken it).
+
+---
+
+## 2026-08-13 — Voice-model bakeoff: ASR chosen (OpenAI `gpt-4o-transcribe`) — SUPERSEDED, see above
 
 Ran the standalone `bakeoff/` harness (not in the app bundle) on a **10-recording personal
 corpus** — 5 routine-creation + 5 workout-logging dictations, Indian-accented English,
