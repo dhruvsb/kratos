@@ -1,0 +1,10 @@
+# Audio recordings — private and large; keep them off git. Ground truth
+# (bakeoff/ground-truth/*.json) IS tracked: it's the labeled corpus.
+recordings/*
+!recordings/.gitkeep
+!recordings/README.md
+
+# Generated + machine-local
+cache/
+reports/
+.env.local

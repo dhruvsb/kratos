@@ -75,7 +75,12 @@
     "eval": "tsx eval/run.ts",
     "eval:compare": "tsx eval/run.ts --compare",
     "parse-cli": "tsx scripts/parse-cli.ts",
-    "harvest-eval-cases": "tsx scripts/harvest-eval-cases.ts"
+    "harvest-eval-cases": "tsx scripts/harvest-eval-cases.ts",
+    "bake": "tsx bakeoff/commands/run.ts",
+    "bake:doctor": "tsx bakeoff/commands/doctor.ts",
+    "bake:init": "tsx bakeoff/commands/init.ts",
+    "bake:transcribe": "tsx bakeoff/commands/transcribe.ts",
+    "bake:score": "tsx bakeoff/commands/score.ts"
   },
   "private": true
 }

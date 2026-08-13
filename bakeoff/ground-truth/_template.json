@@ -1,0 +1,31 @@
+{
+  "audio": "REPLACE-with-the-filename-in-recordings.m4a",
+  "intent": "log_workout",
+  "routine": null,
+  "reference_transcript": "Optional. The verbatim words you said. Only needed for the WER / numeric-entity ASR-quality table — end-to-end scoring does not use it.",
+  "exercises": [
+    {
+      "name": "Canonical exercise name exactly as it appears in your library",
+      "load_mode": "external_load",
+      "sets": [
+        { "weight_kg": 35, "reps": 12 },
+        { "weight_kg": 35, "reps": 12 },
+        { "weight_kg": 35, "reps": 10 }
+      ]
+    },
+    {
+      "name": "Push-ups",
+      "load_mode": "bodyweight",
+      "sets": [
+        { "weight_kg": null, "reps": 12 }
+      ]
+    }
+  ],
+  "meta": {
+    "environment": "quiet_room",
+    "phone": "close",
+    "speaker_state": "rested",
+    "pace": "natural",
+    "notes": "load_mode: bodyweight | external_load | dumbbell_each | assistance | bodyweight_plus. weight_kg null = bodyweight."
+  }
+}

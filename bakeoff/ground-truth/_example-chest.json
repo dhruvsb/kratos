@@ -1,0 +1,42 @@
+{
+  "audio": "_example-chest.m4a",
+  "intent": "log_workout",
+  "routine": "Chest Variation 3",
+  "reference_transcript": "Start the workout with routine Chest Variation 3. I did 3 sets of push-ups, 12 reps each. Incline dumbbell press with dumbbell 35 kg, 3 sets, first two sets 12 reps and last set 10 reps. Machine chest press flat: 39 kg 12 reps, 45 kg 10 reps, 50 kg 8 reps.",
+  "exercises": [
+    {
+      "name": "Push-ups",
+      "load_mode": "bodyweight",
+      "sets": [
+        { "weight_kg": null, "reps": 12 },
+        { "weight_kg": null, "reps": 12 },
+        { "weight_kg": null, "reps": 12 }
+      ]
+    },
+    {
+      "name": "Incline Dumbbell Press",
+      "load_mode": "dumbbell_each",
+      "sets": [
+        { "weight_kg": 35, "reps": 12 },
+        { "weight_kg": 35, "reps": 12 },
+        { "weight_kg": 35, "reps": 10 }
+      ]
+    },
+    {
+      "name": "Machine Chest Press",
+      "load_mode": "machine_stack",
+      "sets": [
+        { "weight_kg": 39, "reps": 12 },
+        { "weight_kg": 45, "reps": 10 },
+        { "weight_kg": 50, "reps": 8 }
+      ]
+    }
+  ],
+  "meta": {
+    "environment": "quiet_room",
+    "phone": "close",
+    "speaker_state": "rested",
+    "pace": "natural",
+    "notes": "The report's worked example. This ground-truth file has no matching audio (there is no _example-chest.m4a), so `doctor` lists it as an orphan — it's here as a reference to copy, not to score. Delete it once you have real recordings."
+  }
+}
