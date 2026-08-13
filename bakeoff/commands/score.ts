@@ -22,19 +22,22 @@ import {
   type KeytermPolicy,
 } from '../config.ts';
 import { loadGroundTruthFiles } from '../lib/paths.ts';
-import { scoreEndToEnd, scoreTranscript } from '../lib/scoring.ts';
+import { scoreEndToEnd, scoreRoutineCreation, scoreTranscript } from '../lib/scoring.ts';
 import { mdTable, pct, fileTimestamp, writeReport } from '../lib/report.ts';
 import { loadCatalog } from '../lib/catalog.ts';
+import { extractRoutine } from '../lib/routine-extraction.ts';
 import type {
   E2EScore,
   GroundTruth,
   NumericConfusion,
+  RoutineScore,
   TranscriptScore,
 } from '../types.ts';
 import { parseContextSchema } from '../../supabase/functions/_shared/parse-types.ts';
 import { parseUtterance } from '../../supabase/functions/_shared/pipeline/pipeline.ts';
+import { resolveExercise } from '../../supabase/functions/_shared/pipeline/resolution.ts';
 import { OpenAiLlm } from '../../supabase/functions/_shared/pipeline/llm.ts';
-import { PARSE_MODEL_DEFAULT } from '../../supabase/functions/_shared/pipeline/prices.ts';
+import { PARSE_MODEL_DEFAULT, costUsd } from '../../supabase/functions/_shared/pipeline/prices.ts';
 import {
   parseCommonFlags,
   type CommonFlags,
@@ -74,6 +77,22 @@ interface E2EAgg {
   spurious: number;
   clarifications: number;
   extractionCostUsd: number;
+  worst: Array<{ audio: string; diffs: string[] }>;
+}
+
+/** BAKEOFF-ONLY prototype scoring — see lib/routine-prompt.ts. */
+interface RoutineAgg {
+  providerId: string;
+  model: string;
+  files: number;
+  emCount: number;
+  nameMatchCount: number;
+  exTot: number;
+  exOk: number;
+  omissions: number;
+  spurious: number;
+  unresolved: number;
+  costUsd: number;
   worst: Array<{ audio: string; diffs: string[] }>;
 }
 
@@ -144,8 +163,9 @@ export async function runScore(flags: CommonFlags): Promise<void> {
     }
   }
 
-  // ---- 2. End-to-end ------------------------------------------------------
+  // ---- 2. End-to-end (log_workout) + 2b. Routine creation (create_routine) --
   const e2e = new Map<string, E2EAgg>();
+  const routine = new Map<string, RoutineAgg>();
   let catalogSource = 'n/a';
   if (flags.e2e) {
     const apiKey = process.env.OPENAI_API_KEY;
@@ -163,6 +183,52 @@ export async function runScore(flags: CommonFlags): Promise<void> {
         if (!gt) continue;
         for (const run of pair.runs) {
           if (run.skipped || run.error || !run.transcript.trim()) continue;
+
+          if (gt.intent === 'create_routine') {
+            const agg =
+              routine.get(run.providerId) ??
+              ({
+                providerId: run.providerId,
+                model: run.model,
+                files: 0,
+                emCount: 0,
+                nameMatchCount: 0,
+                exTot: 0,
+                exOk: 0,
+                omissions: 0,
+                spurious: 0,
+                unresolved: 0,
+                costUsd: 0,
+                worst: [],
+              } satisfies RoutineAgg);
+            try {
+              const { extraction, usage } = await extractRoutine(llm, run.transcript);
+              let cost = costUsd(llm.model, usage.inputTokens, usage.outputTokens);
+              const resolvedNames: Array<string | null> = [];
+              for (const mention of extraction.exercise_mentions) {
+                const { exercise, usage: resUsage } = await resolveExercise(mention, ctx, catalog, llm);
+                if (resUsage) cost += costUsd(llm.model, resUsage.inputTokens, resUsage.outputTokens);
+                resolvedNames.push(exercise.name);
+              }
+              const s: RoutineScore = scoreRoutineCreation(gt, extraction.routine_name, resolvedNames);
+              agg.files++;
+              if (s.routineExactMatch) agg.emCount++;
+              if (s.routineNameMatch) agg.nameMatchCount++;
+              agg.exTot += s.exercisesTotal;
+              agg.exOk += s.exercisesResolvedCorrect;
+              agg.omissions += s.omissions;
+              agg.spurious += s.spurious;
+              agg.unresolved += s.unresolvedCount;
+              agg.costUsd += cost;
+              if (!s.routineExactMatch && agg.worst.length < 12)
+                agg.worst.push({ audio: pair.audio, diffs: s.diffs });
+            } catch (err) {
+              console.warn(`   ${run.providerId} / ${pair.audio}: routine-extraction error — ${(err as Error).message}`);
+            }
+            routine.set(run.providerId, agg);
+            continue;
+          }
+
           const agg =
             e2e.get(run.providerId) ??
             ({
@@ -215,12 +281,17 @@ export async function runScore(flags: CommonFlags): Promise<void> {
   }
 
   // ---- Report -------------------------------------------------------------
-  const md = renderReport(transcripts, asr, e2e, flags, catalogSource);
+  const md = renderReport(transcripts, asr, e2e, routine, flags, catalogSource);
   const stamp = fileTimestamp(new Date().toISOString());
   const { mdPath } = writeReport(
     `bakeoff-${stamp}`,
     md,
-    { transcripts: transcripts.generatedAt, asr: [...asr.values()].map(serializeAsr), e2e: [...e2e.values()] }
+    {
+      transcripts: transcripts.generatedAt,
+      asr: [...asr.values()].map(serializeAsr),
+      e2e: [...e2e.values()],
+      routine: [...routine.values()],
+    }
   );
   console.log('\n' + md);
   console.log(`\n✓ report written to ${path.relative(process.cwd(), mdPath)}`);
@@ -243,6 +314,7 @@ function renderReport(
   t: TranscribeOutput,
   asr: Map<string, AsrAgg>,
   e2e: Map<string, E2EAgg>,
+  routine: Map<string, RoutineAgg>,
   flags: CommonFlags,
   catalogSource: string
 ): string {
@@ -328,6 +400,45 @@ function renderReport(
       details.push('');
     }
     if (details.length) lines.push('### End-to-end failure detail', '', ...details);
+  }
+
+  if (routine.size) {
+    lines.push('## 3. Routine creation 🧪 (BAKEOFF-ONLY prototype — not shipped in the app)', '');
+    lines.push(
+      '_The app has no routine-creation pipeline yet (`intentSchema` is only `log_sets` / `correct_last` / `unknown`). This scores a bakeoff-local extraction prompt (`lib/routine-prompt.ts`) that reuses the REAL exercise resolver (`resolveExercise` — exact/fuzzy/LLM-pick-from-candidates, never free-generates), so exercise-name-resolution accuracy is trustworthy; the surrounding extraction step is a preview, not production behavior._',
+      ''
+    );
+    const routineRows = [...routine.values()]
+      .sort((a, b) => b.emCount / (b.files || 1) - a.emCount / (a.files || 1))
+      .map((a) => [
+        a.providerId,
+        pct(a.emCount, a.files),
+        pct(a.exOk, a.exTot),
+        pct(a.nameMatchCount, a.files),
+        a.unresolved || '',
+        a.omissions || '',
+        a.spurious || '',
+        '$' + a.costUsd.toFixed(4),
+      ]);
+    lines.push(
+      mdTable(
+        ['provider', 'routine EM', 'exercise resolve acc', 'routine-name match', 'unresolved', 'omissions', 'spurious', 'LLM cost'],
+        routineRows
+      ),
+      ''
+    );
+
+    const routineDetails: string[] = [];
+    for (const a of routine.values()) {
+      if (!a.worst.length) continue;
+      routineDetails.push(`### ${a.providerId} — failed routines`, '');
+      for (const w of a.worst) {
+        routineDetails.push(`- **${w.audio}**`);
+        for (const d of w.diffs.slice(0, 8)) routineDetails.push(`  - ${d}`);
+      }
+      routineDetails.push('');
+    }
+    if (routineDetails.length) lines.push('### Routine-creation failure detail', '', ...routineDetails);
   }
 
   lines.push('---', '', '_Reminder: 20–30 recordings choose the architecture; they do not prove a sub-0.5% error rate. Keep accumulating real dictations. WER is diagnostic only — rank on NEER and Workout EM._');

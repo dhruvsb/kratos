@@ -1,0 +1,27 @@
+{
+  "audio": "03.m4a",
+  "intent": "create_routine",
+  "routine": "Leg Day",
+  "reference_transcript": "Um, okay, Leg Day routine. Barbell back squat, uh, front squat — actually no wait, let's do hack squat instead of front squat — um, and then bulgarian split squat, romanian deadlift, leg press, leg extension, uh, lying leg curl and seated leg curl, um, and then standing calf raise, seated calf raise, and, uh, sumo squat. Yeah that's Leg Day.",
+  "exercises": [],
+  "routine_exercises": [
+    "Barbell Back Squat",
+    "Hack Squat",
+    "Bulgarian Split Squat",
+    "Romanian Deadlift",
+    "Leg Press",
+    "Leg Extension",
+    "Lying Leg Curl",
+    "Seated Leg Curl",
+    "Standing Calf Raise",
+    "Seated Calf Raise",
+    "Sumo Squat"
+  ],
+  "meta": {
+    "environment": "quiet_room",
+    "phone": "close",
+    "speaker_state": "rested",
+    "pace": "natural",
+    "notes": "11 exercises, includes a real self-correction ('actually no wait, let's do X instead of Y') that must swap Front Squat -> Hack Squat, never both"
+  }
+}

@@ -26,6 +26,16 @@ Two tables, because the research is emphatic that **WER is the wrong metric**:
    rows, scored against **database-semantic ground truth**: Workout
    Exact-Match, weight/rep/exercise/set-count accuracy, omissions, and
    clarifications-per-workout. **This is the number that decides the product.**
+   Applies to `intent: "log_workout"` ground truth.
+3. **Routine creation 🧪** — a **bakeoff-only prototype**, not the shipped app.
+   The real pipeline has no routine-creation path yet (`intentSchema` in
+   `parse-types.ts` is only `log_sets` / `correct_last` / `unknown`). This table
+   scores `lib/routine-prompt.ts` (a local extraction prompt) piped into the
+   **real** `resolveExercise()` — same exact/fuzzy/LLM-pick-from-candidates
+   resolver the app ships, never free-generates. So exercise-name-resolution
+   accuracy here is trustworthy; the surrounding extraction step is a preview
+   of how well this *would* work if built, not a production result. Applies to
+   `intent: "create_routine"` ground truth.
 
 Providers compared (each gated on its own key, skipped cleanly if absent):
 OpenAI, Groq (Whisper), Deepgram Nova-3, ElevenLabs Scribe, AssemblyAI, Google

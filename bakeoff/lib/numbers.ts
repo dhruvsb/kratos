@@ -39,17 +39,52 @@ const UNIT_DIGIT: Record<string, number> = {
 
 const SCALE = new Set(['hundred', 'thousand', 'million']);
 const CONNECTOR = new Set(['and', 'a', 'an', 'oh', 'o', 'point', 'half', 'quarter']);
+const BIGSCALE: Record<string, number> = { thousand: 1000, million: 1_000_000 };
 
 function isRunToken(tok: string): boolean {
   return tok in UNIT || tok in TENS || SCALE.has(tok) || CONNECTOR.has(tok);
 }
 
-/** Evaluate a maximal run of number-ish tokens to a single number, or null. */
-function evaluateRun(tokens: string[]): number | null {
-  // --- 1. Digit-sequence reading ("one oh five" → 105) ------------------
+/** Category of a value-bearing token, for the attach/split grammar below. */
+type Cat = 'smallunit' | 'ten' | 'teen' | 'tens' | 'hundred' | 'bigscale' | 'digit';
+
+function categorize(tok: string): { cat: Cat; val: number } | null {
+  if (/^\d/.test(tok)) {
+    const m = tok.match(/^\d+(?:\.\d+)?/);
+    return m ? { cat: 'digit', val: Number(m[0]) } : null;
+  }
+  if (tok in UNIT) {
+    const v = UNIT[tok];
+    if (v <= 9) return { cat: 'smallunit', val: v };
+    if (v === 10) return { cat: 'ten', val: 10 };
+    return { cat: 'teen', val: v }; // 11–19
+  }
+  if (tok in TENS) return { cat: 'tens', val: TENS[tok] };
+  if (tok === 'hundred') return { cat: 'hundred', val: 100 };
+  if (tok in BIGSCALE) return { cat: 'bigscale', val: BIGSCALE[tok] };
+  return null;
+}
+
+/**
+ * Evaluate a maximal run of number-ish tokens into ZERO OR MORE numbers.
+ *
+ * The run can hold several distinct spoken numbers with no separating word,
+ * e.g. "twelve sixty" (a rep count then a weight) → [12, 60], so this returns a
+ * list. A new number is started whenever the next value token cannot legally
+ * extend the current one (see `canAttach`). Two domain-specific rules:
+ *   - Colloquial hundreds: a small unit (1–9) directly followed by a tens word
+ *     means hundreds — "one twenty" → 120, "two fifty" → 250 (but "twenty one"
+ *     stays 21, and "ten"/"teens" never trigger it: "ten sixty" → [10, 60]).
+ *   - A fraction/decimal ("and a half", "point five") attaches to the number in
+ *     progress even when that number came from a digit token ("67 and a half"
+ *     → 67.5), and a bare "a half" is 0.5, never 1.5.
+ */
+function evaluateRunMulti(tokens: string[]): number[] {
+  // --- Digit-sequence reading ("one oh five" → 105), pure-word runs only --
+  const hasDigitTok = tokens.some((t) => /^\d/.test(t));
   const hasOh = tokens.some((t) => t === 'oh' || t === 'o');
   const hasRealUnit = tokens.some((t) => t in UNIT_DIGIT && t !== 'oh' && t !== 'o');
-  if (hasOh && hasRealUnit) {
+  if (!hasDigitTok && hasOh && hasRealUnit) {
     const digits: number[] = [];
     let ok = true;
     for (const t of tokens) {
@@ -60,17 +95,49 @@ function evaluateRun(tokens: string[]): number | null {
         break;
       }
     }
-    if (ok && digits.length > 0) return Number(digits.join(''));
-    // else fall through to additive grammar
+    if (ok && digits.length > 0) return [Number(digits.join(''))];
   }
 
-  // --- 2. Additive grammar ---------------------------------------------
-  let total = 0;
+  const results: number[] = [];
   let current = 0;
+  let total = 0; // committed thousands/millions
   let frac = 0;
+  let decimalDigits = '';
   let hasValue = false;
   let decimalMode = false;
-  let decimalDigits = '';
+  let lastCat: Cat | null = null;
+
+  const emit = () => {
+    if (hasValue) {
+      const dec = decimalDigits ? parseFloat('0.' + decimalDigits) : 0;
+      results.push(total + current + frac + dec);
+    }
+    current = 0;
+    total = 0;
+    frac = 0;
+    decimalDigits = '';
+    hasValue = false;
+    decimalMode = false;
+    lastCat = null;
+  };
+
+  const canAttach = (cat: Cat): boolean => {
+    switch (cat) {
+      case 'hundred':
+        return lastCat === 'smallunit' || lastCat === 'teen' || lastCat === 'ten';
+      case 'bigscale':
+        return lastCat !== null;
+      case 'smallunit':
+        return lastCat === 'tens' || lastCat === 'hundred';
+      case 'tens':
+        return lastCat === 'smallunit' /* colloquial */ || lastCat === 'hundred';
+      case 'teen':
+      case 'ten':
+        return lastCat === 'hundred';
+      default:
+        return false; // 'digit' never attaches to a prior number
+    }
+  };
 
   for (const t of tokens) {
     if (t === 'point') {
@@ -83,56 +150,75 @@ function evaluateRun(tokens: string[]): number | null {
         hasValue = true;
         continue;
       }
-      decimalMode = false; // non-digit ends the decimal; reprocess below
+      if (/^\d$/.test(t)) {
+        decimalDigits += t;
+        hasValue = true;
+        continue;
+      }
+      decimalMode = false; // non-digit ends the decimal; reprocess token below
     }
     if (t === 'half') {
       frac += 0.5;
       hasValue = true;
+      lastCat = lastCat ?? 'smallunit';
       continue;
     }
     if (t === 'quarter') {
       frac += 0.25;
       hasValue = true;
+      lastCat = lastCat ?? 'smallunit';
       continue;
     }
-    if (t === 'and') continue;
-    if (t === 'a' || t === 'an') {
-      if (current === 0) current = 1; // "a hundred" → 100; bare "a" stays valueless
-      continue;
-    }
-    if (t in UNIT) {
-      current += UNIT[t];
-      hasValue = true;
-      continue;
-    }
-    if (t in TENS) {
-      current += TENS[t];
-      hasValue = true;
-      continue;
-    }
-    if (t === 'hundred') {
-      current = (current === 0 ? 1 : current) * 100;
-      hasValue = true;
-      continue;
-    }
-    if (t === 'thousand') {
-      total += (current === 0 ? 1 : current) * 1000;
-      current = 0;
-      hasValue = true;
-      continue;
-    }
-    if (t === 'million') {
-      total += (current === 0 ? 1 : current) * 1000000;
-      current = 0;
-      hasValue = true;
-      continue;
-    }
-    // unknown token inside the run — ignore
-  }
+    if (t === 'and' || t === 'a' || t === 'an' || t === 'oh' || t === 'o') continue;
 
-  if (!hasValue) return null;
-  const decimal = decimalDigits ? parseFloat('0.' + decimalDigits) : 0;
-  return total + current + frac + decimal;
+    const c = categorize(t);
+    if (!c) continue; // unknown token inside the run — ignore
+
+    if (hasValue && !canAttach(c.cat)) emit();
+
+    if (!hasValue) {
+      // start a fresh number
+      if (c.cat === 'hundred') current = 100;
+      else if (c.cat === 'bigscale') total = c.val;
+      else current = c.val;
+      hasValue = true;
+      lastCat = c.cat;
+      continue;
+    }
+
+    // attach to the number in progress
+    switch (c.cat) {
+      case 'smallunit':
+        current += c.val;
+        lastCat = 'smallunit';
+        break;
+      case 'tens':
+        if (lastCat === 'smallunit') current = current * 100 + c.val; // colloquial
+        else current += c.val; // after hundred
+        lastCat = 'tens';
+        break;
+      case 'teen':
+      case 'ten':
+        current += c.val; // after hundred
+        lastCat = c.cat;
+        break;
+      case 'hundred':
+        current = (current === 0 ? 1 : current) * 100;
+        lastCat = 'hundred';
+        break;
+      case 'bigscale':
+        total += (current === 0 ? 1 : current) * c.val;
+        current = 0;
+        lastCat = 'bigscale';
+        break;
+      case 'digit':
+        current = c.val; // unreachable (digit never attaches) but keeps types total
+        lastCat = 'digit';
+        break;
+    }
+  }
+  emit();
+  return results;
 }
 
 /** Strip surrounding punctuation while preserving an inner decimal point. */
@@ -152,8 +238,7 @@ export function extractNumbers(text: string): number[] {
 
   const flush = () => {
     if (run.length > 0) {
-      const value = evaluateRun(run);
-      if (value !== null) nums.push(value);
+      for (const value of evaluateRunMulti(run)) nums.push(value);
     }
     run = [];
   };
@@ -163,18 +248,10 @@ export function extractNumbers(text: string): number[] {
     const tok = cleanToken(raw);
     if (!tok) continue;
 
-    // A token that begins with a digit is its own numeric entity ("35",
-    // "12.5", "35kg" → 35). Flush any pending spelled-out run first.
-    if (/^\d/.test(tok)) {
-      const m = tok.match(/^\d+(?:\.\d+)?/);
-      if (m) {
-        flush();
-        nums.push(Number(m[0]));
-        continue;
-      }
-    }
-
-    if (isRunToken(tok)) {
+    // Digit tokens ("35", "12.5", "35kg") and spelled-out number words both
+    // belong to the run — evaluateRunMulti splits a run into as many numbers as
+    // it actually holds, so a trailing "and a half" can attach to "67".
+    if (/^\d/.test(tok) || isRunToken(tok)) {
       run.push(tok);
       continue;
     }

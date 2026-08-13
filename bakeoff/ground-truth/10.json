@@ -1,0 +1,68 @@
+{
+  "audio": "10.m4a",
+  "intent": "log_workout",
+  "routine": "Arms and Shoulders",
+  "reference_transcript": "Arms and shoulders, uh, quick one today. Barbell curl, thirty kilos for twelve. Um, hammer curl, fourteen kilos each, three sets of ten. Preacher curl, twenty five kilos, two sets of eight. Uh, cable overhead triceps extension, eighteen kilos, three sets of fifteen. Dumbbell lateral raise, um, eight kilos each, four sets of twelve. And, uh, standing dumbbell shoulder press, sixteen kilos each, three sets — first one was twelve reps, other two were ten. Okay, done.",
+  "exercises": [
+    {
+      "name": "Barbell Curl",
+      "load_mode": "barbell_total",
+      "sets": [
+        { "weight_kg": 30, "reps": 12 }
+      ]
+    },
+    {
+      "name": "Hammer Curl",
+      "load_mode": "dumbbell_each",
+      "sets": [
+        { "weight_kg": 14, "reps": 10 },
+        { "weight_kg": 14, "reps": 10 },
+        { "weight_kg": 14, "reps": 10 }
+      ]
+    },
+    {
+      "name": "Preacher Curl",
+      "load_mode": "barbell_total",
+      "sets": [
+        { "weight_kg": 25, "reps": 8 },
+        { "weight_kg": 25, "reps": 8 }
+      ]
+    },
+    {
+      "name": "Cable Overhead Triceps Extension",
+      "load_mode": "machine_stack",
+      "sets": [
+        { "weight_kg": 18, "reps": 15 },
+        { "weight_kg": 18, "reps": 15 },
+        { "weight_kg": 18, "reps": 15 }
+      ]
+    },
+    {
+      "name": "Dumbbell Lateral Raise",
+      "load_mode": "dumbbell_each",
+      "sets": [
+        { "weight_kg": 8, "reps": 12 },
+        { "weight_kg": 8, "reps": 12 },
+        { "weight_kg": 8, "reps": 12 },
+        { "weight_kg": 8, "reps": 12 }
+      ]
+    },
+    {
+      "name": "Standing Dumbbell Shoulder Press",
+      "load_mode": "dumbbell_each",
+      "sets": [
+        { "weight_kg": 16, "reps": 12 },
+        { "weight_kg": 16, "reps": 10 },
+        { "weight_kg": 16, "reps": 10 }
+      ]
+    }
+  ],
+  "routine_exercises": [],
+  "meta": {
+    "environment": "quiet_gym",
+    "phone": "close",
+    "speaker_state": "out_of_breath",
+    "pace": "fast",
+    "notes": "hardest of the 5 — 6 exercises incl. several near-duplicate curl variants (also stress-tests exercise resolution, not just numbers); 'fourteen' (hammer curl) is a fourteen/forty risk; carry-over weight applied across 3-4 identical sets per exercise; final exercise reuses the 'first one X, other two Y' positional pattern from workout 06 but phrased differently ('other two' vs 'last one')"
+  }
+}

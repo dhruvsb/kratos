@@ -14,6 +14,7 @@ import type {
   TranscriptScore,
   E2EScore,
   NumericConfusion,
+  RoutineScore,
 } from '../types.ts';
 import type { ParseResult } from '../../supabase/functions/_shared/parse-types.ts';
 import { WEIGHT_TOLERANCE_KG } from '../config.ts';
@@ -153,7 +154,7 @@ interface PredictedExercise {
 }
 
 /** Case-insensitive, whitespace/hyphen-insensitive name key. */
-function normalizeName(name: string): string {
+export function normalizeName(name: string): string {
   return name.toLowerCase().trim().replace(/[-\s]+/g, ' ');
 }
 
@@ -186,7 +187,7 @@ function buildPredictedExercises(result: ParseResult): PredictedExercise[] {
  * Order-preserving matching of ground-truth to predicted exercises by name.
  * LCS over the normalized-name sequences → maximal in-order aligned pairs.
  */
-function alignExercises(
+export function alignExercises(
   gtNorms: string[],
   predNorms: string[]
 ): Array<[number, number]> {
@@ -334,6 +335,75 @@ export function scoreEndToEnd(gt: GroundTruth, result: ParseResult): E2EScore {
     omissions,
     spurious,
     clarifications,
+    diffs,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Routine-creation scoring (BAKEOFF-ONLY — see lib/routine-prompt.ts: the
+// shipped app has no create_routine pipeline, so this scores a prototype).
+// ---------------------------------------------------------------------------
+
+/**
+ * `resolvedNames[i]` is the real resolver's canonical name for
+ * `mentions[i]`, or null when resolveExercise returned 'unmatched'.
+ */
+export function scoreRoutineCreation(
+  gt: GroundTruth,
+  routineName: string | null,
+  resolvedNames: Array<string | null>
+): RoutineScore {
+  const diffs: string[] = [];
+
+  const routineNameMatch =
+    gt.routine == null || normalizeName(routineName ?? '') === normalizeName(gt.routine);
+  if (!routineNameMatch) {
+    diffs.push(`routine name: expected "${gt.routine}" got "${routineName ?? 'null'}"`);
+  }
+
+  const gtNorms = gt.routine_exercises.map((n) => normalizeName(n));
+  // Unmatched mentions get a per-index sentinel so they never spuriously align.
+  const predNorms = resolvedNames.map((n, i) => (n ? normalizeName(n) : `__unmatched_${i}__`));
+  const pairs = alignExercises(gtNorms, predNorms);
+
+  const matchedGt = new Set(pairs.map(([g]) => g));
+  const matchedPred = new Set(pairs.map(([, p]) => p));
+
+  let omissions = 0;
+  for (let g = 0; g < gt.routine_exercises.length; g++) {
+    if (!matchedGt.has(g)) {
+      omissions++;
+      diffs.push(`OMISSION: ${gt.routine_exercises[g]}`);
+    }
+  }
+  let spurious = 0;
+  for (let p = 0; p < resolvedNames.length; p++) {
+    if (!matchedPred.has(p) && resolvedNames[p]) {
+      spurious++;
+      diffs.push(`SPURIOUS: ${resolvedNames[p]}`);
+    }
+  }
+  const unresolvedCount = resolvedNames.filter((n) => n === null).length;
+  if (unresolvedCount) diffs.push(`${unresolvedCount} mention(s) unmatched by the resolver`);
+
+  const exercisesTotal = gt.routine_exercises.length;
+  const exercisesResolvedCorrect = pairs.length;
+
+  const routineExactMatch =
+    routineNameMatch &&
+    omissions === 0 &&
+    spurious === 0 &&
+    unresolvedCount === 0 &&
+    pairs.length === exercisesTotal;
+
+  return {
+    routineNameMatch,
+    exercisesTotal,
+    exercisesResolvedCorrect,
+    omissions,
+    spurious,
+    unresolvedCount,
+    routineExactMatch,
     diffs,
   };
 }

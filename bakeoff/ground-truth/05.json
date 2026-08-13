@@ -1,0 +1,28 @@
+{
+  "audio": "05.m4a",
+  "intent": "create_routine",
+  "routine": "Arms and Shoulders",
+  "reference_transcript": "Alright, um, this is gonna be a big one — Arms and Shoulders. Okay so, curls first: barbell curl, hammer curl, preacher curl, um, concentration curl, rope hammer curl, and, uh, Zottman curl too — yeah I know that's a lot of curls. Um, then triceps: cable overhead triceps extension, overhead triceps extension, and, uh, close-grip bench press. And then shoulders, um, dumbbell lateral raise, front raise, and, uh, reverse fly to finish. Okay that's, uh, twelve exercises for Arms and Shoulders.",
+  "exercises": [],
+  "routine_exercises": [
+    "Barbell Curl",
+    "Hammer Curl",
+    "Preacher Curl",
+    "Concentration Curl",
+    "Rope Hammer Curl",
+    "Zottman Curl",
+    "Cable Overhead Triceps Extension",
+    "Overhead Triceps Extension",
+    "Close-Grip Bench Press",
+    "Dumbbell Lateral Raise",
+    "Front Raise",
+    "Reverse Fly"
+  ],
+  "meta": {
+    "environment": "quiet_room",
+    "phone": "close",
+    "speaker_state": "rested",
+    "pace": "fast",
+    "notes": "12 exercises, the hardest of the 5 — six near-identical curl variants back to back, plus 'Cable Overhead Triceps Extension' vs 'Overhead Triceps Extension' (one word apart), self-aware aside ('that's a lot of curls') mid-list"
+  }
+}

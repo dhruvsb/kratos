@@ -1,0 +1,56 @@
+{
+  "audio": "07.m4a",
+  "intent": "log_workout",
+  "routine": "Pull Day",
+  "reference_transcript": "Alright, Pull Day. Deadlift, um, one hundred and forty kilos for five reps. Bent-over barbell row, sixty kilos, three sets, ten reps each. Lat pulldown, uh, fifty five for twelve, sixty for ten, sixty five for eight. Assisted pull-up, um, twenty kilos assistance, eight reps, two sets. And, uh, barbell curl, thirty kilos for twelve reps, one set.",
+  "exercises": [
+    {
+      "name": "Deadlift",
+      "load_mode": "barbell_total",
+      "sets": [
+        { "weight_kg": 140, "reps": 5 }
+      ]
+    },
+    {
+      "name": "Bent-Over Barbell Row",
+      "load_mode": "barbell_total",
+      "sets": [
+        { "weight_kg": 60, "reps": 10 },
+        { "weight_kg": 60, "reps": 10 },
+        { "weight_kg": 60, "reps": 10 }
+      ]
+    },
+    {
+      "name": "Lat Pulldown",
+      "load_mode": "machine_stack",
+      "sets": [
+        { "weight_kg": 55, "reps": 12 },
+        { "weight_kg": 60, "reps": 10 },
+        { "weight_kg": 65, "reps": 8 }
+      ]
+    },
+    {
+      "name": "Assisted Pull-Up",
+      "load_mode": "assistance",
+      "sets": [
+        { "weight_kg": 20, "reps": 8 },
+        { "weight_kg": 20, "reps": 8 }
+      ]
+    },
+    {
+      "name": "Barbell Curl",
+      "load_mode": "barbell_total",
+      "sets": [
+        { "weight_kg": 30, "reps": 12 }
+      ]
+    }
+  ],
+  "routine_exercises": [],
+  "meta": {
+    "environment": "quiet_gym",
+    "phone": "close",
+    "speaker_state": "rested",
+    "pace": "natural",
+    "notes": "'one hundred and forty' multi-word number; pyramid weights on lat pulldown (55/60/65, all close together — stresses whether sets get merged/dropped); assistance load_mode where a BIGGER number means an EASIER set — must not be treated like normal external load; 'thirty' (barbell curl) is a classic thirteen/thirty confusion risk"
+  }
+}

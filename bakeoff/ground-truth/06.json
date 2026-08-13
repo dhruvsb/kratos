@@ -1,0 +1,49 @@
+{
+  "audio": "06.m4a",
+  "intent": "log_workout",
+  "routine": "Push Day",
+  "reference_transcript": "Okay starting Push Day. Barbell bench press, um, sixty kilos for eight, then, uh, sixty five for six — actually no wait, that second one was sixty seven and a half. Um, incline dumbbell press, thirty two point five kilos, three sets, first two at twelve reps and the last one at ten. Push-ups, um, three sets of fifteen reps each. And, uh, overhead press, fifty kilos for eight reps.",
+  "exercises": [
+    {
+      "name": "Barbell Bench Press",
+      "load_mode": "barbell_total",
+      "sets": [
+        { "weight_kg": 60, "reps": 8 },
+        { "weight_kg": 67.5, "reps": 6 }
+      ]
+    },
+    {
+      "name": "Incline Dumbbell Press",
+      "load_mode": "dumbbell_each",
+      "sets": [
+        { "weight_kg": 32.5, "reps": 12 },
+        { "weight_kg": 32.5, "reps": 12 },
+        { "weight_kg": 32.5, "reps": 10 }
+      ]
+    },
+    {
+      "name": "Push-Up",
+      "load_mode": "bodyweight",
+      "sets": [
+        { "weight_kg": null, "reps": 15 },
+        { "weight_kg": null, "reps": 15 },
+        { "weight_kg": null, "reps": 15 }
+      ]
+    },
+    {
+      "name": "Overhead Press",
+      "load_mode": "barbell_total",
+      "sets": [
+        { "weight_kg": 50, "reps": 8 }
+      ]
+    }
+  ],
+  "routine_exercises": [],
+  "meta": {
+    "environment": "quiet_room",
+    "phone": "close",
+    "speaker_state": "rested",
+    "pace": "natural",
+    "notes": "mid-sentence self-correction on a weight (65->67.5, must not produce both); positional/ordinal reasoning ('first two...last one'); distributive bodyweight sets; 'fifteen' (push-ups) and 'fifty' (overhead press) both present on DIFFERENT exercises — realistic same-workout danger-pair confusion"
+  }
+}

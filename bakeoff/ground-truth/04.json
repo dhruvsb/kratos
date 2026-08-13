@@ -1,0 +1,26 @@
+{
+  "audio": "04.m4a",
+  "intent": "create_routine",
+  "routine": "Full Body",
+  "reference_transcript": "Okay so this one's gonna be Full Body. Um, let's start with goblet squat, then, uh, dumbbell bench press, one-arm dumbbell row... um, dumbbell deadlift, standing dumbbell shoulder press. Okay and then, like, push-up, inverted row, hanging leg raise. Um, oh and I almost forgot, dumbbell curl, and, uh, wrist curl at the end. Yeah, that's Full Body, ten exercises I think.",
+  "exercises": [],
+  "routine_exercises": [
+    "Goblet Squat",
+    "Dumbbell Bench Press",
+    "One-Arm Dumbbell Row",
+    "Dumbbell Deadlift",
+    "Standing Dumbbell Shoulder Press",
+    "Push-Up",
+    "Inverted Row",
+    "Hanging Leg Raise",
+    "Dumbbell Curl",
+    "Wrist Curl"
+  ],
+  "meta": {
+    "environment": "quiet_room",
+    "phone": "close",
+    "speaker_state": "rested",
+    "pace": "natural",
+    "notes": "10 exercises, casual pacing with an 'almost forgot' afterthought tail, spoken self-count at the end ('ten exercises I think') that should NOT be parsed as an 11th item"
+  }
+}

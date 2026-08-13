@@ -1,0 +1,57 @@
+{
+  "audio": "08.m4a",
+  "intent": "log_workout",
+  "routine": "Leg Day",
+  "reference_transcript": "Leg day, let's go. Barbell back squat, eighty kilos for ten, then ninety for eight, then a hundred for five. Romanian deadlift, seventy kilos, two sets of ten. Leg press, um, one twenty for twelve, one forty for ten. Bulgarian split squat, eighteen kilos each hand, three sets of ten. And, uh, standing calf raise, forty kilos, fifteen reps, one set.",
+  "exercises": [
+    {
+      "name": "Barbell Back Squat",
+      "load_mode": "barbell_total",
+      "sets": [
+        { "weight_kg": 80, "reps": 10 },
+        { "weight_kg": 90, "reps": 8 },
+        { "weight_kg": 100, "reps": 5 }
+      ]
+    },
+    {
+      "name": "Romanian Deadlift",
+      "load_mode": "barbell_total",
+      "sets": [
+        { "weight_kg": 70, "reps": 10 },
+        { "weight_kg": 70, "reps": 10 }
+      ]
+    },
+    {
+      "name": "Leg Press",
+      "load_mode": "machine_stack",
+      "sets": [
+        { "weight_kg": 120, "reps": 12 },
+        { "weight_kg": 140, "reps": 10 }
+      ]
+    },
+    {
+      "name": "Bulgarian Split Squat",
+      "load_mode": "dumbbell_each",
+      "sets": [
+        { "weight_kg": 18, "reps": 10 },
+        { "weight_kg": 18, "reps": 10 },
+        { "weight_kg": 18, "reps": 10 }
+      ]
+    },
+    {
+      "name": "Standing Calf Raise",
+      "load_mode": "external_load",
+      "sets": [
+        { "weight_kg": 40, "reps": 15 }
+      ]
+    }
+  ],
+  "routine_exercises": [],
+  "meta": {
+    "environment": "music",
+    "phone": "arms_length",
+    "speaker_state": "out_of_breath",
+    "pace": "fast",
+    "notes": "recorded out-of-breath, phone at arm's length, music in background — realistic gym degradation; ascending pyramid on squat (80/90/100 — round-number sequence, easy to fabricate a plausible-but-wrong 4th set); 'one twenty'/'one forty' compressed number speech; 'fifteen' calf raise reps"
+  }
+}

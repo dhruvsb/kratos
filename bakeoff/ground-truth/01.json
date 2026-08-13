@@ -1,0 +1,26 @@
+{
+  "audio": "01.m4a",
+  "intent": "create_routine",
+  "routine": "Push Day",
+  "reference_transcript": "Okay so, um, let's set up a new routine — I'll call it, uh, Push Day. So exercises... first one's gonna be barbell bench press, and then, like, incline barbell bench press right after that. Um, let's also throw in incline dumbbell press. Okay and then dumbbell fly, um, cable chest press too I think. Let's see what else... oh right, overhead press, and, uh, Arnold press as well. Then cable lateral raise, um, cable overhead triceps extension, and I guess we'll finish with, uh, chest dip. Yeah that's Push Day.",
+  "exercises": [],
+  "routine_exercises": [
+    "Barbell Bench Press",
+    "Incline Barbell Bench Press",
+    "Incline Dumbbell Press",
+    "Dumbbell Fly",
+    "Cable Chest Press",
+    "Overhead Press",
+    "Arnold Press",
+    "Cable Lateral Raise",
+    "Cable Overhead Triceps Extension",
+    "Chest Dip"
+  ],
+  "meta": {
+    "environment": "quiet_room",
+    "phone": "close",
+    "speaker_state": "rested",
+    "pace": "natural",
+    "notes": "10 exercises, heavy filler words (um/uh/like), self-interrupted list flow, 'bench press' vs 'incline bench press' near-duplicate stress test"
+  }
+}

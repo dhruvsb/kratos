@@ -77,7 +77,13 @@ export const groundTruthSchema = z.object({
   routine: z.string().nullable().default(null),
   /** Optional verbatim transcript — enables WER + numeric-entity ASR scoring. */
   reference_transcript: z.string().optional(),
+  /** log_workout ground truth: the sets that should land in the DB. */
   exercises: z.array(gtExerciseSchema).default([]),
+  /**
+   * create_routine ground truth: just the exercise names the routine should
+   * end up containing, in the order spoken — no sets/weights exist yet.
+   */
+  routine_exercises: z.array(z.string()).default([]),
   meta: gtMetaSchema,
 });
 export type GroundTruth = z.infer<typeof groundTruthSchema>;
@@ -169,5 +175,25 @@ export interface E2EScore {
   /** Non-empty ambiguities from the pipeline = clarifications this workout. */
   clarifications: number;
   /** Human-readable per-field diff lines for the report. */
+  diffs: string[];
+}
+
+/**
+ * Scoring for the create_routine intent. NOTE: the shipped app pipeline has no
+ * routine-creation path (see lib/routine-prompt.ts) — this scores a BAKEOFF-ONLY
+ * prototype extraction, not production code.
+ */
+export interface RoutineScore {
+  routineNameMatch: boolean;
+  exercisesTotal: number;
+  /** Aligned pairs where the resolver's canonical name matches ground truth. */
+  exercisesResolvedCorrect: number;
+  /** Ground-truth exercises with no matching resolved mention. */
+  omissions: number;
+  /** Resolved mentions with no matching ground-truth exercise. */
+  spurious: number;
+  /** Mentions the real resolver returned 'unmatched' for. */
+  unresolvedCount: number;
+  routineExactMatch: boolean;
   diffs: string[];
 }

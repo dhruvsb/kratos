@@ -1,0 +1,58 @@
+{
+  "audio": "09.m4a",
+  "intent": "log_workout",
+  "routine": "Full Body",
+  "reference_transcript": "Okay, um, Full Body today. Goblet squat, twenty four kilos, three sets of twelve. Um, dumbbell bench press, twenty eight kilos, two sets of ten. Then, uh, one-arm dumbbell row, twenty two kilos, ten reps each side, two sets. Push-ups, uh, two sets of twenty. And, um, hanging leg raise, three sets of twelve reps. Yeah that's it for today.",
+  "exercises": [
+    {
+      "name": "Goblet Squat",
+      "load_mode": "external_load",
+      "sets": [
+        { "weight_kg": 24, "reps": 12 },
+        { "weight_kg": 24, "reps": 12 },
+        { "weight_kg": 24, "reps": 12 }
+      ]
+    },
+    {
+      "name": "Dumbbell Bench Press",
+      "load_mode": "dumbbell_each",
+      "sets": [
+        { "weight_kg": 28, "reps": 10 },
+        { "weight_kg": 28, "reps": 10 }
+      ]
+    },
+    {
+      "name": "One-Arm Dumbbell Row",
+      "load_mode": "dumbbell_each",
+      "sets": [
+        { "weight_kg": 22, "reps": 10 },
+        { "weight_kg": 22, "reps": 10 }
+      ]
+    },
+    {
+      "name": "Push-Up",
+      "load_mode": "bodyweight",
+      "sets": [
+        { "weight_kg": null, "reps": 20 },
+        { "weight_kg": null, "reps": 20 }
+      ]
+    },
+    {
+      "name": "Hanging Leg Raise",
+      "load_mode": "bodyweight",
+      "sets": [
+        { "weight_kg": null, "reps": 12 },
+        { "weight_kg": null, "reps": 12 },
+        { "weight_kg": null, "reps": 12 }
+      ]
+    }
+  ],
+  "routine_exercises": [],
+  "meta": {
+    "environment": "quiet_room",
+    "phone": "close",
+    "speaker_state": "rested",
+    "pace": "natural",
+    "notes": "goblet squat is a single held weight (not per-hand) despite being a dumbbell/kettlebell exercise — load_mode external_load, not dumbbell_each; trailing meta-comment ('yeah that's it for today') must not be parsed as a 6th exercise"
+  }
+}

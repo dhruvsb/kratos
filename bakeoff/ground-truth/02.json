@@ -1,0 +1,26 @@
+{
+  "audio": "02.m4a",
+  "intent": "create_routine",
+  "routine": "Pull Day",
+  "reference_transcript": "Alright, new routine, um, Pull Day. So we've got, uh, deadlift first, then bent-over barbell row, and, like, pendlay row too — I know that's kind of similar but whatever. Um, lat pulldown, close-grip lat pulldown, uh, seated cable row, one-arm dumbbell row... let's see, what am I missing... oh yeah, barbell curl, hammer curl, and, um, EZ-bar curl to finish it off.",
+  "exercises": [],
+  "routine_exercises": [
+    "Deadlift",
+    "Bent-Over Barbell Row",
+    "Pendlay Row",
+    "Lat Pulldown",
+    "Close-Grip Lat Pulldown",
+    "Seated Cable Row",
+    "One-Arm Dumbbell Row",
+    "Barbell Curl",
+    "Hammer Curl",
+    "EZ-Bar Curl"
+  ],
+  "meta": {
+    "environment": "quiet_room",
+    "phone": "close",
+    "speaker_state": "rested",
+    "pace": "natural",
+    "notes": "10 exercises, filler-heavy, explicit acknowledgment of near-duplicate names (row/pulldown variants), trailing self-search ('what am I missing')"
+  }
+}
