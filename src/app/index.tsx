@@ -272,7 +272,7 @@ const makeStyles = (color: Theme['color']) =>
     histDate: { width: 44 },
     histDd: { fontFamily: font.uiSemibold, fontSize: 15, color: color.t1 },
     histDow: { fontFamily: font.num, fontSize: 9, letterSpacing: 1, color: color.t3, marginTop: 5 },
-    histName: { flex: 1, fontFamily: font.ui, fontSize: 17, color: color.t1 },
+    histName: { flex: 1, fontFamily: font.uiMedium, fontSize: 17, color: color.t1 },
     histVol: { width: 70, alignItems: 'flex-end' },
     histVolNum: { fontFamily: font.uiSemibold, fontSize: 14, color: color.t1 },
     histVolUnit: { fontFamily: font.num, fontSize: 9, letterSpacing: 1, color: color.t3, marginTop: 5 },

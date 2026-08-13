@@ -7,6 +7,17 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-13 — Home routine-name weight fix (font consistency)
+
+The recent-workout name on Home rendered in Instrument Sans **Regular (400)** — the only
+place in the app a name uses 400 (every other list row/title uses `uiMedium` 500 or
+`uiSemibold` 600), so at 17px it read noticeably thinner and "off" next to the Geist Mono
+readouts on the same row. Changed `histName` in `src/app/index.tsx` from `font.ui` →
+`font.uiMedium`, matching the history/routines list rows. No stray fonts found — the
+two-family mix (Instrument Sans names + Geist Mono numbers) is by design.
+
+---
+
 ## 2026-08-13 — Simulator QA pass: 4 bugs found and fixed
 
 First full end-to-end walk since the backlog batch, on the iPhone 17 Pro / iOS 26.5 sim (light theme).
