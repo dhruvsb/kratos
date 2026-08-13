@@ -10,6 +10,7 @@ import {
 import { useEffect } from 'react';
 import * as auth from './auth';
 import * as exercises from './exercises';
+import * as health from './healthImport';
 import * as importer from './import';
 import * as routines from './routines';
 import type { RoutineDetail } from './routines';
@@ -605,6 +606,20 @@ export function useCommitImport() {
   return useMutation({
     mutationFn: (plan: importer.ImportPlan) => importer.commitImportPlan(plan),
     onSuccess: () => qc.invalidateQueries(),
+  });
+}
+
+/** Apple Health gap-fill (iOS-only). Adds blank placeholders for forgotten
+ *  strength days, so it lands new rows in history and the calendar heatmap. */
+export function useSyncHealthWorkouts() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => health.syncHealthWorkouts(),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: keys.workoutList });
+      void qc.invalidateQueries({ queryKey: keys.workoutPrCounts });
+      void qc.invalidateQueries({ queryKey: ['workoutDays'] });
+    },
   });
 }
 

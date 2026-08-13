@@ -10,7 +10,16 @@ codebase or a huge prior conversation.
 > issues**) *and* append a dated entry to [`WORK-LOG.md`](./WORK-LOG.md). This file is the
 > snapshot; `WORK-LOG.md` is the full history. Keep this file short.
 
-**Last updated:** 2026-08-13 — **"Refined Screens (Dark)" TURN 3 shipped (import `fd29fa5c`).** On top of
+**Last updated:** 2026-08-13 — **Apple Health gap-fill (iOS-only) built.** New **Settings → DATA → "Sync
+from Apple Health"** button reads strength sessions (`traditional`/`functional` only) from the Health store
+and inserts a blank **"Strength Training"** placeholder for any day you worked out but forgot to log —
+day-level + `external_id: healthkit:<uuid>` dedup, a real RepVoice/Hevy log always wins. Source-agnostic
+(Whoop now, Amazfit Helio via Zepp later — no app change). New `src/lib/healthkit.ts` (the only HealthKit
+touch-point) + `src/data/healthImport.ts` + `useSyncHealthWorkouts`; config plugin `@kingstinct/react-native-healthkit`
+(read-only, `NSHealthShareUsageDescription`). **iOS-only by design** — button hidden off iOS, every entry
+point no-ops. `tsc` clean. **Needs a dev-client rebuild** (new native module) before the button works on
+device. **Also flagged (awaiting decision): leftover Android/web scaffolding** — see Open issues. Prior:
+**"Refined Screens (Dark)" TURN 3 shipped (import `fd29fa5c`).** On top of
 TURN 2: **(1)** dark accent toned `#A3E635`→**`#ACD455`** in `tokens.ts` (+ every derivative/CTA/meter;
 glows follow `color.acc`; light palette untouched) — "stops glowing at night". **(2)** Home → **3c
 week-grouped history**: date moved into a group header (`THIS WEEK` / `3–9 AUG` + per-week count), rows
@@ -267,6 +276,11 @@ native-`UITabBar` drag-lens glass — deferred, keeping the custom pill+FAB.
 
 ## Pending actions (owner: user / next session)
 
+- [ ] **Rebuild the dev client for Apple Health** — the `@kingstinct/react-native-healthkit` native module
+      was added, so the current on-device build can't run the "Sync from Apple Health" button until a fresh
+      `xcodebuild -allowProvisioningUpdates` install (same flow as the last device build). Until then it's
+      `tsc`-verified only.
+- [ ] **Decide on the Android/web scaffolding** flagged in Open issues (RepVoice is iOS-only) — remove or keep.
 - [x] ~~**Apply migration `0008_clear_own_workouts.sql`**~~ — **applied live 2026-08-13** (`supabase db
       push`; 0001–0008 all on remote). The `clear_own_workouts()` RPC is live, so Settings → DATA → "Clear
       all history" works. Not yet exercised on device.
@@ -363,6 +377,7 @@ optimistic** (instant ✓, rollback on error) · ✅ **kg/lb unit toggle** in Se
 | ~~Med~~ | ✅ **Done 2026-08-13** — repo reads now `.parse()` through the zod schemas (flat rows + the numeric-bearing nested `sets`/`last_session` arrays); partial selects (`listWorkouts` volume, `getExerciseBests`) coerce `weight_kg` via `Number()`. A numeric-as-string can no longer make `weight_kg` a string. `tsc` + `test:offline` 16/16 green. | `src/data/*`, `src/types/db.ts` |
 | ~~Low~~ | ✅ **Done 2026-07-31** — body-region **muscle filter** chip row added to the picker *and* the library (`exercises.tsx`); `searchExercises(query, region?)` + `listExercisesByRegion()`. (RECENT tab still deferred.) Also new: per-workout **muscle split** on `history/[id].tsx` (`lib/muscleSplit.ts` + `components/MuscleSplit.tsx`). | `ExercisePickerModal.tsx` |
 | Low | Routine editor uses ↑/↓ reorder, not drag (= FEEDBACK **#8**, still open) | `src/app/routine/[id].tsx` |
+| New | **iOS-only cleanup (awaiting user decision):** RepVoice ships iOS-only, but non-iOS scaffolding remains — `android:` block + 3 `android-icon-*.png` assets + `web:` block in `app.config.ts`; `"android"`/`"web"` npm scripts; `react-native-web` dep; dead `Platform.OS === 'android'` clauses in `lib/haptics.ts` + `lib/feedback.ts` and the `!== 'web'` branch in `lib/supabase.ts`. All harmless but bloat. New iOS-only code (`healthkit.ts`, `healthImport.ts`) already guards correctly. **Do NOT remove without asking** — web-export was historically a `tsc`-adjacent CI check. | `app.config.ts`, `package.json`, `src/lib/*` |
 | ~~Low~~ | ✅ **Done 2026-08-12** — `addExerciseToWorkout` now dedupes `(workout_id, exercise_id)` (returns the existing row as a no-op) | `src/data/workouts.ts` |
 | — | *(Phase 2 / voice — parked until voice resumes)* model IDs `gpt-5.6-luna/terra` unverified + eval never run; floor-mode auto-exit & PR-celebration wiring; voice dead code (`useVoiceSession.ts`, `useSessionSpeech`, `floorSensor.ts`); telemetry queries never invalidated; duplicated zod enums; `eval/README.md` stale `gpt-4o` refs | Phase 2 files |
 

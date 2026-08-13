@@ -61,6 +61,18 @@ const config: ExpoConfig = {
         speechRecognitionPermission: 'Allow RepVoice to use speech recognition to log sets by voice.',
       },
     ],
+    // Apple Health gap-fill: read-only import of strength sessions the user did
+    // but forgot to log (src/lib/healthkit.ts → src/data/healthImport.ts). We
+    // only ever READ, so just NSHealthShareUsageDescription — no update string,
+    // no background delivery. HealthKit is iOS-only; RepVoice ships iOS-only too.
+    [
+      '@kingstinct/react-native-healthkit',
+      {
+        NSHealthShareUsageDescription:
+          'RepVoice reads your strength-training sessions from Apple Health to fill in days you worked out but forgot to log.',
+        background: false,
+      },
+    ],
   ],
   experiments: {
     typedRoutes: true,

@@ -7,6 +7,38 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-13 — Apple Health gap-fill (iOS-only): backfill forgotten strength days
+
+Built the "did I train at all that day?" backfill. Purpose: when a workout happened but wasn't logged in
+RepVoice/Hevy, the calendar shouldn't show a blank day — Apple Health (fed by Whoop today, an Amazfit
+Helio via the Zepp app later) knows a strength session occurred, so we mark the day.
+
+- **`src/lib/healthkit.ts`** (new) — the single HealthKit touch-point (mirrors the `supabase.ts` rule).
+  `@kingstinct/react-native-healthkit` v14 (Nitro): `isHealthAvailable()`, `requestStrengthPermission()`
+  (read-only, `HKWorkoutTypeIdentifier`), `readStrengthWorkouts(days)` → filters to `traditional`/
+  `functional` strength in JS, returns `{uuid, start, end}`. **iOS-only** — every export short-circuits off
+  iOS so no caller needs a Platform check.
+- **`src/data/healthImport.ts`** (new) — `syncHealthWorkouts()`: reads the last **30 days**, inserts a blank
+  **`title: 'Strength Training'`** workout (no exercises/sets) for any day not already covered. Dedup is
+  twofold: exact `external_id: 'healthkit:<uuid>'` (idempotent re-sync, same column Hevy uses) **and**
+  local calendar-day — a real log always wins. `started_at`+`ended_at` both set so it counts in history and
+  the calendar heatmap (both filter `ended_at IS NOT NULL`). Returns `{added, skipped}`.
+- **UI** — `useSyncHealthWorkouts` (invalidates workoutList/prCounts/workoutDays) + a **Settings → DATA →
+  "Sync from Apple Health"** row, rendered only when `Platform.OS === 'ios'`, with a result Alert.
+- **Config** — `app.config.ts` plugin `@kingstinct/react-native-healthkit` with read-only
+  `NSHealthShareUsageDescription` (no update string, no background). `npx expo install` added the package +
+  `react-native-nitro-modules`.
+- **Future hook:** the placeholder is just an empty workout, so a later "tap → pick muscle groups" feature
+  drops in with no schema change.
+
+`tsc` clean; `expo config` resolves the plugin. **Not yet on device** — the new native module needs a
+dev-client rebuild before the button does anything (noted in Pending).
+
+**Also flagged (per the iOS-only mandate):** audited the repo for non-iOS cruft — `android:`/`web:` config
+blocks, 3 android icon assets, `android`/`web` npm scripts, `react-native-web`, dead `Platform.OS` android/
+web branches in `lib/haptics.ts`, `lib/feedback.ts`, `lib/supabase.ts`. Reported for a keep/remove decision
+(logged in Open issues); **not touched** this session.
+
 ## 2026-08-13 — "Refined Screens (Dark)" TURN 3 (import fd29fa5c): toned accent, week-grouped Home, keypad flow actions
 
 The design doc advanced to **TURN 3 · TONED ACCENT, LIGHTER HOME, KEYPAD ACTIONS**; implemented the

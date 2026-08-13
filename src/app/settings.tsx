@@ -11,7 +11,7 @@ import { useMemo, useState } from 'react';
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useQuery } from '@tanstack/react-query';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HomeQuickStart } from '@/components/home/HomeQuickStart';
 import { HomeTabBar, TAB_BAR_HEIGHT } from '@/components/voice/TabBar';
@@ -21,6 +21,7 @@ import {
   useActiveWorkout,
   useClearAllWorkouts,
   useProfile,
+  useSyncHealthWorkouts,
   useUpdateProfile,
 } from '@/data/hooks';
 import { GOAL_PRESETS, THEME_MODES, useSettings, useUpdateSettings } from '@/data/settings';
@@ -82,10 +83,12 @@ export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const [deleting, setDeleting] = useState(false);
   const [clearing, setClearing] = useState(false);
+  const [syncingHealth, setSyncingHealth] = useState(false);
   const profile = useProfile();
   const updateProfile = useUpdateProfile();
   const activeWorkout = useActiveWorkout();
   const clearAllWorkouts = useClearAllWorkouts();
+  const syncHealth = useSyncHealthWorkouts();
   const settings = useSettings();
   const updateSettings = useUpdateSettings();
   const sessionEmail = useQuery({
@@ -190,6 +193,29 @@ export default function SettingsScreen() {
     );
   }
 
+  // Apple Health gap-fill (iOS-only). Reads strength sessions from Health and
+  // backfills a blank "Strength Training" day for any you forgot to log — the
+  // permission sheet is shown by the sync itself on first run.
+  async function runHealthSync() {
+    setSyncingHealth(true);
+    try {
+      const { added } = await syncHealth.mutateAsync();
+      setSyncingHealth(false);
+      Alert.alert(
+        added > 0 ? 'Synced from Apple Health' : 'Nothing new to add',
+        added > 0
+          ? `Added ${added} strength ${added === 1 ? 'session' : 'sessions'} you hadn't logged.`
+          : 'Every strength session in Apple Health is already on your calendar.'
+      );
+    } catch (e) {
+      setSyncingHealth(false);
+      Alert.alert(
+        'Could not sync',
+        e instanceof Error ? e.message : 'Check Apple Health access in Settings and try again.'
+      );
+    }
+  }
+
   const groups: { title: string; rows: Row[] }[] = s
     ? [
         {
@@ -230,6 +256,16 @@ export default function SettingsScreen() {
           rows: [
             { label: 'Exercise library', onPress: () => router.push('/exercises') },
             { label: 'Import from Hevy', onPress: () => router.push('/import') },
+            // iOS-only: HealthKit exists nowhere else and RepVoice ships iOS-only.
+            ...(Platform.OS === 'ios'
+              ? [
+                  {
+                    label: 'Sync from Apple Health',
+                    value: syncingHealth ? 'Syncing…' : undefined,
+                    onPress: syncingHealth ? undefined : runHealthSync,
+                  } as Row,
+                ]
+              : []),
             { label: 'Export workouts', onPress: () => router.push('/export') },
             {
               label: 'Clear all history',
