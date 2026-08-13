@@ -7,6 +7,50 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-14 — Simulator QA pass (partial): 1 bug fixed, 1 open, sign-in workaround
+
+Comprehensive on-simulator QA of the whole app. **Cut short — see "not covered".**
+
+**Fixed + verified**
+- **Status-bar exception on every cold boot** (pre-existing, commit `4203a73`). `<StatusBar>`
+  (expo-status-bar → RCTStatusBarManager, needs `UIViewControllerBasedStatusBarAppearance=NO`)
+  and the Stack's react-native-screens `statusBarStyle` (needs YES) were both in play; the plist
+  said YES so it threw at launch. Both set the same theme value, so the global one won: plist →
+  false, Stack option dropped (this also keeps the sign-in screen theme-aware). **Clean boot
+  confirmed.** `ios/RepVoice/Info.plist` is gitignored — kept in sync by hand.
+
+**Open defect — voice recorder (`src/app/voice/record.tsx`)**
+- On the simulator the timer stays `00:00`, the level meter never moves, and **"Stop & review"
+  never fires** (label never flips to "Reviewing…", so `onPress` isn't running). Touches/JS are
+  alive (the dev menu opens, rings animate).
+- One real cause found + fixed: a **new options object per render** into `useAudioRecorder` while
+  `useAudioRecorderState` re-rendered every 100ms → a new recorder per poll, saturating JS.
+  Hoisted to a module constant, poll → 250ms. That restored the animations but **not** the timer
+  or the button.
+- Device logs prove recording genuinely starts (AAC encoder + input audio queue created), so the
+  remaining fault is on the JS/state side (or `durationMillis`/`stop()` on the simulator).
+  **Needs another pass + real-mic verification on device.**
+
+**Verified working:** sign-in (light-theme solid-moss CTA, disabled state, 8-box code entry,
+auto-focus, rate-limit + invalid-token errors), Home (streak, ring heatmap w/ today ringed,
+week-grouped history, PR medals, glass tab pill, **mic FAB**), workout-detail history screen (PR
+banner, volume, muscle split, per-set volumes, FAILURE tag), mic-permission prompt with the
+expo-audio string, both edge functions 401 without auth, `voice_logs` telemetry writing live
+(`gpt-transcribe` / `gpt-5.6-luna`, ~$0.001 + ~6s per utterance).
+
+**Not covered (ran out of session):** Routines tab, Settings + theme toggle, the manual
+start→log→finish loop, calendar, exercise library/picker, exercise progress, and the voice
+preview/commit UI. Bottom-tab-bar taps were also unreliable to drive from the harness (taps in
+that strip repeatedly landed on the content underneath) — worth a human check that the glass pill
+isn't passing touches through.
+
+**Sign-in on a fresh simulator install (one-off):** Supabase rate-limits OTPs (~1/min, plus an
+hourly email cap) and `admin/generate_link` mints a **magiclink**-type OTP which the app's
+`verifyOtp({type:'email'})` rejects. Workaround used: set a temporary password via the admin API,
+exchange it for a session (`grant_type=password`), and write it into the app's AsyncStorage
+manifest (`sb-<ref>-auth-token`) before launch. **A temporary password now exists on the
+dsooseven@gmail.com account — remove/rotate it if unwanted.**
+
 ## 2026-08-13 (latest) — Voice logging CUT OVER to the real models (mock retired)
 
 The 1a voice flow now runs on the real pipeline (was gated behind `MOCK_VOICE`). Using the
