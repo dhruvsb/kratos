@@ -491,6 +491,10 @@ export function useFinishWorkout(workoutId: string) {
       void qc.invalidateQueries({ queryKey: keys.workoutList });
       void qc.invalidateQueries({ queryKey: keys.workoutPrCounts }); // this session may set PRs
       void qc.invalidateQueries({ queryKey: keys.workout(workoutId) });
+      // Finishing adds today to the worked days, so Home's streak + heatmap are
+      // now stale (`useWorkoutDays` in data/calendar.ts). Without this the hero
+      // streak keeps showing today as un-worked until the next cold start.
+      void qc.invalidateQueries({ queryKey: ['workoutDays'] });
       // Finished workout becomes someone's "last session".
       void qc.invalidateQueries({ queryKey: ['lastSession'] });
       void qc.invalidateQueries({ queryKey: ['exerciseHistory'] });
@@ -551,6 +555,9 @@ export function useDeleteWorkout(workoutId: string) {
       qc.invalidateQueries({ queryKey: keys.workoutPrCounts });
       qc.invalidateQueries({ queryKey: keys.activeWorkout });
       qc.removeQueries({ queryKey: keys.workout(workoutId) });
+      // Deleting a *finished* workout removes one of the worked days, so Home's
+      // streak + heatmap must refetch (same reason as useFinishWorkout).
+      qc.invalidateQueries({ queryKey: ['workoutDays'] });
       qc.invalidateQueries({ queryKey: ['lastSession'] });
       qc.invalidateQueries({ queryKey: ['exerciseHistory'] });
     },

@@ -121,11 +121,19 @@ export default function ActiveWorkoutScreen() {
   // connection drops mid-workout (the picker filters this list locally offline).
   usePrefetchExerciseDirectory();
 
-  // Default the active exercise to the last one added.
+  // Default the active exercise to where the session actually is: the first
+  // exercise that has no logged sets yet. On a fresh start from a routine that's
+  // exercise 1 (landing on the *last* one made a new workout open at "3 OF 3");
+  // on a resume it's the one you were about to do. If every exercise already has
+  // sets you're at the end, so stay on the last. Adding an exercise mid-workout
+  // jumps to it explicitly (see the picker's onPick), so this only decides the
+  // first paint.
   useEffect(() => {
     if (!detail || activeExerciseId) return;
-    const last = detail.exercises[detail.exercises.length - 1];
-    if (last) setActiveExerciseId(last.exercise_id);
+    const next =
+      detail.exercises.find((we) => we.sets.length === 0) ??
+      detail.exercises[detail.exercises.length - 1];
+    if (next) setActiveExerciseId(next.exercise_id);
   }, [detail, activeExerciseId]);
 
   const activeExercise =

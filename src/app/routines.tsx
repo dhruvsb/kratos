@@ -179,6 +179,16 @@ export default function RoutinesScreen() {
         </View>
       </ScrollView>
 
+      {/* Content-container padding only clears the status bar at scroll-0 — once
+          the list scrolls, rows ran straight under the clock / Dynamic Island.
+          Home never showed this because its streak header is fixed and opaque;
+          here this scrim plays that part. pointerEvents="none" so it can't eat
+          taps meant for the row beneath it. */}
+      <View
+        pointerEvents="none"
+        style={[styles.topScrim, { height: insets.top }]}
+      />
+
       <HomeTabBar active="routines" withFab />
       <ActiveWorkoutBar />
       <HomeQuickStart />
@@ -189,6 +199,15 @@ export default function RoutinesScreen() {
 const makeStyles = (color: Theme['color'], _shadow: Theme['shadow']) =>
   StyleSheet.create({
     screen: { flex: 1, backgroundColor: color.bg },
+    // Opaque status-bar strip so scrolled rows disappear behind it instead of
+    // colliding with the clock. Height is the safe-area inset, set at runtime.
+    topScrim: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      backgroundColor: color.bg,
+    },
     content: { paddingHorizontal: space.xxl, paddingBottom: space.xl, flexGrow: 1 },
     title: { fontFamily: font.uiSemibold, fontSize: 22, color: color.t1 },
     section: {

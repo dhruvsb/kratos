@@ -6,6 +6,81 @@ entry at top. When an item is fixed, mark it and move the detail into `WORK-LOG.
 
 ---
 
+## 2026-08-13 (12) — Full simulator QA pass (iPhone 17 Pro, iOS 26.5, light theme)
+
+**Context:** first end-to-end walk of the app since the 2026-08-13 backlog batch (zod repo
+validation, day-zero Home, `ios.appleTeamId`, overload ghost, clear-history, routine long-press
+actions, logging haptics). Walked: Routines → long-press menu → duplicate → multi-select picker →
+save → start workout → keypad + grid logging → delete set → finish → summary → Home history/PR badge
+→ Settings → clear-history confirm. **4 bugs found, all 4 fixed in-session.**
+
+| # | Item | Area | Done? | Sev | Effort |
+|---|------|------|-------|-----|--------|
+| 37 | Fresh workout opens on the **last** exercise ("3 OF 3"), not the first | Active workout | ✅ FIXED 2026-08-13 | **High** | S |
+| 38 | Today's heatmap cell never shows the worked fill — no acknowledgement after training | Home / streak | ✅ FIXED 2026-08-13 | **High** | S |
+| 39 | Finishing/deleting a workout doesn't refresh the streak + heatmap (`['workoutDays']` never invalidated) | Data / cache | ✅ FIXED 2026-08-13 | Med | S |
+| 40 | Routines list scrolls under the status bar / Dynamic Island | Routines / layout | ✅ FIXED 2026-08-13 | Med | S |
+| 41 | Duplicate creates the routine immediately, so the editor's CANCEL doesn't undo it | Routines | ⬜ Open | Low | S |
+| 42 | Consolidate `lib/feedback.ts` (voice earcons) onto `lib/haptics.ts` | Tech debt | ⬜ Open | Low | S |
+
+### 37. Fresh workout opened on the last exercise ✅ **High** — fixed
+**Seen:** starting a 3-exercise routine landed on **Bench Dip "3 OF 3"** with PREV enabled and
+NEXT gone — you had to manually walk back to exercise 1 to start lifting.
+**Root cause:** `workout/[id].tsx` defaulted the active exercise to `exercises[length - 1]`
+("the last one added"). That default only ever runs on first paint — adding an exercise mid-workout
+already jumps to it explicitly — so it was simply the wrong seed.
+**Fix:** default to **the first exercise with no logged sets**, falling back to the last when every
+exercise already has sets. Fresh routine → exercise 1; a resume → where you actually stopped.
+
+### 38. Today's cell never showed you'd trained ✅ **High** — fixed
+**Seen:** finished a workout, returned to Home, and today's heatmap ring looked **identical to a
+skipped day** — an empty dashed circle. On a streak-first Home whose whole job is "did I show up
+today?", the payoff moment was invisible.
+**Root cause:** `cellLook()` in `index.tsx` tested `cell.isToday` **before** `cell.state === 'worked'`
+and short-circuited, so today always rendered `bg: 'transparent'` regardless of state.
+**Fix:** today keeps its dashed accent ring (still findable at a glance) but now also takes the
+`acc14` worked fill when trained. Verified live: day 13 filled after finishing.
+
+### 39. Finish/delete never refreshed the streak ✅ Med — fixed
+**Root cause:** `useFinishWorkout` invalidated six keys but not `['workoutDays']` (the heatmap/streak
+query, which lives in `data/calendar.ts`, outside `keys`). `useDeleteWorkout` had the same gap.
+So Home's hero streak stayed stale until a cold start. **Fix:** both now invalidate `['workoutDays']`.
+`useDiscardWorkout` deliberately does not — it only ever discards an *unfinished* workout, which was
+never a heatmap day.
+
+### 40. Routines scrolled under the status bar ✅ Med — fixed
+**Seen:** scrolling the routines list ran rows straight under the clock / Dynamic Island.
+**Root cause:** `contentContainerStyle.paddingTop` clears the inset only at scroll-0; nothing masks
+the strip afterwards. Home never showed it because its streak header is fixed and opaque.
+**Fix:** an opaque `color.bg` top scrim (height = safe-area inset, `pointerEvents="none"`).
+
+### 41. Duplicate is committed before the editor opens ⬜ Low
+`duplicateRoutine` writes the copy, then routes into the editor — so **CANCEL leaves the copy
+behind**. Not wrong (it matches "duplicate then tweak"), but CANCEL reads as "undo". Options: create
+on save instead, or relabel the editor's CANCEL for this path.
+
+### 42. Two haptic helpers ⬜ Low (tech debt)
+`lib/feedback.ts` (Phase 2 voice earcons) and the new `lib/haptics.ts` both wrap expo-haptics.
+`feedback.ts` is gated on the voice `muted` flag and speaks an earcon vocabulary, so the manual loop
+must not route through it — but the two should eventually share one primitive.
+
+### Verified working (no defect)
+Routine long-press → Duplicate / Rename / Archive · duplicate copies all exercises in order ·
+multi-select picker + ADD (n) (#18) · Biceps/Triceps region chips live post-reseed (#19) · no target
+inputs in the editor (#21) · reps default 12 (#3) · rep chips (#13) · keypad auto-advance chain (#26) ·
+long-press delete + confirm (#11) · set renumbering under the new UNIQUE constraint (0006) ·
+zero-set exercises dropped on finish · finish summary in kg (#16) · PR medal badge with a real count
+(#35) · glass tab pill + FAB on iOS 26 (#22) · light-theme solid CTAs (#17) · clear-history row +
+first confirm, correct copy (not executed).
+
+**Not covered this pass:** dark theme not re-walked (all four fixes are token-based — `color.bg`,
+`color.acc14` — so they're theme-safe by construction); haptics can't be felt on a simulator (verified
+only that they don't break the write path); day-zero Home unreachable on an account with history;
+the overload ghost never triggered (needs a prior session where *every* set hit reps ≥ 10 — worth
+re-checking on device that the rule isn't too strict to ever fire).
+
+---
+
 ## 2026-08-12 (11) — Glass tabs: device QA + native-tab-bar option
 
 **Context:** hands-on testing of the liquid-glass tabs (#22) on the iPhone 15 / iOS 26.5.2. Four fixes

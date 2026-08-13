@@ -211,7 +211,20 @@ function PrBadge({
 }
 
 function cellLook(cell: HeatCell, color: Theme['color']) {
-  if (cell.isToday) return { ring: color.acc, dashed: true, bg: 'transparent', fg: color.acc };
+  // Today keeps its dashed accent ring so it stays findable at a glance, but it
+  // must ALSO carry the worked fill once you've trained: this check used to
+  // short-circuit before the `worked` branch, so a finished workout left today
+  // looking identical to a day you skipped — no acknowledgement on the one
+  // screen whose whole job is "did I show up today?".
+  if (cell.isToday) {
+    const worked = cell.state === 'worked';
+    return {
+      ring: color.acc,
+      dashed: true,
+      bg: worked ? color.acc14 : 'transparent',
+      fg: color.acc,
+    };
+  }
   if (cell.state === 'worked') return { ring: color.acc, dashed: false, bg: color.acc14, fg: color.acc };
   return { ring: 'transparent', dashed: false, bg: 'transparent', fg: color.t3 };
 }

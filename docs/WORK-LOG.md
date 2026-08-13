@@ -7,6 +7,28 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-13 — Simulator QA pass: 4 bugs found and fixed
+
+First full end-to-end walk since the backlog batch, on the iPhone 17 Pro / iOS 26.5 sim (light theme).
+Detail + the verified-working list in `FEEDBACK-LOG.md` 2026-08-13 (12). Four real bugs, all fixed:
+
+- **#37 (High)** fresh workout opened on the *last* exercise ("3 OF 3") — `workout/[id].tsx` seeded the
+  active exercise to `exercises[length-1]`. Now seeds to the first exercise with **no logged sets**
+  (fresh routine → #1; resume → where you stopped). Mid-workout adds already jump explicitly.
+- **#38 (High)** today's heatmap cell never took the worked fill — `cellLook()` tested `isToday`
+  *before* `worked` and short-circuited, so finishing a workout looked identical to skipping the day
+  on the streak-first Home. Today now keeps its dashed ring **and** takes the `acc14` fill.
+- **#39 (Med)** `useFinishWorkout` / `useDeleteWorkout` never invalidated `['workoutDays']` (that query
+  lives in `data/calendar.ts`, outside `keys`), so the streak/heatmap stayed stale until a cold start.
+  `useDiscardWorkout` intentionally left alone — it only discards unfinished workouts.
+- **#40 (Med)** the Routines list scrolled under the status bar / Dynamic Island; added an opaque
+  `color.bg` top scrim (safe-area height, `pointerEvents="none"`). Home was immune via its fixed header.
+
+Logged as open: **#41** duplicate commits before the editor opens (CANCEL doesn't undo), **#42**
+consolidate `lib/feedback.ts` onto `lib/haptics.ts`. `tsc` clean; `test:offline` 16/16.
+
+---
+
 ## 2026-08-13 — Four parallel-agent backlog fixes (day-zero Home, signing config, overload ghost, clear-history)
 
 Ran four file-disjoint agents at once (on top of the zod fix below), one coherent commit. All `tsc`-clean;
