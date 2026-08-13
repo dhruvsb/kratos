@@ -40,13 +40,40 @@ function next<T>(list: readonly T[], current: T): T {
   return list[(i + 1) % list.length];
 }
 
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
 type Row = {
   label: string;
-  note?: string;
-  value: string;
-  tone?: 'default' | 'on' | 'warn' | 'danger';
+  value?: string;
+  tone?: 'default' | 'warn' | 'danger';
+  /** Renders a switch instead of a value + chevron (the refined design's toggle). */
+  toggle?: boolean;
+  on?: boolean;
   onPress?: () => void;
 };
+
+// The refined design's real switch: a lime track + dark knob when on, a quiet
+// track + knob when off. Token-only so both themes read right.
+function Toggle({ on, onPress }: { on: boolean; onPress?: () => void }) {
+  const { color } = useTheme();
+  return (
+    <Pressable onPress={onPress} hitSlop={8}>
+      <View
+        style={{
+          width: 48,
+          height: 29,
+          borderRadius: 15,
+          padding: 2,
+          flexDirection: 'row',
+          justifyContent: on ? 'flex-end' : 'flex-start',
+          backgroundColor: on ? color.acc : color.line2,
+        }}
+      >
+        <View style={{ width: 25, height: 25, borderRadius: 13, backgroundColor: on ? color.accInk : color.t2 }} />
+      </View>
+    </Pressable>
+  );
+}
 
 export default function SettingsScreen() {
   const { color } = useTheme();
@@ -170,23 +197,20 @@ export default function SettingsScreen() {
           rows: [
             {
               label: 'Units',
-              note: 'stored in kg, always',
-              value: unit.toUpperCase(),
+              value: unit,
               onPress: () =>
                 updateProfile.mutate({ default_unit: unit === 'kg' ? 'lb' : 'kg' }),
             },
             {
               label: 'Pre-fill from last session',
-              note: 'blank rows if off',
-              value: s.prefillFromLastSession ? 'ON' : 'OFF',
-              tone: s.prefillFromLastSession ? 'on' : 'default',
+              toggle: true,
+              on: s.prefillFromLastSession,
               onPress: () =>
                 updateSettings.mutate({ prefillFromLastSession: !s.prefillFromLastSession }),
             },
             {
               label: 'Weekly goal',
-              note: 'drives the calendar tally',
-              value: `${s.weeklyGoal} DAYS`,
+              value: `${s.weeklyGoal} days`,
               onPress: () => updateSettings.mutate({ weeklyGoal: next(GOAL_PRESETS, s.weeklyGoal) }),
             },
           ],
@@ -196,9 +220,7 @@ export default function SettingsScreen() {
           rows: [
             {
               label: 'Theme',
-              note: "'system' follows your device",
-              value: themeMode.toUpperCase(),
-              tone: themeMode === 'system' ? 'default' : 'on',
+              value: cap(themeMode),
               onPress: () => setThemeMode(next(THEME_MODES, themeMode)),
             },
           ],
@@ -206,28 +228,12 @@ export default function SettingsScreen() {
         {
           title: 'DATA',
           rows: [
-            {
-              label: 'Exercise library',
-              note: 'browse and add custom exercises',
-              value: 'MANAGE',
-              onPress: () => router.push('/exercises'),
-            },
-            {
-              label: 'Import from Hevy',
-              note: 'build history from a Hevy CSV',
-              value: 'IMPORT',
-              onPress: () => router.push('/import'),
-            },
-            {
-              label: 'Export workouts',
-              note: 'Hevy-compatible CSV file',
-              value: 'EXPORT',
-              onPress: () => router.push('/export'),
-            },
+            { label: 'Exercise library', onPress: () => router.push('/exercises') },
+            { label: 'Import from Hevy', onPress: () => router.push('/import') },
+            { label: 'Export workouts', onPress: () => router.push('/export') },
             {
               label: 'Clear all history',
-              note: 'deletes every workout; keeps routines & exercises',
-              value: clearing ? 'CLEARING…' : 'CLEAR',
+              value: clearing ? 'Clearing…' : undefined,
               tone: 'danger',
               onPress: clearing ? undefined : confirmClearAllWorkouts,
             },
@@ -236,17 +242,10 @@ export default function SettingsScreen() {
         {
           title: 'ACCOUNT',
           rows: [
-            {
-              label: 'Sign out',
-              note: email,
-              value: '→',
-              tone: 'warn',
-              onPress: confirmSignOut,
-            },
+            { label: 'Sign out', tone: 'warn', onPress: confirmSignOut },
             {
               label: 'Delete account',
-              note: 'erases every workout, routine and custom exercise',
-              value: deleting ? 'DELETING…' : 'DELETE',
+              value: deleting ? 'Deleting…' : undefined,
               tone: 'danger',
               onPress: deleting ? undefined : confirmDeleteAccount,
             },
@@ -255,12 +254,7 @@ export default function SettingsScreen() {
         {
           title: 'ABOUT',
           rows: [
-            {
-              label: 'Privacy policy',
-              note: 'what RepVoice stores, and how to erase it',
-              value: 'READ',
-              onPress: () => WebBrowser.openBrowserAsync(PRIVACY_POLICY_URL),
-            },
+            { label: 'Privacy policy', onPress: () => WebBrowser.openBrowserAsync(PRIVACY_POLICY_URL) },
           ],
         },
       ]
@@ -274,7 +268,10 @@ export default function SettingsScreen() {
 
         {groups.map((g) => (
           <View key={g.title} style={styles.group}>
-            <Text style={styles.groupTitle}>{g.title}</Text>
+            <View style={styles.groupHead}>
+              <Text style={styles.groupTitle}>{g.title}</Text>
+              <View style={styles.groupRule} />
+            </View>
             {g.rows.map((r) => (
               <Pressable
                 key={r.label}
@@ -282,31 +279,25 @@ export default function SettingsScreen() {
                 onPress={r.onPress}
                 disabled={r.onPress == null}
               >
-                <View style={{ flex: 1 }}>
-                  <Text
-                    style={[
-                      styles.rowLabel,
-                      (r.tone === 'warn' || r.tone === 'danger') && { color: color.warn },
-                    ]}
-                  >
-                    {r.label}
-                  </Text>
-                  {r.note ? (
-                    <Text style={styles.rowNote} numberOfLines={1}>
-                      {r.note}
-                    </Text>
-                  ) : null}
-                </View>
                 <Text
                   style={[
-                    styles.rowValue,
-                    r.tone === 'on' && { color: color.acc },
-                    r.tone === 'warn' && { color: color.t3 },
-                    r.tone === 'danger' && { color: color.warn },
+                    styles.rowLabel,
+                    (r.tone === 'warn' || r.tone === 'danger') && { color: color.warn },
                   ]}
+                  numberOfLines={1}
                 >
-                  {r.value}
+                  {r.label}
                 </Text>
+                {r.toggle ? (
+                  <Toggle on={!!r.on} onPress={r.onPress} />
+                ) : (
+                  <View style={styles.valueWrap}>
+                    {r.value ? (
+                      <Text style={[styles.rowValue, r.tone === 'danger' && { color: color.warn }]}>{r.value}</Text>
+                    ) : null}
+                    <Text style={styles.chevron}>›</Text>
+                  </View>
+                )}
               </Pressable>
             ))}
           </View>
@@ -328,24 +319,27 @@ export default function SettingsScreen() {
 const makeStyles = (color: Theme['color']) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.bg },
   content: { paddingHorizontal: space.xxl, paddingBottom: space.xl },
-  title: { fontFamily: font.uiSemibold, fontSize: 22, color: color.t1 },
-  email: { fontFamily: font.numSemibold, fontSize: 9.5, letterSpacing: 0.8, color: color.t3, marginTop: 7 },
+  title: { fontFamily: font.uiSemibold, fontSize: 30, color: color.t1, letterSpacing: -0.4 },
+  email: { fontFamily: font.num, fontSize: 13, color: color.t2, marginTop: 8 },
 
   group: { marginTop: space.xxl + 2 },
-  groupTitle: { fontFamily: font.numSemibold, fontSize: 8, letterSpacing: tracking.wide, color: color.t3 },
+  groupHead: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 2 },
+  groupTitle: { fontFamily: font.numSemibold, fontSize: 11, letterSpacing: tracking.label, color: color.t3 },
+  groupRule: { flex: 1, height: 1, backgroundColor: color.line },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     gap: space.md,
-    paddingVertical: 17,
-    borderBottomWidth: 1,
-    borderBottomColor: color.line,
+    paddingVertical: 15,
+    borderTopWidth: 1,
+    borderTopColor: color.line,
   },
   rowPressed: { backgroundColor: color.acc06 },
-  rowLabel: { fontFamily: font.uiMedium, fontSize: 14, color: color.t1 },
-  rowNote: { fontFamily: font.num, fontSize: 9.5, color: color.t3, marginTop: 5 },
-  rowValue: { fontFamily: font.numSemibold, fontSize: 10, letterSpacing: tracking.label, color: color.t2 },
+  rowLabel: { fontFamily: font.uiMedium, fontSize: 16, color: color.t1, flex: 1 },
+  valueWrap: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  rowValue: { fontFamily: font.numMedium, fontSize: 13, color: color.t2 },
+  chevron: { fontFamily: font.ui, fontSize: 15, color: color.t3 },
 
   footer: {
     fontFamily: font.num,

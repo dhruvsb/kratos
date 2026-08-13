@@ -10,7 +10,7 @@ import { router } from 'expo-router';
 import { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Circle, Path } from 'react-native-svg';
+import { PrBadge } from '@/components/PrBadge';
 import { HomeDayZero } from '@/components/home/HomeDayZero';
 import { HomeQuickStart } from '@/components/home/HomeQuickStart';
 import { HomeTabBar, TAB_BAR_HEIGHT } from '@/components/voice/TabBar';
@@ -47,6 +47,14 @@ export default function HomeScreen() {
   const isDayZero = !days.isLoading && doneDays.size === 0;
 
   const workouts = history.data?.pages.flat() ?? [];
+
+  // "N in last 30 days" — sessions trained in the trailing month, shown on the
+  // history divider (refined design). Counts finished-workout days from the accurate
+  // `days` query, not the paginated history list.
+  const last30 = useMemo(() => {
+    const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    return (days.data ?? []).filter((w) => new Date(w.started_at).getTime() >= cutoff).length;
+  }, [days.data]);
 
   // 5 rows of 7 for the heatmap.
   const rows = useMemo(() => {
@@ -109,7 +117,14 @@ export default function HomeScreen() {
           ))}
         </View>
 
-        {/* Recent workouts — date · name · session volume (records badge = backlog #35) */}
+        {/* History divider — label · rule · "N in last 30 days" (refined design). */}
+        <View style={styles.histHead}>
+          <Text style={styles.histHeadLabel}>HISTORY</Text>
+          <View style={styles.histHeadRule} />
+          {last30 > 0 && <Text style={styles.histHeadCount}>{last30} IN LAST 30 DAYS</Text>}
+        </View>
+
+        {/* Recent workouts — name · date · session volume · PR medal. */}
         <View style={styles.rowsBlock}>
           {history.isLoading ? (
             <Text style={styles.loading}>LOADING…</Text>
@@ -118,26 +133,23 @@ export default function HomeScreen() {
           ) : (
             workouts.map((w) => {
               const started = new Date(w.started_at);
-              const dow = started.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
+              const date = started.toLocaleDateString('en-US', { weekday: 'short', day: '2-digit', month: 'short' });
               // Guard a pre-volume_kg cached row (or a null) from rendering "NaNk".
               const vol = Number.isFinite(w.volume_kg) ? `${(w.volume_kg / 1000).toFixed(1)}k` : '—';
               const pr = prCounts.data?.[w.id] ?? 0;
               return (
                 <Pressable key={w.id} style={styles.histRow} onPress={() => router.push(`/history/${w.id}`)}>
-                  <View style={styles.histDate}>
-                    <Text style={styles.histDd}>{String(started.getDate()).padStart(2, '0')}</Text>
-                    <Text style={styles.histDow}>{dow}</Text>
+                  <View style={styles.histMain}>
+                    <Text style={styles.histName} numberOfLines={1}>
+                      {w.title ?? w.routine_name ?? 'Empty workout'}
+                    </Text>
+                    <Text style={styles.histDate}>{date}</Text>
                   </View>
-                  <Text style={styles.histName} numberOfLines={1}>
-                    {w.title ?? w.routine_name ?? 'Empty workout'}
-                  </Text>
                   <View style={styles.histVol}>
                     <Text style={styles.histVolNum}>{vol}</Text>
-                    <Text style={styles.histVolUnit}>KG</Text>
+                    <Text style={styles.histVolUnit}>kg</Text>
                   </View>
-                  <View style={styles.histPr}>
-                    {pr > 0 ? <PrBadge count={pr} color={color} styles={styles} /> : <Text style={styles.histPrNone}>—</Text>}
-                  </View>
+                  {pr > 0 && <PrBadge count={pr} />}
                 </Pressable>
               );
             })
@@ -175,37 +187,11 @@ function HeatDot({
       <View
         style={[
           styles.cell,
-          { borderColor: look.ring, borderStyle: look.dashed ? 'dashed' : 'solid', backgroundColor: look.bg },
+          { borderWidth: look.border ? 1.5 : 0, borderColor: look.ring, backgroundColor: look.bg },
         ]}
       >
         <Text style={[styles.cellNum, { color: look.fg }]}>{cell.n}</Text>
       </View>
-    </View>
-  );
-}
-
-// PR "records" badge (#35): a small medal + the count of exercises that set a PR that
-// session (heaviest weight at reps ≥ 6, beating every earlier session — see migration 0007).
-function PrBadge({
-  count,
-  color,
-  styles,
-}: {
-  count: number;
-  color: Theme['color'];
-  styles: ReturnType<typeof makeStyles>;
-}) {
-  return (
-    <View style={styles.prBadge}>
-      <Svg width={15} height={19} viewBox="0 0 24 30">
-        <Path d="M6.6 0h10.8v4.2L13.4 6.2h-2.8L6.6 4.2z" fill={color.acc14} />
-        <Circle cx={12} cy={7.4} r={1.5} fill={color.acc} />
-        <Path
-          d="M12 10.6l2.07 5.55 5.91-.26-4.63 3.68 1.58 6.44L12 22.52l-4.93 3.47 1.58-6.44-4.63-3.68 5.91.26z"
-          fill={color.acc}
-        />
-      </Svg>
-      <Text style={styles.prBadgeNum}>{count}</Text>
     </View>
   );
 }
@@ -216,17 +202,16 @@ function cellLook(cell: HeatCell, color: Theme['color']) {
   // short-circuit before the `worked` branch, so a finished workout left today
   // looking identical to a day you skipped — no acknowledgement on the one
   // screen whose whole job is "did I show up today?".
+  // Refined look: worked days are soft-filled circles (no ring), today is a solid
+  // accent chip once trained, else an accent ring so it stays findable at a glance.
   if (cell.isToday) {
     const worked = cell.state === 'worked';
-    return {
-      ring: color.acc,
-      dashed: true,
-      bg: worked ? color.acc14 : 'transparent',
-      fg: color.acc,
-    };
+    return worked
+      ? { ring: 'transparent', border: false, bg: color.acc, fg: color.accInk }
+      : { ring: color.acc, border: true, bg: 'transparent', fg: color.acc };
   }
-  if (cell.state === 'worked') return { ring: color.acc, dashed: false, bg: color.acc14, fg: color.acc };
-  return { ring: 'transparent', dashed: false, bg: 'transparent', fg: color.t3 };
+  if (cell.state === 'worked') return { ring: 'transparent', border: false, bg: color.acc14, fg: color.acc };
+  return { ring: 'transparent', border: false, bg: 'transparent', fg: color.t3 };
 }
 
 const makeStyles = (color: Theme['color']) =>
@@ -248,45 +233,36 @@ const makeStyles = (color: Theme['color']) =>
     gridRow: { flexDirection: 'row', gap: 4 },
     cellWrap: { flex: 1, alignItems: 'center' },
     cell: {
-      width: 42,
-      height: 42,
-      borderRadius: 21,
-      borderWidth: 2,
+      width: 38,
+      height: 38,
+      borderRadius: 19,
       alignItems: 'center',
       justifyContent: 'center',
     },
-    cellNum: { fontFamily: font.uiSemibold, fontSize: 14 },
+    cellNum: { fontFamily: font.numMedium, fontSize: 14 },
+
+    // History divider
+    histHead: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: space.xxl },
+    histHeadLabel: { fontFamily: font.numSemibold, fontSize: 11, letterSpacing: tracking.label, color: color.t3 },
+    histHeadRule: { flex: 1, height: 1, backgroundColor: color.line },
+    histHeadCount: { fontFamily: font.numMedium, fontSize: 11, letterSpacing: 0.8, color: color.t2 },
 
     // Recent workouts
-    rowsBlock: { marginTop: space.xxl },
+    rowsBlock: { marginTop: 6 },
     loading: { fontFamily: font.numSemibold, fontSize: 11, color: color.t3, marginTop: space.md },
     empty: { fontFamily: font.num, fontSize: 11.5, lineHeight: 20, color: color.t2, marginTop: space.md },
     histRow: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 14,
-      paddingVertical: 13,
+      paddingVertical: 15,
       borderTopWidth: 1,
       borderTopColor: color.line,
     },
-    histDate: { width: 44 },
-    histDd: { fontFamily: font.uiSemibold, fontSize: 15, color: color.t1 },
-    histDow: { fontFamily: font.num, fontSize: 9, letterSpacing: 1, color: color.t3, marginTop: 5 },
-    histName: { flex: 1, fontFamily: font.uiMedium, fontSize: 17, color: color.t1 },
-    histVol: { width: 70, alignItems: 'flex-end' },
-    histVolNum: { fontFamily: font.uiSemibold, fontSize: 14, color: color.t1 },
-    histVolUnit: { fontFamily: font.num, fontSize: 9, letterSpacing: 1, color: color.t3, marginTop: 5 },
-    histPr: { width: 46, alignItems: 'flex-end' },
-    histPrNone: { fontFamily: font.num, fontSize: 13, color: color.t3 },
-    prBadge: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 4,
-      paddingVertical: 5,
-      paddingLeft: 6,
-      paddingRight: 8,
-      borderRadius: 20,
-      backgroundColor: color.acc06,
-    },
-    prBadgeNum: { fontFamily: font.numBold, fontSize: 12, color: color.acc },
+    histMain: { flex: 1, gap: 5 },
+    histName: { fontFamily: font.uiMedium, fontSize: 17, color: color.t1 },
+    histDate: { fontFamily: font.num, fontSize: 12, color: color.t2 },
+    histVol: { flexDirection: 'row', alignItems: 'baseline' },
+    histVolNum: { fontFamily: font.numMedium, fontSize: 16, color: color.t1 },
+    histVolUnit: { fontFamily: font.num, fontSize: 12, color: color.t2, marginLeft: 3 },
   });

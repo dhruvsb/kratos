@@ -12,8 +12,8 @@ import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import { router } from 'expo-router';
 import { type ReactElement } from 'react';
 import { Pressable, Text, View } from 'react-native';
-import Svg, { Circle, Path } from 'react-native-svg';
-import { font, tracking } from '@/theme/tokens';
+import Svg, { Circle, Path, Rect } from 'react-native-svg';
+import { font } from '@/theme/tokens';
 import { useTheme, useThemeName } from '@/theme/ThemeProvider';
 
 // Bottom clearance the floating chrome needs (pill sits at bottom:24, ~56 tall). Screens
@@ -34,9 +34,15 @@ function HomeIcon({ color }: IconProps) {
   );
 }
 function RoutinesIcon({ color }: IconProps) {
+  // Dumbbell (decision 2d): outlined plates each side of a filled bar — fitness-native
+  // and legible at 23px, distinct from the equalizer it replaces.
   return (
-    <Svg width={23} height={23} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round">
-      <Path d="M4 9v6M7 7.5v9M17 7.5v9M20 9v6M7 12h10" />
+    <Svg width={23} height={23} viewBox="0 0 24 24" fill="none">
+      <Rect x={3} y={8.6} width={2.4} height={6.8} rx={1} stroke={color} strokeWidth={1.6} />
+      <Rect x={6.4} y={6} width={2.9} height={12} rx={1.2} stroke={color} strokeWidth={1.6} />
+      <Rect x={9.3} y={10.9} width={5.4} height={2.2} rx={1} fill={color} />
+      <Rect x={14.7} y={6} width={2.9} height={12} rx={1.2} stroke={color} strokeWidth={1.6} />
+      <Rect x={18.6} y={8.6} width={2.4} height={6.8} rx={1} stroke={color} strokeWidth={1.6} />
     </Svg>
   );
 }
@@ -52,9 +58,9 @@ function SettingsIcon({ color }: IconProps) {
 
 type TabKey = 'home' | 'routines' | 'account';
 const TABS: { key: TabKey; label: string; route: '/' | '/routines' | '/settings'; Icon: (p: IconProps) => ReactElement }[] = [
-  { key: 'home', label: 'HOME', route: '/', Icon: HomeIcon },
-  { key: 'routines', label: 'ROUTINES', route: '/routines', Icon: RoutinesIcon },
-  { key: 'account', label: 'SETTINGS', route: '/settings', Icon: SettingsIcon },
+  { key: 'home', label: 'Home', route: '/', Icon: HomeIcon },
+  { key: 'routines', label: 'Routines', route: '/routines', Icon: RoutinesIcon },
+  { key: 'account', label: 'Settings', route: '/settings', Icon: SettingsIcon },
 ];
 
 // `withFab` (Home only) shrinks the pill's right edge to leave room for the FAB + gap.
@@ -68,15 +74,17 @@ export function HomeTabBar({ active, withFab = false }: { active: TabKey; withFa
 
   const items = TABS.map((t) => {
     const on = t.key === active;
-    const tone = on ? color.acc : color.t3;
+    // Quiet until active (decision 2d): inactive tabs sit at secondary ink, the
+    // active one lifts to the accent inside its brighter glass chip.
+    const tone = on ? color.acc : color.t2;
     const content = (
       <>
         <t.Icon color={tone} />
         <Text
           style={{
-            fontFamily: on ? font.numSemibold : font.num,
-            fontSize: 10,
-            letterSpacing: tracking.label,
+            fontFamily: on ? font.uiSemibold : font.uiMedium,
+            fontSize: 10.5,
+            letterSpacing: 0.1,
             color: tone,
           }}
         >

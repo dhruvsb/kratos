@@ -130,8 +130,10 @@ export default function RoutinesScreen() {
         contentContainerStyle={[styles.content, { paddingTop: insets.top + space.xl, paddingBottom: space.xl + TAB_BAR_HEIGHT }]}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.title}>Routines</Text>
-        <Text style={styles.section}>{list.length} SAVED · TAP TO START · HOLD FOR OPTIONS</Text>
+        <View style={styles.titleRow}>
+          <Text style={styles.title}>Routines</Text>
+          {list.length > 0 && <Text style={styles.count}>{list.length}</Text>}
+        </View>
 
         <View style={styles.list}>
           {routines.isLoading ? (
@@ -139,33 +141,40 @@ export default function RoutinesScreen() {
           ) : list.length === 0 ? (
             <Text style={styles.empty}>No routines yet. Build one to start with a tap.</Text>
           ) : (
-            list.map((r) => (
-              <Pressable
-                key={r.id}
-                style={styles.row}
-                onPress={() => start(r.id)}
-                onLongPress={() => openRoutineMenu(r)}
-                delayLongPress={350}
-                disabled={busy}
-              >
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.rowName} numberOfLines={1}>
-                    {r.name}
-                  </Text>
-                  <Text style={styles.rowMeta}>
-                    {r.exercise_count} EX · {agoLabel(lastDone.get(r.id)) ?? 'NEVER'}
-                  </Text>
-                </View>
+            list.map((r) => {
+              const empty = r.exercise_count === 0;
+              return (
                 <Pressable
-                  onPress={() => router.push(`/routine/${r.id}`)}
-                  hitSlop={10}
-                  style={{ paddingHorizontal: 4 }}
+                  key={r.id}
+                  style={styles.row}
+                  // Hold anywhere on the row for the options menu (duplicate / rename /
+                  // archive); the Start pill is the one-tap common path.
+                  onLongPress={() => openRoutineMenu(r)}
+                  delayLongPress={350}
                 >
-                  <Text style={styles.rowEdit}>EDIT</Text>
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    <Text style={styles.rowName} numberOfLines={1}>
+                      {r.name}
+                    </Text>
+                    <Text style={styles.rowMeta}>
+                      {r.exercise_count} exercise{r.exercise_count === 1 ? '' : 's'} ·{' '}
+                      {(agoLabel(lastDone.get(r.id)) ?? 'never').toLowerCase()}
+                    </Text>
+                  </View>
+                  <Pressable onPress={() => router.push(`/routine/${r.id}`)} hitSlop={8} style={styles.editPill}>
+                    <Text style={styles.editText}>Edit</Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => !empty && start(r.id)}
+                    disabled={busy || empty}
+                    hitSlop={8}
+                    style={[styles.startPill, empty && styles.startPillOff]}
+                  >
+                    <Text style={[styles.startText, empty && styles.startTextOff]}>Start</Text>
+                  </Pressable>
                 </Pressable>
-                <Text style={styles.rowStart}>START →</Text>
-              </Pressable>
-            ))
+              );
+            })
           )}
         </View>
 
@@ -209,31 +218,44 @@ const makeStyles = (color: Theme['color'], _shadow: Theme['shadow']) =>
       backgroundColor: color.bg,
     },
     content: { paddingHorizontal: space.xxl, paddingBottom: space.xl, flexGrow: 1 },
-    title: { fontFamily: font.uiSemibold, fontSize: 22, color: color.t1 },
-    section: {
-      fontFamily: font.numSemibold,
-      fontSize: 8,
-      letterSpacing: tracking.wide,
-      color: color.t3,
-      marginTop: 10,
-    },
+    titleRow: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' },
+    title: { fontFamily: font.uiSemibold, fontSize: 30, color: color.t1, letterSpacing: -0.4 },
+    count: { fontFamily: font.numMedium, fontSize: 13, color: color.t2, paddingBottom: 6 },
 
-    list: { marginTop: space.lg },
+    list: { marginTop: space.xl },
     loading: { fontFamily: font.numSemibold, fontSize: 11, color: color.t3, marginTop: space.md },
     empty: { fontFamily: font.num, fontSize: 11.5, lineHeight: 20, color: color.t2, marginTop: space.md },
 
     row: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: space.md,
-      paddingVertical: 17,
-      borderBottomWidth: 1,
-      borderBottomColor: color.line,
+      gap: 6,
+      paddingVertical: 16,
+      borderTopWidth: 1,
+      borderTopColor: color.line,
     },
-    rowName: { fontFamily: font.uiMedium, fontSize: 15, color: color.t1 },
-    rowMeta: { fontFamily: font.num, fontSize: 9.5, letterSpacing: 0.6, color: color.t3, marginTop: 6 },
-    rowEdit: { fontFamily: font.numSemibold, fontSize: 9, letterSpacing: tracking.label, color: color.t3 },
-    rowStart: { fontFamily: font.numSemibold, fontSize: 10, letterSpacing: tracking.label, color: color.acc },
+    rowName: { fontFamily: font.uiMedium, fontSize: 17, color: color.t1, letterSpacing: -0.2 },
+    rowMeta: { fontFamily: font.num, fontSize: 12, color: color.t2, marginTop: 5 },
+    editPill: {
+      height: 38,
+      paddingHorizontal: 12,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: radius.pill,
+    },
+    editText: { fontFamily: font.uiMedium, fontSize: 13, color: color.t3 },
+    startPill: {
+      height: 38,
+      paddingHorizontal: 18,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: radius.pill,
+      borderWidth: 1,
+      borderColor: color.acc35,
+    },
+    startPillOff: { borderColor: color.line2 },
+    startText: { fontFamily: font.uiSemibold, fontSize: 13, color: color.acc },
+    startTextOff: { color: color.t3 },
 
     ctaRow: { flexDirection: 'row', gap: space.sm, marginTop: space.xl },
     cta: {

@@ -11,7 +11,7 @@ import { ExercisePickerModal } from '@/components/ExercisePickerModal';
 import { SetKeypad } from '@/components/workout/SetKeypad';
 import { haptics } from '@/lib/haptics';
 import { ElapsedClock } from '@/components/workout/LiveClock';
-import { InsetWell, KeyCap, StatusPip } from '@/components/voice/primitives';
+import { InsetWell, KeyCap } from '@/components/voice/primitives';
 import {
   useAddExerciseToWorkout,
   useAddSet,
@@ -40,6 +40,16 @@ import { useTheme } from '@/theme/ThemeProvider';
  *  not "— × —" — no fake number to beat on a lift's first day. */
 function prevLabel(set: LastSessionSet | undefined, unit: Unit): string {
   return set ? formatSet(set.weight_kg, set.reps, unit) : '—';
+}
+
+/** Compact session-volume label: "1.2k" past a tonne, else the rounded number. */
+function volLabel(kg: number): string {
+  return kg >= 1000 ? `${(kg / 1000).toFixed(1)}k` : `${Math.round(kg)}`;
+}
+
+/** Title-case a lowercase metadata token (muscle / equipment) for the sub-header. */
+function cap(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
 // Frictionless default (feedback #3): when there's no prior rep signal, suggest 12
@@ -76,8 +86,8 @@ type KeypadState = {
 };
 
 export default function ActiveWorkoutScreen() {
-  const { color } = useTheme();
-  const styles = useMemo(() => makeStyles(color), [color]);
+  const { color, shadow } = useTheme();
+  const styles = useMemo(() => makeStyles(color, shadow), [color, shadow]);
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const workout = useWorkout(id);
@@ -328,6 +338,22 @@ export default function ActiveWorkoutScreen() {
     ]);
   }
 
+  // The ⋯ menu (refined design): the destructive/less-common actions moved off the
+  // grid into here — remove the current exercise, or discard the whole session.
+  function openWorkoutMenu() {
+    haptics.tick();
+    const buttons: Parameters<typeof Alert.alert>[2] = [];
+    if (activeExercise) {
+      buttons.push({
+        text: `Remove ${activeExercise.exercise.canonical_name}`,
+        onPress: () => confirmRemoveExercise(activeExercise),
+      });
+    }
+    buttons.push({ text: 'Discard workout', style: 'destructive', onPress: confirmDiscard });
+    buttons.push({ text: 'Cancel', style: 'cancel' });
+    Alert.alert(detail?.title ?? detail?.routine_name ?? 'Workout', undefined, buttons);
+  }
+
   const isLast = activeIndex === detail.exercises.length - 1;
   const topLast = lastSets.reduce<LastSessionSet | null>(
     (best, s) => ((s.weight_kg ?? 0) > (best?.weight_kg ?? -1) ? s : best),
@@ -368,14 +394,22 @@ export default function ActiveWorkoutScreen() {
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top + space.sm }]}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={{ flex: 1 }}>
-          <StatusPip label={isFinished ? 'FINISHED' : 'IN PROGRESS'} on={!isFinished} />
-          <Text style={styles.title} numberOfLines={1}>
-            {detail.title ?? detail.routine_name ?? 'Empty workout'}
-          </Text>
+      {/* Header: RECORDING + ⋯, then title + timer/meta (refined design). */}
+      <View style={styles.recBar}>
+        <View style={styles.recRow}>
+          {!isFinished && <View style={styles.recDot} />}
+          <Text style={styles.recLabel}>{isFinished ? 'FINISHED' : 'RECORDING'}</Text>
         </View>
+        {!isFinished && (
+          <Pressable style={styles.menuBtn} onPress={openWorkoutMenu} hitSlop={8}>
+            <Text style={styles.menuGlyph}>⋯</Text>
+          </Pressable>
+        )}
+      </View>
+      <View style={styles.header}>
+        <Text style={styles.title} numberOfLines={1}>
+          {detail.title ?? detail.routine_name ?? 'Empty workout'}
+        </Text>
         <View style={{ alignItems: 'flex-end' }}>
           <ElapsedClock
             startedAt={detail.started_at}
@@ -384,32 +418,36 @@ export default function ActiveWorkoutScreen() {
             style={styles.timer}
           />
           <Text style={styles.meta}>
-            {totals.sets} SET{totals.sets === 1 ? '' : 'S'} · {Math.round(totals.kg).toLocaleString()} KG
+            {totals.sets} set{totals.sets === 1 ? '' : 's'} · {volLabel(totals.kg)} kg
           </Text>
         </View>
       </View>
 
-      {/* Exercise chips */}
+      {/* Exercise chips — named, ✓ when logged, any chip tappable (refined design). */}
       <View style={styles.chipRow}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingRight: space.lg }}>
-          {detail.exercises.map((we, i) => {
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingRight: space.lg }}>
+          {detail.exercises.map((we) => {
             const on = we.exercise_id === activeExerciseId;
+            const done = we.sets.length > 0;
             return (
               <Pressable
                 key={we.id}
                 onPress={() => setActiveExerciseId(we.exercise_id)}
-                // Long-press a chip to remove that exercise — same fast-delete gesture
-                // the set rows use; the explicit REMOVE control below is the discoverable path.
+                // Long-press a chip to remove that exercise — the same fast gesture the
+                // set rows use; the ⋯ menu carries the discoverable path.
                 onLongPress={() => !isFinished && confirmRemoveExercise(we)}
-                style={[styles.chip, on && styles.chipOn]}
+                style={[styles.chip, done && !on && styles.chipDone, on && styles.chipOn]}
               >
-                <Text style={[styles.chipText, on && { color: color.acc }]}>{i + 1}</Text>
+                {done && <Text style={styles.chipCheck}>✓</Text>}
+                <Text style={[styles.chipText, on && styles.chipTextOn]} numberOfLines={1}>
+                  {we.exercise.canonical_name}
+                </Text>
               </Pressable>
             );
           })}
           {!isFinished && (
             <Pressable onPress={() => setPickerOpen(true)} style={styles.chipAdd}>
-              <Text style={styles.chipAddText}>+ ADD</Text>
+              <Text style={styles.chipAddText}>+ Add</Text>
             </Pressable>
           )}
         </ScrollView>
@@ -423,27 +461,22 @@ export default function ActiveWorkoutScreen() {
         </View>
       ) : (
         <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-          {/* Current exercise */}
-          <View style={styles.exHead}>
+          {/* Current exercise — tap the name for its weight history (refined design). */}
+          <Pressable onPress={() => router.push(`/exercise/${activeExercise.exercise_id}`)}>
             <Text style={styles.exName} numberOfLines={2}>
               {activeExercise.exercise.canonical_name}
             </Text>
-            <Text style={styles.exPos}>
-              {activeIndex + 1} OF {detail.exercises.length}
-            </Text>
-          </View>
+          </Pressable>
           <View style={styles.exSubRow}>
             <Text style={styles.exMuscle}>
               {[activeExercise.exercise.primary_muscles?.[0], activeExercise.exercise.equipment]
                 .filter(Boolean)
-                .join(' · ')
-                .toUpperCase() || 'EXERCISE'}
+                .map((t) => cap(String(t)))
+                .join(' · ') || 'Exercise'}
             </Text>
-            {topLast ? (
-              <Text style={styles.exLast}>LAST {formatSet(topLast.weight_kg, topLast.reps, unit)}</Text>
-            ) : (
-              <Text style={styles.exLast}>NO PREVIOUS SETS</Text>
-            )}
+            <Text style={styles.exPos}>
+              {activeIndex + 1} of {detail.exercises.length}
+            </Text>
           </View>
 
           {/* Set grid */}
@@ -522,20 +555,21 @@ export default function ActiveWorkoutScreen() {
               </Pressable>
             )}
 
-            {!isFinished && (
-              <View style={styles.gridActions}>
-                <Pressable onPress={openAdd}>
-                  <Text style={styles.actAcc}>+ ADD SET</Text>
-                </Pressable>
-                <Pressable onPress={() => router.push(`/exercise/${activeExercise.exercise_id}`)}>
-                  <Text style={styles.actDim}>HISTORY</Text>
-                </Pressable>
-                <Pressable onPress={() => confirmRemoveExercise(activeExercise)}>
-                  <Text style={styles.actWarn}>REMOVE</Text>
-                </Pressable>
-              </View>
-            )}
           </InsetWell>
+
+          {/* One quiet hint + Add set (refined design) — discard/remove moved to ⋯. */}
+          {!isFinished && (
+            <View style={styles.belowGrid}>
+              <Text style={styles.belowHint} numberOfLines={1}>
+                {prefillReps != null && (prefillKg != null || prevInSession != null)
+                  ? `✓ logs ${formatSet(prefillKg, prefillReps, unit)} · tap a field to change`
+                  : 'Enter weight and reps'}
+              </Text>
+              <Pressable onPress={openAdd} hitSlop={8}>
+                <Text style={styles.addSet}>Add set</Text>
+              </Pressable>
+            </View>
+          )}
 
           {noHistory && !isFinished && (
             <View style={styles.firstNote}>
@@ -550,33 +584,28 @@ export default function ActiveWorkoutScreen() {
         </ScrollView>
       )}
 
-      {/* Footer */}
+      {/* Footer: back + next/add row, then the primary Finish CTA (refined design). */}
       {!isFinished && (
         <View style={[styles.footer, { paddingBottom: insets.bottom + space.md }]}>
           <View style={styles.navRow}>
-            <KeyCap
-              label="← PREV"
-              size="sm"
+            <Pressable
               onPress={activeIndex > 0 ? () => goExercise(-1) : undefined}
-              style={activeIndex > 0 ? undefined : { opacity: 0.4 }}
-            />
-            <KeyCap
-              label={isLast ? 'ADD EXERCISE +' : 'NEXT EXERCISE →'}
-              size="sm"
-              tone={isLast ? 'ghost' : 'accent'}
+              disabled={activeIndex === 0}
+              style={[styles.navSquare, activeIndex === 0 && { opacity: 0.4 }]}
+            >
+              <Text style={styles.navChevron}>‹</Text>
+            </Pressable>
+            <Pressable
               onPress={isLast ? () => setPickerOpen(true) : () => goExercise(1)}
-              style={{ flex: 1 }}
-            />
+              style={styles.navWide}
+            >
+              <Text style={styles.navWideText}>{isLast ? 'Add exercise' : 'Next exercise'}</Text>
+              <Text style={styles.navWideChevron}>{isLast ? '+' : '›'}</Text>
+            </Pressable>
           </View>
-          <View style={styles.finishRow}>
-            <KeyCap
-              label={finish.isPending ? 'FINISHING…' : 'FINISH WORKOUT'}
-              tone="accent"
-              onPress={confirmFinish}
-              style={{ flex: 1 }}
-            />
-            <KeyCap label="DISCARD" tone="warn" onPress={confirmDiscard} />
-          </View>
+          <Pressable style={styles.finishBtn} onPress={confirmFinish}>
+            <Text style={styles.finishText}>{finish.isPending ? 'Finishing…' : 'Finish workout'}</Text>
+          </Pressable>
         </View>
       )}
 
@@ -638,58 +667,71 @@ const NUM_W = 22;
 const PREV_W = 62;
 const CHECK_W = 42;
 
-const makeStyles = (color: Theme['color']) => StyleSheet.create({
+const makeStyles = (color: Theme['color'], shadow: Theme['shadow']) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.bg },
   center: { flex: 1, backgroundColor: color.bg, alignItems: 'center', justifyContent: 'center' },
   dim: { fontFamily: font.numSemibold, fontSize: 12, letterSpacing: tracking.label, color: color.t3 },
   err: { fontFamily: font.num, fontSize: 12, color: color.warn, paddingHorizontal: space.lg, textAlign: 'center' },
   link: { fontFamily: font.numSemibold, fontSize: 12, color: color.acc },
 
+  // RECORDING + ⋯ bar
+  recBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: space.lg, paddingBottom: 8 },
+  recRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  recDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: color.acc },
+  recLabel: { fontFamily: font.numSemibold, fontSize: 11, letterSpacing: tracking.label, color: color.acc },
+  menuBtn: { width: 32, height: 32, borderRadius: 16, borderWidth: 1, borderColor: color.line2, alignItems: 'center', justifyContent: 'center' },
+  menuGlyph: { fontFamily: font.uiSemibold, fontSize: 15, color: color.t2, marginTop: -5, letterSpacing: 1 },
+
   header: {
     flexDirection: 'row',
     alignItems: 'flex-end',
+    justifyContent: 'space-between',
     gap: space.md,
     paddingHorizontal: space.lg,
     paddingBottom: space.md,
   },
-  title: { fontFamily: font.uiSemibold, fontSize: 19, color: color.t1, marginTop: 6 },
-  timer: { fontFamily: font.numSemibold, fontSize: 15, color: color.acc, textShadowColor: color.acc14, textShadowRadius: 8 },
-  meta: { fontFamily: font.numSemibold, fontSize: 9, letterSpacing: tracking.label, color: color.t3, marginTop: 4 },
+  title: { fontFamily: font.uiSemibold, fontSize: 26, color: color.t1, letterSpacing: -0.4, flex: 1 },
+  timer: { fontFamily: font.numMedium, fontSize: 20, color: color.t1 },
+  meta: { fontFamily: font.num, fontSize: 12, color: color.t2, marginTop: 4 },
 
   chipRow: { paddingLeft: space.lg, paddingBottom: space.md },
   chip: {
-    width: 38,
-    paddingVertical: 8,
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 6,
+    height: 36,
+    paddingHorizontal: 14,
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: color.line2,
-    borderRadius: radius.keySm,
+    borderColor: 'transparent',
+    backgroundColor: color.s2,
   },
-  chipOn: { borderColor: color.acc35, backgroundColor: color.acc06 },
-  chipText: { fontFamily: font.numSemibold, fontSize: 9.5, color: color.t3 },
+  chipDone: { backgroundColor: color.acc14 },
+  chipOn: { borderColor: color.acc, backgroundColor: color.acc06 },
+  chipCheck: { fontFamily: font.numBold, fontSize: 11, color: color.acc },
+  chipText: { fontFamily: font.uiMedium, fontSize: 13, color: color.t2, maxWidth: 170 },
+  chipTextOn: { color: color.t1, fontFamily: font.uiSemibold },
   chipAdd: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    height: 36,
+    paddingHorizontal: 14,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: color.line,
-    borderRadius: radius.keySm,
+    borderColor: color.line2,
+    borderRadius: 18,
     borderStyle: 'dashed',
   },
-  chipAddText: { fontFamily: font.numSemibold, fontSize: 9.5, letterSpacing: tracking.label, color: color.t2 },
+  chipAddText: { fontFamily: font.uiMedium, fontSize: 13, color: color.t2 },
 
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: space.xl },
   emptyTitle: { fontFamily: font.uiMedium, fontSize: 17, color: color.t1 },
   emptyBody: { fontFamily: font.num, fontSize: 12, color: color.t3, marginTop: space.sm, textAlign: 'center' },
 
   body: { paddingHorizontal: space.lg, paddingBottom: space.xl },
-  exHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: space.md },
-  exName: { fontFamily: font.uiSemibold, fontSize: 18, color: color.t1, flex: 1 },
-  exPos: { fontFamily: font.numSemibold, fontSize: 9.5, letterSpacing: tracking.label, color: color.t3, marginTop: 4 },
-  exSubRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginTop: 9 },
-  exMuscle: { fontFamily: font.numSemibold, fontSize: 10, letterSpacing: tracking.label, color: color.t2 },
-  exLast: { fontFamily: font.numSemibold, fontSize: 10, letterSpacing: 0.6, color: color.t3 },
+  exName: { fontFamily: font.uiSemibold, fontSize: 22, color: color.t1, letterSpacing: -0.3, paddingTop: space.sm },
+  exSubRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginTop: 7 },
+  exMuscle: { fontFamily: font.num, fontSize: 12, color: color.t2 },
+  exPos: { fontFamily: font.num, fontSize: 12, color: color.t2 },
 
   gridHead: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 6, paddingTop: space.lg, paddingBottom: 9 },
   gh: { fontFamily: font.numSemibold, fontSize: 8, letterSpacing: tracking.wide, color: color.t3 },
@@ -766,12 +808,26 @@ const makeStyles = (color: Theme['color']) => StyleSheet.create({
   ghostText: { fontFamily: font.numSemibold, fontSize: 9.5, letterSpacing: tracking.label, color: color.t3, flexShrink: 1 },
   ghostAccept: { fontFamily: font.numSemibold, fontSize: 9.5, letterSpacing: tracking.label, color: color.acc },
 
-  gridActions: { flexDirection: 'row', gap: 22, paddingVertical: 14, paddingHorizontal: 12 },
-  actAcc: { fontFamily: font.numSemibold, fontSize: 10.5, letterSpacing: tracking.label, color: color.acc },
-  actDim: { fontFamily: font.numSemibold, fontSize: 10.5, letterSpacing: tracking.label, color: color.t3 },
-  actWarn: { fontFamily: font.numSemibold, fontSize: 10.5, letterSpacing: tracking.label, color: color.warn },
+  belowGrid: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md, paddingHorizontal: 12, paddingTop: 12 },
+  belowHint: { fontFamily: font.num, fontSize: 12, color: color.t2, flexShrink: 1 },
+  addSet: { fontFamily: font.uiSemibold, fontSize: 14, color: color.acc },
 
-  footer: { paddingHorizontal: space.lg, paddingTop: space.sm, gap: space.sm },
-  navRow: { flexDirection: 'row', gap: space.sm, alignItems: 'stretch' },
-  finishRow: { flexDirection: 'row', gap: space.sm },
+  footer: { paddingHorizontal: space.lg, paddingTop: space.sm, gap: space.md },
+  navRow: { flexDirection: 'row', gap: 10, alignItems: 'stretch' },
+  navSquare: { width: 54, height: 52, borderRadius: 26, backgroundColor: color.s1, borderWidth: 1, borderColor: color.line2, alignItems: 'center', justifyContent: 'center' },
+  navChevron: { fontFamily: font.ui, fontSize: 18, color: color.t2 },
+  navWide: { flex: 1, height: 52, borderRadius: 26, backgroundColor: color.s1, borderWidth: 1, borderColor: color.line2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9 },
+  navWideText: { fontFamily: font.uiSemibold, fontSize: 15, color: color.t1 },
+  navWideChevron: { fontFamily: font.ui, fontSize: 15, color: color.t2 },
+  finishBtn: {
+    height: 54,
+    borderRadius: 27,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: color.ctaBg,
+    borderWidth: 1,
+    borderColor: color.ctaBorder,
+    ...shadow.cta,
+  },
+  finishText: { fontFamily: font.uiSemibold, fontSize: 16, letterSpacing: -0.2, color: color.ctaFg },
 });

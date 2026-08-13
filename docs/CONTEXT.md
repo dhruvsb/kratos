@@ -10,7 +10,18 @@ codebase or a huge prior conversation.
 > issues**) *and* append a dated entry to [`WORK-LOG.md`](./WORK-LOG.md). This file is the
 > snapshot; `WORK-LOG.md` is the full history. Keep this file short.
 
-**Last updated:** 2026-08-13 — **Imported workouts no longer show "Empty workout":** workouts got a
+**Last updated:** 2026-08-13 — **"Refined Screens (Dark)" design pass shipped (import `fd29fa5c`).**
+Implemented the whole refinement + the three picks: **PR badge → 2a Medal** (new shared
+`components/PrBadge.tsx` — ribbon+disc medal, replaces Home's star, now the app-wide PR mark),
+**nav icons → 2d** (dumbbell Routines icon, sentence-case labels), **log set → 1a** (SetKeypad:
+"Set N" header, merged ±step + 8/10/12 rep row). Screens reflowed to the design (Home history
+rows name+date·vol·medal + "HISTORY · N IN LAST 30 DAYS" + filled calendar cells; Active workout
+RECORDING+⋯, named ✓ chips, Next/Finish footer, discard→⋯; Workout detail leads with name + PR
+banner + stacked-bar MuscleSplit + per-set volume; Routines Edit/Start pills + count; Settings
+section rules + real Pre-fill switch). **Colours/fonts stay on `tokens.ts`** (design hexes render
+through `acc`/`t1..t3`/`font.*`); primary CTAs keep the `ctaBg` semantics (dark = dark-fill+accent,
+solid fill reserved for light) rather than the mockup's solid-lime. `tsc` + web-export (16 routes)
+green. Prior: **Imported workouts no longer show "Empty workout":** workouts got a
 first-class `title` (migration **`0009`**, applied live + backfills existing Hevy imports); importer
 writes it, display fallback is now `title ?? routine_name ?? 'Empty workout'` everywhere, export uses it
 for round-trip. `tsc` clean. Prior: **Backlog batch (5 fixes, code):** repo reads now `.parse()` through zod

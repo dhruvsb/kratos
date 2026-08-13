@@ -7,6 +7,46 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-13 — "Refined Screens (Dark)" design pass (import: fd29fa5c) + three picks (2a / 2d / 1a)
+
+Imported the Claude Design doc **"Refined Screens (Dark)"** (project `fd29fa5c`, via the
+DesignSync MCP) and implemented the whole refinement across every top-level screen, plus the
+three decision picks the user chose:
+
+- **PR badge → 2a (Medal).** New shared `src/components/PrBadge.tsx` — a ribbon+disc **Medal**
+  glyph (`Medal`), a list-row count chip (`PrBadge`), and a `PrBanner`. Replaced Home's old
+  **star** SVG badge and is now the single PR mark app-wide (Home rows + Workout-detail banner).
+- **Nav icons → 2d (Outline + label).** `TabBar.tsx`: Routines icon redrawn as an outlined
+  **dumbbell**; labels went sentence-case (Home/Routines/Settings), inactive lifted to `t2`.
+- **Log set sheet → 1a (Chips + keypad).** `SetKeypad.tsx`: header is now just "Set N", the two
+  control rows merged into one (**±step + 8/10/12 rep chips**), plate line sentence-cased. (The
+  4/6 rep chips + SAME shortcut were dropped per the 1a spec; any reps stay typeable on the pad.)
+
+Screen refinements (structure/layout to the design, **colours + fonts stay on `tokens.ts`** —
+the design's `#C0F23C`/`#F2F4EF`/Schibsted/JetBrains render through `acc`/`t1..t3`/`font.*`):
+- **Home:** history rows reflowed to name+date stacked · volume · medal (leading date column
+  dropped); a **HISTORY · N IN LAST 30 DAYS** divider; calendar cells are now soft-filled circles
+  (worked) / solid accent (today) instead of rings.
+- **Active workout:** **RECORDING + ⋯** header (⋯ menu carries Remove-exercise / Discard — both
+  left the grid); the chip rail shows **exercise names with a ✓ when logged**; sub-header is
+  "Chest · Barbell" + "3 of 6"; below-grid is one hint + **Add set**; footer is a glass back +
+  Next/Add pill, then a single **Finish workout** CTA (Discard moved to ⋯).
+- **Workout detail:** leads with the **workout name** (date as subtitle), a **PR banner** (medal +
+  "N personal records" + volume) when PRs exist else a volume card; `MuscleSplit` rebuilt as a
+  single **stacked bar + legend**; set rows show per-set volume; top-right **Edit** → delete menu.
+- **Routines:** count in the header; each row got **Edit** + **Start** pills (Start dimmed for an
+  empty routine); hold-for-options menu kept.
+- **Settings:** section headers get a hairline rule; helper sentences dropped; values gained a **›**
+  chevron; **Pre-fill from last session** is now a **real switch** (`Toggle`).
+
+One deliberate deviation from the literal mockup: the design draws the full-width primary CTAs
+(Finish / Log set) as **solid lime**, but the hard-rule CTA semantics (`ctaBg/ctaBorder/ctaFg`)
+keep dark CTAs dark-fill+accent-border and reserve the solid fill for **light** mode — so the
+buttons follow the token system (dark stays byte-consistent) rather than hardcoding a solid dark
+fill. `tsc --noEmit` clean; `expo export --platform web` bundles all 16 routes.
+
+---
+
 ## 2026-08-13 — Imported workouts showed "Empty workout" — added workouts.title
 
 Every Hevy-imported workout rendered as **"Empty workout"** on Home/History. Root cause:

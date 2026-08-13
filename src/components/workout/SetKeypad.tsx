@@ -41,15 +41,14 @@ export type SetKeypadProps = {
   onClose: () => void;
 };
 
-const QUICK = ['−', '+', 'SAME', '⌫'] as const;
 const PAD = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', '⌫'] as const;
 
-// Reps are a fixed chip set (feedback #13) — the working-set rep counts that cover the
-// overwhelming majority of sets, so a full set is "type weight → tap a rep chip → LOG"
-// with the numeric pad serving weight alone. Odd counts (singles, triples, 15s, 20s,
-// AMRAP) stay reachable: tap the REPS field and the pad/± step edit reps directly, so
-// nothing is unloggable.
-const REP_CHIPS = [4, 6, 8, 10, 12] as const;
+// Decision 1a: one control row does both jobs — two weight steps (±step) then the
+// three working-rep chips that cover the overwhelming majority of sets, so a full set
+// is "±weight / tap a rep chip → Log". Odd counts (singles, triples, 15s, 20s, AMRAP)
+// stay reachable: tap the REPS field and the pad edits reps directly, so nothing is
+// unloggable. The ⌫ escape hatch lives in the keypad's bottom-right.
+const REP_CHIPS = [8, 10, 12] as const;
 
 // Sane upper bound on an entered weight (in kg). Covers every real barbell / dumbbell
 // / machine number with margin, and — critically — stays under weight_kg's
@@ -111,11 +110,6 @@ export function SetKeypad(props: SetKeypadProps) {
     }
   }
 
-  function sameAsLast() {
-    if (lastKg != null) setKgStr(trimWeight(kgToDisplay(lastKg, unit)));
-    if (lastReps != null) setRepsStr(String(lastReps));
-  }
-
   const reps = parseInt(repsStr || '0', 10) || 0;
   const kgDisplay = kgStr === '' ? null : parseFloat(kgStr);
   const weightKg = kgDisplay == null ? null : displayToKg(kgDisplay, unit);
@@ -138,9 +132,7 @@ export function SetKeypad(props: SetKeypadProps) {
         <View style={styles.handle} />
 
         <View style={styles.titleRow}>
-          <Text style={styles.title}>
-            {props.exerciseName.toUpperCase()} · SET {props.setNumber}
-          </Text>
+          <Text style={styles.title}>Set {props.setNumber}</Text>
           {lastLabel && <Text style={styles.lastLabel}>{lastLabel}</Text>}
         </View>
 
@@ -163,15 +155,14 @@ export function SetKeypad(props: SetKeypadProps) {
 
         {/* Plate hint sits right under the weight field, where the eyes are while
             typing — not buried at the bottom of the sheet (feedback #15). */}
-        <View style={styles.plateRow}>
-          {plates ? (
-            <Text style={styles.plateText} numberOfLines={1} ellipsizeMode="tail">
-              PLATES / SIDE · {plates}
-            </Text>
-          ) : null}
-        </View>
-
-        <View style={styles.repChips}>
+        {/* One control row (decision 1a): two weight steps + the working-rep chips. */}
+        <View style={styles.chipRow}>
+          <Pressable style={styles.stepChip} onPress={() => adjust(-1)}>
+            <Text style={styles.stepText}>−{step(unit)}</Text>
+          </Pressable>
+          <Pressable style={styles.stepChip} onPress={() => adjust(1)}>
+            <Text style={styles.stepText}>+{step(unit)}</Text>
+          </Pressable>
           {REP_CHIPS.map((n) => {
             const on = reps === n;
             return (
@@ -195,20 +186,12 @@ export function SetKeypad(props: SetKeypadProps) {
           })}
         </View>
 
-        <View style={styles.quickRow}>
-          {QUICK.map((q) => (
-            <Pressable
-              key={q}
-              style={styles.quick}
-              onPress={() =>
-                q === '−' ? adjust(-1) : q === '+' ? adjust(1) : q === 'SAME' ? sameAsLast() : pressPad('⌫')
-              }
-            >
-              <Text style={styles.quickText}>
-                {q === '−' ? `−${step(unit)}` : q === '+' ? `+${step(unit)}` : q === 'SAME' ? 'SAME' : '⌫'}
-              </Text>
-            </Pressable>
-          ))}
+        <View style={styles.plateRow}>
+          {plates ? (
+            <Text style={styles.plateText} numberOfLines={1} ellipsizeMode="tail">
+              Plates per side · {plates}
+            </Text>
+          ) : null}
         </View>
 
         <View style={styles.pad}>
@@ -314,30 +297,32 @@ const makeStyles = (color: Theme['color']) => StyleSheet.create({
   fieldValRow: { flexDirection: 'row', alignItems: 'baseline', marginTop: 6 },
   fieldVal: { fontFamily: font.numBold, fontSize: 30, color: color.t1 },
 
-  repChips: { flexDirection: 'row', gap: 7, marginTop: space.md },
-  repChip: {
+  // 1a control row: two weight-step pills + three rep chips, all one height.
+  chipRow: { flexDirection: 'row', gap: 8, marginTop: space.md },
+  stepChip: {
     flex: 1,
+    height: 40,
     alignItems: 'center',
-    paddingVertical: 12,
+    justifyContent: 'center',
+    borderRadius: radius.pill,
     backgroundColor: color.s2,
     borderWidth: 1,
     borderColor: color.line2,
-    borderRadius: radius.ctl,
   },
-  repChipOn: { borderColor: color.acc, backgroundColor: color.acc06 },
-  repChipText: { fontFamily: font.numSemibold, fontSize: 17, color: color.t1 },
-  repChipTextOn: { color: color.acc },
-
-  quickRow: { flexDirection: 'row', gap: 7, marginTop: space.md },
-  quick: {
+  stepText: { fontFamily: font.numMedium, fontSize: 14, color: color.t1 },
+  repChip: {
     flex: 1,
+    height: 40,
     alignItems: 'center',
-    paddingVertical: 9,
+    justifyContent: 'center',
+    borderRadius: radius.pill,
+    backgroundColor: color.s2,
     borderWidth: 1,
     borderColor: color.line2,
-    borderRadius: radius.key,
   },
-  quickText: { fontFamily: font.numSemibold, fontSize: 10, color: color.t2 },
+  repChipOn: { borderColor: color.acc, backgroundColor: color.acc06 },
+  repChipText: { fontFamily: font.numMedium, fontSize: 14, color: color.t1 },
+  repChipTextOn: { color: color.acc, fontFamily: font.numSemibold },
 
   pad: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: space.md },
   key: {

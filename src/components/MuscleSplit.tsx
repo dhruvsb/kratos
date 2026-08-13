@@ -1,67 +1,59 @@
-// Muscle split — a compact Hevy-style breakdown of the body regions a workout
-// hit. Presentational: it takes the already-computed shares (see lib/muscleSplit)
-// and renders a bar-per-region list (label · meter · %), heaviest first. On-theme
-// LED look, monochrome — the design's accent is border/glow only, never a fill.
+// Muscle split — the refined single stacked bar: each body region a segment of one
+// horizontal bar (accent, stepping down in opacity heaviest-first), with a legend of
+// dot · "Region NN%" beneath. Answers "am I balanced?" at a glance. Presentational —
+// it takes the already-computed shares (see lib/muscleSplit).
 import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { RegionShare } from '@/lib/muscleSplit';
-import { font, radius, space, tracking, type Theme } from '@/theme/tokens';
+import { font, space, type Theme } from '@/theme/tokens';
 import { useTheme } from '@/theme/ThemeProvider';
+
+// Segment / legend-dot tints, heaviest-first: solid accent, then two faded steps,
+// repeating for any tail regions so a 4+-way split still reads.
+const TINTS = ['acc', 'acc35', 'acc14', 'acc07'] as const;
 
 export function MuscleSplit({ regions }: { regions: RegionShare[] }) {
   const { color } = useTheme();
   const styles = useMemo(() => makeStyles(color), [color]);
   if (regions.length === 0) return null;
-  const max = regions[0].fraction || 1; // scale bars to the leader for readable contrast
+  const tint = (i: number) => color[TINTS[Math.min(i, TINTS.length - 1)]];
 
   return (
     <View style={styles.wrap}>
-      <Text style={styles.heading}>MUSCLE SPLIT</Text>
-      {regions.map((r) => (
-        <View key={r.region} style={styles.row}>
-          <Text style={styles.label}>{r.region.toUpperCase()}</Text>
-          <View style={styles.track}>
-            <View style={[styles.fill, { width: `${Math.max(4, (r.fraction / max) * 100)}%` }]} />
+      <View style={styles.bar}>
+        {regions.map((r, i) => (
+          <View
+            key={r.region}
+            style={{ width: `${Math.max(3, r.fraction * 100)}%`, backgroundColor: tint(i) }}
+          />
+        ))}
+      </View>
+      <View style={styles.legend}>
+        {regions.map((r, i) => (
+          <View key={r.region} style={styles.legendItem}>
+            <View style={[styles.dot, { backgroundColor: tint(i) }]} />
+            <Text style={styles.legendText}>
+              {r.region} {Math.round(r.fraction * 100)}%
+            </Text>
           </View>
-          <Text style={styles.pct}>{Math.round(r.fraction * 100)}%</Text>
-        </View>
-      ))}
+        ))}
+      </View>
     </View>
   );
 }
 
 const makeStyles = (color: Theme['color']) => StyleSheet.create({
-  wrap: { gap: space.sm },
-  heading: {
-    fontFamily: font.numSemibold,
-    fontSize: 8,
-    letterSpacing: tracking.wide,
-    color: color.t3,
-    marginBottom: 2,
-  },
-  row: { flexDirection: 'row', alignItems: 'center', gap: space.md },
-  label: {
-    fontFamily: font.numSemibold,
-    fontSize: 9,
-    letterSpacing: 0.6,
-    color: color.t2,
-    width: 62,
-  },
-  track: {
-    flex: 1,
+  wrap: { gap: 10 },
+  bar: {
+    flexDirection: 'row',
     height: 6,
-    borderRadius: radius.pill,
-    backgroundColor: color.sin,
-    borderWidth: 1,
-    borderColor: color.line,
+    borderRadius: 3,
     overflow: 'hidden',
+    gap: 2,
+    backgroundColor: 'transparent',
   },
-  fill: { height: '100%', borderRadius: radius.pill, backgroundColor: color.t2 },
-  pct: {
-    fontFamily: font.numBold,
-    fontSize: 11,
-    color: color.t1,
-    width: 34,
-    textAlign: 'right',
-  },
+  legend: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 18, rowGap: 8 },
+  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 7 },
+  dot: { width: 7, height: 7, borderRadius: 2 },
+  legendText: { fontFamily: font.num, fontSize: 12, color: color.t2 },
 });
