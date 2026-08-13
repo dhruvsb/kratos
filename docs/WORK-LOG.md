@@ -7,6 +7,42 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-13 (latest) — Voice logging CUT OVER to the real models (mock retired)
+
+The 1a voice flow now runs on the real pipeline (was gated behind `MOCK_VOICE`). Using the
+finalised bakeoff models below.
+
+- **Edge functions deployed** to `amonovkkjohvlkjlfsit`: `parse-utterance` (now also handles the
+  `create_routine` intent) + new **`transcribe`** (cloud ASR). Verified deployed; `OPENAI_API_KEY`
+  secret present.
+- **`transcribe`** biases like the bakeoff: `language:'en'` + a keyterm `prompt` (static gym prime,
+  or live routine keyterms if passed). Model = `ASR_MODEL` = **`gpt-transcribe`** (`prices.ts`).
+- **Routine extraction prompt** (`prompts.ts` rules 13–14) aligned with the validated
+  `bakeoff/lib/routine-prompt.ts` — self-correction replacement, exclude list-asides, preserve
+  near-dupes, and strip a trailing generic word from the name (fixes the top failure, "leg day
+  routine" → "Leg Day").
+- **Client**: `MOCK_VOICE=false`. `parseVoiceIntent` calls `parse-utterance` and maps
+  `ParseResult`→`VoiceParseResult` (log + routine); recorder records via **expo-audio** →
+  `transcribe` → parse. Dev client **rebuilt** (expo-audio pod `ExpoAudio 57.0.3` linked via
+  `pod install`; needs `LANG=…UTF-8` or cocoapods' error reporter crashes).
+- **Deliberately NOT changed**: `llm.ts` temperature (their flagged top follow-up — wants an eval
+  re-run at `temperature:0`; left untouched so the deployed function matches the measured behaviour).
+- `tsc` clean; dev client rebuilt on the sim.
+
+**QA against the 10 real bakeoff recordings, through the DEPLOYED functions** (transcribe → parse-utterance;
+harness in scratchpad `qa-voice.ts` — mints a user JWT via service-role OTP, scores vs `bakeoff/ground-truth`):
+- **Workout logging: 5/5 (100%) exact-match, intent 5/5.** Incl. 06's mid-sentence weight self-correction
+  (65→67.5, no dup), distributive bodyweight sets, and the 15-vs-50 same-workout danger pair.
+- **Routine creation: 4/5 (80%) EM, intent 5/5**, all exercises resolved (10/10/10/11/10/12). The one miss
+  (04) is the same `SPURIOUS: Deadlift` case the bakeoff prototype failed across providers — an extraction
+  edge case on that recording, not a wiring bug. The trailing-generic-word strip rule **fixed 03**
+  ("leg day routine" → "Leg Day"), which had failed on every bakeoff provider — so routine EM here beats the
+  prototype's 60%.
+- **Found + fixed a live bug:** the Supabase `OPENAI_API_KEY` secret was a **stale key** (a different org
+  with no credits → every call 429'd) while `.env` held the funded key. Reset the secret to `.env`'s key
+  (`supabase secrets set` — value never printed); QA then passed. The on-device voice feature depends on this
+  secret, so this also unblocked the real app.
+
 ## 2026-08-13 (later) — Bakeoff corrected; models FINALISED (`gpt-transcribe` + `gpt-5.6-luna`)
 
 Supersedes the entry below, which reported numbers produced by a **broken harness**. A
@@ -87,6 +123,33 @@ labeled 10-file dataset; audio and `.env.local` stay gitignored). Bakeoff scaffo
 harvesting real corrections (`voice_logs` + `scripts/harvest-eval-cases.ts`).
 
 ---
+
+## 2026-08-13 — Phase 2 voice logging: real model pipeline wired (cloud ASR + routine intent), gated
+
+Follow-up to the 1a UI build (below): wired the real model path end-to-end, still gated behind
+`MOCK_VOICE` so the running app is unaffected until cutover. User's model bake-off is nearly done
+(ASR = new cloud **gpt-transcribe**; parse = a GPT model, id TBD).
+
+**Backend (Deno / shared pipeline):**
+- **`create_routine` intent.** `parse-types.ts` adds the intent + `ParseResult.routine` (name + resolved
+  exercises). `extraction.ts`/`prompts.ts` extract a routine name + exercise names (rules 13–14).
+  `pipeline.ts` resolves each name via the existing alias/fuzzy/LLM resolver and returns a routine payload
+  instead of set entries. Set-logging path unchanged.
+- **`transcribe` edge function** (new): auth-guarded, takes base64 audio, calls OpenAI
+  `audio.transcriptions` with `ASR_MODEL` (`prices.ts`, = `gpt-transcribe` — confirm exact id), returns
+  `{ text }`. Key stays server-side (same hard rule as parse-utterance).
+
+**Client:**
+- `voiceParse.ts` `parseVoiceIntent` real body: calls `parseVoiceUtterance` (edge fn), maps `ParseResult`
+  → `VoiceParseResult` (log + routine), enriches muscle/equipment from the cached library. `MOCK_VOICE`
+  switch retained with the cutover checklist in a header comment.
+- Cloud ASR capture: added **expo-audio** (dep + config-plugin mic string). `src/data/transcribe.ts`
+  (reads the clip via `new File(uri).base64()`, posts to the edge fn). Recorder screen now records →
+  transcribes → parses on the real path; the mock path (canned transcript + toggle) stays for `MOCK_VOICE`.
+
+**Verified:** `tsc` clean; web-export 18 routes. **NOT cut over** — needs: deploy both edge functions,
+rebuild the dev client (expo-audio is native), confirm the final parse-model + ASR ids, then flip
+`MOCK_VOICE=false`. Edge functions couldn't be Deno-typechecked locally (no `deno`; supabase CLI present).
 
 ## 2026-08-13 — Phase 2 voice logging: UI + workflow (design "Voice Logging" 1a), model left unplugged
 

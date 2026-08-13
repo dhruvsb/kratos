@@ -152,6 +152,10 @@ function AppContent({ session }: { session: Session | null }) {
         <Stack.Screen name="calendar" options={TAB_SCREEN} />
         <Stack.Screen name="history/index" options={TAB_SCREEN} />
         <Stack.Screen name="settings" options={TAB_SCREEN} />
+        {/* Voice logging (design "Voice Logging" 1a): the recorder + its review
+            preview fade in as a full-screen instrument rather than sliding "deeper". */}
+        <Stack.Screen name="voice/record" options={{ animation: 'fade', animationDuration: 200 }} />
+        <Stack.Screen name="voice/preview" options={{ animation: 'fade', animationDuration: 200 }} />
       </Stack>
       {/* Floats over every screen; only visible offline or while the offline
           queue is draining. */}

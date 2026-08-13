@@ -61,6 +61,15 @@ const config: ExpoConfig = {
         speechRecognitionPermission: 'Allow RepVoice to use speech recognition to log sets by voice.',
       },
     ],
+    // Audio recording for cloud ASR (design "Voice Logging" 1a): the recorder
+    // captures a clip that the `transcribe` edge function sends to gpt-transcribe.
+    // (expo-speech-recognition also declares mic usage; both strings are harmless.)
+    [
+      'expo-audio',
+      {
+        microphonePermission: 'Allow RepVoice to record your voice to log sets and build routines.',
+      },
+    ],
     // Apple Health gap-fill: read-only import of strength sessions the user did
     // but forgot to log (src/lib/healthkit.ts → src/data/healthImport.ts). We
     // only ever READ, so just NSHealthShareUsageDescription — no update string,

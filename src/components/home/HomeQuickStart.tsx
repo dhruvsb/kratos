@@ -10,6 +10,7 @@ import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import { router } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
+import { MicGlyph } from '@/components/voice/MicGlyph';
 import { useRoutines, useWorkoutList } from '@/data/hooks';
 import { useStartWorkoutFlow } from '@/data/useStartWorkoutFlow';
 import { agoLabel } from '@/lib/dates';
@@ -136,19 +137,29 @@ export function HomeQuickStart() {
         style={[
           styles.fab,
           glass ? styles.fabGlassWrap : styles.fabSolid,
-          { transform: [{ translateY: fabTranslate }, { rotate: fabRotate }] },
+          { transform: [{ translateY: fabTranslate }] },
         ]}
       >
         {glass && <GlassView glassEffectStyle="regular" isInteractive tintColor={color.acc} style={styles.fabGlass} />}
         <Pressable
-          onPress={() => toggle(!open)}
+          // The FAB is now a mic (design "Voice Logging" 1a): tap starts a voice
+          // recording, long-press keeps the old MOST USED quick-start. While the
+          // sheet is open the FAB doubles as its × close control, so tap closes.
+          onPress={() => (open ? toggle(false) : router.push('/voice/record'))}
+          onLongPress={() => !open && toggle(true)}
+          delayLongPress={280}
           style={styles.fabPress}
-          accessibilityLabel={open ? 'Close quick start' : 'Quick start'}
+          accessibilityLabel={open ? 'Close quick start' : 'Log by voice (long-press for quick start)'}
         >
-          <View style={styles.glyph}>
-            <View style={[styles.glyphH, { backgroundColor: glyphColor }]} />
-            <View style={[styles.glyphV, { backgroundColor: glyphColor }]} />
-          </View>
+          {open ? (
+            // × close glyph (the old + rotated), shown only while the sheet is open.
+            <Animated.View style={[styles.glyph, { transform: [{ rotate: fabRotate }] }]}>
+              <View style={[styles.glyphH, { backgroundColor: glyphColor }]} />
+              <View style={[styles.glyphV, { backgroundColor: glyphColor }]} />
+            </Animated.View>
+          ) : (
+            <MicGlyph size={30} color={glyphColor} strokeWidth={1.8} />
+          )}
         </Pressable>
       </Animated.View>
     </>

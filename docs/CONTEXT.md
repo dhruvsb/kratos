@@ -10,7 +10,22 @@ codebase or a huge prior conversation.
 > issues**) *and* append a dated entry to [`WORK-LOG.md`](./WORK-LOG.md). This file is the
 > snapshot; `WORK-LOG.md` is the full history. Keep this file short.
 
-**Last updated:** 2026-08-13 — **Apple Health gap-fill (iOS-only) built.** New **Settings → DATA → "Sync
+**Last updated:** 2026-08-13 — **Phase 2 voice logging UI + workflow built (design "Voice Logging" 1a),
+model deliberately left unplugged.** The `+` FAB on Home is now a **mic** (tap → record; long-press → the
+old MOST USED sheet). New flow: **full-screen recorder** (`src/app/voice/record.tsx`) → **Stop & review** →
+a preview that branches on inferred intent — **03A new-routine** (`components/voice/VoiceRoutinePreview.tsx`)
+or **03B logged-workout** (`VoiceLogPreview.tsx`, grouped by exercise, PREV beside every value, tap-to-edit
+via the existing `SetKeypad`, missing-field "how many sets?" chips) → **commit writes real rows** through the
+existing repos (`useCommitVoiceRoutine` → routine; `useCommitVoiceLog` → start/resume a live workout + write
+each set via `confirmVoiceEntries`) → lands on the existing **active-workout screen (04)** with a new
+**"N SETS LOGGED FROM VOICE · UNDO"** banner (`components/workout/VoiceUndoBanner.tsx`). **The one seam the
+eval's chosen model plugs into is `src/data/voiceParse.ts` — `parseVoiceIntent()` + the `VoiceParseResult`
+union (routine | log); it's `MOCK_VOICE=true` today** (canned data, but exercise ids resolved against the real
+library so commits write valid FKs; the recorder carries a small MOCK toggle for the log-vs-routine example).
+When the model lands: implement `parseVoiceIntent`'s real body + flip `MOCK_VOICE`. Existing Phase-2 code
+(`VoiceMicButton`/`VoiceConfirmationCard`/`FloorMode`, `ParseResult`) untouched. `tsc` + web-export (18
+routes incl. `/voice/record`, `/voice/preview`) green; **not yet run on the simulator/device.** Prior:
+**Apple Health gap-fill (iOS-only) built.** New **Settings → DATA → "Sync
 from Apple Health"** button reads strength sessions (`traditional`/`functional` only) from the Health store
 and inserts a blank **"Strength Training"** placeholder for any day you worked out but forgot to log —
 day-level + `external_id: healthkit:<uuid>` dedup, a real RepVoice/Hevy log always wins. Source-agnostic

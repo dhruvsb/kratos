@@ -12,7 +12,16 @@ export type Unit = z.infer<typeof unitSchema>;
 export const setTypeSchema = z.enum(['warmup', 'normal', 'drop', 'failure']);
 export type SetType = z.infer<typeof setTypeSchema>;
 
-export const intentSchema = z.enum(['log_sets', 'correct_last', 'unknown']);
+// 'create_routine' — the utterance builds a routine ("create a new routine called
+// … and add …") instead of logging sets. Entries stay empty; the routine payload
+// (name + resolved exercises) rides in ParseResult.routine. Intent is inferred by
+// the extraction LLM from the same transcript (design "Voice Logging" 1a).
+export const intentSchema = z.enum([
+  'log_sets',
+  'correct_last',
+  'create_routine',
+  'unknown',
+]);
 export type Intent = z.infer<typeof intentSchema>;
 
 // How the exercise name was resolved to an exercise_id.
@@ -71,9 +80,20 @@ export const ambiguitySchema = z.object({
 });
 export type Ambiguity = z.infer<typeof ambiguitySchema>;
 
+// A parsed "create a routine" result: the spoken name + its ordered exercises,
+// each resolved to the library the same way logged sets are (alias/fuzzy/llm/
+// unmatched). Only present when intent === 'create_routine'.
+export const parsedRoutineSchema = z.object({
+  name: z.string().nullable(),
+  exercises: z.array(parsedExerciseSchema),
+});
+export type ParsedRoutine = z.infer<typeof parsedRoutineSchema>;
+
 export const parseResultSchema = z.object({
   intent: intentSchema,
   entries: z.array(parseEntrySchema),
+  // Populated only for intent === 'create_routine'; null for set-logging.
+  routine: parsedRoutineSchema.nullable().default(null),
   // non-empty ⇒ the UI MUST ask; asking is a success state, never a fallback
   ambiguities: z.array(ambiguitySchema),
   confidence: z.number(), // 0–1; rubric documented in the extraction prompt

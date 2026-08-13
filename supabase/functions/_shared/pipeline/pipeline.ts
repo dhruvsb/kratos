@@ -5,6 +5,8 @@
 import type {
   ParseContext,
   ParseEntry,
+  ParsedExercise,
+  ParsedRoutine,
   ParseResult,
   ParseTelemetry,
 } from '../parse-types.ts';
@@ -48,19 +50,34 @@ export async function parseUtterance(
   usages.push(extractionUsage);
   llmCalls++;
 
-  const entries: ParseEntry[] = [];
-  for (const raw of extraction.entries) {
-    entries.push(
-      await buildEntry(raw, extraction, context, deps, (usage) => {
-        usages.push(usage);
-        llmCalls++;
-      })
-    );
+  const onUsage = (usage: LlmUsage) => {
+    usages.push(usage);
+    llmCalls++;
+  };
+
+  // Routine-creation intent (design "Voice Logging" 1a): no sets to build — resolve
+  // each spoken exercise name to the library the same way logged sets are, and
+  // return the routine payload instead of entries.
+  let entries: ParseEntry[] = [];
+  let routine: ParsedRoutine | null = null;
+  if (extraction.intent === 'create_routine') {
+    const exercises: ParsedExercise[] = [];
+    for (const spoken of extraction.routine.exercise_names) {
+      const resolved = await resolveExercise(spoken, context, deps.catalog, deps.llm);
+      if (resolved.usage) onUsage(resolved.usage);
+      exercises.push(resolved.exercise);
+    }
+    routine = { name: extraction.routine.name, exercises };
+  } else {
+    for (const raw of extraction.entries) {
+      entries.push(await buildEntry(raw, extraction, context, deps, onUsage));
+    }
   }
 
   const result: ParseResult = {
     intent: extraction.intent,
     entries,
+    routine,
     ambiguities: extraction.ambiguities.filter(
       (ambiguity) =>
         ambiguity.entry_index >= 0 &&

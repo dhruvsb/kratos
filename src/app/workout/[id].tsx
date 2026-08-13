@@ -9,6 +9,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ExercisePickerModal } from '@/components/ExercisePickerModal';
 import { SetKeypad } from '@/components/workout/SetKeypad';
+import { VoiceUndoBanner } from '@/components/workout/VoiceUndoBanner';
 import { haptics } from '@/lib/haptics';
 import { ElapsedClock } from '@/components/workout/LiveClock';
 import { InsetWell, KeyCap } from '@/components/voice/primitives';
@@ -452,6 +453,9 @@ export default function ActiveWorkoutScreen() {
           )}
         </ScrollView>
       </View>
+
+      {/* Voice commit landed here → transient "N sets logged from voice · UNDO". */}
+      <VoiceUndoBanner workoutId={id!} />
 
       {!activeExercise ? (
         <View style={styles.empty}>

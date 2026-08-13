@@ -25,9 +25,19 @@ export const llmEntrySchema = z.strictObject({
   ),
 });
 
+// Routine-creation payload. Always present (structured-outputs strict mode wants
+// every field), but only meaningful when intent === 'create_routine': name is the
+// spoken routine name (null ⇒ ask), exercise_names are spoken phrases resolved to
+// the library downstream (same as exercise_raw). Empty for set-logging.
+export const llmRoutineSchema = z.strictObject({
+  name: z.string().nullable(),
+  exercise_names: z.array(z.string()),
+});
+
 export const llmExtractionSchema = z.strictObject({
   intent: intentSchema,
   entries: z.array(llmEntrySchema),
+  routine: llmRoutineSchema,
   ambiguities: z.array(
     z.strictObject({
       entry_index: z.number().int(),
