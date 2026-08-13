@@ -82,7 +82,7 @@ export default function FinishScreen() {
     <View style={[styles.screen, { paddingTop: insets.top + space.lg }]}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.saved}>WORKOUT SAVED</Text>
-        <Text style={styles.title}>{detail.routine_name ?? 'Empty workout'}</Text>
+        <Text style={styles.title}>{detail.title ?? detail.routine_name ?? 'Empty workout'}</Text>
         <Text style={styles.when}>
           {started.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' }).toUpperCase()} ·{' '}
           {time(started)} — {time(ended)}

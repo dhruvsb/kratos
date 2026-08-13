@@ -129,7 +129,7 @@ export default function HomeScreen() {
                     <Text style={styles.histDow}>{dow}</Text>
                   </View>
                   <Text style={styles.histName} numberOfLines={1}>
-                    {w.routine_name ?? 'Empty workout'}
+                    {w.title ?? w.routine_name ?? 'Empty workout'}
                   </Text>
                   <View style={styles.histVol}>
                     <Text style={styles.histVolNum}>{vol}</Text>

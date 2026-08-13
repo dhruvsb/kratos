@@ -373,7 +373,7 @@ export default function ActiveWorkoutScreen() {
         <View style={{ flex: 1 }}>
           <StatusPip label={isFinished ? 'FINISHED' : 'IN PROGRESS'} on={!isFinished} />
           <Text style={styles.title} numberOfLines={1}>
-            {detail.routine_name ?? 'Empty workout'}
+            {detail.title ?? detail.routine_name ?? 'Empty workout'}
           </Text>
         </View>
         <View style={{ alignItems: 'flex-end' }}>

@@ -401,6 +401,7 @@ export function buildStartPlan(qc: QueryClient, routineId?: string): StartPlan |
       // Not rendered anywhere; the background refetch fills in the real value.
       user_id: '',
       routine_id: routineId ?? null,
+      title: null,
       started_at: startedAt,
       ended_at: null,
       notes: null,

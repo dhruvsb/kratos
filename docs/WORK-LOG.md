@@ -7,6 +7,25 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-13 — Imported workouts showed "Empty workout" — added workouts.title
+
+Every Hevy-imported workout rendered as **"Empty workout"** on Home/History. Root cause:
+a workout's display name came *only* from a linked routine (`workouts.routine_id →
+routines.name`), but a Hevy import is a one-off session with its own title and no routine.
+The importer had the title in hand and could only smuggle it into `notes`
+(`Imported from Hevy · <title>`), which nothing rendered — so the fallback
+`routine_name ?? 'Empty workout'` always hit the default.
+
+Fix: gave workouts a first-class `title` (migration **`0009_workouts_title.sql`**, applied
+live via `supabase db push`; it also **backfills** already-imported rows by lifting the
+title out of the synthetic note and clearing that note). `title` added to `workoutSchema`.
+Importer now writes `title: w.title` and keeps `notes` for the real description only.
+Display fallback is now `title ?? routine_name ?? 'Empty workout'` at all 5 sites
+(`index`, `history/index`, `history/[id]`, `finish/[id]`, `workout/[id]`), and the Hevy
+**export** uses `title` for the CSV title so the round-trip preserves the session name.
+`tsc` clean; backfill verified live (8 recent workouts now read "Chest & Triceps",
+"Back & Biceps", "Legs", … with notes cleared). Not yet re-run on device.
+
 ## 2026-08-13 — Home routine-name weight fix (font consistency)
 
 The recent-workout name on Home rendered in Instrument Sans **Regular (400)** — the only

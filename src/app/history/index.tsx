@@ -86,7 +86,7 @@ export default function HistoryScreen() {
             <Pressable style={styles.row} onPress={() => router.push(`/history/${item.w.id}`)}>
               <View style={{ flex: 1 }}>
                 <Text style={styles.rowName} numberOfLines={1}>
-                  {item.w.routine_name ?? 'Empty workout'}
+                  {item.w.title ?? item.w.routine_name ?? 'Empty workout'}
                 </Text>
                 <Text style={styles.rowMeta}>
                   {new Date(item.w.started_at)

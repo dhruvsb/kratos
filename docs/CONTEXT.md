@@ -10,7 +10,10 @@ codebase or a huge prior conversation.
 > issues**) *and* append a dated entry to [`WORK-LOG.md`](./WORK-LOG.md). This file is the
 > snapshot; `WORK-LOG.md` is the full history. Keep this file short.
 
-**Last updated:** 2026-08-13 — **Backlog batch (5 fixes, code):** repo reads now `.parse()` through zod
+**Last updated:** 2026-08-13 — **Imported workouts no longer show "Empty workout":** workouts got a
+first-class `title` (migration **`0009`**, applied live + backfills existing Hevy imports); importer
+writes it, display fallback is now `title ?? routine_name ?? 'Empty workout'` everywhere, export uses it
+for round-trip. `tsc` clean. Prior: **Backlog batch (5 fixes, code):** repo reads now `.parse()` through zod
 (dead `z.coerce` guards killed; numeric-as-string can't corrupt `weight_kg`); **#34** day-zero Home welcome
 (`HomeDayZero.tsx`); `ios.appleTeamId` moved into `app.config.ts` (survives prebuild); **#28** progressive-
 overload ghost in the set grid; **Task 5** in-app "Clear all history" (Settings → DATA; keeps routines) via

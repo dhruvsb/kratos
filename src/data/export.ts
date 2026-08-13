@@ -25,7 +25,7 @@ export async function buildHevyExport(): Promise<HevyExport> {
   const { data, error } = await supabase
     .from('workouts')
     .select(
-      'started_at, ended_at, notes, routine:routines(name), ' +
+      'started_at, ended_at, title, notes, routine:routines(name), ' +
         'workout_exercises(position, exercise:exercises(canonical_name), sets(*))'
     )
     .not('ended_at', 'is', null)
@@ -34,7 +34,7 @@ export async function buildHevyExport(): Promise<HevyExport> {
 
   const rows = (data ?? []) as any[];
   const workouts: ExportWorkout[] = rows.map((w) => ({
-    title: w.routine?.name ?? 'Workout',
+    title: w.title ?? w.routine?.name ?? 'Workout',
     description: w.notes ?? '',
     startedAt: w.started_at,
     endedAt: w.ended_at,

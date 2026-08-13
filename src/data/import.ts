@@ -231,9 +231,10 @@ export async function commitImportPlan(plan: ImportPlan): Promise<ImportResult> 
       .insert({
         user_id: userId,
         routine_id: null,
+        title: w.title, // the session's own name (e.g. "Chest & Triceps")
         started_at: w.startedAt,
         ended_at: w.endedAt ?? w.startedAt, // must be non-null to show in history
-        notes: w.description || `Imported from Hevy · ${w.title}`,
+        notes: w.description || null,
         external_id: w.externalId,
       })
       .select('id')

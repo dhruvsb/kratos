@@ -52,7 +52,7 @@ export default function WorkoutDetailScreen() {
   );
 
   const meta = [
-    detail.routine_name ?? 'Empty workout',
+    detail.title ?? detail.routine_name ?? 'Empty workout',
     durationMin != null ? `${durationMin} MIN` : 'IN PROGRESS',
     `${Math.round(totalKg).toLocaleString()} KG`,
   ]

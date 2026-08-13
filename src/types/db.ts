@@ -80,6 +80,7 @@ export const workoutSchema = z.object({
   id: z.string().uuid(),
   user_id: z.string().uuid(),
   routine_id: z.string().uuid().nullable(),
+  title: z.string().nullable(),
   started_at: z.string(),
   ended_at: z.string().nullable(),
   notes: z.string().nullable(),
