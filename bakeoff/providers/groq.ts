@@ -20,6 +20,7 @@ const MODEL = process.env.BAKEOFF_GROQ_MODEL ?? 'whisper-large-v3';
 export const groqProvider: AsrProvider = {
   id: 'groq',
   label: 'Groq',
+  model: MODEL,
   keyEnv: ['GROQ_API_KEY'],
   note: `${MODEL} via OpenAI-compatible /audio/transcriptions — verify model id at console.groq.com`,
 

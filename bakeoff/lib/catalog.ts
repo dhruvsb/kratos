@@ -55,14 +55,21 @@ class ServiceRoleCatalog implements ExerciseCatalog {
   }
 
   async candidates(raw: string, limit: number): Promise<ScoredCandidate[]> {
-    const rpc = this.db.rpc as unknown as (
-      fn: string,
-      params: Record<string, unknown>
-    ) => Promise<{
-      data: { exercise_id: string; name: string; score: number }[] | null;
-      error: { message: string } | null;
-    }>;
-    const { data, error } = await rpc('search_exercise_candidates', {
+    // NOTE: the cast must be applied to the CLIENT, not lifted into a bare
+    // function reference. `const rpc = this.db.rpc` detaches the method from
+    // its receiver, so supabase-js sees `this === undefined` and dies with
+    // "Cannot read properties of undefined (reading 'rest')". Keeping it a
+    // method call on `db` preserves the binding (and the types).
+    const db = this.db as unknown as {
+      rpc: (
+        fn: string,
+        params: Record<string, unknown>
+      ) => Promise<{
+        data: { exercise_id: string; name: string; score: number }[] | null;
+        error: { message: string } | null;
+      }>;
+    };
+    const { data, error } = await db.rpc('search_exercise_candidates', {
       q: raw,
       max_results: limit,
     });

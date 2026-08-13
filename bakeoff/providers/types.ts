@@ -11,6 +11,12 @@ export interface AsrProvider {
   id: string;
   /** Human label for the report. */
   label: string;
+  /**
+   * The resolved model id this adapter will call. MUST be part of the
+   * transcription cache key — without it, changing a BAKEOFF_*_MODEL override
+   * silently returns transcripts produced by the previous model.
+   */
+  model: string;
   /** Env var names that must be present for this provider to run. */
   keyEnv: string[];
   /**

@@ -36,6 +36,7 @@ const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 export const assemblyaiProvider: AsrProvider = {
   id: 'assemblyai',
   label: 'AssemblyAI',
+  model: MODEL,
   keyEnv: ['ASSEMBLYAI_API_KEY'],
   note: `${MODEL} via upload+poll — verified live 2026-08-13 (uses plural speech_models array)`,
 

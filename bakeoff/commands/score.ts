@@ -77,6 +77,8 @@ interface E2EAgg {
   spurious: number;
   clarifications: number;
   extractionCostUsd: number;
+  /** Files that threw during parse — MUST surface, else % hides a broken run. */
+  failed: number;
   worst: Array<{ audio: string; diffs: string[] }>;
 }
 
@@ -85,6 +87,7 @@ interface RoutineAgg {
   providerId: string;
   model: string;
   files: number;
+  failed: number;
   emCount: number;
   nameMatchCount: number;
   exTot: number;
@@ -193,6 +196,7 @@ export async function runScore(flags: CommonFlags): Promise<void> {
                 files: 0,
                 emCount: 0,
                 nameMatchCount: 0,
+                failed: 0,
                 exTot: 0,
                 exOk: 0,
                 omissions: 0,
@@ -223,6 +227,7 @@ export async function runScore(flags: CommonFlags): Promise<void> {
               if (!s.routineExactMatch && agg.worst.length < 12)
                 agg.worst.push({ audio: pair.audio, diffs: s.diffs });
             } catch (err) {
+              agg.failed++;
               console.warn(`   ${run.providerId} / ${pair.audio}: routine-extraction error — ${(err as Error).message}`);
             }
             routine.set(run.providerId, agg);
@@ -237,6 +242,7 @@ export async function runScore(flags: CommonFlags): Promise<void> {
               files: 0,
               emCount: 0,
               intentCount: 0,
+              failed: 0,
               wTot: 0,
               wOk: 0,
               rTot: 0,
@@ -272,6 +278,7 @@ export async function runScore(flags: CommonFlags): Promise<void> {
             if (!s.workoutExactMatch && agg.worst.length < 12)
               agg.worst.push({ audio: pair.audio, diffs: s.diffs });
           } catch (err) {
+            agg.failed++;
             console.warn(`   ${run.providerId} / ${pair.audio}: parse error — ${(err as Error).message}`);
           }
           e2e.set(run.providerId, agg);
@@ -369,6 +376,8 @@ function renderReport(
       .sort((a, b) => b.emCount / (b.files || 1) - a.emCount / (a.files || 1))
       .map((a) => [
         a.providerId,
+        a.files,
+        a.failed || '',
         pct(a.emCount, a.files),
         pct(a.wOk, a.wTot),
         pct(a.rOk, a.rTot),
@@ -381,7 +390,7 @@ function renderReport(
     lines.push(
       e2eRows.length
         ? mdTable(
-            ['provider', 'workout EM', 'weight acc', 'rep acc', 'exercise acc', 'setcount acc', 'clarif/wkout', 'omissions', 'LLM cost'],
+            ['provider', 'scored', 'FAILED', 'workout EM', 'weight acc', 'rep acc', 'exercise acc', 'setcount acc', 'clarif/wkout', 'omissions', 'LLM cost'],
             e2eRows
           )
         : '_end-to-end stage did not run_',
@@ -412,6 +421,8 @@ function renderReport(
       .sort((a, b) => b.emCount / (b.files || 1) - a.emCount / (a.files || 1))
       .map((a) => [
         a.providerId,
+        a.files,
+        a.failed || '',
         pct(a.emCount, a.files),
         pct(a.exOk, a.exTot),
         pct(a.nameMatchCount, a.files),
@@ -422,7 +433,7 @@ function renderReport(
       ]);
     lines.push(
       mdTable(
-        ['provider', 'routine EM', 'exercise resolve acc', 'routine-name match', 'unresolved', 'omissions', 'spurious', 'LLM cost'],
+        ['provider', 'scored', 'FAILED', 'routine EM', 'exercise resolve acc', 'routine-name match', 'unresolved', 'omissions', 'spurious', 'LLM cost'],
         routineRows
       ),
       ''
@@ -439,6 +450,19 @@ function renderReport(
       routineDetails.push('');
     }
     if (routineDetails.length) lines.push('### Routine-creation failure detail', '', ...routineDetails);
+  }
+
+  const totalFailed =
+    [...e2e.values()].reduce((n, a) => n + a.failed, 0) +
+    [...routine.values()].reduce((n, a) => n + a.failed, 0);
+  if (totalFailed > 0) {
+    lines.push(
+      '',
+      `> ⚠️ **${totalFailed} file(s) threw during scoring and are EXCLUDED from every percentage above.**`,
+      '> The percentages are over the *scored* column, not the whole corpus — treat them as',
+      '> provisional until `FAILED` is 0. Scroll up in the console for the per-file errors.',
+      ''
+    );
   }
 
   lines.push('---', '', '_Reminder: 20–30 recordings choose the architecture; they do not prove a sub-0.5% error rate. Keep accumulating real dictations. WER is diagnostic only — rank on NEER and Workout EM._');

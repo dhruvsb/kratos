@@ -30,6 +30,7 @@ interface DeepgramResponse {
 export const deepgramProvider: AsrProvider = {
   id: 'deepgram',
   label: 'Deepgram',
+  model: MODEL,
   keyEnv: ['DEEPGRAM_API_KEY'],
   note: `${MODEL} via /v1/listen — Nova-3 keyterm is unweighted; verify at developers.deepgram.com`,
 

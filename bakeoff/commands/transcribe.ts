@@ -83,7 +83,16 @@ export async function runTranscribe(flags: CommonFlags): Promise<TranscribeOutpu
     console.log(`\n▶ ${pair.audio}`);
     const runs: ProviderRun[] = [];
     for (const provider of configured) {
-      const key = cacheKey([provider.id, audioSha, flags.language, flags.keyterms, keytermSig]);
+      // provider.model MUST be in the key — otherwise switching a
+      // BAKEOFF_*_MODEL override silently replays the old model's transcripts.
+      const key = cacheKey([
+        provider.id,
+        provider.model,
+        audioSha,
+        flags.language,
+        flags.keyterms,
+        keytermSig,
+      ]);
       let result: AsrResult | null = flags.fresh ? null : readCache<AsrResult>(key);
       const cached = !!result;
       if (!result) {

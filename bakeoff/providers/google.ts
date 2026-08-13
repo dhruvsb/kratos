@@ -34,6 +34,7 @@ interface GoogleResponse {
 export const googleChirpProvider: AsrProvider = {
   id: 'google',
   label: 'Google Chirp (v2)',
+  model: MODEL,
   keyEnv: ['GOOGLE_STT_ACCESS_TOKEN'],
   note: `${MODEL} via Speech v2 — needs a gcloud access token + GOOGLE_CLOUD_PROJECT; verify recognizer path`,
 

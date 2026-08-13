@@ -21,6 +21,7 @@ const MODEL = process.env.BAKEOFF_ELEVENLABS_MODEL ?? 'scribe_v1';
 export const elevenlabsProvider: AsrProvider = {
   id: 'elevenlabs',
   label: 'ElevenLabs',
+  model: MODEL,
   keyEnv: ['ELEVENLABS_API_KEY'],
   note: `${MODEL} via /v1/speech-to-text — Scribe v2 id + keyterm field name unverified; check elevenlabs.io`,
 

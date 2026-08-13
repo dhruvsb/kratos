@@ -22,6 +22,7 @@ const MODEL = process.env.BAKEOFF_SARVAM_MODEL ?? 'saaras:v3';
 export const sarvamProvider: AsrProvider = {
   id: 'sarvam',
   label: 'Sarvam',
+  model: MODEL,
   keyEnv: ['SARVAM_API_KEY'],
   note: 'Sarvam endpoint/model/auth header UNVERIFIED — confirm at docs.sarvam.ai before trusting',
 

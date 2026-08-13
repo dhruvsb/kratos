@@ -4,7 +4,7 @@
  * ALL_PROVIDERS is the canonical order used in reports / CLI defaults.
  */
 import type { AsrProvider } from './types.ts';
-import { openaiProvider } from './openai.ts';
+import { openaiProvider, openaiNextProvider } from './openai.ts';
 import { groqProvider } from './groq.ts';
 import { deepgramProvider } from './deepgram.ts';
 import { elevenlabsProvider } from './elevenlabs.ts';
@@ -15,6 +15,7 @@ import { sarvamProvider } from './sarvam.ts';
 /** Every adapter, in canonical report order. */
 export const ALL_PROVIDERS: AsrProvider[] = [
   openaiProvider,
+  openaiNextProvider,
   groqProvider,
   deepgramProvider,
   elevenlabsProvider,
