@@ -10,7 +10,16 @@ codebase or a huge prior conversation.
 > issues**) *and* append a dated entry to [`WORK-LOG.md`](./WORK-LOG.md). This file is the
 > snapshot; `WORK-LOG.md` is the full history. Keep this file short.
 
-**Last updated:** 2026-08-13 — **"Refined Screens (Dark)" design pass shipped (import `fd29fa5c`).**
+**Last updated:** 2026-08-13 — **"Refined Screens (Dark)" TURN 3 shipped (import `fd29fa5c`).** On top of
+TURN 2: **(1)** dark accent toned `#A3E635`→**`#ACD455`** in `tokens.ts` (+ every derivative/CTA/meter;
+glows follow `color.acc`; light palette untouched) — "stops glowing at night". **(2)** Home → **3c
+week-grouped history**: date moved into a group header (`THIS WEEK` / `3–9 AUG` + per-week count), rows
+now just **weekday · name · PR medal — no volume**; HISTORY divider centered; the "N in last 30 days"
+count removed. **(3)** **Log-sheet v3**: keypad gained **Done + Next exercise** above Log set (SetKeypad
+`onDone`/`onNextExercise`, add-mode only) and a **"{exercise} · Set N" · "{i} of {total}"** header. CTA
+treatment unchanged (dark = `ctaBg` dark-fill+accent, not the mockup's solid lime). Built + installed to
+the iPhone 15 (Release, Personal Team). `tsc` + web-export (16 routes) green. Prior: **"Refined Screens
+(Dark)" design pass shipped (import `fd29fa5c`).**
 Implemented the whole refinement + the three picks: **PR badge → 2a Medal** (new shared
 `components/PrBadge.tsx` — ribbon+disc medal, replaces Home's star, now the app-wide PR mark),
 **nav icons → 2d** (dumbbell Routines icon, sentence-case labels), **log set → 1a** (SetKeypad:

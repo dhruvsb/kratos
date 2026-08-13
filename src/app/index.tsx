@@ -17,12 +17,24 @@ import { HomeTabBar, TAB_BAR_HEIGHT } from '@/components/voice/TabBar';
 import { ActiveWorkoutBar } from '@/components/workout/ActiveWorkoutBar';
 import { useWorkoutDays } from '@/data/calendar';
 import { useWorkoutList, useWorkoutPrCounts } from '@/data/hooks';
-import { startOfDay } from '@/lib/dates';
+import { addDays, mondayOf, startOfDay } from '@/lib/dates';
 import { computeStreak, type HeatCell } from '@/lib/streak';
 import { font, space, tracking, type Theme } from '@/theme/tokens';
 import { useTheme } from '@/theme/ThemeProvider';
 
 const DOW = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
+// A week group's date-range label, e.g. "3–9 AUG" (or "28 JUL–3 AUG" across a month
+// boundary). `mon` is the Monday-of-week timestamp.
+function weekRangeLabel(mon: number): string {
+  const start = new Date(mon);
+  const end = addDays(start, 6);
+  const sMon = start.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
+  const eMon = end.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
+  return sMon === eMon
+    ? `${start.getDate()}–${end.getDate()} ${sMon}`
+    : `${start.getDate()} ${sMon}–${end.getDate()} ${eMon}`;
+}
 
 export default function HomeScreen() {
   const { color } = useTheme();
@@ -48,13 +60,26 @@ export default function HomeScreen() {
 
   const workouts = history.data?.pages.flat() ?? [];
 
-  // "N in last 30 days" — sessions trained in the trailing month, shown on the
-  // history divider (refined design). Counts finished-workout days from the accurate
-  // `days` query, not the paginated history list.
-  const last30 = useMemo(() => {
-    const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
-    return (days.data ?? []).filter((w) => new Date(w.started_at).getTime() >= cutoff).length;
-  }, [days.data]);
+  // History grouped by week (design 3c): the exact date moves up into a group header
+  // ("THIS WEEK" / "3–9 AUG") and each row carries only its three-letter weekday +
+  // name. Newest week first; workouts within a week stay newest-first.
+  const weekGroups = useMemo(() => {
+    const thisMon = startOfDay(mondayOf(new Date()));
+    const map = new Map<number, typeof workouts>();
+    for (const w of workouts) {
+      const mon = startOfDay(mondayOf(new Date(w.started_at)));
+      const bucket = map.get(mon);
+      if (bucket) bucket.push(w);
+      else map.set(mon, [w]);
+    }
+    return [...map.entries()]
+      .sort((a, b) => b[0] - a[0])
+      .map(([mon, items]) => ({
+        mon,
+        label: mon === thisMon ? 'THIS WEEK' : weekRangeLabel(mon),
+        items,
+      }));
+  }, [workouts]);
 
   // 5 rows of 7 for the heatmap.
   const rows = useMemo(() => {
@@ -117,42 +142,42 @@ export default function HomeScreen() {
           ))}
         </View>
 
-        {/* History divider — label · rule · "N in last 30 days" (refined design). */}
+        {/* Centered HISTORY rule (design 3c). */}
         <View style={styles.histHead}>
+          <View style={styles.histHeadRule} />
           <Text style={styles.histHeadLabel}>HISTORY</Text>
           <View style={styles.histHeadRule} />
-          {last30 > 0 && <Text style={styles.histHeadCount}>{last30} IN LAST 30 DAYS</Text>}
         </View>
 
-        {/* Recent workouts — name · date · session volume · PR medal. */}
+        {/* Week-grouped history — weekday · name · PR medal (no volume). */}
         <View style={styles.rowsBlock}>
           {history.isLoading ? (
             <Text style={styles.loading}>LOADING…</Text>
           ) : workouts.length === 0 ? (
             <Text style={styles.empty}>No workouts yet. Your history will fill in here.</Text>
           ) : (
-            workouts.map((w) => {
-              const started = new Date(w.started_at);
-              const date = started.toLocaleDateString('en-US', { weekday: 'short', day: '2-digit', month: 'short' });
-              // Guard a pre-volume_kg cached row (or a null) from rendering "NaNk".
-              const vol = Number.isFinite(w.volume_kg) ? `${(w.volume_kg / 1000).toFixed(1)}k` : '—';
-              const pr = prCounts.data?.[w.id] ?? 0;
-              return (
-                <Pressable key={w.id} style={styles.histRow} onPress={() => router.push(`/history/${w.id}`)}>
-                  <View style={styles.histMain}>
-                    <Text style={styles.histName} numberOfLines={1}>
-                      {w.title ?? w.routine_name ?? 'Empty workout'}
-                    </Text>
-                    <Text style={styles.histDate}>{date}</Text>
-                  </View>
-                  <View style={styles.histVol}>
-                    <Text style={styles.histVolNum}>{vol}</Text>
-                    <Text style={styles.histVolUnit}>kg</Text>
-                  </View>
-                  {pr > 0 && <PrBadge count={pr} />}
-                </Pressable>
-              );
-            })
+            weekGroups.map((g) => (
+              <View key={g.mon}>
+                <View style={styles.weekHead}>
+                  <Text style={styles.weekLabel}>{g.label}</Text>
+                  <View style={styles.weekRule} />
+                  <Text style={styles.weekCount}>{g.items.length}</Text>
+                </View>
+                {g.items.map((w) => {
+                  const dow = new Date(w.started_at).toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
+                  const pr = prCounts.data?.[w.id] ?? 0;
+                  return (
+                    <Pressable key={w.id} style={styles.histRow} onPress={() => router.push(`/history/${w.id}`)}>
+                      <Text style={styles.histDow}>{dow}</Text>
+                      <Text style={styles.histName} numberOfLines={1}>
+                        {w.title ?? w.routine_name ?? 'Empty workout'}
+                      </Text>
+                      {pr > 0 && <PrBadge count={pr} />}
+                    </Pressable>
+                  );
+                })}
+              </View>
+            ))
           )}
         </View>
       </ScrollView>
@@ -241,28 +266,27 @@ const makeStyles = (color: Theme['color']) =>
     },
     cellNum: { fontFamily: font.numMedium, fontSize: 14 },
 
-    // History divider
-    histHead: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: space.xxl },
-    histHeadLabel: { fontFamily: font.numSemibold, fontSize: 11, letterSpacing: tracking.label, color: color.t3 },
+    // Centered HISTORY divider
+    histHead: { flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: space.xxl },
+    histHeadLabel: { fontFamily: font.numSemibold, fontSize: 12, letterSpacing: 1.8, color: color.t1b },
     histHeadRule: { flex: 1, height: 1, backgroundColor: color.line },
-    histHeadCount: { fontFamily: font.numMedium, fontSize: 11, letterSpacing: 0.8, color: color.t2 },
 
-    // Recent workouts
-    rowsBlock: { marginTop: 6 },
+    // Week-grouped history
+    rowsBlock: { marginTop: 4 },
     loading: { fontFamily: font.numSemibold, fontSize: 11, color: color.t3, marginTop: space.md },
     empty: { fontFamily: font.num, fontSize: 11.5, lineHeight: 20, color: color.t2, marginTop: space.md },
+    weekHead: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingTop: 18, paddingBottom: 8 },
+    weekLabel: { fontFamily: font.numMedium, fontSize: 11, letterSpacing: 1.2, color: color.t3 },
+    weekRule: { flex: 1, height: 1, backgroundColor: color.line },
+    weekCount: { fontFamily: font.numMedium, fontSize: 11, color: color.t3 },
     histRow: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 14,
-      paddingVertical: 15,
+      paddingVertical: 16,
       borderTopWidth: 1,
       borderTopColor: color.line,
     },
-    histMain: { flex: 1, gap: 5 },
-    histName: { fontFamily: font.uiMedium, fontSize: 17, color: color.t1 },
-    histDate: { fontFamily: font.num, fontSize: 12, color: color.t2 },
-    histVol: { flexDirection: 'row', alignItems: 'baseline' },
-    histVolNum: { fontFamily: font.numMedium, fontSize: 16, color: color.t1 },
-    histVolUnit: { fontFamily: font.num, fontSize: 12, color: color.t2, marginLeft: 3 },
+    histDow: { width: 46, fontFamily: font.numMedium, fontSize: 12, letterSpacing: 0.8, color: color.t2 },
+    histName: { flex: 1, fontFamily: font.uiMedium, fontSize: 17, color: color.t1 },
   });

@@ -51,16 +51,18 @@ const darkColor = {
   t2b: '#A0B3C2',
   t1b: '#C7DCE6',
 
-  // Accent = lime LED (--acc + derivatives). Accent is only ever border /
-  // underline / glow — never a fill (agent-notes hard rule).
-  acc: '#A3E635',
-  accHi: '#BEF264',
+  // Accent = lime LED. Toned down for TURN 3 (#C0F23C → #ACD455 in the design's
+  // terms; here #A3E635 → #ACD455) — same hue, less chroma + lightness so it stops
+  // glowing at night. Border / underline / glow, and the few deliberate fills (FAB,
+  // today's cell, primary CTA on light).
+  acc: '#ACD455',
+  accHi: '#C2E074',
   accInk: '#0F1A03',
-  acc07: 'rgba(163,230,53,0.07)',
-  acc14: 'rgba(163,230,53,0.14)',
-  acc35: 'rgba(163,230,53,0.35)',
-  acc05: 'rgba(163,230,53,0.05)',
-  acc06: 'rgba(163,230,53,0.06)',
+  acc07: 'rgba(172,212,85,0.07)',
+  acc14: 'rgba(172,212,85,0.14)',
+  acc35: 'rgba(172,212,85,0.35)',
+  acc05: 'rgba(172,212,85,0.05)',
+  acc06: 'rgba(172,212,85,0.06)',
 
   // Semantic "primary CTA" triplet + current-set ✓ chip. Dark keeps the mockup's
   // dark-fill / accent-border / accent-text look (a straight token swap would read as
@@ -68,10 +70,10 @@ const darkColor = {
   // light these flip to a solid accent fill with white ink. One StyleSheet, both
   // themes: screens read these instead of hardcoding the fill/border/text.
   ctaBg: '#131E27', // = s2
-  ctaBorder: 'rgba(163,230,53,0.35)', // = acc35
-  ctaFg: '#A3E635', // = acc
+  ctaBorder: 'rgba(172,212,85,0.35)', // = acc35
+  ctaFg: '#ACD455', // = acc
   checkBg: 'transparent', // pending ✓ has no fill in dark (accent border only)
-  checkFg: '#A3E635', // = acc
+  checkFg: '#ACD455', // = acc
 
   ok: '#5FE3B0',
   warn: '#FF5647',
@@ -85,7 +87,7 @@ const darkColor = {
   meterCold: '#17222B',
   meterMid: '#1E2C36',
   meterHigh: '#2B3A45',
-  meterHot: '#A3E635',
+  meterHot: '#ACD455',
 
   // Tag chip borders used in the annotation cards.
   tagOkBorder: '#2B3A45',

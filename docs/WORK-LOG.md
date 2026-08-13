@@ -7,6 +7,32 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-13 — "Refined Screens (Dark)" TURN 3 (import fd29fa5c): toned accent, week-grouped Home, keypad flow actions
+
+The design doc advanced to **TURN 3 · TONED ACCENT, LIGHTER HOME, KEYPAD ACTIONS**; implemented the
+delta on top of TURN 2 (picks 3c + 1a, nav still 2d). Four changes:
+
+- **Accent retone (dark):** `acc` `#A3E635` → **`#ACD455`** in `tokens.ts` (design's `#C0F23C` → `#ACD455`
+  — same hue, less chroma/lightness so it stops glowing at night). Retoned every derivative
+  (`acc05/06/07/14/35`, `accHi`, `ctaFg`, `ctaBorder`, `checkFg`, `meterHot`); the glow shadows follow
+  automatically (they resolve `color.acc`). Light (moss) palette untouched. App-wide dark accent shift.
+- **Home → 3c (week-grouped history):** the exact date moved into a **group header** (`THIS WEEK` /
+  `3–9 AUG` + a per-week count), and each row now carries only a **three-letter weekday + name + PR
+  medal — no volume column**. New `mondayOf`-based grouping + `weekRangeLabel()` in `index.tsx`; the
+  HISTORY divider is now **centered** (rule · HISTORY · rule); the "N in last 30 days" count is gone
+  (replaced by the per-week counts).
+- **Log-sheet v3:** the keypad gained a **Done** + **Next exercise ›** row above **Log set**
+  (`SetKeypad` new optional `onDone`/`onNextExercise` — add mode only, so history-edit keeps just
+  Save/Delete). Header is now **"{exercise} · Set N"** with **"{i} of {total}"** top-right (position
+  passed from the active workout; falls back to the LAST label when absent). Done dismisses; Next
+  exercise advances the session (or opens the picker on the last exercise).
+- **Volume dropped from the Home history rows** (folded into the 3c change above).
+
+CTA treatment unchanged from TURN 2: primary CTAs keep `ctaBg` semantics (dark = dark-fill+accent),
+not the mockup's solid `#ACD455` fill. `tsc` clean; `expo export web` bundles all 16 routes.
+
+---
+
 ## 2026-08-13 — "Refined Screens (Dark)" design pass (import: fd29fa5c) + three picks (2a / 2d / 1a)
 
 Imported the Claude Design doc **"Refined Screens (Dark)"** (project `fd29fa5c`, via the

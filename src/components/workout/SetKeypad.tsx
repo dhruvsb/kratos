@@ -33,11 +33,20 @@ export type SetKeypadProps = {
   initialKg: number | null;
   initialReps: number | null;
   mode?: 'add' | 'edit';
+  /** Active-workout add mode: this exercise's position in the session, shown top-right
+   *  of the sheet ("3 of 5") in place of the LAST label (design log-sheet v3). */
+  exercisePosition?: number;
+  exerciseCount?: number;
   onLog: (weightKg: number | null, reps: number) => void;
   onDelete?: () => void;
   /** Edit mode only: "wrong day entirely" — delete the whole workout. Kept visually
    *  apart from SAVE / DELETE SET so it can't be hit by muscle memory (mockup 17). */
   onDeleteWorkout?: () => void;
+  /** Add mode (design log-sheet v3): the two flow actions above Log set. "Done" ends
+   *  logging for this exercise (dismiss); "Next exercise" advances the session. Shown
+   *  only when provided, so the history-edit sheet keeps just SAVE / DELETE. */
+  onDone?: () => void;
+  onNextExercise?: () => void;
   onClose: () => void;
 };
 
@@ -132,8 +141,16 @@ export function SetKeypad(props: SetKeypadProps) {
         <View style={styles.handle} />
 
         <View style={styles.titleRow}>
-          <Text style={styles.title}>Set {props.setNumber}</Text>
-          {lastLabel && <Text style={styles.lastLabel}>{lastLabel}</Text>}
+          <Text style={styles.title} numberOfLines={1}>
+            {props.exerciseName} · Set {props.setNumber}
+          </Text>
+          {props.exercisePosition != null && props.exerciseCount != null ? (
+            <Text style={styles.lastLabel}>
+              {props.exercisePosition} of {props.exerciseCount}
+            </Text>
+          ) : lastLabel ? (
+            <Text style={styles.lastLabel}>{lastLabel}</Text>
+          ) : null}
         </View>
 
         <View style={styles.fields}>
@@ -202,13 +219,30 @@ export function SetKeypad(props: SetKeypadProps) {
           ))}
         </View>
 
+        {/* Flow actions above Log set (design log-sheet v3), add mode only. */}
+        {(props.onDone || props.onNextExercise) && (
+          <View style={styles.flowRow}>
+            {props.onDone && (
+              <Pressable style={styles.doneBtn} onPress={props.onDone}>
+                <Text style={styles.doneText}>Done</Text>
+              </Pressable>
+            )}
+            {props.onNextExercise && (
+              <Pressable style={styles.nextBtn} onPress={props.onNextExercise}>
+                <Text style={styles.nextText}>Next exercise</Text>
+                <Text style={styles.nextChevron}>›</Text>
+              </Pressable>
+            )}
+          </View>
+        )}
+
         <Pressable
           style={[styles.logBtn, !canLog && styles.logBtnOff]}
           onPress={log}
           disabled={!canLog}
         >
           <Text style={[styles.logText, !canLog && { color: color.t3 }]}>
-            {props.mode === 'edit' ? 'SAVE SET' : 'LOG SET'}
+            {props.mode === 'edit' ? 'Save set' : 'Log set'}
           </Text>
         </Pressable>
 
@@ -278,9 +312,9 @@ const makeStyles = (color: Theme['color']) => StyleSheet.create({
     alignSelf: 'center',
     marginBottom: space.lg,
   },
-  titleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
-  title: { fontFamily: font.numSemibold, fontSize: 10.5, letterSpacing: tracking.label, color: color.t2 },
-  lastLabel: { fontFamily: font.numSemibold, fontSize: 9.5, letterSpacing: 0.6, color: color.t3 },
+  titleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: space.md },
+  title: { flex: 1, fontFamily: font.uiSemibold, fontSize: 15, color: color.t1 },
+  lastLabel: { fontFamily: font.num, fontSize: 12, color: color.t2, flexShrink: 0 },
 
   fields: { flexDirection: 'row', gap: space.md, marginTop: space.md },
   field: {
@@ -338,6 +372,35 @@ const makeStyles = (color: Theme['color']) => StyleSheet.create({
   },
   keyText: { fontFamily: font.numSemibold, fontSize: 21, color: color.t1 },
 
+  // Flow actions (Done + Next exercise) above Log set — quiet surfaces, distinct from
+  // the primary CTA below them.
+  flowRow: { flexDirection: 'row', gap: 10, marginTop: space.md },
+  doneBtn: {
+    width: 104,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.pill,
+    backgroundColor: color.s2,
+    borderWidth: 1,
+    borderColor: color.line2,
+  },
+  doneText: { fontFamily: font.uiSemibold, fontSize: 15, color: color.t2 },
+  nextBtn: {
+    flex: 1,
+    height: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    borderRadius: radius.pill,
+    backgroundColor: color.s2,
+    borderWidth: 1,
+    borderColor: color.line2,
+  },
+  nextText: { fontFamily: font.uiSemibold, fontSize: 15, color: color.t1 },
+  nextChevron: { fontFamily: font.ui, fontSize: 15, color: color.t2 },
+
   logBtn: {
     height: 52,
     alignItems: 'center',
@@ -351,7 +414,7 @@ const makeStyles = (color: Theme['color']) => StyleSheet.create({
   // Disabled falls back to the plain surface — in dark that's the same s2 (no visual
   // change); in light it neutralizes the solid accent fill to a clean outline.
   logBtnOff: { backgroundColor: color.s2, borderColor: color.line2 },
-  logText: { fontFamily: font.uiMedium, fontSize: 11, letterSpacing: tracking.label, color: color.ctaFg },
+  logText: { fontFamily: font.uiSemibold, fontSize: 15, color: color.ctaFg },
 
   // Plate hint, promoted from a 9.5px footer whisper to a readable line right under
   // the fields (feedback #15). Reserve height so it doesn't shift the pad when it

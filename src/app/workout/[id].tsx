@@ -635,6 +635,19 @@ export default function ActiveWorkoutScreen() {
           initialKg={keypad.kg}
           initialReps={keypad.reps}
           mode={keypad.mode}
+          // Log-sheet v3 flow actions (add mode only): position + Done/Next exercise.
+          exercisePosition={keypad.mode === 'add' ? activeIndex + 1 : undefined}
+          exerciseCount={keypad.mode === 'add' ? detail.exercises.length : undefined}
+          onDone={keypad.mode === 'add' ? () => setKeypad(null) : undefined}
+          onNextExercise={
+            keypad.mode === 'add'
+              ? () => {
+                  setKeypad(null);
+                  if (isLast) setPickerOpen(true);
+                  else goExercise(1);
+                }
+              : undefined
+          }
           onLog={onKeypadLog}
           onDelete={
             keypad.mode === 'edit' && keypad.setId
