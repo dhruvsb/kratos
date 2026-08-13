@@ -105,6 +105,20 @@ answer, which keeps typical cost near a single LLM call.
 
 ## 5. Key decisions & rationale
 
+- **ASR (speech→text) provider: OpenAI `gpt-4o-transcribe`** (decided 2026-08-13 from the
+  `bakeoff/` harness — see WORK-LOG). Chosen over Groq (Whisper), Deepgram Nova-3, and
+  AssemblyAI on a 10-recording personal corpus (Indian-accented English, background gym
+  noise). Rationale: (1) tied for best on the product metric — 100% workout exact-match,
+  same as AssemblyAI + Deepgram; (2) **one vendor** — it's already the extraction provider,
+  so ASR+parse share a key/Edge Function; (3) it is **not a Whisper model**, and the one
+  dangerous failure the bakeoff found — Groq/Whisper **silently dropping a whole exercise**
+  (valid-looking JSON, no flag) — didn't occur on it. Low-regret because the STT seam
+  (`src/lib/stt.ts`) + the `bakeoff/providers/` adapters make switching a config change.
+  **Standing caveat:** silent omission is invisible to WER/NEER *and* to "just watch it in
+  real use" — so the real flow must keep a **glanceable commit-time confirmation** (enough
+  that a *missing exercise* is visible), not blind auto-commit. n=5 workouts chose the
+  direction, doesn't certify reliability; keep harvesting (`voice_logs` +
+  `scripts/harvest-eval-cases.ts`) and re-run `npm run bake` if OpenAI ever disappoints.
 - **Provider: OpenAI, GPT-5.6 family** (switched from Anthropic on 2026-07-19 — user has an
   OpenAI key, not an Anthropic one). Day-to-day parsing uses `gpt-5.6-luna`
   (`PARSE_MODEL_DEFAULT` in `prices.ts` — the cheap $1/$6-per-1M high-volume tier); the
@@ -331,3 +345,33 @@ the complete finding list and rationale. Standing facts a future session must kn
   included), unblocking the voice alias write-back (AC #5). Apply it (`supabase db push` /
   SQL editor) before relying on alias learning; until then `createExerciseAliasFromVoice`
   still throws for seeded exercises.
+
+## 10. "Voice Logging" 1a UI + workflow (2026-08-13) — model NOT plugged in
+
+Built the full 1a flow from the Claude Design "Voice logging feature design" project on the
+user's instruction: **finish the UI/workflow, leave all model/STT/parsing decisions for the
+in-progress model bake-off.** This is a *separate*, newer flow from the §8 voice-first v2
+redesign — the FAB-mic → record → review-preview → commit path — and it's what the app now
+surfaces from Home. The §8 components (`VoiceMicButton`, `VoiceConfirmationCard`, `FloorMode`)
+are untouched and unwired; keep them (don't delete voice code).
+
+**The seam — the single place a model plugs in later:** `src/data/voiceParse.ts`.
+- `VoiceParseResult` = a discriminated union `{ kind: 'routine' | 'log', … }`. Deliberately a
+  **new** contract, not `ParseResult` (§parse-types), because 1a infers a *routine-creation*
+  intent from the same utterance and `ParseResult` only models set-logging. `ParseResult` and
+  the whole `pipeline.ts`/edge-function path are unchanged.
+- `parseVoiceIntent({ transcript, forceKind? })` is **mocked** (`MOCK_VOICE = true`): canned
+  data whose exercise ids are resolved against the real seeded library (`listAllExercises`) so
+  a commit writes valid FK rows. **To wire the eval's model:** implement `parseVoiceIntent`'s
+  real body (call `parse-utterance`, adapt its `ParseResult` + a routine-intent extension onto
+  `VoiceParseResult`), then flip `MOCK_VOICE`. Nothing else in the flow should need to change.
+- STT is likewise mocked — the recorder never touches `src/lib/stt.ts`. When real STT returns,
+  it feeds `parseVoiceIntent`'s `transcript`; the recorder's MOCK toggle (log vs routine
+  example) exists only because the simulator has no mic.
+
+**Files added:** `src/data/voiceParse.ts` (seam), `voiceDraft.ts` (record→preview store),
+`useVoiceCommit.ts` (real repo writes), `src/app/voice/record.tsx`, `src/app/voice/preview.tsx`,
+`components/voice/{MicGlyph,VoiceRoutinePreview,VoiceLogPreview}.tsx`,
+`components/workout/VoiceUndoBanner.tsx`. **Touched:** `HomeQuickStart.tsx` (FAB→mic),
+`workout/[id].tsx` (banner), `_layout.tsx` (route animations). `tsc` + web-export (18 routes)
+green; **not yet run on simulator/device** (no new native deps → no dev-client rebuild needed).

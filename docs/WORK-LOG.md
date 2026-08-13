@@ -7,6 +7,83 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-13 — Voice-model bakeoff: ASR chosen (OpenAI `gpt-4o-transcribe`)
+
+Ran the standalone `bakeoff/` harness (not in the app bundle) on a **10-recording personal
+corpus** — 5 routine-creation + 5 workout-logging dictations, Indian-accented English,
+filler-heavy, **all with background YouTube gym noise**, recorded on iPhone Voice Memos.
+Compared 4 ASR models (OpenAI gpt-4o-transcribe, Groq whisper-large-v3, Deepgram Nova-3,
+AssemblyAI universal-3-5-pro) two ways: transcript quality (WER/NEER) and **end-to-end
+through the real parse pipeline** (workout exact-match vs DB-semantic ground truth).
+
+**Decision: ship OpenAI `gpt-4o-transcribe` as the ASR.** Rationale in
+`PROJECT-SUMMARY-PHASE2.md` §5 (new first bullet). Short version: tied-best 100% workout EM,
+single vendor (already the extraction provider), and a non-Whisper architecture that avoided
+the one dangerous failure below. Low-regret — the `src/lib/stt.ts` seam makes switching cheap.
+
+**Findings worth keeping:**
+- **End-to-end scoring overturned the transcript-quality ranking.** Groq had the *best*
+  number accuracy (0.0% NEER) but the *worst* workout EM (50%) — it **silently dropped an
+  entire exercise** ("Assisted Pull-Up") from one transcript. Deepgram had the *worst* NEER
+  (6.2%, duplicating numbers "22 22") but 100% EM — the extraction LLM absorbed the noise.
+  Lesson: WER/NEER can't see silent omission; only end-to-end exercise-recall can. **The
+  real app must keep a commit-time confirmation that makes a missing exercise visible.**
+- **The closed-vocabulary exercise resolver is bulletproof** — 100% exercise-resolution
+  across all 4 providers. The weak spot was routine *name* extraction ("Leg Day" → "leg day
+  routine", "Push Day" → "push today"); fix when routine-creation is built for real =
+  resolve the name against the user's existing routine list (a closed set), don't free-extract.
+- **Background gym noise did not break it** — OpenAI hit 100% EM *with* noise, which
+  materially de-risks the "real gym audio destroys accuracy" worry for this setup.
+
+**Harness note:** the run first exposed a bug in the harness's own NEER scorer
+(`bakeoff/lib/numbers.ts` mis-parsed spelled-out numbers — "one twenty" → 21, "twelve sixty"
+→ 72, "67 and a half" → [67,1.5]), which made correct ASR look wrong (Groq's real 0% NEER
+showed as 5.6%). Fixed + covered by `bakeoff/lib/numbers.test.ts` (18 cases). Committed
+`6298a66` (parser fix + create_routine scoring + AssemblyAI live-API-drift fixes + the
+labeled 10-file dataset; audio and `.env.local` stay gitignored). Bakeoff scaffold was
+`1b8ea33`. Caveat: n=5 per intent chooses a direction, doesn't certify reliability — keep
+harvesting real corrections (`voice_logs` + `scripts/harvest-eval-cases.ts`).
+
+---
+
+## 2026-08-13 — Phase 2 voice logging: UI + workflow (design "Voice Logging" 1a), model left unplugged
+
+Built the whole 1a flow from the Claude Design "Voice logging feature design" project
+(`fefd8154-…`, file `Voice Logging.dc.html`), on the user's explicit instruction to finish the UI/workflow
+now and leave every model / STT / parsing decision for their in-progress model bake-off.
+
+**The seam (the only place a model plugs in later):** `src/data/voiceParse.ts` — a UI-facing
+`VoiceParseResult` discriminated union (`kind: 'routine' | 'log'`) + `parseVoiceIntent()`. It's
+`MOCK_VOICE = true` today: canned, structurally-real data, with exercise ids resolved against the real
+seeded library (`listAllExercises`) so a commit writes valid FKs. Chose a *new* shape over `ParseResult`
+(`src/types/parse.ts`) because that contract only models set-logging; 1a also infers a "create routine"
+intent from the same utterance. `ParseResult` and all existing Phase-2 code left untouched. When the eval
+picks a model: fill in `parseVoiceIntent`'s real body (call `parse-utterance`, map onto `VoiceParseResult`)
+and flip `MOCK_VOICE`.
+
+**Screens / wiring (all 5 of 1a):**
+- **01 Home** — the `+` FAB is now a mic (`components/voice/MicGlyph.tsx`): **tap → recorder**, **long-press
+  → the old MOST USED sheet** (`HomeQuickStart.tsx`); while the sheet's open the FAB is still its × close.
+- **02 Recording** — `src/app/voice/record.tsx`: full-screen instrument (pulsing mic ring, `LevelMeter`,
+  count-up timer, Stop & review). STT/meter are cosmetic mocks; a small clearly-labelled MOCK toggle picks
+  which example (WORKOUT vs ROUTINE) Stop returns, since the simulator has no mic.
+- **03A/03B Preview** — `src/app/voice/preview.tsx` branches on `kind`. `VoiceRoutinePreview` (editable name,
+  numbered rows ↑↓✕, fuzzy-match note → picker, dashed add, Save) and `VoiceLogPreview` (grouped by exercise,
+  PREV per value, tap a value → the existing `SetKeypad` for inline edit, warn-border + "how many sets?"
+  chips for a missing field, CHANGE target routine).
+- **Commit (real repo writes)** — `src/data/useVoiceCommit.ts`: `useCommitVoiceRoutine` (create routine +
+  `setRoutineExercises`), `useCommitVoiceLog` (log into the running workout if one's live, else start one —
+  linked to the target routine via an empty preset so it inherits the name without pre-loading exercises —
+  then write each parsed set through `confirmVoiceEntries`, flattened one entry per set so per-set edits
+  survive). Ephemeral draft passed record→preview via a tiny module store (`src/data/voiceDraft.ts`).
+- **04 Committed** — reuses the existing `workout/[id].tsx` (its layout already matches the design) + a new
+  transient **"N SETS LOGGED FROM VOICE · UNDO"** banner (`components/workout/VoiceUndoBanner.tsx`; UNDO
+  deletes exactly the committed sets, auto-clears after `timing.undoWindowMs`).
+
+**Verified:** `tsc --noEmit` clean; `expo export --platform web` bundles all 18 routes (incl. `/voice/record`,
+`/voice/preview`). **Not yet run on the simulator or device** — no new native deps (STT is mocked, `react-native-svg`
+already present), so it should run on the current dev client without a rebuild.
+
 ## 2026-08-13 — Library feedback: bottomless region chips (#43) + logged #44
 
 Device screenshot of the Exercise **Library** flagged two things; logged both in `FEEDBACK-LOG.md`
