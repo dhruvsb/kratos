@@ -6,6 +6,55 @@ entry at top. When an item is fixed, mark it and move the detail into `WORK-LOG.
 
 ---
 
+## 2026-08-13 (13) — Exercise Library: clipped region-chip strip + cross-region exercise reads mis-segregated
+
+**Context:** device screenshot of the Exercise **Library** with the **LEGS** chip active. Two issues
+flagged: one UI (the header/filter strip), one exercise segregation ("Clean and Press" showing SHOULDERS
+under a LEGS filter). Both verified in code.
+
+| # | Item | Area | Done? | Sev | Effort |
+|---|------|------|-------|-----|--------|
+| 43 | Region-filter chips render bottomless — the pill's bottom border is clipped, so each chip reads as an open-bottomed box | Library / layout | ✅ FIXED 2026-08-13 | Med | S |
+| 44 | A multi-region exercise (Clean and Press) appears under LEGS but its row shows only "SHOULDERS" → reads as mis-segregated | Search / taxonomy | ⬜ Open | Med | S |
+
+### 43. Region chips render bottomless — pill bottom border clipped ⬜ Med
+**Seen:** each region chip (SHOULDERS · BICEPS · TRICEPS · LEGS · CORE) is drawn as a rounded pill, but the
+**bottom border is missing** — the boxes look open-bottomed, boundary only on top/left/right below the label.
+**Root cause:** the chips are a horizontal `ScrollView` — `chipRow: { flexGrow: 0 }` with
+`chipRowContent` carrying **no vertical padding** (`exercises.tsx:123-124`). Each `chip` is `height: 30`,
+`borderWidth: 1`, `borderRadius: pill` (`:125-133`). The strip therefore sizes to the chip's exact 30px and
+the `ScrollView` clips overflow at that edge, so every pill's 1px **bottom** border lands on/under the clip
+boundary and gets shaved — the top border survives, the bottom doesn't. (A plain `View`/`FlatList` wouldn't
+clip; the horizontal `ScrollView`'s overflow-hidden is what eats the border.)
+**Fix (scope):** give the strip a few px of vertical breathing room so the full pill border renders — e.g.
+add `paddingVertical` to `chipRowContent` (and/or a small `paddingBottom`), or set `chipRow` height a touch
+above the 30px chip. Layout-only; no data change. Verify on both themes (border colors `line2` / `acc35`).
+**Done (2026-08-13):** added `paddingVertical: space.xs` (4px) to `chipRowContent` (`exercises.tsx`), so the
+horizontal `ScrollView` no longer clips at the chip's exact 30px — each pill's bottom border now renders.
+Layout-only, token-based (theme-safe). `tsc` green; not yet on device.
+
+### 44. Cross-region compound reads as mis-segregated ⬜ Med
+**Seen:** under the **LEGS** filter, **Clean and Press** appears with the meta `SHOULDERS · BARBELL` — looks
+like a shoulders exercise wrongly filed under legs.
+**Root cause — it's a *display* mismatch, not bad data.** In `scripts/data/exercises-curated.json`, Clean
+and Press has `primary_muscles: ['shoulders', 'glutes']` → `deriveBodyRegion` (`lib/muscles.ts`) →
+`body_region: ['Shoulders', 'Legs']`, so `listExercisesByRegion` (`.contains('body_region', ['Legs'])`)
+**correctly** returns it under LEGS (it's a genuine leg+shoulder movement — same pattern as Power Clean /
+Hang Clean, both `['Legs','Back']`). But the Library row only prints **`primary_muscles[0]`**
+(`exercises.tsx:83`), i.e. "SHOULDERS", so the reason it's in the LEGS list is invisible → reads as
+mis-segregated.
+**Fix — product decision needed (pick one):**
+- **(a) Show why it's here:** render the region-relevant / all contributing muscles in the row meta (e.g.
+  `SHOULDERS · GLUTES · BARBELL`), so LEGS membership is self-evident. Keeps compounds under every region
+  they train (arguably correct for a workout app). Smallest change; `exercises.tsx` display only.
+- **(b) Segregate by a single canonical region:** filter/file each exercise under only its *first* primary
+  muscle's region, so Clean and Press lives under SHOULDERS only. Cleaner filter, but hides real leg-day
+  candidates from the LEGS list — needs a rule for which region "wins" and a re-derive/re-seed of
+  `body_region[]`.
+Recommend **(a)** — it fixes the confusion without dropping legitimate cross-region results.
+
+---
+
 ## 2026-08-13 (12) — Full simulator QA pass (iPhone 17 Pro, iOS 26.5, light theme)
 
 **Context:** first end-to-end walk of the app since the 2026-08-13 backlog batch (zod repo

@@ -121,7 +121,7 @@ const makeStyles = (color: Theme['color']) => StyleSheet.create({
   input: { flex: 1, fontFamily: font.numMedium, fontSize: 15, color: color.t1, padding: 0 },
 
   chipRow: { flexGrow: 0, marginTop: space.md },
-  chipRowContent: { gap: space.sm, paddingHorizontal: space.xxl },
+  chipRowContent: { gap: space.sm, paddingHorizontal: space.xxl, paddingVertical: space.xs },
   chip: {
     paddingHorizontal: space.md,
     height: 30,

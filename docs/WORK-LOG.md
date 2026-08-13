@@ -7,6 +7,23 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-13 — Library feedback: bottomless region chips (#43) + logged #44
+
+Device screenshot of the Exercise **Library** flagged two things; logged both in `FEEDBACK-LOG.md`
+(2026-08-13 (13)), fixed the UI one.
+
+- **#43 (fixed) — region chips rendered bottomless.** The filter pills sit in a horizontal `ScrollView`
+  whose `chipRowContent` had no vertical padding, so the strip collapsed to the chip's exact `height: 30`
+  and the ScrollView clipped each pill's 1px **bottom** border → open-bottomed boxes. Fix: added
+  `paddingVertical: space.xs` (4px) to `chipRowContent` (`src/app/exercises.tsx`). Layout/token-only,
+  theme-safe. `tsc` green; not yet on device.
+- **#44 (logged, open) — "Clean and Press" shows under LEGS with a `SHOULDERS` tag.** Not bad data: its
+  seed `primary_muscles: ['shoulders','glutes']` → `body_region: ['Shoulders','Legs']`, so it *correctly*
+  filters into LEGS, but the row prints only `primary_muscles[0]`, hiding why. Left open with a product
+  decision (recommend showing all contributing muscles in the row meta).
+
+---
+
 ## 2026-08-13 — Apple Health gap-fill (iOS-only): backfill forgotten strength days
 
 Built the "did I train at all that day?" backfill. Purpose: when a workout happened but wasn't logged in
