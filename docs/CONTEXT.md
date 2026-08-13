@@ -25,9 +25,11 @@ glows follow `color.acc`; light palette untouched) — "stops glowing at night".
 week-grouped history**: date moved into a group header (`THIS WEEK` / `3–9 AUG` + per-week count), rows
 now just **weekday · name · PR medal — no volume**; HISTORY divider centered; the "N in last 30 days"
 count removed. **(3)** **Log-sheet v3**: keypad gained **Done + Next exercise** above Log set (SetKeypad
-`onDone`/`onNextExercise`, add-mode only) and a **"{exercise} · Set N" · "{i} of {total}"** header. CTA
-treatment unchanged (dark = `ctaBg` dark-fill+accent, not the mockup's solid lime). Built + installed to
-the iPhone 15 (Release, Personal Team). `tsc` + web-export (16 routes) green. Prior: **"Refined Screens
+`onDone`/`onNextExercise`, add-mode only) and a **"{exercise} · Set N" · "{i} of {total}"** header.
+**(4)** Primary CTAs now **solid lime fill + near-black ink on dark too** (`ctaBg`/`ctaBorder`/`ctaFg`
+flipped in `tokens.ts` dark palette to match the mockup; light was already solid moss) — the LED
+dark-fill/accent-border CTA look is retired for full-width buttons; the current-set ✓ stays
+accent-border-only. Built + installed to the iPhone 15 (Release, Personal Team). `tsc` + web-export (16 routes) green. Prior: **"Refined Screens
 (Dark)" design pass shipped (import `fd29fa5c`).**
 Implemented the whole refinement + the three picks: **PR badge → 2a Medal** (new shared
 `components/PrBadge.tsx` — ribbon+disc medal, replaces Home's star, now the app-wide PR mark),

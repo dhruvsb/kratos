@@ -64,14 +64,14 @@ const darkColor = {
   acc05: 'rgba(172,212,85,0.05)',
   acc06: 'rgba(172,212,85,0.06)',
 
-  // Semantic "primary CTA" triplet + current-set ✓ chip. Dark keeps the mockup's
-  // dark-fill / accent-border / accent-text look (a straight token swap would read as
-  // disabled on white — see the light handoff's "not a straight swap" rules), so on
-  // light these flip to a solid accent fill with white ink. One StyleSheet, both
-  // themes: screens read these instead of hardcoding the fill/border/text.
-  ctaBg: '#131E27', // = s2
-  ctaBorder: 'rgba(172,212,85,0.35)', // = acc35
-  ctaFg: '#ACD455', // = acc
+  // Semantic "primary CTA" triplet + current-set ✓ chip. Per the refined mockup,
+  // primary CTAs are now a **solid accent fill with near-black ink** on BOTH themes
+  // (dark = lime, light = moss) — the LED dark-fill/accent-border look is retired for
+  // full-width CTAs. The current-set ✓ stays accent-border-only on dark (checkBg
+  // transparent), matching the active-grid mockup. One StyleSheet, both themes.
+  ctaBg: '#ACD455', // = acc (solid lime fill)
+  ctaBorder: 'transparent', // no border on a filled CTA
+  ctaFg: '#0F1A03', // = accInk (near-black ink on the lime fill)
   checkBg: 'transparent', // pending ✓ has no fill in dark (accent border only)
   checkFg: '#ACD455', // = acc
 
