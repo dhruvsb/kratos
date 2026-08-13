@@ -280,7 +280,14 @@ native-`UITabBar` drag-lens glass — deferred, keeping the custom pill+FAB.
       was added, so the current on-device build can't run the "Sync from Apple Health" button until a fresh
       `xcodebuild -allowProvisioningUpdates` install (same flow as the last device build). Until then it's
       `tsc`-verified only.
-- [ ] **Decide on the Android/web scaffolding** flagged in Open issues (RepVoice is iOS-only) — remove or keep.
+- [ ] **Decide on the Android/web scaffolding** flagged in Open issues (RepVoice is iOS-only). Audit done
+      2026-08-13; three buckets: **(a) clearly dead → safe to delete** — `app.config.ts` `android:` block +
+      3 `assets/images/android-icon-*.png` + `"android"` npm script + the `Platform.OS === 'android'`
+      clauses in `lib/haptics.ts:20` & `lib/feedback.ts:38`; **(b) web → dead for shipping, but confirm
+      web-export isn't still used as a build check first** — `web:` block, `"web"` script,
+      `react-native-web` dep, `!== 'web'` branch in `lib/supabase.ts:29`; **(c) leave** — the `? 'padding' :
+      undefined` KeyboardAvoidingView idioms + `Alert.prompt` fallback in `routines.tsx:66` (iOS branch is
+      the real path). Recommendation: do (a) now; do (b) only if web-export is retired.
 - [x] ~~**Apply migration `0008_clear_own_workouts.sql`**~~ — **applied live 2026-08-13** (`supabase db
       push`; 0001–0008 all on remote). The `clear_own_workouts()` RPC is live, so Settings → DATA → "Clear
       all history" works. Not yet exercised on device.
