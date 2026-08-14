@@ -6,6 +6,50 @@ entry at top. When an item is fixed, mark it and move the detail into `WORK-LOG.
 
 ---
 
+## 2026-08-14 (15) — Feature request: automatic weekly local CSV backup
+
+**Context:** user-requested, not from a device QA pass. Wants training history backed up automatically
+rather than relying on a manual Settings → Export.
+
+| # | Item | Area | Done? | Sev | Effort |
+|---|------|------|-------|-----|--------|
+| 50 | **Automatic weekly backup** — export workout history to CSV on a schedule, save to a local directory, keep only the most recent 4 backups (delete older ones) | Data / backup | ⬜ Open | Med | M |
+
+### 50. Automatic weekly CSV backup, local, 4-backup rotation ⬜ Med
+**Requested:** once a week, automatically export all workouts to a Hevy-compatible CSV and save it to a
+local directory on-device — no manual "Export" tap required — keeping a rolling window of the **4 most
+recent** backups and deleting anything older than that.
+**Verified — the hard part (serialization) already exists, the missing part is scheduling + persistent
+storage + rotation.** `buildHevyExport()` / `serializeHevyCsv()` (`src/data/export.ts`, `src/lib/hevy.ts`)
+already build the exact CSV content, but today it's **manual-only**: Settings → DATA → "Export workouts"
+(`src/app/export.tsx`) writes the file to `Paths.cache` (`expo-file-system`'s cache dir — OS-purgeable,
+not meant for durable storage) purely to hand it to the iOS **share sheet**; nothing persists on-device
+afterward and there's no scheduling of any kind (no background task, no `expo-task-manager`/BGTaskScheduler
+usage anywhere in the repo).
+**Fix (scope, not started) — three pieces:**
+1. **Scheduling:** iOS background execution is unreliable for "run every 7 days" without either a proper
+   `BGTaskScheduler`-backed background task (`expo-background-task`, best-effort, no guaranteed timing) or a
+   lighter "check on foreground" approach — on each cold start / app-foreground, compare `now` against a
+   persisted `lastBackupAt` (`src/data/settings.ts`) and run the backup if ≥ 7 days have passed. The
+   foreground-check approach is far more reliable for a showcase app (no background-mode entitlement, no App
+   Store review risk) and matches how the existing durability work (`docs/FEEDBACK-LOG.md` #32) already
+   reasons about iOS backgrounding — recommend that over true background scheduling.
+2. **Durable local storage:** write to `Paths.document` (persists across launches, survives iOS's cache
+   eviction) under a dedicated subfolder, e.g. `backups/repvoice-YYYY-MM-DD.csv` — not the current
+   `Paths.cache` used for the ephemeral share-sheet file.
+3. **Rotation (max 4):** after each write, list the backups subfolder, sort by the embedded date/mtime,
+   and delete anything past the 4 most recent — a small pure function, unit-testable independent of the
+   filesystem calls.
+**Open product questions to settle before building:** (a) should this be silent, or show a toast/Settings
+row ("Last backup: 3 days ago")? (b) does "local directory" mean purely on-device (invisible to the user
+unless they dig into the Files app via "On My iPhone → RepVoice") or should it also re-offer the share sheet
+periodically? (c) should Settings gain a manual "Back up now" alongside the automatic one, and a way to
+browse/restore from a prior backup (ties into the existing CSV **import** path, which already round-trips)?
+Recommend keeping v1 silent + on-device-only + Settings status row, and treating restore as a separate
+follow-up (the import screen already exists as the mechanism).
+
+---
+
 ## 2026-08-14 (14) — Hands-on device use (Core workout): time-based exercises, delete routines, edit workout, unshipped design
 
 **Context:** user's own device session logging a **Core** workout, plus general use. Six screenshots:

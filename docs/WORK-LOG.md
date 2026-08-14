@@ -7,6 +7,20 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-14 — Logged #50 backlog: automatic weekly local CSV backup
+
+User-requested feature, logged (no code) in [`FEEDBACK-LOG.md`](./FEEDBACK-LOG.md) §15:
+
+- **#50 (Med)** — back up training history to a local CSV automatically, weekly, keeping only the 4 most
+  recent backups (delete older). Verified the serialization already exists (`buildHevyExport` /
+  `serializeHevyCsv` in `src/data/export.ts` / `src/lib/hevy.ts`) — today it's manual-only via Settings →
+  Export, and writes to `Paths.cache` (ephemeral, purely for the share sheet). Scoped into three pieces:
+  (1) scheduling — recommended a foreground `lastBackupAt` check over true iOS background execution; (2)
+  durable storage under `Paths.document`; (3) rotation to 4. Flagged open product questions (silent vs.
+  visible, restore path) before building.
+
+---
+
 ## 2026-08-14 — #45 FIXED + sim-verified (time-based exercises no longer lost)
 
 Fixed the data-loss bug where weightless/time-based exercises (Plank, Side Plank, Dead Hang) logged

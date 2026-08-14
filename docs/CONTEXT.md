@@ -10,7 +10,12 @@ codebase or a huge prior conversation.
 > issues**) *and* append a dated entry to [`WORK-LOG.md`](./WORK-LOG.md). This file is the
 > snapshot; `WORK-LOG.md` is the full history. Keep this file short.
 
-**Last updated:** 2026-08-14 — **#45 (High) FIXED + sim-verified.** Time-based/weightless exercises
+**Last updated:** 2026-08-14 — **Logged #50 (backlog): automatic weekly local CSV backup**, 4-backup
+rotation — see [`FEEDBACK-LOG.md`](./FEEDBACK-LOG.md) §15. Not built; the export/serialize logic already
+exists (`buildHevyExport`/`serializeHevyCsv`), missing pieces are scheduling (foreground-check on
+`lastBackupAt` recommended over true background execution), durable `Paths.document` storage (today's
+manual export only writes to the ephemeral `Paths.cache` for the share sheet), and rotation. Prior same day:
+**#45 (High) FIXED + sim-verified.** Time-based/weightless exercises
 (Plank/Side Plank/Dead Hang) no longer vanish from the finished summary: the pending-row ✓ now **logs the row
 as shown, null weight included** (`workout/[id].tsx` `logPending` diverts to the keypad only when there's
 nothing to log), so a reps-only set is a real committed set instead of being trapped in the keypad (where
@@ -294,7 +299,7 @@ Static checks currently green: `tsc --noEmit` clean; `expo export --platform web
 `xcodebuild -allowProvisioningUpdates` builds + installs Release to physical hardware.
 **Feedback pass (`FEEDBACK-LOG.md`): 22 done** — ✅ #1 #2 #3 #4 #6 #7 #9 #10 #11 #13 #14 #15 #16
 #17 #18 #19 #20 #21 #26 #31 #32 (#12 dissolved by #13) · 🟡 #5 (fix applied — keyboard-avoidance;
-device-confirm pending) · ⬜ **open: #8 #23 #36 #44 #46 #47 #48 #49** · **#45 (High) DONE 2026-08-14** (sim-verified) · **withdrawn (won't do): #24 #25 #27 #29 #30**.
+device-confirm pending) · ⬜ **open: #8 #23 #36 #44 #46 #47 #48 #49 #50** · **#45 (High) DONE 2026-08-14** (sim-verified) · **withdrawn (won't do): #24 #25 #27 #29 #30**.
 **#33 (active-workout resume bar) + #35 (PR records badge) DONE 2026-08-13** (bar sim+device-verified;
 badge sim-verified, RPC 0007 applied). **#22 (Liquid Glass): DONE 2026-08-12** — glass tab pill + FAB, device-verified on the iPhone 15 (iOS
 26.5.2); device-QA fixes landed (refraction, consistent FAB, cross-fade). **#36 (backlog):** authentic
