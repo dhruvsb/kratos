@@ -12,10 +12,9 @@ import {
   RecordingPresets,
   setAudioModeAsync,
   useAudioRecorder,
-  useAudioRecorderState,
 } from 'expo-audio';
 import { router } from 'expo-router';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MicGlyph } from '@/components/voice/MicGlyph';
@@ -65,18 +64,35 @@ export default function VoiceRecordScreen() {
 
   // Real recorder (only driven when !MOCK_VOICE). Hooks must run unconditionally.
   const recorder = useAudioRecorder(RECORDING_OPTIONS);
-  // 250ms is plenty for a timer + level meter, and a third of the re-renders.
-  const recorderState = useAudioRecorderState(recorder, 250);
   const startedRef = useRef(false);
+  const recordingRef = useRef(false);
+  const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Mock timer/meter (only driven when MOCK_VOICE).
-  const [mockSeconds, setMockSeconds] = useState(0);
-  const [mockLevel, setMockLevel] = useState(0.6);
+  // Timer + level, driven by the mock effect OR the real recorder's own interval.
+  // We deliberately do NOT use expo-audio's `useAudioRecorderState`: it re-subscribes
+  // to the recorder on every render and, on the simulator, never advanced
+  // durationMillis — that combination jammed the JS thread (frozen 00:00 timer and
+  // unresponsive buttons, while the native-driver ring/dot animations kept going and
+  // masked it). A self-managed wall-clock timer is reliable and cheap.
+  const [seconds, setSeconds] = useState(0);
+  const [level, setLevel] = useState(0);
 
   const ring1 = useRef(new Animated.Value(0)).current;
   const ring2 = useRef(new Animated.Value(0)).current;
 
-  // Start the real recording once on mount.
+  // Stop the mic + the timer once, idempotently.
+  const stopRecording = useCallback(async () => {
+    if (tickRef.current) {
+      clearInterval(tickRef.current);
+      tickRef.current = null;
+    }
+    if (recordingRef.current) {
+      recordingRef.current = false;
+      await recorder.stop().catch(() => {});
+    }
+  }, [recorder]);
+
+  // Start the real recording once on mount, and self-drive the timer + meter.
   useEffect(() => {
     if (MOCK_VOICE || startedRef.current) return;
     startedRef.current = true;
@@ -90,14 +106,24 @@ export default function VoiceRecordScreen() {
         await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: true });
         await recorder.prepareToRecordAsync();
         recorder.record();
+        recordingRef.current = true;
         haptics.tick();
+        const startedAt = Date.now();
+        tickRef.current = setInterval(() => {
+          setSeconds(Math.floor((Date.now() - startedAt) / 1000));
+          try {
+            const status = recorder.getStatus();
+            if (typeof status?.metering === 'number') setLevel(dbToLevel(status.metering));
+          } catch {
+            // getStatus can throw in the gap around prepare/stop — keep the timer.
+          }
+        }, 300);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Couldn't start recording.");
       }
     })();
     return () => {
-      // Release the mic if we leave mid-recording (cancel / unmount).
-      if (recorder.isRecording) recorder.stop().catch(() => {});
+      void stopRecording();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -105,9 +131,9 @@ export default function VoiceRecordScreen() {
   // Mock timer + meter wander.
   useEffect(() => {
     if (!MOCK_VOICE) return;
-    const t = setInterval(() => setMockSeconds((s) => s + 1), 1000);
+    const t = setInterval(() => setSeconds((s) => s + 1), 1000);
     const meter = setInterval(
-      () => setMockLevel(0.4 + Math.abs(Math.sin(Date.now() / 700)) * 0.55),
+      () => setLevel(0.4 + Math.abs(Math.sin(Date.now() / 700)) * 0.55),
       180
     );
     haptics.tick();
@@ -141,12 +167,9 @@ export default function VoiceRecordScreen() {
     };
   }, [ring1, ring2]);
 
-  const seconds = MOCK_VOICE ? mockSeconds : Math.floor((recorderState.durationMillis ?? 0) / 1000);
-  const level = MOCK_VOICE ? mockLevel : dbToLevel(recorderState.metering);
-
   function cancel() {
     haptics.tick();
-    if (!MOCK_VOICE && recorder.isRecording) recorder.stop().catch(() => {});
+    if (!MOCK_VOICE) void stopRecording();
     if (router.canGoBack()) router.back();
     else router.replace('/');
   }
@@ -161,7 +184,7 @@ export default function VoiceRecordScreen() {
       if (MOCK_VOICE) {
         transcript = MOCK_TRANSCRIPTS[mockIntent];
       } else {
-        await recorder.stop();
+        await stopRecording();
         const uri = recorder.uri;
         if (!uri) throw new Error('No audio was recorded.');
         transcript = await transcribeAudio(uri);
