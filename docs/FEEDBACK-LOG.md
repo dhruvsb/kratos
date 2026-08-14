@@ -111,8 +111,9 @@ to `sets` (and widens `last_session_sets()` to return them). `SetKeypad` branche
 pending-row ✓, PREV/LAST labels, finish summary, history, and the per-exercise chart all render/aggregate in
 the exercise's own terms via `formatSetByModality`/`formatDuration`/`formatLevel` (`src/lib/units.ts`).
 kg-tonnage volume stays weight-only; server-side PR *counts* (`workout_pr_counts`/`getExerciseBests`) remain
-weight-only — non-weight "NEW BEST" detection is a noted follow-up. **Requires migration 0010 applied before
-on-device use.**
+weight-only — non-weight "NEW BEST" detection is a noted follow-up. **Migration 0010 applied live +
+sim-verified 2026-08-14** (Plank/Elliptical/Push-Up logged, edited, finished — grids, keypads, PREV, finish
+summary + history all modality-correct). Also fixed the first-time hint copy to be modality-aware.
 
 ### 47. Can't delete a routine ⬜ Med
 **Seen:** long-pressing a routine opens Duplicate / Rename / **Archive** / Cancel — there's no hard **Delete**.

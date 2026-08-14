@@ -34,8 +34,12 @@ Farmer's Walk/Sled Push left mis-bucketed (rarely used) so no reseed; enum value
   picks its "top" set in the exercise's own terms; overload ghost + kg-tonnage stay
   weight-only. `VoiceLogPreview` pinned to `weight_reps` (Phase-2, unwired).
 
-`tsc --noEmit` green. **Not yet device-run** — migration 0010 must be applied to Supabase
-first. Server-side PR *counts* stay weight-only (noted follow-up: widen `getExerciseBests`).
+`tsc --noEmit` green. **Migration 0010 applied live (`supabase db push`) + sim-verified**: logged,
+edited, and finished a workout with Plank (time), Elliptical (cardio duration+level), and Push-Up
+(bodyweight) — grids, keypads (mm:ss + level entry, per-modality chips), PREV labels, finish summary
+("TOP 0:45 / 20:00·L8 / 10 reps"), and history detail all render in each exercise's own terms; volume
+stays weight-only (0 kg). Follow-up commit fixed the first-time hint copy for non-weight exercises.
+Server-side PR *counts* stay weight-only (noted follow-up: widen `getExerciseBests`).
 
 ## 2026-08-14 — Logged #50 backlog: automatic weekly local CSV backup
 
