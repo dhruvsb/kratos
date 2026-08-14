@@ -35,7 +35,20 @@ A step isn't "done" until the docs reflect it and it's committed. Update **only*
   durable save (that's what "upload" means here).
 - **Verify before claiming done:** `tsc` clean; for UI, run/screenshot it. Report failures honestly.
 
-## 4. Keep the docs lean (anti-bloat — this matters)
+## 4. Use parallel agents/subagents whenever feasible
+Within a single session, don't default to working through a task list serially — fan out independent
+pieces to parallel subagents (the Agent/Task tool) whenever the pieces don't depend on each other's output:
+- **Independent research or investigation** (e.g. root-causing two unrelated bugs, or reading a design
+  file while auditing code for a different item) — launch both at once, not one after the other.
+- **Independent implementation chunks** — separate features/fixes touching different files/screens can be
+  built concurrently. If two pieces might touch the same file, keep them sequential (same collision risk
+  as §2) or isolate one in its own git worktree.
+- **Static checks / long-running commands** (`tsc`, `expo export --platform web`, a simulator boot) can
+  run in the background while other work continues, rather than blocking on them.
+- Don't force parallelism where the task is genuinely sequential (a decision in step 1 shapes step 2) or
+  where the pieces are trivial enough that spawning agents costs more than it saves. Use judgment.
+
+## 5. Keep the docs lean (anti-bloat — this matters)
 - Docs capture **what exists and why**, not every detail. If the code or git history already says it,
   don't repeat it in a doc.
 - **Prefer editing an existing line to adding a new one; delete stale lines.**
