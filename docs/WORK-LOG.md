@@ -7,6 +7,28 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-14 — Recorder bug FIXED + verified; Release build pushed to the iPhone 15
+
+Follow-up to the QA pass below — fixed both bugs and shipped to device.
+
+- **Voice recorder freeze — FIXED + verified on the simulator** (commit `834d7aa`). Root cause:
+  `useAudioRecorderState` re-subscribed to the recorder every render and never advanced
+  `durationMillis` on the simulator → JS thread jammed (dead 00:00 timer + unresponsive buttons;
+  the native-driver ring animations masked it). Dropped that hook, self-manage a wall-clock timer
+  + guarded `getStatus().metering` poll, made `stop()` idempotent via refs. **Verified:** timer
+  ticks (00:16→00:23), "Stop & review" fires ("Reviewing…"), and the **whole pipeline runs
+  end-to-end on-sim** — record → `transcribe` edge fn returned real text → `parse-utterance` →
+  the 03B preview rendered ("Standalone workout", "Log N sets"). On the sim the transcript is
+  garbage (mic catches only ambient noise → 0 sets, 20% confidence), which is correct; real
+  accuracy is the bakeoff's 100%/80%.
+- **Status-bar redbox — FIXED + verified** (commit `4203a73`, see below): clean cold boot, no redbox.
+- **Tab-bar "touch-through" — NOT a bug.** Re-examined: the glass pill spans ~y794–850pt; the QA
+  taps at y≈851 landed just below it on content. The pill is also already device-verified (#22).
+  Left untouched.
+- **Pushed to device:** Release build (`xcodebuild -allowProvisioningUpdates`, free Personal Team
+  `TUR974K866`) installed to the iPhone 15 — Release bundles the JS so it runs without Metro. The
+  `transcribe`/`parse-utterance` functions are live, so voice works on-device with a real mic.
+
 ## 2026-08-14 — Simulator QA pass (partial): 1 bug fixed, 1 open, sign-in workaround
 
 Comprehensive on-simulator QA of the whole app. **Cut short — see "not covered".**
