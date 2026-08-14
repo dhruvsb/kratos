@@ -70,7 +70,7 @@ export function HomeTabBar({ active, withFab = false }: { active: TabKey; withFa
   const light = themeName === 'light';
   const glass = isLiquidGlassAvailable();
 
-  const rightInset = withFab ? 86 : 14; // 62 FAB + 10 gap + 14 margin
+  const rightInset = withFab ? 96 : 14; // 72 FAB + 10 gap + 14 margin (design "Voice Logging" 1a)
 
   const items = TABS.map((t) => {
     const on = t.key === active;

@@ -168,17 +168,27 @@ lives in the server RPC `workout_pr_counts` (migration 0007) + `getExerciseBests
 with the just-shipped modality migration (0010) and the export/settings agent; left as the follow-up already
 noted under #46.
 
-### 49. Latest `Voice Logging.dc.html` design not shipped (mic FAB + Home history) ⬜ Med
+### 49. Latest `Voice Logging.dc.html` design not shipped (mic FAB + Home history) ✅ FIXED (code) 2026-08-14
 **Seen:** on Home, the **voice mic FAB is misaligned** relative to the tab pill, and the history area shows a
 **stray extra line** beneath the "THIS WEEK" group header — neither matches the exported design. User: "some
 design changes have not taken effect."
 **Reference design:** `Voice Logging.dc.html` (Claude Design project
-`fefd8154-7ec8-46fd-b3d2-4733410fa3f6`, file `Voice Logging.dc.html` + its `support.js` import) — the intended
-current-state design.
-**Not yet code-verified** (logged from screenshots). **Next step:** diff the shipped Home (`index.tsx`,
-`TabBar.tsx` FAB positioning, the week-grouped history header) against `Voice Logging.dc.html` to find which
-design deltas didn't land — likely the FAB's alignment/offset vs. the glass pill and the history group-header /
-sub-line treatment. Import the design via the `claude_design` MCP and reconcile.
+`fefd8154-7ec8-46fd-b3d2-4733410fa3f6`) — imported + diffed against the shipped app.
+**Diff result — one real code delta, one already-fixed-in-code:**
+- **Mic FAB geometry (the "misalignment").** The 1a design draws the FAB at **72px / radius 36** in *both*
+  the Home and Committed screens (the design's own prose caption saying "62px, only the glyph changes" is
+  **stale** — the rendered markup is 72px, twice). The app shipped the older **62px / radius 31** FAB, so it
+  sat too small/low against the glass pill. **Fixed:** `HomeQuickStart.tsx` FAB → 72/36 (+ `fabGlass` r36),
+  and `TabBar.tsx` `withFab` right-inset 86 → **96** (72 FAB + 10 gap + 14 margin) so the pill leaves the
+  right-sized gap. `tsc` clean.
+- **"Stray history sub-line."** Already gone in current code — the design's history rows are `weekday · name`
+  only, which is exactly what `index.tsx` renders today (the volume/date sub-line was removed by the earlier
+  **3c week-grouped history** change; the PR medal is a separate approved feature, #35). The sub-line the user
+  saw was an **older on-device build** predating 3c; no code change needed — it clears on the next
+  device rebuild.
+**Verified:** `tsc` clean; other 1a screens (recorder, routine/log previews, voice-undo banner) already
+matched the design and were left unchanged. **Not yet re-run on the simulator/device** — the FAB size bump is
+a constants-only change; confirm the FAB-vs-pill balance on the next rebuild.
 
 ---
 

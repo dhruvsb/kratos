@@ -10,7 +10,13 @@ codebase or a huge prior conversation.
 > issues**) *and* append a dated entry to [`WORK-LOG.md`](./WORK-LOG.md). This file is the
 > snapshot; `WORK-LOG.md` is the full history. Keep this file short.
 
-**Last updated:** 2026-08-14 — **#47 + #48 + #50 FIXED (code), parallel batch (tsc-clean, not device-verified).**
+**Last updated:** 2026-08-14 — **#49 FIXED (code): Home reconciled to the final `Voice Logging.dc.html` (1a) design.**
+Imported the design + diffed 1a against the app — the whole voice flow (recorder, routine/log previews, undo banner)
+already matched. One real Home delta: the **mic FAB was 62px but the 1a design draws it at 72px/r36** (in both the
+Home + Committed screens; the caption's "62px" is stale) — bumped `HomeQuickStart.tsx` FAB → 72/36 and `TabBar.tsx`
+`withFab` right-inset 86 → 96 so the glass pill leaves the right gap. The "stray history sub-line" was **already gone
+in code** (rows are `weekday · name` post-3c-grouping; the user's screenshot was an older on-device build). `tsc` clean;
+constants-only, not yet re-run on sim/device. Prior: **#47 + #48 + #50 FIXED (code), parallel batch (tsc-clean, not device-verified).**
 #48: History "Edit" now opens the full live logging workflow on a finished session (in-place, `ended_at` stays set)
 via reuse of `workout/[id].tsx` behind `?edit=1`. #47: red **Delete** in the routine long-press menu (hard delete,
 history preserved by cascade/set-null). #50: durable weekly local CSV backup (`src/data/backup.ts`) with 4-file

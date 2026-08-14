@@ -7,6 +7,26 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-14 — #49: reconciled Home to the final `Voice Logging.dc.html` (1a) design
+
+Imported the "Voice Logging" design (Claude Design project `fefd8154-…`) via the design MCP and diffed
+its **1a** column (the user's "1a is final") against the shipped app. Result: the whole voice flow —
+recorder (`voice/record.tsx`), routine/log previews (`VoiceRoutinePreview`/`VoiceLogPreview`), and the
+`VoiceUndoBanner` — already matched 1a. **Two Home deltas, one real:**
+
+- **Mic FAB was 62px, design is 72px.** The 1a markup draws the FAB at **72px / radius 36** in both the
+  Home and Committed screens (its prose caption "62px, only the glyph changes" is stale — the pixels are
+  72, twice). Bumped `HomeQuickStart.tsx` FAB to 72/36 and moved `TabBar.tsx`'s `withFab` right-inset
+  86 → 96 so the glass pill leaves the right gap. This is the "misaligned FAB" the user saw.
+- **"Stray history sub-line" was already fixed in code** — `index.tsx` history rows are `weekday · name`
+  only (the volume sub-line went away with the earlier 3c week-grouping). The user's screenshot was an
+  older on-device build; it corrects itself on the next rebuild, no code change.
+
+`tsc` clean. Constants-only UI change — not yet re-run on sim/device (verify FAB-vs-pill balance on the
+next build). Feedback **#49 → FIXED (code)**.
+
+---
+
 ## 2026-08-14 — #47 + #48 + #50 shipped as a parallel 3-agent batch
 
 Ran three independent feedback items concurrently (one subagent each, non-overlapping scopes),

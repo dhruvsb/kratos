@@ -231,14 +231,17 @@ const makeStyles = (color: Theme['color'], shadow: Theme['shadow']) =>
       right: 14,
       bottom: FAB_BOTTOM,
       zIndex: 8,
-      width: 62,
-      height: 62,
-      borderRadius: 31,
+      // 72px / r36 per the "Voice Logging" 1a design (both Home + Committed screens
+      // draw the mic FAB at 72px — the prose caption's "62px" is stale). The larger
+      // disc reads as the primary action and lines up with the glass pill's gap.
+      width: 72,
+      height: 72,
+      borderRadius: 36,
       ...shadow.cta,
     },
     fabSolid: { backgroundColor: color.ctaBg, borderWidth: 1, borderColor: color.ctaBorder },
     fabGlassWrap: {}, // glass surface is the GlassView child below; wrapper stays transparent for the shadow
-    fabGlass: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 31 },
+    fabGlass: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 36 },
     fabPress: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     glyph: { width: 22, height: 22 },
     glyphH: { position: 'absolute', top: 10, left: 0, width: 22, height: 2.5, borderRadius: 2 },
