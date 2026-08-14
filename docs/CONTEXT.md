@@ -10,10 +10,14 @@ codebase or a huge prior conversation.
 > issues**) *and* append a dated entry to [`WORK-LOG.md`](./WORK-LOG.md). This file is the
 > snapshot; `WORK-LOG.md` is the full history. Keep this file short.
 
-**Last updated:** 2026-08-14 — **Logged hands-on device feedback #45–#49** (no code changes; see
-[`FEEDBACK-LOG.md`](./FEEDBACK-LOG.md) §14): **#45 (High)** time-based exercises (Plank/Side Plank/Dead Hang)
-logged but **missing from the finished summary** — first-time-lift pending ✓ diverts to the keypad instead
-of committing, and `finishWorkout` drops the resulting zero-set exercises; **#46** no duration set type;
+**Last updated:** 2026-08-14 — **#45 (High) FIXED + sim-verified.** Time-based/weightless exercises
+(Plank/Side Plank/Dead Hang) no longer vanish from the finished summary: the pending-row ✓ now **logs the row
+as shown, null weight included** (`workout/[id].tsx` `logPending` diverts to the keypad only when there's
+nothing to log), so a reps-only set is a real committed set instead of being trapped in the keypad (where
+Done/Next silently dropped it) and then culled by `finishWorkout`. Verified on the iOS 17 sim: add Plank
+(first-time) → ✓ → "1 set" → Finish → summary shows **Plank · 1 SET**. `tsc` + web-export green. Prior same
+day: **logged hands-on device feedback #45–#49** (see [`FEEDBACK-LOG.md`](./FEEDBACK-LOG.md) §14): **#46** no
+duration set type;
 **#47** can't hard-delete a routine (only Archive); **#48** History "Edit" only deletes — want full editing
 of a past session; **#49** latest `Voice Logging.dc.html` design unshipped (mic FAB misaligned + stray Home
 history sub-line). Prior: **Phase 2 voice logging UI + workflow built (design "Voice Logging" 1a),
@@ -290,7 +294,7 @@ Static checks currently green: `tsc --noEmit` clean; `expo export --platform web
 `xcodebuild -allowProvisioningUpdates` builds + installs Release to physical hardware.
 **Feedback pass (`FEEDBACK-LOG.md`): 22 done** — ✅ #1 #2 #3 #4 #6 #7 #9 #10 #11 #13 #14 #15 #16
 #17 #18 #19 #20 #21 #26 #31 #32 (#12 dissolved by #13) · 🟡 #5 (fix applied — keyboard-avoidance;
-device-confirm pending) · ⬜ **open: #8 #23 #36 #44 #45 #46 #47 #48 #49** (#45 High) · **withdrawn (won't do): #24 #25 #27 #29 #30**.
+device-confirm pending) · ⬜ **open: #8 #23 #36 #44 #46 #47 #48 #49** · **#45 (High) DONE 2026-08-14** (sim-verified) · **withdrawn (won't do): #24 #25 #27 #29 #30**.
 **#33 (active-workout resume bar) + #35 (PR records badge) DONE 2026-08-13** (bar sim+device-verified;
 badge sim-verified, RPC 0007 applied). **#22 (Liquid Glass): DONE 2026-08-12** — glass tab pill + FAB, device-verified on the iPhone 15 (iOS
 26.5.2); device-QA fixes landed (refraction, consistent FAB, cross-fade). **#36 (backlog):** authentic

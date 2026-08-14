@@ -203,10 +203,16 @@ export default function ActiveWorkoutScreen() {
 
   function logPending() {
     if (!activeExercise) return;
-    // Open the keypad instead of logging when there's genuinely nothing to repeat:
-    // pre-fill is off, or it's the first time on this lift with no weight to suggest
-    // (a brand-new lift needs a working weight before one-tap logging kicks in).
-    if (prefillReps == null || (prefillKg == null && noHistory && prevInSession == null)) {
+    // ✓ logs the pending row exactly as shown. It diverts to the keypad only when
+    // there's genuinely nothing to log yet — prefill is off, so the row is blank
+    // (prefillReps == null). Otherwise it commits, INCLUDING a null weight: bodyweight
+    // and time-based lifts (plank, dead hang, pull-up) carry no weight, so a reps-only
+    // set is still a real logged set. Previously a first-time lift with no weight to
+    // suggest opened the keypad instead — and tapping the keypad's "Done"/"Next
+    // exercise" there dropped the typed set silently, so those exercises finished with
+    // zero sets and were culled from the saved workout (feedback #45). To set a weight,
+    // the weight cell still opens the keypad.
+    if (prefillReps == null) {
       openAdd();
       return;
     }
@@ -565,7 +571,7 @@ export default function ActiveWorkoutScreen() {
           {!isFinished && (
             <View style={styles.belowGrid}>
               <Text style={styles.belowHint} numberOfLines={1}>
-                {prefillReps != null && (prefillKg != null || prevInSession != null)
+                {prefillReps != null
                   ? `✓ logs ${formatSet(prefillKg, prefillReps, unit)} · tap a field to change`
                   : 'Enter weight and reps'}
               </Text>
@@ -580,7 +586,7 @@ export default function ActiveWorkoutScreen() {
               <View style={styles.firstNoteBar} />
               <Text style={styles.firstNoteText}>
                 {prefillEnabled
-                  ? 'First time on this lift. Enter a working weight — every set after today arrives pre-filled from it.'
+                  ? 'First time on this lift. Tap ✓ to log it as shown, or set a weight first — every set after today pre-fills from it.'
                   : 'First time on this lift. Enter your weight and reps for each set.'}
               </Text>
             </View>

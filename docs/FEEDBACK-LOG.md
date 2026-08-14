@@ -17,13 +17,25 @@ item: **`Voice Logging.dc.html`** (Claude Design project `fefd8154-7ec8-46fd-b3d
 
 | # | Item | Area | Done? | Sev | Effort |
 |---|------|------|-------|-----|--------|
-| 45 | Time-based exercises (Plank, Side Plank, Dead Hang) logged this session **vanish from the finished summary** | Active workout / finish | ⬜ Open | **High** | S–M |
+| 45 | Time-based exercises (Plank, Side Plank, Dead Hang) logged this session **vanish from the finished summary** | Active workout / finish | ✅ FIXED 2026-08-14 (sim-verified) | **High** | S–M |
 | 46 | No **duration** set type — time-based lifts are forced into kg×reps, which is the wrong data model | Logging / schema | ⬜ Open | Med | M |
 | 47 | No way to **delete** a routine — long-press menu offers only Duplicate / Rename / Archive | Routines | ⬜ Open | Med | S |
 | 48 | History **"Edit" doesn't edit** — it only offers "Delete workout"; want the full logging workflow on a past session | History / edit | ⬜ Open | Med–High | M–L |
 | 49 | Latest **`Voice Logging.dc.html`** design hasn't shipped — mic FAB misaligned + stray history sub-line on Home | Design / Home | ⬜ Open | Med | M |
 
-### 45. Time-based exercises logged, but missing from the finished session ⬜ **High**
+### 45. Time-based exercises logged, but missing from the finished session ✅ **High** — fixed 2026-08-14
+**Fixed (2026-08-14, sim-verified):** the pending-row ✓ now **logs the row exactly as shown**, including a
+null weight, so a reps-only set (plank/dead hang/pull-up) is a real committed set. Changed `logPending`
+(`workout/[id].tsx`) to divert to the keypad **only** when there's nothing to log (`prefillReps == null`, i.e.
+prefill off) — removed the old `(prefillKg == null && noHistory && prevInSession == null)` condition that sent
+first-time lifts into the keypad, where tapping "Done"/"Next exercise" silently dropped the typed set. Updated
+the below-grid hint (now "✓ logs — × 12 · tap a field to change" on a first-timer) and the first-time note
+("Tap ✓ to log it as shown, or set a weight first…"). To set a weight, the weight cell still opens the keypad.
+**Verified on the iOS 17 sim:** empty workout → add Plank (Body only, first-time) → tap ✓ → set 1 commits
+(`— × 12`, header "1 set"), auto-advances to set 2 → Finish → summary lists **Plank · 1 SET** (previously it
+was culled as a zero-set exercise). `tsc` + web-export green. **#46** (a real duration set type) is still the
+deeper fix, but the data loss is closed.
+<details><summary>Original verification (2026-08-14)</summary>
 **Seen:** the user logged Plank, Side Plank and Dead Hang mid-workout, but the **WORKOUT SAVED** summary lists
 only the four weighted exercises (15 sets total = Crunch 5 + Hanging Leg Raise 4 + Lying Leg Raise 3 + Reverse
 Crunch 3). The three time-based exercises are gone — reads as data loss.
@@ -42,6 +54,7 @@ means "logged"; and/or (b) make the divert-to-keypad obvious (e.g. the ✓ visib
 brand-new lift). Deeper fix is **#46** (a real duration set type removes the "no weight" ambiguity for these
 exercises). Whatever ships, verify the finish drop-rule (`workouts.ts:124`) never eats an exercise the user
 believes they logged.
+</details>
 
 ### 46. No duration-based set type for time exercises ⬜ Med
 **Requested:** Plank, Side Plank, Dead Hang are **time-based** — a set has a **duration**, not weight × reps.

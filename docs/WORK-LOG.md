@@ -7,6 +7,25 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-14 — #45 FIXED + sim-verified (time-based exercises no longer lost)
+
+Fixed the data-loss bug where weightless/time-based exercises (Plank, Side Plank, Dead Hang) logged
+mid-workout vanished from the finished summary.
+
+- **Root cause (recap):** on a first-time lift the pending-row ✓ (`logPending`) diverted to the keypad
+  instead of committing (no weight to repeat); the keypad's "Done"/"Next exercise" then `setKeypad(null)`
+  without logging, so the exercise finished with zero sets and `finishWorkout` culled it.
+- **Fix (`src/app/workout/[id].tsx`):** ✓ now logs the pending row **as shown**, null weight included — a
+  reps-only set is a real set (`canLog = reps > 0` already allowed it). `logPending` diverts to the keypad
+  only when `prefillReps == null` (prefill off / nothing to log); removed the weight-based divert. Updated
+  the below-grid hint and the first-time-lift note to say ✓ logs as shown. Weight cell still opens the keypad.
+- **Verified on the iOS 17 simulator:** empty workout → add Plank (Body only, first-time) → tap ✓ → set 1
+  commits `— × 12` (header "1 set"), auto-advances to set 2 → Finish → summary shows **Plank · 1 SET**
+  (would previously have been dropped). `tsc` + web-export green.
+- Still open: **#46** (a real duration set type) is the deeper model fix; this closes the data loss only.
+
+---
+
 ## 2026-08-14 — Logged hands-on device feedback (#45–#49)
 
 User's own Core-workout session + general use surfaced five items, all logged (no code changes) in
