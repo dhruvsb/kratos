@@ -31,16 +31,59 @@ import {
 import { useSettings } from '@/data/settings';
 import type { ExerciseBest, WorkoutExerciseDetail } from '@/data/workouts';
 import type { LastSessionSet } from '@/types/db';
-import type { SetType, Unit } from '@/types/db';
+import type { ExerciseModality, SetType, Unit } from '@/types/db';
 import { newUuid } from '@/lib/ids';
-import { formatSet, formatWeight } from '@/lib/units';
+import {
+  formatDuration,
+  formatLevel,
+  formatSetByModality,
+  formatWeight,
+  type SetMetrics,
+} from '@/lib/units';
 import { font, radius, space, tracking, type Theme } from '@/theme/tokens';
 import { useTheme } from '@/theme/ThemeProvider';
 
 /** PREV cell: a lone em-dash when there's no matching last-session set (mockup 15),
- *  not "— × —" — no fake number to beat on a lift's first day. */
-function prevLabel(set: LastSessionSet | undefined, unit: Unit): string {
-  return set ? formatSet(set.weight_kg, set.reps, unit) : '—';
+ *  not "— × —" — no fake number to beat on a lift's first day. The label reads in the
+ *  exercise's own terms (weight×reps / reps / time / time·level). */
+function prevLabel(
+  set: LastSessionSet | undefined,
+  modality: ExerciseModality,
+  unit: Unit
+): string {
+  return set ? formatSetByModality(set, modality, unit) : '—';
+}
+
+/** The value columns to the right of PREV, by modality. Header labels here; the logged
+ *  rows and the pending row render the same count of `cField` cells so all three grids
+ *  line up. */
+function valueHeaders(modality: ExerciseModality, unit: Unit): string[] {
+  switch (modality) {
+    case 'bodyweight_reps':
+      return ['REPS'];
+    case 'time':
+      return ['TIME'];
+    case 'distance_time':
+      return ['TIME', 'LVL'];
+    case 'weight_reps':
+    default:
+      return [unit.toUpperCase(), 'REPS'];
+  }
+}
+
+/** A logged set's value cells (one string per column above), by modality. */
+function valueCells(set: SetMetrics, modality: ExerciseModality, unit: Unit): string[] {
+  switch (modality) {
+    case 'bodyweight_reps':
+      return [set.reps == null ? '—' : String(set.reps)];
+    case 'time':
+      return [formatDuration(set.duration_seconds)];
+    case 'distance_time':
+      return [formatDuration(set.duration_seconds), formatLevel(set.level)];
+    case 'weight_reps':
+    default:
+      return [formatWeight(set.weight_kg, unit), set.reps == null ? '—' : String(set.reps)];
+  }
 }
 
 /** Compact session-volume label: "1.2k" past a tonne, else the rounded number. */
@@ -84,6 +127,8 @@ type KeypadState = {
   setType: SetType;
   kg: number | null;
   reps: number | null;
+  durationSeconds: number | null;
+  level: number | null;
 };
 
 export default function ActiveWorkoutScreen() {
@@ -183,6 +228,15 @@ export default function ActiveWorkoutScreen() {
     );
   }
 
+  // Each exercise carries a modality; the grid columns, prefill, keypad, and the
+  // overload ghost all key off it. weight_reps is the lift default (byte-identical to
+  // before); the others drop the weight column and/or add duration + level.
+  const modality: ExerciseModality = activeExercise?.exercise.modality ?? 'weight_reps';
+  const isWeightModality = modality === 'weight_reps';
+  const usesReps = modality === 'weight_reps' || modality === 'bodyweight_reps';
+  const usesDuration = modality === 'time' || modality === 'distance_time';
+  const isCardio = modality === 'distance_time';
+
   const logged = activeExercise?.sets ?? [];
   const nextSetNumber = logged.length + 1;
   const noHistory = lastSets.length === 0; // first time on this lift (mockup 15)
@@ -193,13 +247,47 @@ export default function ActiveWorkoutScreen() {
   // fields every set, the same treatment a brand-new lift gets (mockup 15).
   // When on (feedback #3): weight suggests what you're lifting today (this session's
   // last set) → your all-time previous best → last session's same-index set; reps
-  // repeat what you did → else default to 12, so ✓ is a true one-tap log.
-  const prefillKg = prefillEnabled
+  // repeat what you did → else default to 12, so ✓ is a true one-tap log. Non-weight
+  // modalities pre-fill only their own fields (reps / duration / duration+level) from
+  // this session's last set, else last session's same-index set.
+  const prefillKg = prefillEnabled && isWeightModality
     ? prevInSession?.weight_kg ?? best?.weight_kg ?? lastForNext?.weight_kg ?? null
     : null;
-  const prefillReps = prefillEnabled
+  const prefillReps = prefillEnabled && usesReps
     ? prevInSession?.reps ?? lastForNext?.reps ?? DEFAULT_REPS
     : null;
+  const prefillDuration = prefillEnabled && usesDuration
+    ? prevInSession?.duration_seconds ?? lastForNext?.duration_seconds ?? null
+    : null;
+  const prefillLevel = prefillEnabled && isCardio
+    ? prevInSession?.level ?? lastForNext?.level ?? null
+    : null;
+  // Whether ✓ can log the pending row as-shown (else it opens the keypad): a duration
+  // for time/cardio, otherwise reps.
+  const canQuickLog = usesDuration ? prefillDuration != null : prefillReps != null;
+
+  // The pending row's editable value cells, by modality — same column count as the
+  // header/logged rows so the grid lines up. `dim` renders the placeholder-grey ink
+  // (t3) when the field has no suggestion yet.
+  const prefillMetrics: SetMetrics = {
+    weight_kg: prefillKg,
+    reps: prefillReps,
+    duration_seconds: prefillDuration,
+    level: prefillLevel,
+  };
+  const pendingCells: { text: string; dim: boolean }[] = usesDuration
+    ? isCardio
+      ? [
+          { text: formatDuration(prefillDuration), dim: prefillDuration == null },
+          { text: formatLevel(prefillLevel), dim: prefillLevel == null },
+        ]
+      : [{ text: formatDuration(prefillDuration), dim: prefillDuration == null }]
+    : isWeightModality
+      ? [
+          { text: formatWeight(prefillKg, unit), dim: prefillKg == null },
+          { text: prefillReps == null ? '—' : String(prefillReps), dim: prefillReps == null },
+        ]
+      : [{ text: prefillReps == null ? '—' : String(prefillReps), dim: prefillReps == null }];
 
   function logPending() {
     if (!activeExercise) return;
@@ -212,16 +300,23 @@ export default function ActiveWorkoutScreen() {
     // exercise" there dropped the typed set silently, so those exercises finished with
     // zero sets and were culled from the saved workout (feedback #45). To set a weight,
     // the weight cell still opens the keypad.
-    if (prefillReps == null) {
+    if (!canQuickLog) {
       openAdd();
       return;
     }
     // Fire alongside the optimistic cache patch, not after it — the tap, the row
-    // appearing, and the tick should read as one event.
+    // appearing, and the tick should read as one event. Only the modality's fields are
+    // non-null (prefill* is gated per modality above).
     haptics.log();
     addSet.mutate({
       workoutExerciseId: activeExercise.id,
-      set: { weight_kg: prefillKg, reps: prefillReps, set_type: 'normal' },
+      set: {
+        weight_kg: prefillKg,
+        reps: prefillReps,
+        duration_seconds: prefillDuration,
+        level: prefillLevel,
+        set_type: 'normal',
+      },
     });
   }
 
@@ -232,19 +327,40 @@ export default function ActiveWorkoutScreen() {
       setType: 'normal',
       kg: prefillKg,
       reps: prefillReps,
+      durationSeconds: prefillDuration,
+      level: prefillLevel,
     });
   }
 
-  function onKeypadLog(weightKg: number | null, reps: number) {
+  function onKeypadLog(v: {
+    weightKg: number | null;
+    reps: number | null;
+    durationSeconds: number | null;
+    level: number | null;
+  }) {
     if (!activeExercise || !keypad) return;
     if (keypad.mode === 'edit' && keypad.setId) {
-      updateSet.mutate({ setId: keypad.setId, patch: { weight_kg: weightKg, reps } });
+      updateSet.mutate({
+        setId: keypad.setId,
+        patch: {
+          weight_kg: v.weightKg,
+          reps: v.reps,
+          duration_seconds: v.durationSeconds,
+          level: v.level,
+        },
+      });
       setKeypad(null);
       return;
     }
     addSet.mutate({
       workoutExerciseId: activeExercise.id,
-      set: { weight_kg: weightKg, reps, set_type: keypad.setType },
+      set: {
+        weight_kg: v.weightKg,
+        reps: v.reps,
+        duration_seconds: v.durationSeconds,
+        level: v.level,
+        set_type: keypad.setType,
+      },
     });
     // Auto-advance (feedback #26): keep the sheet open on the next set, pre-filled with
     // what was just logged, so a run of working sets is tap-tap-tap without reopening
@@ -253,8 +369,10 @@ export default function ActiveWorkoutScreen() {
       mode: 'add',
       setNumber: keypad.setNumber + 1,
       setType: 'normal',
-      kg: weightKg,
-      reps,
+      kg: v.weightKg,
+      reps: v.reps,
+      durationSeconds: v.durationSeconds,
+      level: v.level,
     });
   }
 
@@ -377,6 +495,7 @@ export default function ActiveWorkoutScreen() {
     normalLastSets.length > 0 &&
     normalLastSets.every((s) => (s.reps ?? 0) >= OVERLOAD_REP_THRESHOLD);
   const ghostKg =
+    isWeightModality &&
     prefillEnabled &&
     logged.length === 0 &&
     strongLastSession &&
@@ -396,6 +515,8 @@ export default function ActiveWorkoutScreen() {
       setType: 'normal',
       kg: ghostKg,
       reps: prefillReps,
+      durationSeconds: prefillDuration,
+      level: prefillLevel,
     });
   }
 
@@ -493,8 +614,9 @@ export default function ActiveWorkoutScreen() {
           <View style={styles.gridHead}>
             <Text style={[styles.gh, styles.cNum]}>#</Text>
             <Text style={[styles.gh, styles.cPrev]}>PREV</Text>
-            <Text style={[styles.gh, styles.cField, { textAlign: 'center' }]}>{unit.toUpperCase()}</Text>
-            <Text style={[styles.gh, styles.cField, { textAlign: 'center' }]}>REPS</Text>
+            {valueHeaders(modality, unit).map((h, i) => (
+              <Text key={i} style={[styles.gh, styles.cField, { textAlign: 'center' }]}>{h}</Text>
+            ))}
             <Text style={[styles.gh, styles.cCheck]} />
           </View>
 
@@ -512,6 +634,8 @@ export default function ActiveWorkoutScreen() {
                     setType: s.set_type,
                     kg: s.weight_kg,
                     reps: s.reps,
+                    durationSeconds: s.duration_seconds,
+                    level: s.level,
                   })
                 }
                 // Long-press = the fast delete path from the grid (feedback #11); tapping
@@ -519,13 +643,12 @@ export default function ActiveWorkoutScreen() {
                 onLongPress={() => !isFinished && confirmDeleteSet(s.id, i + 1)}
               >
                 <Text style={[styles.rNum, styles.cNum]}>{i + 1}</Text>
-                <Text style={[styles.rPrev, styles.cPrev]}>{prevLabel(lastSets[i], unit)}</Text>
-                <View style={[styles.cField, styles.cellDone]}>
-                  <Text style={styles.valDone}>{formatWeight(s.weight_kg, unit)}</Text>
-                </View>
-                <View style={[styles.cField, styles.cellDone]}>
-                  <Text style={styles.valDone}>{s.reps ?? '—'}</Text>
-                </View>
+                <Text style={[styles.rPrev, styles.cPrev]}>{prevLabel(lastSets[i], modality, unit)}</Text>
+                {valueCells(s, modality, unit).map((v, ci) => (
+                  <View key={ci} style={[styles.cField, styles.cellDone]}>
+                    <Text style={styles.valDone}>{v}</Text>
+                  </View>
+                ))}
                 <View style={styles.cCheck}>
                   <Text style={styles.checkDone}>✓</Text>
                 </View>
@@ -536,17 +659,12 @@ export default function ActiveWorkoutScreen() {
             {!isFinished && (
               <View style={[styles.row, { borderBottomWidth: 0, backgroundColor: color.acc06 }]}>
                 <Text style={[styles.rNum, styles.cNum, { color: color.acc }]}>{nextSetNumber}</Text>
-                <Text style={[styles.rPrev, styles.cPrev]}>{prevLabel(lastForNext, unit)}</Text>
-                <Pressable style={[styles.cField, styles.cellActive]} onPress={openAdd}>
-                  <Text style={[styles.valActive, prefillKg == null && { color: color.t3 }]}>
-                    {formatWeight(prefillKg, unit)}
-                  </Text>
-                </Pressable>
-                <Pressable style={[styles.cField, styles.cellActive]} onPress={openAdd}>
-                  <Text style={[styles.valActive, prefillReps == null && { color: color.t3 }]}>
-                    {prefillReps ?? '—'}
-                  </Text>
-                </Pressable>
+                <Text style={[styles.rPrev, styles.cPrev]}>{prevLabel(lastForNext, modality, unit)}</Text>
+                {pendingCells.map((c, ci) => (
+                  <Pressable key={ci} style={[styles.cField, styles.cellActive]} onPress={openAdd}>
+                    <Text style={[styles.valActive, c.dim && { color: color.t3 }]}>{c.text}</Text>
+                  </Pressable>
+                ))}
                 <Pressable style={[styles.cCheck, styles.checkBtn]} onPress={logPending}>
                   <Text style={styles.checkActive}>✓</Text>
                 </Pressable>
@@ -571,9 +689,13 @@ export default function ActiveWorkoutScreen() {
           {!isFinished && (
             <View style={styles.belowGrid}>
               <Text style={styles.belowHint} numberOfLines={1}>
-                {prefillReps != null
-                  ? `✓ logs ${formatSet(prefillKg, prefillReps, unit)} · tap a field to change`
-                  : 'Enter weight and reps'}
+                {canQuickLog
+                  ? `✓ logs ${formatSetByModality(prefillMetrics, modality, unit)} · tap a field to change`
+                  : isWeightModality
+                    ? 'Enter weight and reps'
+                    : usesDuration
+                      ? 'Enter a time'
+                      : 'Enter reps'}
               </Text>
               <Pressable onPress={openAdd} hitSlop={8}>
                 <Text style={styles.addSet}>Add set</Text>
@@ -637,13 +759,15 @@ export default function ActiveWorkoutScreen() {
       {keypad && activeExercise && (
         <SetKeypad
           visible
+          modality={modality}
           exerciseName={activeExercise.exercise.canonical_name}
           setNumber={keypad.setNumber}
           unit={unit}
-          lastKg={lastSets[keypad.setNumber - 1]?.weight_kg ?? null}
-          lastReps={lastSets[keypad.setNumber - 1]?.reps ?? null}
+          lastSet={lastSets[keypad.setNumber - 1] ?? null}
           initialKg={keypad.kg}
           initialReps={keypad.reps}
+          initialDurationSeconds={keypad.durationSeconds}
+          initialLevel={keypad.level}
           mode={keypad.mode}
           // Log-sheet v3 flow actions (add mode only): position + Done/Next exercise.
           exercisePosition={keypad.mode === 'add' ? activeIndex + 1 : undefined}

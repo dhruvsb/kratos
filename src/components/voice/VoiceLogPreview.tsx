@@ -209,14 +209,16 @@ export function VoiceLogPreview({ result }: { result: LogResult }) {
       {edit && editingEx && editingSet && (
         <SetKeypad
           visible
+          // Voice logging (Phase 2) is weight_reps-only for now.
+          modality="weight_reps"
           mode="edit"
           exerciseName={editingEx.name}
           setNumber={editingIndex + 1}
           unit={unit}
           initialKg={editingSet.weightKg}
           initialReps={editingSet.reps}
-          onLog={(weightKg, reps) => {
-            updateSet(edit.exKey, edit.setKey, weightKg, reps);
+          onLog={({ weightKg, reps }) => {
+            updateSet(edit.exKey, edit.setKey, weightKg, reps ?? 0);
             setEdit(null);
           }}
           onClose={() => setEdit(null)}

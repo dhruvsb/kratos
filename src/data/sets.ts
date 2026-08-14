@@ -4,6 +4,9 @@ import { workoutSetSchema, type SetType, type WorkoutSet } from '@/types/db';
 export type AddSetInput = {
   weight_kg: number | null;
   reps: number | null;
+  // Modality metrics (migration 0010): duration for time/cardio, level for cardio.
+  duration_seconds?: number | null;
+  level?: number | null;
   set_type?: SetType;
   rpe?: number | null;
 };
@@ -24,6 +27,8 @@ export async function addSet(
     {
       weight_kg: input.weight_kg,
       reps: input.reps,
+      duration_seconds: input.duration_seconds ?? null,
+      level: input.level ?? null,
       set_type: input.set_type ?? 'normal',
       rpe: input.rpe ?? null,
       logged_via: 'manual',
@@ -51,6 +56,8 @@ export async function addVoiceSet(
   return insertSet(workoutExerciseId, {
     weight_kg: input.weight_kg,
     reps: input.reps,
+    duration_seconds: null,
+    level: null,
     set_type: input.set_type,
     rpe: null,
     logged_via: 'voice',
@@ -82,6 +89,8 @@ async function insertSet(
   row: {
     weight_kg: number | null;
     reps: number | null;
+    duration_seconds: number | null;
+    level: number | null;
     set_type: SetType;
     rpe: number | null;
     logged_via: WorkoutSet['logged_via'];
@@ -137,7 +146,9 @@ async function insertSet(
 
 export async function updateSet(
   id: string,
-  patch: Partial<Pick<WorkoutSet, 'weight_kg' | 'reps' | 'set_type' | 'rpe'>>
+  patch: Partial<
+    Pick<WorkoutSet, 'weight_kg' | 'reps' | 'duration_seconds' | 'level' | 'set_type' | 'rpe'>
+  >
 ): Promise<void> {
   const { error } = await supabase.from('sets').update(patch).eq('id', id);
   if (error) throw error;

@@ -9,22 +9,82 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Empty, ErrorText, Loading } from '@/components/ui';
 import { useExercise, useExerciseHistory, useProfile } from '@/data/hooks';
 import type { ExerciseHistoryEntry } from '@/data/workouts';
-import type { WorkoutSet, Unit } from '@/types/db';
-import { formatWeight, kgToDisplay, trimWeight } from '@/lib/units';
+import type { WorkoutSet, Unit, ExerciseModality } from '@/types/db';
+import { formatWeight, formatDuration, formatLevel, formatSetByModality, kgToDisplay, trimWeight } from '@/lib/units';
 import { font, space, tracking, type Theme } from '@/theme/tokens';
 import { useTheme } from '@/theme/ThemeProvider';
 
 const DAY_MS = 86_400_000;
 
-function topSet(sets: WorkoutSet[]): WorkoutSet | null {
+// The single number that represents a set's magnitude for this modality — the
+// progress metric plotted + ranked across the whole page.
+function metricOf(modality: ExerciseModality): (s: WorkoutSet) => number {
+  switch (modality) {
+    case 'bodyweight_reps':
+      return (s) => s.reps ?? 0;
+    case 'time':
+    case 'distance_time':
+      return (s) => s.duration_seconds ?? 0;
+    case 'weight_reps':
+    default:
+      return (s) => s.weight_kg ?? 0;
+  }
+}
+
+// Secondary key when two sets tie on the metric: reps for lifts, level for cardio.
+function tiebreakOf(modality: ExerciseModality): (s: WorkoutSet) => number {
+  switch (modality) {
+    case 'distance_time':
+      return (s) => s.level ?? 0;
+    case 'weight_reps':
+      return (s) => s.reps ?? 0;
+    default:
+      return () => 0;
+  }
+}
+
+function topSet(sets: WorkoutSet[], modality: ExerciseModality): WorkoutSet | null {
+  const metric = metricOf(modality);
+  const tie = tiebreakOf(modality);
   return sets.reduce<WorkoutSet | null>(
     (best, s) =>
-      (s.weight_kg ?? 0) > (best?.weight_kg ?? -1) ||
-      ((s.weight_kg ?? 0) === (best?.weight_kg ?? -1) && (s.reps ?? 0) > (best?.reps ?? 0))
+      best == null ||
+      metric(s) > metric(best) ||
+      (metric(s) === metric(best) && tie(s) > tie(best))
         ? s
         : best,
     null
   );
+}
+
+// The BEST stat, in the exercise's own terms: a big value + a small suffix.
+function bestStatOf(set: WorkoutSet, modality: ExerciseModality, unit: Unit): { main: string; suffix: string } {
+  switch (modality) {
+    case 'bodyweight_reps':
+      return { main: `${set.reps ?? '—'}`, suffix: 'reps' };
+    case 'time':
+      return { main: formatDuration(set.duration_seconds), suffix: '' };
+    case 'distance_time':
+      return { main: formatDuration(set.duration_seconds), suffix: set.level != null ? `L${formatLevel(set.level)}` : '' };
+    case 'weight_reps':
+    default:
+      return { main: formatWeight(set.weight_kg, unit), suffix: set.reps != null ? `×${set.reps}` : '' };
+  }
+}
+
+// The chart's min/max range label, formatted for the metric (weight → display
+// unit; reps → a count; duration → mm:ss).
+function metricRange(min: number, max: number, modality: ExerciseModality, unit: Unit): string {
+  switch (modality) {
+    case 'bodyweight_reps':
+      return `${Math.round(min)}—${Math.round(max)} REPS`;
+    case 'time':
+    case 'distance_time':
+      return `${formatDuration(min)}—${formatDuration(max)}`;
+    case 'weight_reps':
+    default:
+      return `${trimWeight(kgToDisplay(min, unit))}—${trimWeight(kgToDisplay(max, unit))} ${unit.toUpperCase()}`;
+  }
 }
 
 export default function ExerciseProgressScreen() {
@@ -37,41 +97,49 @@ export default function ExerciseProgressScreen() {
   const profile = useProfile();
   const unit: Unit = profile.data?.default_unit ?? 'kg';
 
+  // One page-level modality — every session here is the same exercise, so a
+  // single metric applies to the whole page. Falls back to weight_reps until the
+  // exercise row loads (preserves the legacy lift behaviour).
+  const modality: ExerciseModality = exercise.data?.modality ?? 'weight_reps';
+
   const entries = useMemo<ExerciseHistoryEntry[]>(
     () => (history.data?.pages ?? []).flat(),
     [history.data]
   );
 
   const derived = useMemo(() => {
+    const metric = metricOf(modality);
     let best: WorkoutSet | null = null;
     for (const e of entries) {
-      const t = topSet(e.sets);
-      if (t && (t.weight_kg ?? 0) > (best?.weight_kg ?? -1)) best = t;
+      const t = topSet(e.sets, modality);
+      if (t && metric(t) > (best ? metric(best) : -1)) best = t;
     }
     const lastDays = entries[0]
       ? Math.round(
           (Date.now() - new Date(entries[0].started_at).getTime()) / DAY_MS
         )
       : null;
-    // Chart: top-set weight per session, chronological, last 12.
+    // Chart: top-set metric per session, chronological, last 12.
     const chrono = [...entries].reverse().slice(-12);
-    const tops = chrono.map((e) => topSet(e.sets)?.weight_kg ?? 0);
+    const tops = chrono.map((e) => {
+      const t = topSet(e.sets, modality);
+      return t ? metric(t) : 0;
+    });
     const min = Math.min(...(tops.length ? tops : [0]));
     const max = Math.max(...(tops.length ? tops : [1]));
-    const bars = chrono.map((e) => {
-      const w = topSet(e.sets)?.weight_kg ?? 0;
+    const bars = tops.map((w) => {
       const h = max === min ? 70 : 30 + 70 * ((w - min) / (max - min));
       return { h, isPr: w === max && max > 0 };
     });
     return { best, lastDays, bars, min, max };
-  }, [entries]);
+  }, [entries, modality]);
 
   if (exercise.isLoading || history.isLoading) return <Loading />;
   if (history.error != null) return <ErrorText error={history.error} />;
 
-  const bestLabel = derived.best
-    ? `${formatWeight(derived.best.weight_kg, unit)}`
-    : '—';
+  const bestStat = derived.best ? bestStatOf(derived.best, modality, unit) : null;
+  const bestMain = bestStat?.main ?? '—';
+  const bestSuffix = bestStat?.suffix ?? '';
   const lastLabel =
     derived.lastDays == null ? '—' : derived.lastDays === 0 ? 'TODAY' : `${derived.lastDays}D`;
 
@@ -89,8 +157,8 @@ export default function ExerciseProgressScreen() {
         <View>
           <Text style={styles.statLabel}>BEST</Text>
           <Text style={styles.statValue}>
-            {bestLabel}
-            {derived.best?.reps != null && <Text style={styles.statUnit}> ×{derived.best.reps}</Text>}
+            {bestMain}
+            {bestSuffix !== '' && <Text style={styles.statUnit}> {bestSuffix}</Text>}
           </Text>
         </View>
         <View>
@@ -108,7 +176,7 @@ export default function ExerciseProgressScreen() {
           <View style={styles.chartHead}>
             <Text style={styles.statLabel}>TOP SET · LAST {derived.bars.length}</Text>
             <Text style={styles.chartRange}>
-              {trimWeight(kgToDisplay(derived.min, unit))}—{trimWeight(kgToDisplay(derived.max, unit))} {unit.toUpperCase()}
+              {metricRange(derived.min, derived.max, modality, unit)}
             </Text>
           </View>
           <View style={styles.chart}>
@@ -142,10 +210,16 @@ export default function ExerciseProgressScreen() {
         }}
         onEndReachedThreshold={0.5}
         renderItem={({ item }) => {
-          const t = topSet(item.sets);
-          const isBest = t != null && derived.best != null && t.weight_kg === derived.best.weight_kg && t.reps === derived.best.reps;
+          const t = topSet(item.sets, modality);
+          const metric = metricOf(modality);
+          const tie = tiebreakOf(modality);
+          const isBest =
+            t != null &&
+            derived.best != null &&
+            metric(t) === metric(derived.best) &&
+            tie(t) === tie(derived.best);
           const summary = item.sets
-            .map((s) => `${formatWeight(s.weight_kg, unit)}×${s.reps ?? '—'}`)
+            .map((s) => formatSetByModality(s, modality, unit))
             .join('  ·  ');
           return (
             <Pressable style={styles.sessionRow} onPress={() => router.push(`/history/${item.workout_id}`)}>

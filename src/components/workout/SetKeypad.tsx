@@ -1,43 +1,59 @@
-// Set-entry keypad (mockup 05). A bottom sheet over the set grid: two big LED
-// fields (KG active / REPS), ±step + SAME-AS-LAST shortcuts, a numeric pad, and a
-// plate-math hint. Storage is kg; entry is in the profile's display unit and
-// converted on LOG. Used for both adding a new set and editing a logged one.
+// Set-entry keypad (mockup 05). A bottom sheet over the set grid. What it captures
+// adapts to the exercise's modality:
+//   weight_reps      → KG + REPS   (+ plate hint, rep chips)
+//   bodyweight_reps  → REPS        (rep chips)
+//   time             → DURATION    (mm:ss entry, duration chips)
+//   distance_time    → DURATION + LEVEL   (cardio; level = unitless machine setting)
+// Weight storage is kg; entry is in the profile's display unit and converted on LOG.
+// Used for both adding a new set and editing a logged one.
 import { useEffect, useMemo, useState } from 'react';
-import { Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Caret } from '@/components/workout/Caret';
 import { haptics } from '@/lib/haptics';
 import {
   displayToKg,
-  formatSet,
+  formatDuration,
+  formatSetByModality,
   kgToDisplay,
   platesLabel,
   step,
   trimWeight,
+  type SetMetrics,
 } from '@/lib/units';
 import { font, radius, space, tracking, type Theme } from '@/theme/tokens';
 import { useTheme } from '@/theme/ThemeProvider';
-import type { Unit } from '@/types/db';
+import type { ExerciseModality, Unit } from '@/types/db';
 
-type Field = 'kg' | 'reps';
+type Field = 'kg' | 'reps' | 'dur' | 'level';
+
+/** What LOG hands back — only the fields the modality uses are non-null. */
+export type SetKeypadValues = {
+  weightKg: number | null;
+  reps: number | null;
+  durationSeconds: number | null;
+  level: number | null;
+};
 
 export type SetKeypadProps = {
   visible: boolean;
+  modality: ExerciseModality;
   exerciseName: string;
   setNumber: number;
   unit: Unit;
-  /** Same-index set from last session (kg), for the SAME-AS-LAST shortcut + label. */
-  lastKg?: number | null;
-  lastReps?: number | null;
-  /** Prefill (kg) — usually the same last-session set, or the value being edited. */
+  /** Same-index set from last session, for the LAST label (modality-aware). */
+  lastSet?: SetMetrics | null;
+  /** Prefill — usually the same last-session set, or the value being edited. */
   initialKg: number | null;
   initialReps: number | null;
+  initialDurationSeconds?: number | null;
+  initialLevel?: number | null;
   mode?: 'add' | 'edit';
   /** Active-workout add mode: this exercise's position in the session, shown top-right
    *  of the sheet ("3 of 5") in place of the LAST label (design log-sheet v3). */
   exercisePosition?: number;
   exerciseCount?: number;
-  onLog: (weightKg: number | null, reps: number) => void;
+  onLog: (values: SetKeypadValues) => void;
   onDelete?: () => void;
   /** Edit mode only: "wrong day entirely" — delete the whole workout. Kept visually
    *  apart from SAVE / DELETE SET so it can't be hit by muscle memory (mockup 17). */
@@ -52,12 +68,14 @@ export type SetKeypadProps = {
 
 const PAD = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', '⌫'] as const;
 
-// Decision 1a: one control row does both jobs — two weight steps (±step) then the
-// three working-rep chips that cover the overwhelming majority of sets, so a full set
-// is "±weight / tap a rep chip → Log". Odd counts (singles, triples, 15s, 20s, AMRAP)
-// stay reachable: tap the REPS field and the pad edits reps directly, so nothing is
-// unloggable. The ⌫ escape hatch lives in the keypad's bottom-right.
-const REP_CHIPS = [8, 10, 12] as const;
+// Decision 1a: one control row does both jobs — two ± steps then three value chips that
+// cover the overwhelming majority of sets, so a full set is "±step / tap a chip → Log".
+// The chips are modality-specific (reps for lifts, longer reps for calisthenics, common
+// durations for holds/cardio). Odd values stay reachable via the pad.
+const REP_CHIPS_WEIGHT = [8, 10, 12] as const;
+const REP_CHIPS_BODYWEIGHT = [10, 15, 20] as const;
+const DUR_CHIPS_TIME = [30, 45, 60] as const; // seconds
+const DUR_CHIPS_CARDIO = [600, 1200, 1800] as const; // 10 / 20 / 30 min
 
 // Sane upper bound on an entered weight (in kg). Covers every real barbell / dumbbell
 // / machine number with margin, and — critically — stays under weight_kg's
@@ -65,45 +83,112 @@ const REP_CHIPS = [8, 10, 12] as const;
 // throw on insert mid-workout (feedback #14).
 const MAX_WEIGHT_KG = 1000;
 
+// duration_seconds is a plain int; cap entry well below overflow while covering any real
+// hold or cardio bout.
+const MAX_DURATION_SECONDS = 60 * 60 * 10; // 10h
+// level is numeric(4,1): keep it a sane machine dial.
+const MAX_LEVEL = 99;
+
+/** mm:ss digit buffer → total seconds (last two digits = seconds). */
+function digitsToSeconds(d: string): number {
+  if (!d) return 0;
+  const ss = parseInt(d.slice(-2) || '0', 10);
+  const mm = parseInt(d.slice(0, -2) || '0', 10);
+  return mm * 60 + ss;
+}
+/** Total seconds → the minimal digit buffer that renders back to it. */
+function secondsToDigits(total: number | null | undefined): string {
+  if (!total || total <= 0) return '';
+  const mm = Math.floor(total / 60);
+  const ss = total % 60;
+  return mm > 0 ? `${mm}${String(ss).padStart(2, '0')}` : String(ss);
+}
+/** Render a digit buffer as m:ss while typing (0:00 when empty). */
+function displayDigits(d: string): string {
+  const ss = (d.slice(-2) || '0').padStart(2, '0');
+  const mm = d.slice(0, -2) || '0';
+  return `${parseInt(mm, 10)}:${ss}`;
+}
+
 export function SetKeypad(props: SetKeypadProps) {
   const { color } = useTheme();
   const styles = useMemo(() => makeStyles(color), [color]);
-  const { visible, unit, initialKg, initialReps, lastKg, lastReps } = props;
+  const { visible, modality, unit, initialKg, initialReps, lastSet } = props;
   const insets = useSafeAreaInsets();
   const [kgStr, setKgStr] = useState('');
   const [repsStr, setRepsStr] = useState('');
+  const [durDigits, setDurDigits] = useState('');
+  const [levelStr, setLevelStr] = useState('');
+
+  const isWeight = modality === 'weight_reps';
+  const isReps = modality === 'weight_reps' || modality === 'bodyweight_reps';
+  const isTime = modality === 'time';
+  const isCardio = modality === 'distance_time';
+  const usesDuration = isTime || isCardio;
+
   const [active, setActive] = useState<Field>('kg');
 
-  // Reset the buffers each time the sheet opens for a (new) set.
+  // Reset the buffers each time the sheet opens for a (new) set, seeding the field the
+  // modality leads with.
   useEffect(() => {
     if (!visible) return;
     setKgStr(initialKg == null ? '' : trimWeight(kgToDisplay(initialKg, unit)));
     setRepsStr(initialReps == null ? '' : String(initialReps));
-    setActive('kg');
-  }, [visible, initialKg, initialReps, unit]);
-
-  const setActiveStr = (updater: (s: string) => string) =>
-    active === 'kg' ? setKgStr(updater) : setRepsStr(updater);
+    setDurDigits(secondsToDigits(props.initialDurationSeconds));
+    setLevelStr(props.initialLevel == null ? '' : trimWeight(props.initialLevel));
+    setActive(isWeight ? 'kg' : isReps ? 'reps' : 'dur');
+  }, [
+    visible,
+    initialKg,
+    initialReps,
+    props.initialDurationSeconds,
+    props.initialLevel,
+    unit,
+    modality,
+  ]);
 
   function pressPad(key: string) {
-    if (key === '⌫') return setActiveStr((s) => s.slice(0, -1));
+    if (key === '⌫') {
+      if (active === 'dur') return setDurDigits((s) => s.slice(0, -1));
+      if (active === 'kg') return setKgStr((s) => s.slice(0, -1));
+      if (active === 'level') return setLevelStr((s) => s.slice(0, -1));
+      return setRepsStr((s) => s.slice(0, -1));
+    }
     if (key === '.') {
-      if (active !== 'kg') return; // reps are integers
-      return setKgStr((s) => (s.includes('.') ? s : (s === '' ? '0.' : s + '.')));
+      // Only weight and level are fractional; reps + duration digits are integers.
+      if (active === 'kg') return setKgStr((s) => (s.includes('.') ? s : s === '' ? '0.' : s + '.'));
+      if (active === 'level')
+        return setLevelStr((s) => (s.includes('.') ? s : s === '' ? '0.' : s + '.'));
+      return;
     }
     // digit
-    setActiveStr((s) => {
-      if (active === 'reps' && s.length >= 3) return s; // sane cap
-      if (active === 'kg') {
+    if (active === 'dur') {
+      return setDurDigits((s) => {
         const next = s + key;
-        // one decimal place max
+        if (next.replace(/^0+/, '').length > 5) return s; // cap length
+        if (digitsToSeconds(next) > MAX_DURATION_SECONDS) return s;
+        return next.replace(/^0+(?=\d)/, ''); // trim leading zeros
+      });
+    }
+    if (active === 'kg') {
+      return setKgStr((s) => {
+        const next = s + key;
         if (next.includes('.') && next.split('.')[1].length > 1) return s;
         if (next.replace('.', '').length > 5) return s;
-        // hard weight ceiling — a typo can't overflow numeric(6,2) or the plate math
         if (displayToKg(parseFloat(next) || 0, unit) > MAX_WEIGHT_KG) return s;
-      }
-      return s + key;
-    });
+        return next;
+      });
+    }
+    if (active === 'level') {
+      return setLevelStr((s) => {
+        const next = s + key;
+        if (next.includes('.') && next.split('.')[1].length > 1) return s;
+        if ((parseFloat(next) || 0) > MAX_LEVEL) return s;
+        return next;
+      });
+    }
+    // reps
+    setRepsStr((s) => (s.length >= 3 ? s : s + key));
   }
 
   function adjust(sign: 1 | -1) {
@@ -112,6 +197,14 @@ export function SetKeypad(props: SetKeypadProps) {
       const maxDisplay = kgToDisplay(MAX_WEIGHT_KG, unit);
       const next = Math.min(maxDisplay, Math.max(0, Math.round((cur + sign * step(unit)) * 10) / 10));
       setKgStr(next === 0 && kgStr === '' ? '' : trimWeight(next));
+    } else if (active === 'dur') {
+      const stepS = isCardio ? 30 : 5;
+      const next = Math.max(0, Math.min(MAX_DURATION_SECONDS, digitsToSeconds(durDigits) + sign * stepS));
+      setDurDigits(secondsToDigits(next));
+    } else if (active === 'level') {
+      const cur = parseFloat(levelStr || '0') || 0;
+      const next = Math.max(0, Math.min(MAX_LEVEL, cur + sign));
+      setLevelStr(next === 0 && levelStr === '' ? '' : trimWeight(next));
     } else {
       const cur = parseInt(repsStr || '0', 10) || 0;
       const next = Math.max(0, cur + sign);
@@ -122,17 +215,61 @@ export function SetKeypad(props: SetKeypadProps) {
   const reps = parseInt(repsStr || '0', 10) || 0;
   const kgDisplay = kgStr === '' ? null : parseFloat(kgStr);
   const weightKg = kgDisplay == null ? null : displayToKg(kgDisplay, unit);
-  const canLog = reps > 0;
-  const plates = platesLabel(weightKg);
+  const durationSeconds = digitsToSeconds(durDigits);
+  const level = levelStr === '' ? null : parseFloat(levelStr);
+  const canLog = usesDuration ? durationSeconds > 0 : reps > 0;
+  const plates = isWeight ? platesLabel(weightKg) : null;
+
+  // The ± step label reflects whatever field is active.
+  const stepLabel =
+    active === 'kg'
+      ? String(step(unit))
+      : active === 'dur'
+        ? isCardio
+          ? '30s'
+          : '5s'
+        : '1';
 
   function log() {
     if (!canLog) return;
     haptics.log();
-    props.onLog(weightKg, reps);
+    props.onLog({
+      weightKg: isWeight ? weightKg : null,
+      reps: isReps ? reps : null,
+      durationSeconds: usesDuration ? durationSeconds : null,
+      level: isCardio ? level : null,
+    });
   }
 
   const lastLabel =
-    lastKg != null || lastReps != null ? `LAST ${formatSet(lastKg, lastReps, unit)}` : null;
+    lastSet && (lastSet.weight_kg != null || lastSet.reps != null || lastSet.duration_seconds != null)
+      ? `LAST ${formatSetByModality(lastSet, modality, unit)}`
+      : null;
+
+  // The value chips for the control row, by modality.
+  const chips: { label: string; on: boolean; apply: () => void }[] = isWeight
+    ? REP_CHIPS_WEIGHT.map((n) => ({
+        label: String(n),
+        on: reps === n,
+        apply: () => {
+          setRepsStr(String(n));
+          setActive('kg'); // hand focus back to weight — the common flow needs no switch
+        },
+      }))
+    : modality === 'bodyweight_reps'
+      ? REP_CHIPS_BODYWEIGHT.map((n) => ({
+          label: String(n),
+          on: reps === n,
+          apply: () => setRepsStr(String(n)),
+        }))
+      : (isCardio ? DUR_CHIPS_CARDIO : DUR_CHIPS_TIME).map((s) => ({
+          label: formatDuration(s),
+          on: durationSeconds === s,
+          apply: () => {
+            setDurDigits(secondsToDigits(s));
+            setActive('dur');
+          },
+        }));
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={props.onClose}>
@@ -154,53 +291,64 @@ export function SetKeypad(props: SetKeypadProps) {
         </View>
 
         <View style={styles.fields}>
-          <Field
-            label={unit.toUpperCase()}
-            value={kgStr || '0'}
-            dim={kgStr === ''}
-            active={active === 'kg'}
-            onPress={() => setActive('kg')}
-          />
-          <Field
-            label="REPS"
-            value={repsStr || '0'}
-            dim={repsStr === ''}
-            active={active === 'reps'}
-            onPress={() => setActive('reps')}
-          />
+          {isWeight && (
+            <Field
+              label={unit.toUpperCase()}
+              value={kgStr || '0'}
+              dim={kgStr === ''}
+              active={active === 'kg'}
+              onPress={() => setActive('kg')}
+            />
+          )}
+          {isReps && (
+            <Field
+              label="REPS"
+              value={repsStr || '0'}
+              dim={repsStr === ''}
+              active={active === 'reps'}
+              onPress={() => setActive('reps')}
+            />
+          )}
+          {usesDuration && (
+            <Field
+              label="TIME"
+              value={displayDigits(durDigits)}
+              dim={durDigits === ''}
+              active={active === 'dur'}
+              onPress={() => setActive('dur')}
+            />
+          )}
+          {isCardio && (
+            <Field
+              label="LEVEL"
+              value={levelStr || '0'}
+              dim={levelStr === ''}
+              active={active === 'level'}
+              onPress={() => setActive('level')}
+            />
+          )}
         </View>
 
-        {/* Plate hint sits right under the weight field, where the eyes are while
-            typing — not buried at the bottom of the sheet (feedback #15). */}
-        {/* One control row (decision 1a): two weight steps + the working-rep chips. */}
+        {/* One control row (decision 1a): two ± steps + the modality's value chips. */}
         <View style={styles.chipRow}>
           <Pressable style={styles.stepChip} onPress={() => adjust(-1)}>
-            <Text style={styles.stepText}>−{step(unit)}</Text>
+            <Text style={styles.stepText}>−{stepLabel}</Text>
           </Pressable>
           <Pressable style={styles.stepChip} onPress={() => adjust(1)}>
-            <Text style={styles.stepText}>+{step(unit)}</Text>
+            <Text style={styles.stepText}>+{stepLabel}</Text>
           </Pressable>
-          {REP_CHIPS.map((n) => {
-            const on = reps === n;
-            return (
-              <Pressable
-                key={n}
-                style={[styles.repChip, on && styles.repChipOn]}
-                // Set reps and hand focus back to KG so the pad stays weight — the
-                // common flow needs no field switch (feedback #13).
-                onPress={() => {
-                  // Detent tick only when the value actually moves — re-tapping the
-                  // chip you're already on stays silent, so a tap-tap-tap run of
-                  // identical sets buzzes once per LOG, not once per touch.
-                  if (!on) haptics.tick();
-                  setRepsStr(String(n));
-                  setActive('kg');
-                }}
-              >
-                <Text style={[styles.repChipText, on && styles.repChipTextOn]}>{n}</Text>
-              </Pressable>
-            );
-          })}
+          {chips.map((c) => (
+            <Pressable
+              key={c.label}
+              style={[styles.repChip, c.on && styles.repChipOn]}
+              onPress={() => {
+                if (!c.on) haptics.tick();
+                c.apply();
+              }}
+            >
+              <Text style={[styles.repChipText, c.on && styles.repChipTextOn]}>{c.label}</Text>
+            </Pressable>
+          ))}
         </View>
 
         <View style={styles.plateRow}>
@@ -331,7 +479,7 @@ const makeStyles = (color: Theme['color']) => StyleSheet.create({
   fieldValRow: { flexDirection: 'row', alignItems: 'baseline', marginTop: 6 },
   fieldVal: { fontFamily: font.numBold, fontSize: 30, color: color.t1 },
 
-  // 1a control row: two weight-step pills + three rep chips, all one height.
+  // 1a control row: two ± step pills + up to three value chips, all one height.
   chipRow: { flexDirection: 'row', gap: 8, marginTop: space.md },
   stepChip: {
     flex: 1,

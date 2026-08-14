@@ -7,6 +7,36 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-14 — #46: modality-aware set logging (all four modalities)
+
+Started as a requested recheck of the exercise directory ("which exercises aren't
+weight×reps?"). The directory was already correctly classified by `modality`; the real
+gap was that **no screen read it** — the set grid + `SetKeypad` were hardwired to KG×REPS,
+so planks and cardio got a bench-press weight field. Fixed the UI to honour modality (the
+substance of open issue #46), full scope, all four modalities.
+
+Product decisions (with the user): cardio (`distance_time`) captures **duration + machine
+level**, distance dropped; distance unit would follow the weight unit if ever needed;
+Farmer's Walk/Sled Push left mis-bucketed (rarely used) so no reseed; enum values kept
+(`distance_time` now means duration+level) to avoid an exercises-table migration.
+
+- **Schema/data:** migration `0010_set_metrics.sql` adds nullable `duration_seconds` +
+  `level` to `sets` and drops/recreates `last_session_sets()` to return them. `db.ts`
+  (`workoutSetSchema` + `lastSessionSetSchema`), `sets.ts` (`AddSetInput`/insert/update),
+  and the `useAddSet` optimistic cache patch all thread the two fields.
+- **Helpers:** `formatDuration` (mm:ss), `formatLevel`, `formatSetByModality` in
+  `units.ts` — the single source every label now uses.
+- **`SetKeypad`:** modality-branched fields — KG+REPS / REPS / mm:ss duration / duration+
+  level — with per-modality chips (rep chips 8/10/12 vs 10/15/20; duration chips), phone-
+  timer digit entry for time, plate hint gated to weight_reps. `onLog` widened to an object.
+- **Screens** (fanned out to 4 parallel agents, one file each): active workout grid
+  (`workout/[id]`), finish summary, history detail, per-exercise chart — each renders and
+  picks its "top" set in the exercise's own terms; overload ghost + kg-tonnage stay
+  weight-only. `VoiceLogPreview` pinned to `weight_reps` (Phase-2, unwired).
+
+`tsc --noEmit` green. **Not yet device-run** — migration 0010 must be applied to Supabase
+first. Server-side PR *counts* stay weight-only (noted follow-up: widen `getExerciseBests`).
+
 ## 2026-08-14 — Logged #50 backlog: automatic weekly local CSV backup
 
 User-requested feature, logged (no code) in [`FEEDBACK-LOG.md`](./FEEDBACK-LOG.md) §15:

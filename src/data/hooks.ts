@@ -766,6 +766,8 @@ export function useAddSet(workoutId: string) {
           set_number: v.setNumber,
           weight_kg: v.set.weight_kg,
           reps: v.set.reps,
+          duration_seconds: v.set.duration_seconds ?? null,
+          level: v.set.level ?? null,
           rpe: v.set.rpe ?? null,
           set_type: v.set.set_type ?? 'normal',
           logged_via: 'manual',

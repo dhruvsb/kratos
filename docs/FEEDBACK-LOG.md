@@ -62,7 +62,7 @@ item: **`Voice Logging.dc.html`** (Claude Design project `fefd8154-7ec8-46fd-b3d
 | # | Item | Area | Done? | Sev | Effort |
 |---|------|------|-------|-----|--------|
 | 45 | Time-based exercises (Plank, Side Plank, Dead Hang) logged this session **vanish from the finished summary** | Active workout / finish | ✅ FIXED 2026-08-14 (sim-verified) | **High** | S–M |
-| 46 | No **duration** set type — time-based lifts are forced into kg×reps, which is the wrong data model | Logging / schema | ⬜ Open | Med | M |
+| 46 | No **duration** set type — time-based lifts are forced into kg×reps, which is the wrong data model | Logging / schema | ✅ Done | Med | M |
 | 47 | No way to **delete** a routine — long-press menu offers only Duplicate / Rename / Archive | Routines | ⬜ Open | Med | S |
 | 48 | History **"Edit" doesn't edit** — it only offers "Delete workout"; want the full logging workflow on a past session | History / edit | ⬜ Open | Med–High | M–L |
 | 49 | Latest **`Voice Logging.dc.html`** design hasn't shipped — mic FAB misaligned + stray history sub-line on Home | Design / Home | ⬜ Open | Med | M |
@@ -100,18 +100,19 @@ exercises). Whatever ships, verify the finish drop-rule (`workouts.ts:124`) neve
 believes they logged.
 </details>
 
-### 46. No duration-based set type for time exercises ⬜ Med
+### 46. No duration-based set type for time exercises ✅ Done (2026-08-14)
 **Requested:** Plank, Side Plank, Dead Hang are **time-based** — a set has a **duration**, not weight × reps.
-Forcing them into the kg/reps grid (weight `—`, reps `12`) is the wrong model and is what makes #45 confusing.
-**Verified:** the whole logging surface is weight×reps — `SetKeypad` has only `kg`/`reps` fields
-(`SetKeypad.tsx:22`), `sets` rows are `weight_kg`/`reps`, and there's no `duration`/seconds column or exercise
-"tracks-time" flag anywhere. Exercises carry `modality`/`mechanic` metadata but nothing marks an exercise as
-time-tracked.
-**Fix (scope, not started):** product + schema decision — add a per-exercise "measured in time" flag (or a
-`set_metric` of reps|duration), a `duration_seconds` column on `sets`, a time entry mode in `SetKeypad`
-(mm:ss), and time-aware rendering in the grid / history / summary (and volume: a plank has no kg×reps volume).
-Sizeable but it's the correct fix for a general lifting app. Until then, #45's commit fix at least stops the
-data loss.
+Forcing them into the kg/reps grid (weight `—`, reps `12`) is the wrong model and is what made #45 confusing.
+**Fixed — went beyond time, made the whole logging surface modality-aware.** Every exercise already carried a
+`modality`; now the UI reads it. Migration `0010_set_metrics.sql` adds nullable `duration_seconds` + `level`
+to `sets` (and widens `last_session_sets()` to return them). `SetKeypad` branches per modality:
+**weight_reps** = KG+REPS (unchanged), **bodyweight_reps** = REPS only, **time** = mm:ss duration entry,
+**distance_time** = duration + machine level (cardio; distance dropped by product decision). The set grid,
+pending-row ✓, PREV/LAST labels, finish summary, history, and the per-exercise chart all render/aggregate in
+the exercise's own terms via `formatSetByModality`/`formatDuration`/`formatLevel` (`src/lib/units.ts`).
+kg-tonnage volume stays weight-only; server-side PR *counts* (`workout_pr_counts`/`getExerciseBests`) remain
+weight-only — non-weight "NEW BEST" detection is a noted follow-up. **Requires migration 0010 applied before
+on-device use.**
 
 ### 47. Can't delete a routine ⬜ Med
 **Seen:** long-pressing a routine opens Duplicate / Rename / **Archive** / Cancel — there's no hard **Delete**.

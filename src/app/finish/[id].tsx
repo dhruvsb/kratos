@@ -8,19 +8,44 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Empty, Loading } from '@/components/ui';
 import { useExerciseBests, useWorkout } from '@/data/hooks';
-import type { WorkoutSet, Unit } from '@/types/db';
-import { formatSet, formatWeight, kgToDisplay } from '@/lib/units';
+import type { WorkoutSet, Unit, ExerciseModality } from '@/types/db';
+import { formatSetByModality, kgToDisplay } from '@/lib/units';
 import { font, radius, space, tracking, type Theme } from '@/theme/tokens';
 import { useTheme } from '@/theme/ThemeProvider';
 
-/** Session top set: heaviest weight wins, reps break ties. */
-function topSet(sets: WorkoutSet[]): WorkoutSet | null {
+/**
+ * Session top set, per modality:
+ *   weight_reps    → heaviest weight wins, reps break ties
+ *   bodyweight_reps→ most reps
+ *   time           → longest duration
+ *   distance_time  → longest duration, level breaks ties
+ * A set with a null primary metric can't be a top set.
+ */
+function topSet(sets: WorkoutSet[], modality: ExerciseModality): WorkoutSet | null {
   return sets.reduce<WorkoutSet | null>((best, s) => {
-    if (s.weight_kg == null) return best;
-    if (best?.weight_kg == null) return s;
-    if (s.weight_kg > best.weight_kg) return s;
-    if (s.weight_kg === best.weight_kg && (s.reps ?? 0) > (best.reps ?? 0)) return s;
-    return best;
+    switch (modality) {
+      case 'bodyweight_reps':
+        if (s.reps == null) return best;
+        if (best?.reps == null) return s;
+        return s.reps > best.reps ? s : best;
+      case 'time':
+        if (s.duration_seconds == null) return best;
+        if (best?.duration_seconds == null) return s;
+        return s.duration_seconds > best.duration_seconds ? s : best;
+      case 'distance_time':
+        if (s.duration_seconds == null) return best;
+        if (best?.duration_seconds == null) return s;
+        if (s.duration_seconds > best.duration_seconds) return s;
+        if (s.duration_seconds === best.duration_seconds && (s.level ?? 0) > (best.level ?? 0)) return s;
+        return best;
+      case 'weight_reps':
+      default:
+        if (s.weight_kg == null) return best;
+        if (best?.weight_kg == null) return s;
+        if (s.weight_kg > best.weight_kg) return s;
+        if (s.weight_kg === best.weight_kg && (s.reps ?? 0) > (best.reps ?? 0)) return s;
+        return best;
+    }
   }, null);
 }
 
@@ -65,14 +90,20 @@ export default function FinishScreen() {
   // are an online read (offline finish just omits the section).
   const bestByExercise = new Map((bests.data ?? []).map((b) => [b.exercise_id, b]));
   const newBests = detail.exercises.flatMap((we) => {
-    const top = topSet(we.sets);
+    const modality = we.exercise.modality;
+    const top = topSet(we.sets, modality);
     const prior = bestByExercise.get(we.exercise_id);
-    if (!top || top.weight_kg == null || !prior) return [];
+    if (!top || !prior) return [];
+    // The all-time baseline (getExerciseBests) is weight-only, so PR detection
+    // is meaningful only for weight_reps — heavier, or same weight for more
+    // reps. Other modalities have no baseline to beat (prior is absent) and
+    // fall through; when one exists, its "top" still renders per modality.
+    if (modality !== 'weight_reps' || top.weight_kg == null) return [];
     const beat =
       top.weight_kg > prior.weight_kg ||
       (top.weight_kg === prior.weight_kg && (top.reps ?? 0) > (prior.reps ?? 0));
     return beat
-      ? [{ id: we.id, name: we.exercise.canonical_name, val: formatSet(top.weight_kg, top.reps, unit) }]
+      ? [{ id: we.id, name: we.exercise.canonical_name, val: formatSetByModality(top, modality, unit) }]
       : [];
   });
 
@@ -112,7 +143,7 @@ export default function FinishScreen() {
 
         <Text style={[styles.section, { marginTop: space.xxl }]}>SESSION</Text>
         {detail.exercises.map((we) => {
-          const top = topSet(we.sets);
+          const top = topSet(we.sets, we.exercise.modality);
           return (
             <View key={we.id} style={styles.exRow}>
               <Text style={styles.exName} numberOfLines={1}>
@@ -120,7 +151,7 @@ export default function FinishScreen() {
               </Text>
               <Text style={styles.exMeta}>
                 {we.sets.length} SET{we.sets.length === 1 ? '' : 'S'}
-                {top ? ` · TOP ${formatWeight(top.weight_kg, unit)}` : ''}
+                {top ? ` · TOP ${formatSetByModality(top, we.exercise.modality, unit)}` : ''}
               </Text>
             </View>
           );

@@ -105,6 +105,9 @@ export const workoutSetSchema = z.object({
   // z.coerce on numeric columns: PostgREST may serialize numeric as string.
   weight_kg: z.coerce.number().nullable(),
   reps: z.number().int().nullable(),
+  // Modality metrics (migration 0010): duration for time/cardio, level for cardio.
+  duration_seconds: z.number().int().nullable(),
+  level: z.coerce.number().nullable(),
   rpe: z.coerce.number().nullable(),
   set_type: setTypeSchema,
   logged_via: loggedViaSchema,
@@ -149,6 +152,8 @@ export const lastSessionSetSchema = z.object({
   set_number: z.number().int(),
   weight_kg: z.coerce.number().nullable(),
   reps: z.number().int().nullable(),
+  duration_seconds: z.number().int().nullable(),
+  level: z.coerce.number().nullable(),
   rpe: z.coerce.number().nullable(),
   set_type: setTypeSchema,
 });

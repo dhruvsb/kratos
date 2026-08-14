@@ -1,7 +1,7 @@
 // Weight display + entry helpers. Storage is ALWAYS kg (hard rule); these convert
 // to/from the profile's display unit and format for the LED number style. The kg↔lb
 // factor is the exact pound (0.45359237 kg), so a round-tripped value is stable.
-import type { Unit } from '@/types/db';
+import type { ExerciseModality, Unit } from '@/types/db';
 
 const LB_PER_KG = 1 / 0.45359237; // 2.2046226218…
 
@@ -41,6 +41,59 @@ export function formatSet(
 ): string {
   const w = kg == null ? '—' : trimWeight(kgToDisplay(kg, unit));
   return `${w} × ${reps ?? '—'}`;
+}
+
+// Modality metrics (duration / level) ---------------------------------------
+// Time exercises store duration_seconds; cardio (distance_time) stores duration +
+// an unitless machine level. These format those for the LED number style.
+
+/** "0:45", "28:30", "1:05:00" — mm:ss, growing an hours field only when needed. */
+export function formatDuration(sec: number | null | undefined): string {
+  if (sec == null) return '—';
+  const s = Math.max(0, Math.round(sec));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const ss = s % 60;
+  const two = (n: number) => String(n).padStart(2, '0');
+  return h > 0 ? `${h}:${two(m)}:${two(ss)}` : `${m}:${two(ss)}`;
+}
+
+/** "8" / "8.5" — a machine level, or "—" when absent. */
+export function formatLevel(n: number | null | undefined): string {
+  if (n == null) return '—';
+  return trimWeight(n);
+}
+
+/** The minimal set shape the modality formatters read (WorkoutSet + LastSessionSet). */
+export type SetMetrics = {
+  weight_kg: number | null;
+  reps: number | null;
+  duration_seconds: number | null;
+  level: number | null;
+};
+
+/**
+ * A whole set summarised for PREV / LAST / tape labels, in the exercise's own terms:
+ * weight×reps, bare reps, a duration, or duration + level.
+ */
+export function formatSetByModality(
+  set: SetMetrics,
+  modality: ExerciseModality,
+  unit: Unit
+): string {
+  switch (modality) {
+    case 'bodyweight_reps':
+      return `${set.reps ?? '—'} reps`;
+    case 'time':
+      return formatDuration(set.duration_seconds);
+    case 'distance_time': {
+      const t = formatDuration(set.duration_seconds);
+      return set.level != null ? `${t} · L${formatLevel(set.level)}` : t;
+    }
+    case 'weight_reps':
+    default:
+      return formatSet(set.weight_kg, set.reps, unit);
+  }
 }
 
 // Barbell plate math ---------------------------------------------------------

@@ -10,9 +10,15 @@ codebase or a huge prior conversation.
 > issues**) *and* append a dated entry to [`WORK-LOG.md`](./WORK-LOG.md). This file is the
 > snapshot; `WORK-LOG.md` is the full history. Keep this file short.
 
-**Last updated:** 2026-08-14 — **Logged #50 (backlog): automatic weekly local CSV backup**, 4-backup
-rotation — see [`FEEDBACK-LOG.md`](./FEEDBACK-LOG.md) §15. Not built; the export/serialize logic already
-exists (`buildHevyExport`/`serializeHevyCsv`), missing pieces are scheduling (foreground-check on
+**Last updated:** 2026-08-14 — **#46 FIXED (code): modality-aware set logging.** The set grid + `SetKeypad`
+now adapt to each exercise's `modality` — weight_reps (KG+REPS, unchanged), bodyweight_reps (REPS), time
+(mm:ss duration), distance_time (cardio: duration + machine level). New migration `0010_set_metrics.sql`
+(nullable `duration_seconds`+`level` on `sets`, widened `last_session_sets()`); new
+`formatDuration`/`formatLevel`/`formatSetByModality` in `units.ts`; grid/finish/history/exercise-chart all
+render in the exercise's own terms. `tsc` green. **⚠ migration 0010 must be applied to Supabase before
+on-device use; not yet run on a device.** Prior same day — **Logged #50 (backlog): automatic weekly local CSV
+backup**, 4-backup rotation — see [`FEEDBACK-LOG.md`](./FEEDBACK-LOG.md) §15. Not built; the export/serialize
+logic already exists (`buildHevyExport`/`serializeHevyCsv`), missing pieces are scheduling (foreground-check on
 `lastBackupAt` recommended over true background execution), durable `Paths.document` storage (today's
 manual export only writes to the ephemeral `Paths.cache` for the share sheet), and rotation. Prior same day:
 **#45 (High) FIXED + sim-verified.** Time-based/weightless exercises
@@ -299,7 +305,7 @@ Static checks currently green: `tsc --noEmit` clean; `expo export --platform web
 `xcodebuild -allowProvisioningUpdates` builds + installs Release to physical hardware.
 **Feedback pass (`FEEDBACK-LOG.md`): 22 done** — ✅ #1 #2 #3 #4 #6 #7 #9 #10 #11 #13 #14 #15 #16
 #17 #18 #19 #20 #21 #26 #31 #32 (#12 dissolved by #13) · 🟡 #5 (fix applied — keyboard-avoidance;
-device-confirm pending) · ⬜ **open: #8 #23 #36 #44 #46 #47 #48 #49 #50** · **#45 (High) DONE 2026-08-14** (sim-verified) · **withdrawn (won't do): #24 #25 #27 #29 #30**.
+device-confirm pending) · ⬜ **open: #8 #23 #36 #44 #47 #48 #49 #50** · **#45 (High) DONE 2026-08-14** (sim-verified) · **#46 DONE 2026-08-14** (modality-aware logging; code+tsc, migration 0010 pending apply, not device-verified) · **withdrawn (won't do): #24 #25 #27 #29 #30**.
 **#33 (active-workout resume bar) + #35 (PR records badge) DONE 2026-08-13** (bar sim+device-verified;
 badge sim-verified, RPC 0007 applied). **#22 (Liquid Glass): DONE 2026-08-12** — glass tab pill + FAB, device-verified on the iPhone 15 (iOS
 26.5.2); device-QA fixes landed (refraction, consistent FAB, cross-fade). **#36 (backlog):** authentic
@@ -308,6 +314,10 @@ native-`UITabBar` drag-lens glass — deferred, keeping the custom pill+FAB.
 
 ## Pending actions (owner: user / next session)
 
+- [ ] **Apply migration `0010_set_metrics.sql` to Supabase** (`supabase db push` or SQL editor) — adds
+      `duration_seconds`+`level` to `sets` and widens `last_session_sets()`. Additive + nullable (safe). The
+      modality-aware set logging (#46) can't write time/cardio sets until this lands. Then device-verify one
+      exercise of each modality (weight_reps / bodyweight_reps / time / distance_time).
 - [ ] **Rebuild the dev client for Apple Health** — the `@kingstinct/react-native-healthkit` native module
       was added, so the current on-device build can't run the "Sync from Apple Health" button until a fresh
       `xcodebuild -allowProvisioningUpdates` install (same flow as the last device build). Until then it's

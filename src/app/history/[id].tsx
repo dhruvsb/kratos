@@ -19,8 +19,8 @@ import {
   useWorkout,
   useWorkoutPrCounts,
 } from '@/data/hooks';
-import type { WorkoutSet, Unit } from '@/types/db';
-import { formatSet, formatWeight } from '@/lib/units';
+import type { WorkoutSet, Unit, ExerciseModality } from '@/types/db';
+import { formatSetByModality, formatWeight } from '@/lib/units';
 import { muscleSplit } from '@/lib/muscleSplit';
 import { font, space, tracking, type Theme } from '@/theme/tokens';
 import { useTheme } from '@/theme/ThemeProvider';
@@ -29,8 +29,11 @@ type EditState = {
   setId: string;
   exerciseName: string;
   setNumber: number;
+  modality: ExerciseModality;
   kg: number | null;
   reps: number | null;
+  durationSeconds: number | null;
+  level: number | null;
 };
 
 export default function WorkoutDetailScreen() {
@@ -147,17 +150,34 @@ export default function WorkoutDetailScreen() {
         )}
 
         {detail.exercises.map((we) => {
-          const top = we.sets.reduce<WorkoutSet | null>(
-            (best, s) => ((s.weight_kg ?? 0) > (best?.weight_kg ?? -1) ? s : best),
-            null
-          );
+          const modality = we.exercise.modality;
+          // "Top" set depends on what the exercise measures: heaviest weight, most reps,
+          // or the longest hold/cardio time — so it isn't a bare "—" for non-weight work.
+          const top = we.sets.reduce<WorkoutSet | null>((best, s) => {
+            switch (modality) {
+              case 'bodyweight_reps':
+                return (s.reps ?? 0) > (best?.reps ?? -1) ? s : best;
+              case 'time':
+              case 'distance_time':
+                return (s.duration_seconds ?? 0) > (best?.duration_seconds ?? -1) ? s : best;
+              case 'weight_reps':
+              default:
+                return (s.weight_kg ?? 0) > (best?.weight_kg ?? -1) ? s : best;
+            }
+          }, null);
           return (
             <View key={we.id} style={styles.block}>
               <Pressable style={styles.blockHead} onPress={() => router.push(`/exercise/${we.exercise_id}`)}>
                 <Text style={styles.blockTitle} numberOfLines={1}>
                   {we.exercise.canonical_name}
                 </Text>
-                {top && <Text style={styles.blockTop}>top {formatWeight(top.weight_kg, unit)} {unit}</Text>}
+                {top && (
+                  <Text style={styles.blockTop}>
+                    {modality === 'weight_reps'
+                      ? `top ${formatWeight(top.weight_kg, unit)} ${unit}`
+                      : `top ${formatSetByModality(top, modality, unit)}`}
+                  </Text>
+                )}
               </Pressable>
               {we.sets.map((set, i) => (
                 <Pressable
@@ -168,21 +188,28 @@ export default function WorkoutDetailScreen() {
                       setId: set.id,
                       exerciseName: we.exercise.canonical_name,
                       setNumber: set.set_number,
+                      modality,
                       kg: set.weight_kg,
                       reps: set.reps,
+                      durationSeconds: set.duration_seconds,
+                      level: set.level,
                     })
                   }
                 >
                   <Text style={styles.setNum}>{i + 1}</Text>
-                  <Text style={styles.setVal}>{formatSet(set.weight_kg, set.reps, unit)}</Text>
+                  <Text style={styles.setVal}>{formatSetByModality(set, modality, unit)}</Text>
                   {/* Warmup carries no visible trace (feedback #31); drop/failure tags stay
                       for imported (Hevy) data that can still contain them. */}
                   {set.set_type !== 'normal' && set.set_type !== 'warmup' && (
                     <Text style={styles.setTag}>{set.set_type.toUpperCase()}</Text>
                   )}
-                  <Text style={styles.setVol}>
-                    {Math.round((set.weight_kg ?? 0) * (set.reps ?? 0))} {unit}
-                  </Text>
+                  {/* Per-set volume is meaningful only for weight×reps work; hide the "0 kg"
+                      badge for bodyweight / time / cardio sets. */}
+                  {modality === 'weight_reps' && (
+                    <Text style={styles.setVol}>
+                      {Math.round((set.weight_kg ?? 0) * (set.reps ?? 0))} {unit}
+                    </Text>
+                  )}
                 </Pressable>
               ))}
             </View>
@@ -193,14 +220,21 @@ export default function WorkoutDetailScreen() {
       {edit && (
         <SetKeypad
           visible
+          modality={edit.modality}
           exerciseName={edit.exerciseName}
           setNumber={edit.setNumber}
           unit={unit}
+          lastSet={null}
           initialKg={edit.kg}
           initialReps={edit.reps}
+          initialDurationSeconds={edit.durationSeconds ?? null}
+          initialLevel={edit.level ?? null}
           mode="edit"
-          onLog={(weightKg, reps) => {
-            updateSet.mutate({ setId: edit.setId, patch: { weight_kg: weightKg, reps } });
+          onLog={({ weightKg, reps, durationSeconds, level }) => {
+            updateSet.mutate({
+              setId: edit.setId,
+              patch: { weight_kg: weightKg, reps, duration_seconds: durationSeconds, level },
+            });
             setEdit(null);
           }}
           onDelete={() => {
