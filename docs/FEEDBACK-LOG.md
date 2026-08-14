@@ -6,6 +6,94 @@ entry at top. When an item is fixed, mark it and move the detail into `WORK-LOG.
 
 ---
 
+## 2026-08-14 (14) — Hands-on device use (Core workout): time-based exercises, delete routines, edit workout, unshipped design
+
+**Context:** user's own device session logging a **Core** workout, plus general use. Six screenshots:
+active-workout Plank (`4 OF 5`, first-time-lift banner) → Dead Hang (`7 OF 7`) → finish summary (only
+Crunch / Hanging Leg Raise / Lying Leg Raise / Reverse Crunch — **Plank, Side Plank, Dead Hang gone**) →
+Routines long-press menu (Duplicate / Rename / Archive — **no Delete**) → History detail Edit menu (only
+**Delete workout**) → Home (mic FAB misaligned + a stray history sub-line). Reference design for the last
+item: **`Voice Logging.dc.html`** (Claude Design project `fefd8154-7ec8-46fd-b3d2-4733410fa3f6`).
+
+| # | Item | Area | Done? | Sev | Effort |
+|---|------|------|-------|-----|--------|
+| 45 | Time-based exercises (Plank, Side Plank, Dead Hang) logged this session **vanish from the finished summary** | Active workout / finish | ⬜ Open | **High** | S–M |
+| 46 | No **duration** set type — time-based lifts are forced into kg×reps, which is the wrong data model | Logging / schema | ⬜ Open | Med | M |
+| 47 | No way to **delete** a routine — long-press menu offers only Duplicate / Rename / Archive | Routines | ⬜ Open | Med | S |
+| 48 | History **"Edit" doesn't edit** — it only offers "Delete workout"; want the full logging workflow on a past session | History / edit | ⬜ Open | Med–High | M–L |
+| 49 | Latest **`Voice Logging.dc.html`** design hasn't shipped — mic FAB misaligned + stray history sub-line on Home | Design / Home | ⬜ Open | Med | M |
+
+### 45. Time-based exercises logged, but missing from the finished session ⬜ **High**
+**Seen:** the user logged Plank, Side Plank and Dead Hang mid-workout, but the **WORKOUT SAVED** summary lists
+only the four weighted exercises (15 sets total = Crunch 5 + Hanging Leg Raise 4 + Lying Leg Raise 3 + Reverse
+Crunch 3). The three time-based exercises are gone — reads as data loss.
+**Root cause — they were never committed as sets, then dropped on finish.** These are **first-time lifts**
+(the "First time on this lift" banner is up, so `noHistory && prevInSession == null`). On that path the pending
+row's green ✓ (`logPending`, `workout/[id].tsx:204-212`) **diverts to the keypad instead of logging** — with no
+weight to repeat it can't one-tap-log. So tapping ✓ opens `SetKeypad` rather than saving; if the user doesn't
+then tap **Log set**, nothing is written. (A weightless set *is* loggable — `canLog = reps > 0` in
+`SetKeypad.tsx:125`, `weight_kg` null is fine — so once the keypad's LOG is tapped it saves. The trap is
+purely that the pending ✓ reads as "logged" but only opens the editor.) With zero committed sets,
+`finishWorkout` (`workouts.ts:124-128`) **deletes every zero-set exercise**, so Plank/Side Plank/Dead Hang
+disappear from the saved session entirely.
+**Fix (scope, not started):** two levers, pick or combine — (a) make the first-time-lift pending ✓ **commit the
+reps-only set** it's showing (log `weight_kg: null, reps`) instead of silently opening the keypad, so a tap
+means "logged"; and/or (b) make the divert-to-keypad obvious (e.g. the ✓ visibly means "needs a value" on a
+brand-new lift). Deeper fix is **#46** (a real duration set type removes the "no weight" ambiguity for these
+exercises). Whatever ships, verify the finish drop-rule (`workouts.ts:124`) never eats an exercise the user
+believes they logged.
+
+### 46. No duration-based set type for time exercises ⬜ Med
+**Requested:** Plank, Side Plank, Dead Hang are **time-based** — a set has a **duration**, not weight × reps.
+Forcing them into the kg/reps grid (weight `—`, reps `12`) is the wrong model and is what makes #45 confusing.
+**Verified:** the whole logging surface is weight×reps — `SetKeypad` has only `kg`/`reps` fields
+(`SetKeypad.tsx:22`), `sets` rows are `weight_kg`/`reps`, and there's no `duration`/seconds column or exercise
+"tracks-time" flag anywhere. Exercises carry `modality`/`mechanic` metadata but nothing marks an exercise as
+time-tracked.
+**Fix (scope, not started):** product + schema decision — add a per-exercise "measured in time" flag (or a
+`set_metric` of reps|duration), a `duration_seconds` column on `sets`, a time entry mode in `SetKeypad`
+(mm:ss), and time-aware rendering in the grid / history / summary (and volume: a plank has no kg×reps volume).
+Sizeable but it's the correct fix for a general lifting app. Until then, #45's commit fix at least stops the
+data loss.
+
+### 47. Can't delete a routine ⬜ Med
+**Seen:** long-pressing a routine opens Duplicate / Rename / **Archive** / Cancel — there's no hard **Delete**.
+The user has accumulated junk/test routines (Push A, Test, Test 2, …, "17" total) and wants to remove them.
+**Verified:** the menu (`routines.tsx:119-123`) offers only those three; the data layer has
+`setRoutineArchived` (`routines.ts:84`) / `useArchiveRoutine` but **no `deleteRoutine`** — archive just flips
+`archived=true` so the routine stays in the DB and can resurface. No permanent delete exists.
+**Fix (scope, not started):** add `deleteRoutine(id)` (hard delete; the routine's `routine_exercises` cascade —
+logged *workouts* are independent rows, so history is untouched) + a `useDeleteRoutine` hook, and a **Delete**
+entry in the long-press menu with a destructive confirm, kept distinct from Archive (archive = hide, delete =
+gone). Decide whether Archive stays or Delete replaces it.
+
+### 48. "Edit" on a finished workout can't actually edit it ⬜ Med–High
+**Requested:** tapping **Edit** on a past workout should open the **normal logging workflow** — add an
+exercise, add/remove sets, change weights/reps, delete anything — on that finished session.
+**Verified:** History detail's top-right "Edit" (`history/[id].tsx:103-104`) only opens a menu whose sole
+action is **Delete workout** (`openWorkoutMenu`, `:88-93`). Individual sets are editable inline (tap a row →
+`SetKeypad`), but there's **no** add-exercise / add-set / remove-exercise path on a finished workout — that
+workflow lives only on the live `workout/[id].tsx` screen.
+**Fix (scope, not started):** let a finished workout re-enter the active-workout editor (or port its
+add/remove-exercise + add-set affordances into the history detail). Wrinkle: the live screen keys off
+`useActiveWorkout` (`ended_at IS NULL`) and the finish/summary flow — editing an *ended* workout needs either a
+temporary re-open (clear `ended_at`, edit, re-finish) or the grid components made workout-id-driven rather than
+active-only. Non-trivial; scope the re-open-vs-inline-editor choice first.
+
+### 49. Latest `Voice Logging.dc.html` design not shipped (mic FAB + Home history) ⬜ Med
+**Seen:** on Home, the **voice mic FAB is misaligned** relative to the tab pill, and the history area shows a
+**stray extra line** beneath the "THIS WEEK" group header — neither matches the exported design. User: "some
+design changes have not taken effect."
+**Reference design:** `Voice Logging.dc.html` (Claude Design project
+`fefd8154-7ec8-46fd-b3d2-4733410fa3f6`, file `Voice Logging.dc.html` + its `support.js` import) — the intended
+current-state design.
+**Not yet code-verified** (logged from screenshots). **Next step:** diff the shipped Home (`index.tsx`,
+`TabBar.tsx` FAB positioning, the week-grouped history header) against `Voice Logging.dc.html` to find which
+design deltas didn't land — likely the FAB's alignment/offset vs. the glass pill and the history group-header /
+sub-line treatment. Import the design via the `claude_design` MCP and reconcile.
+
+---
+
 ## 2026-08-13 (13) — Exercise Library: clipped region-chip strip + cross-region exercise reads mis-segregated
 
 **Context:** device screenshot of the Exercise **Library** with the **LEGS** chip active. Two issues

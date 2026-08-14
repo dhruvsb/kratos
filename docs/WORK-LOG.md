@@ -7,6 +7,29 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-14 — Logged hands-on device feedback (#45–#49)
+
+User's own Core-workout session + general use surfaced five items, all logged (no code changes) in
+[`FEEDBACK-LOG.md`](./FEEDBACK-LOG.md) §14 with root-cause verification:
+
+- **#45 (High) — time-based exercises vanish from the finished summary.** Plank / Side Plank / Dead Hang
+  were logged but absent from the saved session. Root cause: on a **first-time lift** the pending row's
+  green ✓ (`logPending`, `workout/[id].tsx:204`) diverts to the keypad instead of committing (no weight to
+  repeat), so if the keypad's Log set isn't tapped, **zero sets are written** — and `finishWorkout`
+  (`workouts.ts:124`) deletes every zero-set exercise. Reps-only sets *are* loggable (`canLog = reps > 0`);
+  the trap is the ✓ reading as "logged" while only opening the editor.
+- **#46 (Med) — no duration set type.** Time exercises are forced into kg×reps; needs a per-exercise
+  time flag + `duration_seconds` + a time entry mode. The real fix behind #45's ambiguity.
+- **#47 (Med) — can't delete a routine.** Long-press menu has only Duplicate/Rename/Archive; no
+  `deleteRoutine` in the data layer — add a hard delete distinct from Archive.
+- **#48 (Med–High) — History "Edit" can't edit.** It only offers Delete workout; want the full logging
+  workflow (add/remove exercises, sets, weights) on a finished session. Wrinkle: live grid keys off
+  `useActiveWorkout` (`ended_at IS NULL`).
+- **#49 (Med) — latest `Voice Logging.dc.html` design not shipped.** Mic FAB misaligned + stray Home
+  history sub-line vs. the exported design (Claude Design `fefd8154-…`); needs a design-vs-code diff.
+
+---
+
 ## 2026-08-14 — Recorder bug FIXED + verified; Release build pushed to the iPhone 15
 
 Follow-up to the QA pass below — fixed both bugs and shipped to device.
