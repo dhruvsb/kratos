@@ -708,8 +708,18 @@ export default function ActiveWorkoutScreen() {
               <View style={styles.firstNoteBar} />
               <Text style={styles.firstNoteText}>
                 {prefillEnabled
-                  ? 'First time on this lift. Tap ✓ to log it as shown, or set a weight first — every set after today pre-fills from it.'
-                  : 'First time on this lift. Enter your weight and reps for each set.'}
+                  ? `First time on this ${isWeightModality ? 'lift' : 'exercise'}. Tap ✓ to log it as shown, or ${
+                      isWeightModality ? 'set a weight first' : usesDuration ? 'set a time first' : 'set your reps first'
+                    } — every set after today pre-fills from it.`
+                  : `First time on this ${isWeightModality ? 'lift' : 'exercise'}. Enter ${
+                      isWeightModality
+                        ? 'your weight and reps'
+                        : usesDuration
+                          ? isCardio
+                            ? 'a time and level'
+                            : 'a time'
+                          : 'your reps'
+                    } for each set.`}
               </Text>
             </View>
           )}
