@@ -11,6 +11,7 @@ import { HomeTabBar, TAB_BAR_HEIGHT } from '@/components/voice/TabBar';
 import { ActiveWorkoutBar } from '@/components/workout/ActiveWorkoutBar';
 import {
   useArchiveRoutine,
+  useDeleteRoutine,
   useDuplicateRoutine,
   useRenameRoutine,
   useRoutines,
@@ -33,6 +34,7 @@ export default function RoutinesScreen() {
   const duplicate = useDuplicateRoutine();
   const rename = useRenameRoutine();
   const archive = useArchiveRoutine();
+  const remove = useDeleteRoutine();
 
   const list = routines.data ?? [];
   const workouts = history.data?.pages.flat() ?? [];
@@ -114,12 +116,35 @@ export default function RoutinesScreen() {
     ]);
   }
 
+  function deleteRoutine(r: RoutineWithCount) {
+    remove.mutate(r.id, {
+      onError: (e) => Alert.alert("Couldn't delete routine", e.message),
+    });
+  }
+
+  function confirmDelete(r: RoutineWithCount) {
+    // Destructive + irreversible, so a second explicit confirm (Archive only warns
+    // once because it's undoable; Delete is gone for good). Logged history is
+    // untouched — workouts' routine_id is FK set-null, so past sessions survive.
+    haptics.warn();
+    Alert.alert(
+      `Delete "${r.name}"?`,
+      'This permanently removes the routine. Your logged workout history is kept.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete', style: 'destructive', onPress: () => deleteRoutine(r) },
+      ]
+    );
+  }
+
   function openRoutineMenu(r: RoutineWithCount) {
     haptics.tick();
     Alert.alert(r.name, `${r.exercise_count} EXERCISES`, [
       { text: 'Duplicate', onPress: () => duplicateRoutine(r) },
       { text: 'Rename', onPress: () => renameRoutine(r) },
-      { text: 'Archive', style: 'destructive', onPress: () => confirmArchive(r) },
+      // Archive = hide (undoable); Delete = permanent. Kept as two distinct actions.
+      { text: 'Archive', onPress: () => confirmArchive(r) },
+      { text: 'Delete', style: 'destructive', onPress: () => confirmDelete(r) },
       { text: 'Cancel', style: 'cancel' },
     ]);
   }

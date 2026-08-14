@@ -86,13 +86,13 @@ export default function WorkoutDetailScreen() {
     ]);
   }
 
-  // The top-right "Edit" affordance (refined design). Editing a set is inline (tap a
-  // row); this surfaces the whole-workout action that used to hide in the set sheet.
-  function openWorkoutMenu() {
-    Alert.alert(name, dateLabel, [
-      { text: 'Delete workout', style: 'destructive', onPress: confirmDeleteWorkout },
-      { text: 'Cancel', style: 'cancel' },
-    ]);
+  // The top-right "Edit" affordance (feedback #48). Opens the full logging workflow
+  // on this finished session — the live set grid + keypad, add/remove exercises,
+  // add/edit/delete sets — by re-using the active-workout screen in edit mode
+  // (`?edit=1`; the workout stays finished, ended_at untouched). Quick single-set
+  // fixes still work inline here (tap a row); this is the broader editor.
+  function openEditor() {
+    router.push(`/workout/${detail.id}?edit=1`);
   }
 
   return (
@@ -103,7 +103,7 @@ export default function WorkoutDetailScreen() {
             <Text style={styles.backChevron}>‹</Text>
             <Text style={styles.back}>History</Text>
           </Pressable>
-          <Pressable onPress={openWorkoutMenu} hitSlop={10}>
+          <Pressable onPress={openEditor} hitSlop={10}>
             <Text style={styles.edit}>Edit</Text>
           </Pressable>
         </View>
@@ -146,7 +146,7 @@ export default function WorkoutDetailScreen() {
         {detail.exercises.length === 0 ? (
           <Empty text="No exercises in this workout." />
         ) : (
-          <Text style={styles.editHint}>Tap any set to fix it.</Text>
+          <Text style={styles.editHint}>Tap a set to fix it · Edit to add or remove.</Text>
         )}
 
         {detail.exercises.map((we) => {

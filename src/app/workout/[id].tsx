@@ -4,7 +4,7 @@
 // stays in eyeshot as the number to beat. No microphone — voice drops back in
 // later on top of this same grid (see docs/design/RepVoice-VoiceFirst-v3.dc.html).
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ExercisePickerModal } from '@/components/ExercisePickerModal';
@@ -17,6 +17,7 @@ import {
   useAddExerciseToWorkout,
   useAddSet,
   useDeleteSet,
+  useDeleteWorkout,
   useDiscardWorkout,
   useExerciseBests,
   useFinishWorkout,
@@ -24,6 +25,7 @@ import {
   usePrefetchExerciseDirectory,
   usePrefetchLastSessions,
   useProfile,
+  useReconcileEditedWorkout,
   useRemoveWorkoutExercise,
   useUpdateSet,
   useWorkout,
@@ -135,7 +137,11 @@ export default function ActiveWorkoutScreen() {
   const { color, shadow } = useTheme();
   const styles = useMemo(() => makeStyles(color, shadow), [color, shadow]);
   const insets = useSafeAreaInsets();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  // `edit=1` (set by History → Edit) unlocks the full logging workflow on an
+  // already-finished session (feedback #48): the same set grid, keypad, add/remove
+  // exercise and add/edit/delete set affordances, without re-opening the workout
+  // (ended_at stays set, so it never resurfaces as the "active" workout).
+  const { id, edit } = useLocalSearchParams<{ id: string; edit?: string }>();
   const workout = useWorkout(id);
   const profile = useProfile();
   const settings = useSettings();
@@ -148,7 +154,9 @@ export default function ActiveWorkoutScreen() {
   const deleteSet = useDeleteSet(id!);
   const finish = useFinishWorkout(id!);
   const discard = useDiscardWorkout(id!);
+  const deleteWorkout = useDeleteWorkout(id!);
   const removeExercise = useRemoveWorkoutExercise(id!);
+  const reconcileEdit = useReconcileEditedWorkout();
 
   const [pickerOpen, setPickerOpen] = useState(false);
   const [activeExerciseId, setActiveExerciseId] = useState<string | null>(null);
@@ -156,6 +164,27 @@ export default function ActiveWorkoutScreen() {
 
   const detail = workout.data;
   const isFinished = detail?.ended_at != null;
+  // Editing a finished session (History → Edit). `locked` is the real read-only gate:
+  // a finished workout opened *without* edit mode stays view-only (every editing
+  // affordance below keys off `!locked`, which is `!isFinished` unless we're editing).
+  const editingFinished = isFinished && edit === '1';
+  const locked = isFinished && !editingFinished;
+
+  // Reconcile the history/PR/calendar/progress caches when the edit session ends —
+  // on the explicit "Done" tap and as an unmount safety net (OS back gesture). The
+  // set/exercise mutations only refresh keys.workout(id); a finished session feeds
+  // more (see useReconcileEditedWorkout). Guarded by a ref so it fires only when we
+  // actually entered edit mode and only once per relevant unmount.
+  const editedRef = useRef(false);
+  useEffect(() => {
+    if (editingFinished) editedRef.current = true;
+  }, [editingFinished]);
+  useEffect(
+    () => () => {
+      if (editedRef.current) reconcileEdit();
+    },
+    [reconcileEdit]
+  );
 
   // Warm the last-session panel for every exercise up front (the 80% case: this
   // session repeats last session), so switching exercises is instant from cache.
@@ -446,6 +475,35 @@ export default function ActiveWorkoutScreen() {
     router.replace(`/finish/${id}`);
   }
 
+  // Leave the finished-workout edit session (feedback #48). Nothing to "finish" — the
+  // workout is already ended and every set was written optimistically as it was
+  // touched — so this just reconciles the history caches and returns to the detail.
+  function doneEditing() {
+    reconcileEdit();
+    editedRef.current = false;
+    router.back();
+  }
+
+  // Delete an already-finished workout from the edit session's ⋯ menu. Uses the
+  // history delete (refreshes streak/PR/progress), unlike discard's active-slot path.
+  function confirmDeleteWorkout() {
+    Alert.alert('Delete this workout?', 'The whole session and every set in it are removed.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () => {
+          haptics.warn();
+          editedRef.current = false; // delete already reconciles the caches
+          deleteWorkout.mutate(undefined, {
+            onSuccess: () => router.back(),
+            onError: (e) => Alert.alert("Couldn't delete workout", e.message),
+          });
+        },
+      },
+    ]);
+  }
+
   function confirmDiscard() {
     Alert.alert('Discard workout?', 'Every set logged this session is deleted.', [
       { text: 'Cancel', style: 'cancel' },
@@ -474,7 +532,13 @@ export default function ActiveWorkoutScreen() {
         onPress: () => confirmRemoveExercise(activeExercise),
       });
     }
-    buttons.push({ text: 'Discard workout', style: 'destructive', onPress: confirmDiscard });
+    // Editing history: the destructive action is a real history delete; a live
+    // session discards the in-progress workout.
+    buttons.push(
+      editingFinished
+        ? { text: 'Delete workout', style: 'destructive', onPress: confirmDeleteWorkout }
+        : { text: 'Discard workout', style: 'destructive', onPress: confirmDiscard }
+    );
     buttons.push({ text: 'Cancel', style: 'cancel' });
     Alert.alert(detail?.title ?? detail?.routine_name ?? 'Workout', undefined, buttons);
   }
@@ -526,9 +590,11 @@ export default function ActiveWorkoutScreen() {
       <View style={styles.recBar}>
         <View style={styles.recRow}>
           {!isFinished && <View style={styles.recDot} />}
-          <Text style={styles.recLabel}>{isFinished ? 'FINISHED' : 'RECORDING'}</Text>
+          <Text style={styles.recLabel}>
+            {locked ? 'FINISHED' : editingFinished ? 'EDITING' : 'RECORDING'}
+          </Text>
         </View>
-        {!isFinished && (
+        {!locked && (
           <Pressable style={styles.menuBtn} onPress={openWorkoutMenu} hitSlop={8}>
             <Text style={styles.menuGlyph}>⋯</Text>
           </Pressable>
@@ -563,7 +629,7 @@ export default function ActiveWorkoutScreen() {
                 onPress={() => setActiveExerciseId(we.exercise_id)}
                 // Long-press a chip to remove that exercise — the same fast gesture the
                 // set rows use; the ⋯ menu carries the discoverable path.
-                onLongPress={() => !isFinished && confirmRemoveExercise(we)}
+                onLongPress={() => !locked && confirmRemoveExercise(we)}
                 style={[styles.chip, done && !on && styles.chipDone, on && styles.chipOn]}
               >
                 {done && <Text style={styles.chipCheck}>✓</Text>}
@@ -573,7 +639,7 @@ export default function ActiveWorkoutScreen() {
               </Pressable>
             );
           })}
-          {!isFinished && (
+          {!locked && (
             <Pressable onPress={() => setPickerOpen(true)} style={styles.chipAdd}>
               <Text style={styles.chipAddText}>+ Add</Text>
             </Pressable>
@@ -626,7 +692,7 @@ export default function ActiveWorkoutScreen() {
                 key={s.id}
                 style={styles.row}
                 onPress={() =>
-                  !isFinished &&
+                  !locked &&
                   setKeypad({
                     mode: 'edit',
                     setId: s.id,
@@ -640,7 +706,7 @@ export default function ActiveWorkoutScreen() {
                 }
                 // Long-press = the fast delete path from the grid (feedback #11); tapping
                 // still opens the edit sheet, which now carries a prominent DELETE button.
-                onLongPress={() => !isFinished && confirmDeleteSet(s.id, i + 1)}
+                onLongPress={() => !locked && confirmDeleteSet(s.id, i + 1)}
               >
                 <Text style={[styles.rNum, styles.cNum]}>{i + 1}</Text>
                 <Text style={[styles.rPrev, styles.cPrev]}>{prevLabel(lastSets[i], modality, unit)}</Text>
@@ -656,7 +722,7 @@ export default function ActiveWorkoutScreen() {
             ))}
 
             {/* Pending row */}
-            {!isFinished && (
+            {!locked && (
               <View style={[styles.row, { borderBottomWidth: 0, backgroundColor: color.acc06 }]}>
                 <Text style={[styles.rNum, styles.cNum, { color: color.acc }]}>{nextSetNumber}</Text>
                 <Text style={[styles.rPrev, styles.cPrev]}>{prevLabel(lastForNext, modality, unit)}</Text>
@@ -674,7 +740,7 @@ export default function ActiveWorkoutScreen() {
             {/* Progressive-overload ghost (feedback #28) — a dimmed, opt-in hint that
                 sits under the pending row without changing its real prefill. Tapping
                 opens the keypad primed with the bumped weight. */}
-            {!isFinished && ghostKg != null && (
+            {!locked && ghostKg != null && (
               <Pressable style={styles.ghostRow} onPress={acceptGhost}>
                 <Text style={styles.ghostText}>
                   STRONG LAST TIME · TRY {formatWeight(ghostKg, unit)} {unit.toUpperCase()}
@@ -686,7 +752,7 @@ export default function ActiveWorkoutScreen() {
           </InsetWell>
 
           {/* One quiet hint + Add set (refined design) — discard/remove moved to ⋯. */}
-          {!isFinished && (
+          {!locked && (
             <View style={styles.belowGrid}>
               <Text style={styles.belowHint} numberOfLines={1}>
                 {canQuickLog
@@ -703,7 +769,7 @@ export default function ActiveWorkoutScreen() {
             </View>
           )}
 
-          {noHistory && !isFinished && (
+          {noHistory && !locked && (
             <View style={styles.firstNote}>
               <View style={styles.firstNoteBar} />
               <Text style={styles.firstNoteText}>
@@ -726,8 +792,9 @@ export default function ActiveWorkoutScreen() {
         </ScrollView>
       )}
 
-      {/* Footer: back + next/add row, then the primary Finish CTA (refined design). */}
-      {!isFinished && (
+      {/* Footer: back + next/add row, then the primary CTA (refined design). Editing a
+          finished session, the CTA is "Done" (reconcile + back), not "Finish". */}
+      {!locked && (
         <View style={[styles.footer, { paddingBottom: insets.bottom + space.md }]}>
           <View style={styles.navRow}>
             <Pressable
@@ -745,8 +812,13 @@ export default function ActiveWorkoutScreen() {
               <Text style={styles.navWideChevron}>{isLast ? '+' : '›'}</Text>
             </Pressable>
           </View>
-          <Pressable style={styles.finishBtn} onPress={confirmFinish}>
-            <Text style={styles.finishText}>{finish.isPending ? 'Finishing…' : 'Finish workout'}</Text>
+          <Pressable
+            style={styles.finishBtn}
+            onPress={editingFinished ? doneEditing : confirmFinish}
+          >
+            <Text style={styles.finishText}>
+              {editingFinished ? 'Done' : finish.isPending ? 'Finishing…' : 'Finish workout'}
+            </Text>
           </Pressable>
         </View>
       )}
@@ -808,7 +880,8 @@ export default function ActiveWorkoutScreen() {
             keypad.mode === 'edit'
               ? () => {
                   setKeypad(null);
-                  confirmDiscard();
+                  if (editingFinished) confirmDeleteWorkout();
+                  else confirmDiscard();
                 }
               : undefined
           }

@@ -7,6 +7,31 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-14 — #47 + #48 + #50 shipped as a parallel 3-agent batch
+
+Ran three independent feedback items concurrently (one subagent each, non-overlapping scopes),
+then verified as one batch: `tsc --noEmit` clean, shared files (`hooks.ts`, `routines.ts`,
+`settings.ts`) skimmed to confirm both agents' additive edits survived, committed together.
+
+- **#48 (Med–High) — History "Edit" now really edits.** Tapping Edit on a finished workout opens the
+  **full live logging workflow** by reusing `workout/[id].tsx` behind `?edit=1` (in-place edit —
+  `ended_at` stays set, so the session never resurfaces as "active"); every `!isFinished` affordance
+  regated behind a `locked` flag, footer CTA becomes **Done**, ⋯ becomes a real history delete. New
+  `useReconcileEditedWorkout()` broad-invalidates the finished-session caches (list/PR/heatmap/lastSession/
+  exerciseHistory) on Done + unmount. Non-edit finished view byte-identical (no regression).
+- **#47 (Med) — Delete a routine.** `deleteRoutine()` + `useDeleteRoutine()` + red **Delete** in the
+  long-press menu with warning haptic + destructive confirm, distinct from Archive. Cascade/set-null
+  in `0001_init.sql` means logged history survives; no migration.
+- **#50 (Med) — Weekly local CSV backup.** New `src/data/backup.ts`: reuses `buildHevyExport()`, writes to
+  durable `Paths.document/backups/` (v57 File/Directory/Paths API), pure `backupsToDelete(_,4)` rotation,
+  `useWeeklyBackup()` foreground check-on-mount (≥7d since persisted `lastBackupAt`). Settings → DATA →
+  **Automatic backup** row. *Open follow-up:* scheduler mounts on Settings, not `_layout.tsx` — fires when
+  Settings opens after 7+ days, not at cold start; `useWeeklyBackup()` is lift-ready for `AppContent`.
+
+Not device-verified — `tsc`/scope-reviewed only. Non-weight "NEW BEST" PR detection stayed **open** (lives in
+server RPC `workout_pr_counts` / migration territory, out of #48's scope). #49 (voice FAB) is in flight in a
+separate chat — its `HomeQuickStart.tsx`/`TabBar.tsx` edits were left unstaged for that chat.
+
 ## 2026-08-14 — #46: modality-aware set logging (all four modalities)
 
 Started as a requested recheck of the exercise directory ("which exercises aren't

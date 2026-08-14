@@ -21,12 +21,16 @@ export type AppSettings = {
   weeklyGoal: number;
   /** Light/dark preference; 'system' follows the OS appearance (#17). */
   themeMode: ThemeMode;
+  /** Epoch ms of the last automatic/manual CSV backup (#50); null = never. Drives
+   *  the weekly foreground-check scheduling in src/data/backup.ts. */
+  lastBackupAt: number | null;
 };
 
 export const DEFAULT_SETTINGS: AppSettings = {
   prefillFromLastSession: true,
   weeklyGoal: 5,
   themeMode: 'system',
+  lastBackupAt: null,
 };
 
 /** Theme options offered by the Settings control (#17 Phase 3). */

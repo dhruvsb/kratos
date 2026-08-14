@@ -25,6 +25,7 @@ import {
   useUpdateProfile,
 } from '@/data/hooks';
 import { GOAL_PRESETS, THEME_MODES, useSettings, useUpdateSettings } from '@/data/settings';
+import { useBackups, useRunBackupNow, useWeeklyBackup } from '@/data/backup';
 import { font, radius, space, tracking, type Theme } from '@/theme/tokens';
 import { useTheme, useThemeMode } from '@/theme/ThemeProvider';
 
@@ -42,6 +43,15 @@ function next<T>(list: readonly T[], current: T): T {
 }
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+// "3 days ago" / "Today" / "Never" — the last-backup summary for the DATA row (#50).
+function fmtLastBackup(at: number | null | undefined): string {
+  if (at == null) return 'Never';
+  const days = Math.floor((Date.now() - at) / (24 * 60 * 60 * 1000));
+  if (days <= 0) return 'Today';
+  if (days === 1) return 'Yesterday';
+  return `${days} days ago`;
+}
 
 type Row = {
   label: string;
@@ -91,6 +101,11 @@ export default function SettingsScreen() {
   const syncHealth = useSyncHealthWorkouts();
   const settings = useSettings();
   const updateSettings = useUpdateSettings();
+  // Weekly CSV backup (#50): fires the once-per-session foreground check (runs a
+  // backup if ≥ 7 days since the last), and drives the DATA status row + "Back up now".
+  useWeeklyBackup();
+  const backups = useBackups();
+  const runBackupNow = useRunBackupNow();
   const sessionEmail = useQuery({
     queryKey: ['sessionEmail'],
     queryFn: () => getSession().then((s) => s?.user.email ?? null),
@@ -216,6 +231,29 @@ export default function SettingsScreen() {
     }
   }
 
+  // Manual "Back up now" — writes a durable CSV immediately (the automatic path is
+  // the weekly foreground check above). Keeps the last 4 backups; older ones roll off.
+  async function runManualBackup() {
+    try {
+      const res = await runBackupNow.mutateAsync();
+      Alert.alert(
+        res.skipped ? 'Nothing to back up' : 'Backup saved',
+        res.skipped
+          ? 'Log or import a workout first, then your history will back up automatically.'
+          : `Saved ${res.workoutCount} ${res.workoutCount === 1 ? 'workout' : 'workouts'} (${res.setCount} sets). RepVoice keeps the last 4 backups on this device.`
+      );
+    } catch (e) {
+      Alert.alert(
+        'Could not back up',
+        e instanceof Error ? e.message : 'Check your connection and try again.'
+      );
+    }
+  }
+
+  const lastBackupLabel = runBackupNow.isPending
+    ? 'Backing up…'
+    : fmtLastBackup(s?.lastBackupAt ?? backups.data?.[0]?.modifiedAt ?? null);
+
   const groups: { title: string; rows: Row[] }[] = s
     ? [
         {
@@ -267,6 +305,11 @@ export default function SettingsScreen() {
                 ]
               : []),
             { label: 'Export workouts', onPress: () => router.push('/export') },
+            {
+              label: 'Automatic backup',
+              value: lastBackupLabel,
+              onPress: runBackupNow.isPending ? undefined : runManualBackup,
+            },
             {
               label: 'Clear all history',
               value: clearing ? 'Clearing…' : undefined,

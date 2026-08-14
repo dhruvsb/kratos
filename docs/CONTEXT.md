@@ -10,7 +10,11 @@ codebase or a huge prior conversation.
 > issues**) *and* append a dated entry to [`WORK-LOG.md`](./WORK-LOG.md). This file is the
 > snapshot; `WORK-LOG.md` is the full history. Keep this file short.
 
-**Last updated:** 2026-08-14 — **#46 FIXED (code): modality-aware set logging.** The set grid + `SetKeypad`
+**Last updated:** 2026-08-14 — **#47 + #48 + #50 FIXED (code), parallel batch (tsc-clean, not device-verified).**
+#48: History "Edit" now opens the full live logging workflow on a finished session (in-place, `ended_at` stays set)
+via reuse of `workout/[id].tsx` behind `?edit=1`. #47: red **Delete** in the routine long-press menu (hard delete,
+history preserved by cascade/set-null). #50: durable weekly local CSV backup (`src/data/backup.ts`) with 4-file
+rotation + foreground check-on-mount scheduling. Prior — **#46 FIXED (code): modality-aware set logging.** The set grid + `SetKeypad`
 now adapt to each exercise's `modality` — weight_reps (KG+REPS, unchanged), bodyweight_reps (REPS), time
 (mm:ss duration), distance_time (cardio: duration + machine level). New migration `0010_set_metrics.sql`
 (nullable `duration_seconds`+`level` on `sets`, widened `last_session_sets()`); new
@@ -306,7 +310,7 @@ Static checks currently green: `tsc --noEmit` clean; `expo export --platform web
 `xcodebuild -allowProvisioningUpdates` builds + installs Release to physical hardware.
 **Feedback pass (`FEEDBACK-LOG.md`): 22 done** — ✅ #1 #2 #3 #4 #6 #7 #9 #10 #11 #13 #14 #15 #16
 #17 #18 #19 #20 #21 #26 #31 #32 (#12 dissolved by #13) · 🟡 #5 (fix applied — keyboard-avoidance;
-device-confirm pending) · ⬜ **open: #8 #23 #36 #44 #47 #48 #49 #50** · **#45 (High) DONE 2026-08-14** (sim-verified) · **#46 DONE 2026-08-14** (modality-aware logging; migration 0010 applied live + sim-verified across all 4 modalities) · **withdrawn (won't do): #24 #25 #27 #29 #30**.
+device-confirm pending) · ⬜ **open: #8 #23 #36 #44 #49** · **#47 #48 #50 DONE (code) 2026-08-14** (parallel batch; tsc-clean, device-verify pending) · **#45 (High) DONE 2026-08-14** (sim-verified) · **#46 DONE 2026-08-14** (modality-aware logging; migration 0010 applied live + sim-verified across all 4 modalities) · **withdrawn (won't do): #24 #25 #27 #29 #30**.
 **#33 (active-workout resume bar) + #35 (PR records badge) DONE 2026-08-13** (bar sim+device-verified;
 badge sim-verified, RPC 0007 applied). **#22 (Liquid Glass): DONE 2026-08-12** — glass tab pill + FAB, device-verified on the iPhone 15 (iOS
 26.5.2); device-QA fixes landed (refraction, consistent FAB, cross-fade). **#36 (backlog):** authentic

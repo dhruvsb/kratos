@@ -85,6 +85,20 @@ export async function setRoutineArchived(id: string, archived: boolean): Promise
   await updateRoutine(id, { archived });
 }
 
+/**
+ * Permanently delete a routine (hard delete — distinct from archive, which only
+ * flips `archived=true`). RLS ("routines all own", user_id = auth.uid()) scopes
+ * the delete to the owner, so no client-side ownership filter is needed. The
+ * routine's `routine_exercises` are removed automatically by the FK
+ * `on delete cascade` (0001_init.sql). Logged *workouts* are independent rows
+ * whose `routine_id` FK is `on delete set null`, so training history is untouched
+ * — the sessions stay, they just lose the pointer back to the deleted routine.
+ */
+export async function deleteRoutine(id: string): Promise<void> {
+  const { error } = await supabase.from('routines').delete().eq('id', id);
+  if (error) throw error;
+}
+
 export type RoutineExerciseInput = {
   exercise_id: string;
   target_sets?: number | null;

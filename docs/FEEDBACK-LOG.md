@@ -15,7 +15,15 @@ rather than relying on a manual Settings → Export.
 |---|------|------|-------|-----|--------|
 | 50 | **Automatic weekly backup** — export workout history to CSV on a schedule, save to a local directory, keep only the most recent 4 backups (delete older ones) | Data / backup | ⬜ Open | Med | M |
 
-### 50. Automatic weekly CSV backup, local, 4-backup rotation ⬜ Med
+### 50. Automatic weekly CSV backup, local, 4-backup rotation ✅ Med — **done (code) 2026-08-14**
+**Shipped:** new `src/data/backup.ts` — `runBackup()` reuses `buildHevyExport()` and writes to durable
+`Paths.document/backups/repvoice-backup-YYYY-MM-DD.csv` (v57 `File`/`Directory`/`Paths` API, not the purgeable
+cache dir); pure `backupsToDelete(names, 4)` rotation keeps the 4 newest; `useWeeklyBackup()` runs a foreground
+check-on-mount (once/session) and backs up when ≥7 days since the persisted `lastBackupAt` (`settings.ts`).
+Settings → DATA → **Automatic backup** row shows last-backup age + tap to "Back up now".
+**Follow-up (open):** scheduler is mounted on the Settings screen, not `_layout.tsx`, so the weekly run fires
+when Settings opens after 7+ days rather than at cold start — `useWeeklyBackup()` is written to lift into
+`AppContent` verbatim if true app-start scheduling is wanted.
 **Requested:** once a week, automatically export all workouts to a Hevy-compatible CSV and save it to a
 local directory on-device — no manual "Export" tap required — keeping a rolling window of the **4 most
 recent** backups and deleting anything older than that.
@@ -64,8 +72,8 @@ item: **`Voice Logging.dc.html`** (Claude Design project `fefd8154-7ec8-46fd-b3d
 | 45 | Time-based exercises (Plank, Side Plank, Dead Hang) logged this session **vanish from the finished summary** | Active workout / finish | ✅ FIXED 2026-08-14 (sim-verified) | **High** | S–M |
 | 46 | No **duration** set type — time-based lifts are forced into kg×reps, which is the wrong data model | Logging / schema | ✅ Done | Med | M |
 | 47 | No way to **delete** a routine — long-press menu offers only Duplicate / Rename / Archive | Routines | ⬜ Open | Med | S |
-| 48 | History **"Edit" doesn't edit** — it only offers "Delete workout"; want the full logging workflow on a past session | History / edit | ⬜ Open | Med–High | M–L |
-| 49 | Latest **`Voice Logging.dc.html`** design hasn't shipped — mic FAB misaligned + stray history sub-line on Home | Design / Home | ⬜ Open | Med | M |
+| 48 | History **"Edit" doesn't edit** — it only offers "Delete workout"; want the full logging workflow on a past session | History / edit | ✅ Done (code 2026-08-14) | Med–High | M–L |
+| 49 | Latest **`Voice Logging.dc.html`** design hasn't shipped — mic FAB misaligned + stray history sub-line on Home | Design / Home | ✅ FIXED (code) 2026-08-14 | Med | M |
 
 ### 45. Time-based exercises logged, but missing from the finished session ✅ **High** — fixed 2026-08-14
 **Fixed (2026-08-14, sim-verified):** the pending-row ✓ now **logs the row exactly as shown**, including a
@@ -115,7 +123,12 @@ weight-only — non-weight "NEW BEST" detection is a noted follow-up. **Migratio
 sim-verified 2026-08-14** (Plank/Elliptical/Push-Up logged, edited, finished — grids, keypads, PREV, finish
 summary + history all modality-correct). Also fixed the first-time hint copy to be modality-aware.
 
-### 47. Can't delete a routine ⬜ Med
+### 47. Can't delete a routine ✅ Med — **done (code) 2026-08-14**
+**Shipped:** `deleteRoutine(id)` (`routines.ts`, hard delete — RLS-scoped) + `useDeleteRoutine` (invalidates
+`['routines']`, drops the per-routine detail key) + a red **Delete** entry in the long-press menu
+(`routines.tsx`) with a warning haptic and a destructive confirm alert, kept **distinct from Archive**
+(archive = hide/undoable, delete = permanent). Child `routine_exercises` cascade-delete and `workouts.routine_id`
+`on delete set null` (per `0001_init.sql`) mean **logged history survives** — no migration needed.
 **Seen:** long-pressing a routine opens Duplicate / Rename / **Archive** / Cancel — there's no hard **Delete**.
 The user has accumulated junk/test routines (Push A, Test, Test 2, …, "17" total) and wants to remove them.
 **Verified:** the menu (`routines.tsx:119-123`) offers only those three; the data layer has
@@ -126,18 +139,34 @@ logged *workouts* are independent rows, so history is untouched) + a `useDeleteR
 entry in the long-press menu with a destructive confirm, kept distinct from Archive (archive = hide, delete =
 gone). Decide whether Archive stays or Delete replaces it.
 
-### 48. "Edit" on a finished workout can't actually edit it ⬜ Med–High
+### 48. "Edit" on a finished workout can't actually edit it ✅ Med–High — **done (code) 2026-08-14**
 **Requested:** tapping **Edit** on a past workout should open the **normal logging workflow** — add an
 exercise, add/remove sets, change weights/reps, delete anything — on that finished session.
-**Verified:** History detail's top-right "Edit" (`history/[id].tsx:103-104`) only opens a menu whose sole
-action is **Delete workout** (`openWorkoutMenu`, `:88-93`). Individual sets are editable inline (tap a row →
-`SetKeypad`), but there's **no** add-exercise / add-set / remove-exercise path on a finished workout — that
-workflow lives only on the live `workout/[id].tsx` screen.
-**Fix (scope, not started):** let a finished workout re-enter the active-workout editor (or port its
-add/remove-exercise + add-set affordances into the history detail). Wrinkle: the live screen keys off
-`useActiveWorkout` (`ended_at IS NULL`) and the finish/summary flow — editing an *ended* workout needs either a
-temporary re-open (clear `ended_at`, edit, re-finish) or the grid components made workout-id-driven rather than
-active-only. Non-trivial; scope the re-open-vs-inline-editor choice first.
+**Done (2026-08-14):** History detail's top-right **Edit** now launches the **full live logging workflow** on
+the finished session by **re-using the active-workout screen in an edit mode** — no parallel UI. The right
+call between the two scoped options was **workout-id-driven in-place edit**, *not* the re-open (clear
+`ended_at`) route: the live screen already reads `useWorkout(id)` (not `useActiveWorkout`) and already rendered
+finished workouts read-only, so every editing affordance was simply gated behind `!isFinished`. Editing is
+entered via `router.push('/workout/${id}?edit=1')` from `history/[id].tsx`; the screen computes
+`editingFinished = isFinished && edit === '1'` and a real read-only gate `locked = isFinished &&
+!editingFinished`, and every affordance's `!isFinished` became `!locked` (pending row, keypad add/edit/delete,
+add/remove exercise, ⋯ menu, footer). `ended_at` is **left untouched**, so the session never resurfaces as the
+"active" workout (no phantom active-workout bar / double-active-workout risk / accidental whole-workout
+deletion from clearing sets — the pitfalls of the re-open route). The footer CTA becomes **Done** (not Finish)
+→ `doneEditing()` reconciles + `router.back()`; the ⋯ destructive action becomes a real history **Delete
+workout** (`useDeleteWorkout`, correct streak/PR/calendar invalidation) instead of discard. All set writes go
+through the existing optimistic `useAddSet`/`useUpdateSet`/`useDeleteSet`/`useAddExerciseToWorkout`/
+`useRemoveWorkoutExercise` hooks (only invalidate `keys.workout(id)`), so a new **`useReconcileEditedWorkout()`**
+hook broad-invalidates the caches a *finished* session also feeds (`workoutList`, `workoutPrCounts`,
+`workoutDays`, `lastSession`, `exerciseHistory`) — fired on Done and as an unmount safety net (OS back gesture).
+Inline single-set fix (tap a row here) is untouched, per "don't regress the modality edit-keypad". Files:
+`src/app/workout/[id].tsx`, `src/app/history/[id].tsx`, `src/data/hooks.ts`. `tsc` review-clean (full repo tsc
+deliberately not run — parallel edits in flight); **not yet run on the simulator/device.**
+**Still open (deliberately):** non-weight **NEW BEST / PR-count** detection (reps-based / bodyweight bests) —
+lives in the server RPC `workout_pr_counts` (migration 0007) + `getExerciseBests` + the finish summary
+(`finish/[id].tsx`), all weight-only. Out of this task's history/set-grid scope and touching it risks colliding
+with the just-shipped modality migration (0010) and the export/settings agent; left as the follow-up already
+noted under #46.
 
 ### 49. Latest `Voice Logging.dc.html` design not shipped (mic FAB + Home history) ⬜ Med
 **Seen:** on Home, the **voice mic FAB is misaligned** relative to the tab pill, and the history area shows a

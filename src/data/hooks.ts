@@ -7,7 +7,7 @@ import {
   useQueryClient,
   type QueryClient,
 } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import * as auth from './auth';
 import * as exercises from './exercises';
 import * as health from './healthImport';
@@ -329,6 +329,22 @@ export function useArchiveRoutine() {
   });
 }
 
+/** Hard-delete a routine (long-press menu → Delete, feedback #47). Distinct from
+ *  useArchiveRoutine (hide): this removes the row for good. Its routine_exercises
+ *  cascade in the DB; logged workouts survive (routine_id → set null). `['routines']`
+ *  prefix invalidation refreshes both archived variants; the per-routine detail is
+ *  dropped since the row no longer exists. */
+export function useDeleteRoutine() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (routineId: string) => routines.deleteRoutine(routineId),
+    onSuccess: (_data, routineId) => {
+      qc.invalidateQueries({ queryKey: ['routines'] });
+      qc.removeQueries({ queryKey: keys.routine(routineId) });
+    },
+  });
+}
+
 export function useSetRoutineExercises(routineId: string) {
   const qc = useQueryClient();
   return useMutation({
@@ -564,6 +580,25 @@ export function useDeleteWorkout(workoutId: string) {
       qc.invalidateQueries({ queryKey: ['exerciseHistory'] });
     },
   });
+}
+
+/** Broad cache reconcile after editing an *already-finished* workout in place
+ *  (feedback #48 — History "Edit" opens the full logging workflow on a past session).
+ *  The set/exercise mutations only invalidate `keys.workout(id)`, which is enough while
+ *  a workout is live (it isn't in history yet). But a finished session also feeds the
+ *  history list's volume/set counts, the per-session PR counts, the calendar heatmap,
+ *  last-session recall and the per-exercise progress charts — none of which the set
+ *  hooks touch — so those must refetch once the edit session ends. Returns a stable
+ *  callback the editor fires when leaving edit mode (on "Done" and on unmount). */
+export function useReconcileEditedWorkout() {
+  const qc = useQueryClient();
+  return useCallback(() => {
+    void qc.invalidateQueries({ queryKey: keys.workoutList });
+    void qc.invalidateQueries({ queryKey: keys.workoutPrCounts });
+    void qc.invalidateQueries({ queryKey: ['workoutDays'] });
+    void qc.invalidateQueries({ queryKey: ['lastSession'] });
+    void qc.invalidateQueries({ queryKey: ['exerciseHistory'] });
+  }, [qc]);
 }
 
 /** Wipe *all* finished-workout history for the signed-in user (Settings → DATA →
