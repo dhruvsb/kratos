@@ -1,7 +1,9 @@
-// Import from Hevy (Settings → DATA). Pick a Hevy "Export Data" CSV, preview
-// exactly what will land (new vs already-imported workouts, matched vs new-custom
-// exercises), then commit. Parsing/matching is in src/lib/hevy.ts + src/data/import.ts;
-// this screen is just the pick → preview → commit flow.
+// Import workouts (Settings → DATA). The idle stage explains the CSV shape we
+// expect (one row per set), then you pick a file, preview exactly what will land
+// (new vs already-imported workouts, matched vs new-custom exercises), and commit.
+// The format is Hevy's "Export Data" CSV — a Hevy export drops straight in — but
+// any CSV with the same columns works. Parsing/matching is in src/lib/hevy.ts +
+// src/data/import.ts; this screen is just the guide → pick → preview → commit flow.
 import * as DocumentPicker from 'expo-document-picker';
 import { File } from 'expo-file-system';
 import { router } from 'expo-router';
@@ -64,9 +66,9 @@ export default function ImportScreen() {
         <Pressable onPress={() => router.back()} hitSlop={10}>
           <Text style={styles.back}>← BACK</Text>
         </Pressable>
-        <Text style={styles.count}>HEVY CSV</Text>
+        <Text style={styles.count}>CSV</Text>
       </View>
-      <Text style={styles.title}>Import history</Text>
+      <Text style={styles.title}>Import workouts</Text>
 
       <ScrollView
         contentContainerStyle={{ paddingBottom: insets.bottom + space.xxl }}
@@ -75,10 +77,30 @@ export default function ImportScreen() {
         {stage.name === 'idle' && (
           <>
             <Text style={styles.body}>
-              Bring your training history over from Hevy. In the Hevy app: Profile → Settings →{' '}
-              <Text style={styles.em}>Export &amp; Backup Data</Text>, then pick the CSV here. Re-importing
-              the same file is safe — workouts already imported are skipped.
+              Bring your training history in from a <Text style={styles.em}>CSV file</Text> — one row
+              per set. Coming from Hevy? Its <Text style={styles.em}>Export &amp; Backup Data</Text> file
+              drops straight in. Re-importing the same file is safe — workouts already imported are skipped.
             </Text>
+
+            <View style={styles.guide}>
+              <Text style={styles.guideTitle}>REQUIRED COLUMNS</Text>
+              <Col name="title" desc="Workout name (e.g. Push Day)." />
+              <Col name="start_time" desc="When it started — e.g. 26 Jul 2026, 10:36." />
+              <Col name="exercise_title" desc="Exercise name, matched to your library." />
+
+              <Text style={[styles.guideTitle, styles.guideTitleGap]}>OPTIONAL COLUMNS</Text>
+              <Col name="weight_kg" desc="Weight in kilograms." />
+              <Col name="reps" desc="Repetitions in the set." />
+              <Col name="set_type" desc="normal, warmup, failure or dropset." />
+              <Col name="end_time" desc="When the workout finished." />
+              <Col name="duration_seconds · distance_km" desc="For timed / cardio sets." />
+
+              <Text style={styles.guideNote}>
+                One line = one set, with the workout and exercise repeated on each of its rows.
+                Unknown exercises are added as custom, so nothing is dropped.
+              </Text>
+            </View>
+
             <View style={styles.spacer} />
             <Btn title="CHOOSE CSV FILE" tone="accent" onPress={pickFile} />
           </>
@@ -112,6 +134,17 @@ export default function ImportScreen() {
           </>
         )}
       </ScrollView>
+    </View>
+  );
+}
+
+function Col({ name, desc }: { name: string; desc: string }) {
+  const { color } = useTheme();
+  const styles = useMemo(() => makeStyles(color), [color]);
+  return (
+    <View style={styles.colRow}>
+      <Text style={styles.colName}>{name}</Text>
+      <Text style={styles.colDesc}>{desc}</Text>
     </View>
   );
 }
@@ -237,6 +270,27 @@ const makeStyles = (color: Theme['color']) => StyleSheet.create({
 
   body: { fontFamily: font.ui, fontSize: 14, lineHeight: 22, color: color.t2 },
   em: { fontFamily: font.uiSemibold, color: color.t1b },
+
+  guide: {
+    marginTop: space.xl,
+    borderWidth: 1,
+    borderColor: color.line,
+    borderRadius: radius.card,
+    backgroundColor: color.s0,
+    padding: space.lg,
+  },
+  guideTitle: { fontFamily: font.numSemibold, fontSize: 8, letterSpacing: tracking.wide, color: color.t3 },
+  guideTitleGap: { marginTop: space.lg },
+  colRow: { flexDirection: 'row', gap: space.md, marginTop: space.sm },
+  colName: {
+    fontFamily: font.numMedium,
+    fontSize: 11,
+    color: color.acc,
+    width: 118,
+    letterSpacing: 0.2,
+  },
+  colDesc: { flex: 1, fontFamily: font.ui, fontSize: 12, lineHeight: 17, color: color.t2 },
+  guideNote: { fontFamily: font.num, fontSize: 10.5, lineHeight: 17, color: color.t3, marginTop: space.lg },
 
   center: { alignItems: 'center', gap: space.md, paddingVertical: space.xxl * 2 },
   dim: { fontFamily: font.num, fontSize: 11, color: color.t3, letterSpacing: tracking.label },

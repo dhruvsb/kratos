@@ -7,6 +7,34 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-15 — Email + password auth; "Import from Hevy" → "Import workouts" + CSV guide
+
+Three related changes (code-complete, `tsc` clean; **not yet device-verified**):
+
+- **Auth is now email + password** (replaces the everyday email-code/OTP flow). `src/data/auth.ts`
+  gains `signInWithPassword`, `signUpWithPassword` (returns `needsConfirmation` when the project has
+  email confirmations on), `setPassword` (`updateUser`), and a recovery pair `sendRecoveryCode` /
+  `verifyRecoveryCode`. `SignInScreen.tsx` rewritten: email + password with a SIGN IN / CREATE
+  ACCOUNT toggle and a SHOW/HIDE reveal. **"Forgot password?"** is a fully in-app recovery (no email
+  deep links): it emails a one-time sign-in code (`shouldCreateUser: false`), reuses the old
+  segmented 8-box code field, signs you in, and you set a new password from Settings.
+- **Set password in Settings** (`settings.tsx` → ACCOUNT → "Set password", iOS-only). Two secure
+  `Alert.prompt`s (enter + confirm) → `setPassword`. This is the migration path for the existing
+  account, which was created via email-code and has **no password** — sign in via the persisted
+  session, then set one here.
+- **Import rebranded generic.** Settings row "Import from Hevy" → **"Import workouts"**;
+  `import.tsx` header `HEVY CSV` → `CSV`, title → "Import workouts", and the idle stage now shows a
+  **CSV-format guide** (required `title` / `start_time` / `exercise_title`; optional `weight_kg`,
+  `reps`, `set_type`, `end_time`, `duration_seconds`/`distance_km`) with one-line descriptions. The
+  underlying parser is unchanged (still Hevy-shaped — a Hevy export still drops straight in); only
+  the framing is generalized. Export screen untouched.
+
+**Supabase-side follow-ups (dashboard, owner=user):** password min length (default 6); if "email
+confirmations" is ON, new `signUp`s land in the "check your email" state — turn it off for
+frictionless showcase signups if desired. Recovery codes require the account to already exist.
+
+---
+
 ## 2026-08-15 — Rename RepVoice → Kratos (app-wide)
 
 Renamed the app from **RepVoice** to **Kratos** across every git-tracked, non-generated file

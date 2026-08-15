@@ -19,16 +19,51 @@ export function onAuthStateChange(
   return () => data.subscription.unsubscribe();
 }
 
-/** Sends the project's configured email OTP. Creates the account on first sign-in. */
-export async function sendOtp(email: string): Promise<void> {
+/** Sign in with an email + password (the everyday path). */
+export async function signInWithPassword(email: string, password: string): Promise<void> {
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) throw error;
+}
+
+/**
+ * Create an account with an email + password. If the Supabase project has email
+ * confirmations enabled, `signUp` returns no session until the user confirms — we
+ * surface that to the caller so it can tell "you're in" from "check your email".
+ */
+export async function signUpWithPassword(
+  email: string,
+  password: string
+): Promise<{ needsConfirmation: boolean }> {
+  const { data, error } = await supabase.auth.signUp({ email, password });
+  if (error) throw error;
+  return { needsConfirmation: data.session == null };
+}
+
+/**
+ * Set (or change) the signed-in user's password. Used by Settings → ACCOUNT and
+ * as the second half of the forgot-password flow. Works whether or not a password
+ * was set before (accounts created via the old email-code flow have none).
+ */
+export async function setPassword(password: string): Promise<void> {
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) throw error;
+}
+
+/**
+ * Forgot-password path, kept fully in-app (no email deep links). We email a
+ * one-time sign-in code with `shouldCreateUser: false` (never conjure an empty
+ * account from a typo), the user enters it to sign in, then sets a new password
+ * from Settings. `verifyRecoveryCode` completes the sign-in.
+ */
+export async function sendRecoveryCode(email: string): Promise<void> {
   const { error } = await supabase.auth.signInWithOtp({
     email,
-    options: { shouldCreateUser: true },
+    options: { shouldCreateUser: false },
   });
   if (error) throw error;
 }
 
-export async function verifyOtp(email: string, token: string): Promise<void> {
+export async function verifyRecoveryCode(email: string, token: string): Promise<void> {
   const { error } = await supabase.auth.verifyOtp({ email, token, type: 'email' });
   if (error) throw error;
 }

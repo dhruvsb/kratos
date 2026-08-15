@@ -10,7 +10,14 @@ codebase or a huge prior conversation.
 > issues**) *and* append a dated entry to [`WORK-LOG.md`](./WORK-LOG.md). This file is the
 > snapshot; `WORK-LOG.md` is the full history. Keep this file short.
 
-**Last updated:** 2026-08-15 — **App renamed RepVoice → Kratos** + **new photographic barbell icon**. Clean iOS prebuild done (bundle id `com.dhruvshah.kratos`, team `TUR974K866`), **built + installed + launched on device** (Dhruv's iPhone 15, iOS 26.6) via `devicectl`. Prebuild/pod install/xcodebuild all need `LANG=en_US.UTF-8` (Ruby 4.0 + CocoaPods 1.17 crash otherwise). Still to do: host `dhruvsb.github.io/kratos` Pages repo for the privacy-policy link.
+**Last updated:** 2026-08-15 — **Auth switched to email + password** (SignInScreen rewritten: SIGN IN /
+CREATE ACCOUNT + SHOW/HIDE; "Forgot password?" = in-app one-time-code recovery, no deep links) with a new
+Settings → ACCOUNT → **"Set password"** (two secure prompts → `updateUser`; the migration path for the
+old code-only account). `auth.ts` +`signInWithPassword`/`signUpWithPassword`/`setPassword`/`sendRecoveryCode`/`verifyRecoveryCode`.
+Also **"Import from Hevy" → "Import workouts"**: generic framing + a CSV-format guide (required
+`title`/`start_time`/`exercise_title` + optional weight/reps/set_type/…) on the idle stage; parser unchanged
+(Hevy exports still drop in). `tsc` clean; **not device-verified**. Supabase dashboard follow-up: password
+min length + email-confirmation toggle affect signup. Prior: **App renamed RepVoice → Kratos** + **new photographic barbell icon**. Clean iOS prebuild done (bundle id `com.dhruvshah.kratos`, team `TUR974K866`), **built + installed + launched on device** (Dhruv's iPhone 15, iOS 26.6) via `devicectl`. Prebuild/pod install/xcodebuild all need `LANG=en_US.UTF-8` (Ruby 4.0 + CocoaPods 1.17 crash otherwise). Still to do: host `dhruvsb.github.io/kratos` Pages repo for the privacy-policy link.
 #51: History-detail workout **title is now tappable → rename** (`Alert.prompt`, iOS; blank clears back to
 "Empty workout"); new `renameWorkout`/`useRenameWorkout` (optimistic). #53: exercise search keyboard now
 **dismisses on scroll** (`keyboardDismissMode="on-drag"`) + return-key, in both `ExercisePickerModal` and the
@@ -419,8 +426,11 @@ native-`UITabBar` drag-lens glass — deferred, keeping the custom pill+FAB.
       Full launch record + user step-by-step in [`docs/app-store/APP-STORE-LAUNCH-LOG.md`](./app-store/APP-STORE-LAUNCH-LOG.md).
 - [ ] **See "Delete account" on device** (Settings → ACCOUNT) — the row is static-verified only.
       Don't smoke-test it on the real account; make a throwaway one, or re-run the live-DB check.
-- [ ] **Verify a real OTP sign-in from scratch** (sign out → enter email → 8-digit code). This
-      session used a persisted session, so the end-to-end auth flow itself is still unconfirmed.
+- [ ] **Verify the new email + password auth on device** (2026-08-15): sign out → SIGN IN with
+      email + password; CREATE ACCOUNT for a fresh email; "Forgot password?" → one-time code → set a
+      new password in Settings. **First:** on the existing (code-only) account, use Settings → ACCOUNT
+      → **Set password** while still signed in via the persisted session, then confirm password sign-in.
+      Recovery still uses the 8-digit email code (`CODE_LEN` in `SignInScreen.tsx`).
 - [ ] **Create + save a routine** on device (name, add exercises, targets, save) and confirm
       it appears on Home and starts.
 - [ ] Log ~4 real workouts on-device (the real "done" bar for the manual tracker) — this also

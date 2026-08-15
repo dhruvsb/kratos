@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HomeQuickStart } from '@/components/home/HomeQuickStart';
 import { HomeTabBar, TAB_BAR_HEIGHT } from '@/components/voice/TabBar';
 import { ActiveWorkoutBar } from '@/components/workout/ActiveWorkoutBar';
-import { deleteAccount, getSession, signOut } from '@/data/auth';
+import { deleteAccount, getSession, setPassword, signOut } from '@/data/auth';
 import {
   useActiveWorkout,
   useClearAllWorkouts,
@@ -114,6 +114,46 @@ export default function SettingsScreen() {
   const unit = profile.data?.default_unit ?? 'kg';
   const s = settings.data;
   const email = sessionEmail.data ?? '';
+
+  // "Set password" — everyday sign-in is email + password, but accounts created
+  // via the old email-code flow have none, so this both sets a first password and
+  // changes an existing one (Supabase `updateUser`). Two secure prompts (enter +
+  // confirm) so a typo can't silently lock you out; iOS-only (Alert.prompt is).
+  function changePassword() {
+    if (Platform.OS !== 'ios') return;
+    Alert.prompt(
+      'Set a password',
+      'Choose a password (at least 6 characters). You’ll use it with your email to sign in.',
+      (first) => {
+        const pw = (first ?? '').trim();
+        if (pw.length < 6) {
+          if (pw.length > 0) Alert.alert('Too short', 'Use at least 6 characters.');
+          return;
+        }
+        Alert.prompt(
+          'Confirm password',
+          'Re-enter the same password.',
+          async (second) => {
+            if ((second ?? '').trim() !== pw) {
+              Alert.alert('Passwords don’t match', 'Try setting your password again.');
+              return;
+            }
+            try {
+              await setPassword(pw);
+              Alert.alert('Password set', 'You can now sign in with your email and password.');
+            } catch (e) {
+              Alert.alert(
+                'Could not set password',
+                e instanceof Error ? e.message : 'Check your connection and try again.'
+              );
+            }
+          },
+          'secure-text'
+        );
+      },
+      'secure-text'
+    );
+  }
 
   function confirmSignOut() {
     Alert.alert('Sign out?', email || undefined, [
@@ -293,7 +333,7 @@ export default function SettingsScreen() {
           title: 'DATA',
           rows: [
             { label: 'Exercise library', onPress: () => router.push('/exercises') },
-            { label: 'Import from Hevy', onPress: () => router.push('/import') },
+            { label: 'Import workouts', onPress: () => router.push('/import') },
             // iOS-only: HealthKit exists nowhere else and Kratos ships iOS-only.
             ...(Platform.OS === 'ios'
               ? [
@@ -321,6 +361,9 @@ export default function SettingsScreen() {
         {
           title: 'ACCOUNT',
           rows: [
+            ...(Platform.OS === 'ios'
+              ? [{ label: 'Set password', onPress: changePassword } as Row]
+              : []),
             { label: 'Sign out', tone: 'warn', onPress: confirmSignOut },
             {
               label: 'Delete account',
