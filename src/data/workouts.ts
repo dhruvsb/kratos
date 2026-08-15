@@ -134,6 +134,18 @@ export async function finishWorkout(workoutId: string): Promise<{ discarded: boo
   return { discarded: false };
 }
 
+/** Rename a workout by setting `workouts.title`. Passing null (or a blank title
+ *  from the UI, coerced to null by the caller) clears it, so the display falls back
+ *  to routine_name / "Empty workout". Lets an ad-hoc empty-workout session get a name
+ *  after the fact (feedback #51). */
+export async function renameWorkout(workoutId: string, title: string | null): Promise<void> {
+  const { error } = await supabase
+    .from('workouts')
+    .update({ title })
+    .eq('id', workoutId);
+  if (error) throw error;
+}
+
 /** Discards an in-progress workout entirely (cascades to exercises/sets). */
 export async function discardWorkout(workoutId: string): Promise<void> {
   const { error } = await supabase.from('workouts').delete().eq('id', workoutId);

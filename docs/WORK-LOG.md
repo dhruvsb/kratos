@@ -7,6 +7,29 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-15 — #51 + #53 + #42: rename empty workout, keyboard dismiss, haptics dedup (3-agent parallel)
+
+Three independent low-severity items fixed by **3 parallel implementation agents** with disjoint file
+boundaries (no shared files → no clobber risk; combined `tsc` clean afterward).
+
+- **#51 rename an "Empty workout":** the History-detail title is now a `Pressable` → `Alert.prompt` (iOS,
+  prefilled) with a "Tap title to rename" hint. `renameWorkout(id, title|null)` (`workouts.ts`) sets
+  `workouts.title`; a blank submit → null → falls back to routine_name / "Empty workout". `useRenameWorkout`
+  (`hooks.ts`) optimistically patches the detail cache + invalidates the history list.
+- **#53 keyboard won't dismiss:** both search surfaces (`ExercisePickerModal`, `exercises` library) got
+  `keyboardDismissMode="on-drag"` on the results FlatList + `returnKeyType="search"` /
+  `onSubmitEditing={Keyboard.dismiss}`; `keyboardShouldPersistTaps="handled"` was already there.
+- **#42 two haptic wrappers:** extracted the shared expo-haptics primitive to `lib/hapticsPrimitive.ts`
+  (`fireHaptic` — platform guard + swallow sync throws & async rejections, no mute gate). `haptics.ts` (ungated)
+  and `feedback.ts` (`if (muted) return` before firing) both use it — the deliberate voice-mute separation is
+  preserved, public APIs unchanged. Note #42's scope was the *low-level wrapper only*, NOT merging the voice/TTS
+  layer into haptics (`haptics.ts`'s design comment forbids that) — flagged and confirmed before implementing.
+
+Also this session: applied the #52/#44 exercise-audit changes to the live DB (migration `0011` +
+`update-exercise-metadata.ts`, non-destructive — user data verified intact). `tsc` clean; none device-verified.
+
+---
+
 ## 2026-08-15 — #52/#44: `weighted_bodyweight` modality + full 156-exercise audit
 
 Device feedback (#51 empty-workout rename, #52 Back Extension has no weight field, #53 search keyboard won't

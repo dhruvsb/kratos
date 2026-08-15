@@ -11,9 +11,9 @@
 //
 // Everything is wrapped so a missing/na native module (e.g. web, or Expo Go
 // without the haptics engine) degrades to a silent no-op instead of throwing.
-import { Platform } from 'react-native';
 import * as Speech from 'expo-speech';
 import * as Haptics from 'expo-haptics';
+import { fireHaptic } from './hapticsPrimitive';
 
 // --- Echo verbosity (agent-notes variation point #3) --------------------------
 // Full sentence / numbers only / earcon only / silent. No settings screen this
@@ -35,20 +35,11 @@ export function isMuted(): boolean {
   return muted;
 }
 
-const canHaptic = Platform.OS === 'ios' || Platform.OS === 'android';
-
+// The voice mute-gate is this module's own concern; the platform-guard +
+// swallow-everything wrapper is the shared primitive (lib/hapticsPrimitive.ts).
 function safeHaptic(fn: () => Promise<void> | void) {
-  if (!canHaptic || muted) return;
-  try {
-    // Must catch the *rejection*, not just a synchronous throw: several earcons
-    // below are async (awaited multi-note patterns), so a bare `void fn()` would
-    // let a denied/unavailable engine surface as an unhandled promise rejection.
-    Promise.resolve(fn()).catch(() => {
-      /* haptics engine unavailable — ignore */
-    });
-  } catch {
-    /* haptics engine unavailable — ignore */
-  }
+  if (muted) return;
+  fireHaptic(fn);
 }
 
 /**

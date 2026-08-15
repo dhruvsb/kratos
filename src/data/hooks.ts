@@ -582,6 +582,31 @@ export function useDeleteWorkout(workoutId: string) {
   });
 }
 
+/** Rename a *finished* workout (feedback #51 — a session logged without a routine shows
+ *  as "Empty workout" in History with no way to name it). Sets `workouts.title`; a null
+ *  title clears it back to the routine_name / "Empty workout" fallback. Optimistically
+ *  patches the per-workout detail cache (like the set hooks) so the tapped title updates
+ *  on the same frame, and invalidates the history list — whose rows also read the title. */
+export function useRenameWorkout(workoutId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (title: string | null) => workouts.renameWorkout(workoutId, title),
+    onMutate: async (title): Promise<{ prev?: WorkoutDetail }> => {
+      await qc.cancelQueries({ queryKey: keys.workout(workoutId) });
+      const prev = qc.getQueryData<WorkoutDetail>(keys.workout(workoutId));
+      if (prev) qc.setQueryData<WorkoutDetail>(keys.workout(workoutId), { ...prev, title });
+      return { prev };
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.prev) qc.setQueryData(keys.workout(workoutId), ctx.prev);
+    },
+    onSettled: () => {
+      void qc.invalidateQueries({ queryKey: keys.workout(workoutId) });
+      void qc.invalidateQueries({ queryKey: keys.workoutList });
+    },
+  });
+}
+
 /** Broad cache reconcile after editing an *already-finished* workout in place
  *  (feedback #48 — History "Edit" opens the full logging workflow on a past session).
  *  The set/exercise mutations only invalidate `keys.workout(id)`, which is enough while

@@ -5,7 +5,7 @@
 // finished session patches instantly just like the active one).
 import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Empty, ErrorText, Loading } from '@/components/ui';
 import { MuscleSplit } from '@/components/MuscleSplit';
@@ -15,6 +15,7 @@ import {
   useDeleteSet,
   useDeleteWorkout,
   useProfile,
+  useRenameWorkout,
   useUpdateSet,
   useWorkout,
   useWorkoutPrCounts,
@@ -47,6 +48,7 @@ export default function WorkoutDetailScreen() {
   const updateSet = useUpdateSet(id!);
   const deleteSet = useDeleteSet(id!);
   const deleteWorkout = useDeleteWorkout(id!);
+  const renameWorkout = useRenameWorkout(id!);
   const prCounts = useWorkoutPrCounts();
   const [edit, setEdit] = useState<EditState | null>(null);
 
@@ -95,6 +97,34 @@ export default function WorkoutDetailScreen() {
     router.push(`/workout/${detail.id}?edit=1`);
   }
 
+  // Tap the title to name the session (feedback #51) — chiefly for ad-hoc empty
+  // workouts that otherwise read as a bare "Empty workout" with no name. Prefilled
+  // with the current title (blank when it's the default); a blank/whitespace submit
+  // clears it back to null so it falls back to routine_name / "Empty workout".
+  // Alert.prompt is iOS-only (this app ships iOS only).
+  function promptRename() {
+    if (Platform.OS !== 'ios') return;
+    Alert.prompt(
+      'Name this workout',
+      undefined,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Save',
+          onPress: (value?: string) => {
+            const next = value?.trim() ? value.trim() : null;
+            if (next === (detail.title ?? null)) return;
+            renameWorkout.mutate(next, {
+              onError: (e) => Alert.alert("Couldn't rename workout", e.message),
+            });
+          },
+        },
+      ],
+      'plain-text',
+      detail.title ?? ''
+    );
+  }
+
   return (
     <View style={[styles.screen, { paddingTop: insets.top + space.md }]}>
       <ScrollView contentContainerStyle={styles.content}>
@@ -108,9 +138,12 @@ export default function WorkoutDetailScreen() {
           </Pressable>
         </View>
 
-        <Text style={styles.title} numberOfLines={2}>
-          {name}
-        </Text>
+        <Pressable onPress={promptRename} hitSlop={8} disabled={Platform.OS !== 'ios'}>
+          <Text style={styles.title} numberOfLines={2}>
+            {name}
+          </Text>
+        </Pressable>
+        {Platform.OS === 'ios' ? <Text style={styles.renameHint}>Tap title to rename</Text> : null}
         <Text style={styles.date}>{dateLabel}</Text>
         {detail.notes ? <Text style={styles.notes}>{detail.notes}</Text> : null}
 
@@ -268,6 +301,7 @@ const makeStyles = (color: Theme['color']) => StyleSheet.create({
   edit: { fontFamily: font.uiMedium, fontSize: 15, color: color.acc },
 
   title: { fontFamily: font.uiSemibold, fontSize: 30, color: color.t1, marginTop: space.lg, letterSpacing: -0.4 },
+  renameHint: { fontFamily: font.num, fontSize: 10, letterSpacing: 0.4, color: color.t3, marginTop: 6 },
   date: { fontFamily: font.num, fontSize: 13, color: color.t2, marginTop: 8 },
   editHint: { fontFamily: font.num, fontSize: 10, letterSpacing: 0.4, color: color.t3, marginTop: space.xl },
   split: { marginTop: space.xl },

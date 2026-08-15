@@ -10,7 +10,14 @@ codebase or a huge prior conversation.
 > issues**) *and* append a dated entry to [`WORK-LOG.md`](./WORK-LOG.md). This file is the
 > snapshot; `WORK-LOG.md` is the full history. Keep this file short.
 
-**Last updated:** 2026-08-15 — **#52 FIXED (code): new `weighted_bodyweight` modality + full 156-exercise audit.**
+**Last updated:** 2026-08-15 — **#51 + #53 + #42 FIXED (code), 3-agent parallel batch (tsc-clean, not device-verified).**
+#51: History-detail workout **title is now tappable → rename** (`Alert.prompt`, iOS; blank clears back to
+"Empty workout"); new `renameWorkout`/`useRenameWorkout` (optimistic). #53: exercise search keyboard now
+**dismisses on scroll** (`keyboardDismissMode="on-drag"`) + return-key, in both `ExercisePickerModal` and the
+`exercises` library. #42: shared expo-haptics wrapper extracted to `lib/hapticsPrimitive.ts` (`fireHaptic`);
+`haptics.ts` + `feedback.ts` both use it, voice mute-gate separation preserved. Prior:
+**#52 FIXED (code): new `weighted_bodyweight` modality + full 156-exercise audit** (applied live to the DB —
+migration 0011 + `update-exercise-metadata.ts`; sim walkthrough still owed).
 Bodyweight-or-loaded lifts (Pull-Up, Dip, Back Extension, …) get an **optional +weight** field: reps lead, a blank
 weight is a pure-bodyweight set (`— × 12`), a loaded set reads `+10 × 12` — one exercise, not two. New modality wired
 through `SetKeypad`, the active-workout grid, finish/history top-set ranking, `formatSetByModality`, and the
@@ -334,13 +341,12 @@ native-`UITabBar` drag-lens glass — deferred, keeping the custom pill+FAB.
 
 ## Pending actions (owner: user / next session)
 
-- [ ] **Apply the exercise-audit changes to the live DB (#52 / #44)** — two steps, in order: **(1)** apply
-      migration `0011_weighted_bodyweight_modality.sql` (`supabase db push` or SQL editor — widens the modality
-      CHECK), then **(2)** `npx tsx scripts/update-exercise-metadata.ts`. Step 2 is a **new NON-destructive** sync
-      (UPDATEs existing rows in place — ids + routines + logged sets preserved — and inserts the 6 new exercises +
-      aliases). **Do NOT run the old `seed-exercises.ts` / `npm run seed`: it wipes `routine_exercises` +
-      `workout_exercises`.** After applying, the offline exercise cache refreshes on next online load; a sim/device
-      walkthrough of a weighted_bodyweight lift (e.g. Back Extension: log `— × 12`, then `+10 × 12`) still owed.
+- [x] ~~**Apply the exercise-audit changes to the live DB (#52 / #44)**~~ — **done 2026-08-15**: migration `0011`
+      pushed (`supabase db push`, dry-run-confirmed) + `npx tsx scripts/update-exercise-metadata.ts` (150 updated
+      in place, 6 inserted, 198 aliases). Verified live: 156 seeded, `weighted_bodyweight`=20, Back Extension
+      retagged, and user data intact (3 routines / 26 workouts / 429 sets untouched). **Still owed:** on-device
+      cache refresh + a sim walkthrough of a weighted_bodyweight lift (Back Extension: `— × 12`, then `+10 × 12`).
+      **Never run the old `seed-exercises.ts` / `npm run seed` on this DB — it wipes routines + workout sets.**
 - [x] ~~Apply migration `0010_set_metrics.sql`~~ — **done 2026-08-14** (applied live via `supabase db push`;
       #46 modality logging sim-verified across all four modalities).
 - [ ] **Rebuild the dev client for Apple Health** — the `@kingstinct/react-native-healthkit` native module

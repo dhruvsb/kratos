@@ -13,6 +13,7 @@
 import { useMemo, useState } from 'react';
 import {
   FlatList,
+  Keyboard,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -154,6 +155,8 @@ export function ExercisePickerModal({
             selectionColor={color.acc}
             autoFocus
             autoCorrect={false}
+            returnKeyType="search"
+            onSubmitEditing={Keyboard.dismiss}
           />
           <Text style={styles.count}>
             {results.length} {query.trim() ? 'MATCH' + (results.length === 1 ? '' : 'ES') : ''}
@@ -187,6 +190,7 @@ export function ExercisePickerModal({
           data={results}
           keyExtractor={(item) => item.id}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
           style={{ flex: 1 }}
           contentContainerStyle={{ paddingBottom: space.md }}
           renderItem={({ item }) => {

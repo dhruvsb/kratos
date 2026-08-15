@@ -14,21 +14,13 @@
 //   • web is a hard no-op — expo-haptics falls back to the Vibration API on web,
 //     and a buzzing browser is not the intent (`expo export --platform web` is
 //     part of this project's verification).
-import { Platform } from 'react-native';
+//
+// The platform-guard + swallow-everything wrapper itself lives in
+// lib/hapticsPrimitive.ts (shared with the voice earcon layer); this module only
+// names the manual loop's vocabulary on top of it — and stays ungated, unlike
+// feedback.ts's earcons.
 import * as Haptics from 'expo-haptics';
-
-const HAPTICS_SUPPORTED = Platform.OS === 'ios' || Platform.OS === 'android';
-
-function fire(run: () => Promise<void>) {
-  if (!HAPTICS_SUPPORTED) return;
-  try {
-    run().catch(() => {
-      /* engine unavailable / feedback denied — feel is never load-bearing */
-    });
-  } catch {
-    /* module missing entirely */
-  }
-}
+import { fireHaptic as fire } from './hapticsPrimitive';
 
 /** The logging loop's haptic vocabulary. Every call is safe from any context. */
 export const haptics = {

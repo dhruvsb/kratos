@@ -2,7 +2,7 @@
 // row goes to that exercise's progress, not a description.
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { FlatList, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { FlatList, Keyboard, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ErrorText } from '@/components/ui';
 import { useExerciseSearch } from '@/data/hooks';
@@ -41,6 +41,8 @@ export default function ExerciseLibraryScreen() {
           placeholderTextColor={color.t3}
           selectionColor={color.acc}
           autoCorrect={false}
+          returnKeyType="search"
+          onSubmitEditing={Keyboard.dismiss}
         />
       </View>
 
@@ -71,6 +73,7 @@ export default function ExerciseLibraryScreen() {
         data={results}
         keyExtractor={(item) => item.id}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         contentContainerStyle={styles.content}
         renderItem={({ item }) => (
           <Pressable style={styles.row} onPress={() => router.push(`/exercise/${item.id}`)}>

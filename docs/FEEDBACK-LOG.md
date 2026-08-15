@@ -13,14 +13,19 @@ and logged into without ever being named/attached to a routine — Lat Pulldown,
 
 | # | Item | Area | Done? | Sev | Effort |
 |---|------|------|-------|-----|--------|
-| 51 | Can't rename an "Empty workout" — a session logged without a routine/name has no rename affordance | History / naming | ⬜ Open | Low–Med | ? |
+| 51 | Can't rename an "Empty workout" — a session logged without a routine/name has no rename affordance | History / naming | ✅ Done (code 2026-08-15) | Low–Med | S |
 | 52 | Back Extension (aka Hyperextension) has no weight field — it's bodyweight-or-loaded, same class of exercise as others that need a weight-optional modality re-check | Exercise data / modality | ✅ Done (code 2026-08-15) — needs DB apply | Med | M–L |
-| 53 | Exercise search modal keyboard won't dismiss on its own — user has to tap Enter, then tap outside, to close it | Search / keyboard | ⬜ Open | Low | ? |
+| 53 | Exercise search modal keyboard won't dismiss on its own — user has to tap Enter, then tap outside, to close it | Search / keyboard | ✅ Done (code 2026-08-15) | Low | S |
 
-### 51. Can't rename an "Empty workout"
+### 51. Can't rename an "Empty workout" ✅ done (code) 2026-08-15
 **Seen:** a workout started/logged without picking a routine shows up in History titled literally
 **"Empty workout"**, with no apparent way to rename it after the fact.
-**Not yet investigated** — root cause / fix scope not looked at.
+**Done (2026-08-15):** the workout **title in History detail is now tappable** (`history/[id].tsx`) →
+`Alert.prompt` (iOS) prefilled with the current title (blank when it's the default) + a subtle "Tap title
+to rename" hint. New `renameWorkout(id, title|null)` (`workouts.ts`) sets `workouts.title`; a blank/whitespace
+submit coerces to **null**, clearing it back to the `routine_name` / "Empty workout" fallback. `useRenameWorkout`
+(`hooks.ts`) optimistically patches the workout-detail cache (title updates same-frame) and invalidates the
+history list. `tsc` clean; not yet on device.
 
 ### 52. Back Extension / Hyperextension needs a weight field — re-audit bodyweight-or-loaded exercises ✅ done (code) 2026-08-15
 **Seen:** Back Extension (also called Hyperextension) can be done pure bodyweight *or* with added load
@@ -54,11 +59,14 @@ primary muscle — reorder handled #44's case, but Burpee/Thruster/Turkish Get-U
 can't log their load; `SEED_ALIASES` is keyed to defunct free-exercise-db names — rekey to curated names or
 retire it (the inline curated aliases are the live path).
 
-### 53. Exercise search modal keyboard doesn't dismiss normally
+### 53. Exercise search modal keyboard doesn't dismiss normally ✅ done (code) 2026-08-15
 **Seen:** in the exercise-picker search sheet, the keyboard doesn't go down on its own (e.g. via a
 "Done" bar, tap-outside-to-dismiss on first tap, or scroll-to-dismiss) — user has to first press
 **Enter/return** and *then* tap outside the sheet to actually close the keyboard.
-**Not yet investigated** — root cause / fix scope not looked at.
+**Done (2026-08-15):** both search surfaces (`ExercisePickerModal.tsx` + the `exercises.tsx` library) got
+`keyboardDismissMode="on-drag"` on the results `FlatList` (scroll-to-dismiss — the core fix) plus
+`returnKeyType="search"` + `onSubmitEditing={Keyboard.dismiss}` on the `TextInput`; `keyboardShouldPersistTaps="handled"`
+was already present so a single tap on a result still registers with the keyboard up. `tsc` clean; not yet on device.
 
 ---
 
@@ -318,7 +326,7 @@ save → start workout → keypad + grid logging → delete set → finish → s
 | 39 | Finishing/deleting a workout doesn't refresh the streak + heatmap (`['workoutDays']` never invalidated) | Data / cache | ✅ FIXED 2026-08-13 | Med | S |
 | 40 | Routines list scrolls under the status bar / Dynamic Island | Routines / layout | ✅ FIXED 2026-08-13 | Med | S |
 | 41 | Duplicate creates the routine immediately, so the editor's CANCEL doesn't undo it | Routines | ⬜ Open | Low | S |
-| 42 | Consolidate `lib/feedback.ts` (voice earcons) onto `lib/haptics.ts` | Tech debt | ⬜ Open | Low | S |
+| 42 | Consolidate `lib/feedback.ts` (voice earcons) onto `lib/haptics.ts` | Tech debt | ✅ Done (code 2026-08-15) | Low | S |
 
 ### 37. Fresh workout opened on the last exercise ✅ **High** — fixed
 **Seen:** starting a 3-exercise routine landed on **Bench Dip "3 OF 3"** with PREV enabled and
@@ -356,10 +364,15 @@ the strip afterwards. Home never showed it because its streak header is fixed an
 behind**. Not wrong (it matches "duplicate then tweak"), but CANCEL reads as "undo". Options: create
 on save instead, or relabel the editor's CANCEL for this path.
 
-### 42. Two haptic helpers ⬜ Low (tech debt)
+### 42. Two haptic helpers ✅ Low (tech debt) — **done (code) 2026-08-15**
 `lib/feedback.ts` (Phase 2 voice earcons) and the new `lib/haptics.ts` both wrap expo-haptics.
 `feedback.ts` is gated on the voice `muted` flag and speaks an earcon vocabulary, so the manual loop
 must not route through it — but the two should eventually share one primitive.
+**Done (2026-08-15):** extracted the shared low-level wrapper into **`src/lib/hapticsPrimitive.ts`**
+(`fireHaptic(run)` — platform guard + swallow sync throws *and* async rejections; **no** mute gate).
+Both modules now call it: `haptics.ts` stays ungated; `feedback.ts`'s `safeHaptic` keeps the `if (muted)
+return` **before** `fireHaptic`, so the deliberate separation (muting voice never silences the manual set
+grid) is preserved. Public APIs of both modules unchanged (`useVoiceSession.ts` untouched). `tsc` clean.
 
 ### Verified working (no defect)
 Routine long-press → Duplicate / Rename / Archive · duplicate copies all exercises in order ·
