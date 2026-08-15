@@ -79,8 +79,9 @@ rejection. Easiest free route:
 
 ### Step 2 — Create the reviewer demo account (≈10 min) **[BLOCKER]**
 Follow `COMPLIANCE-ANSWERS.md` §5a. In the app, tap **Create account** and register a dedicated
-demo login (e.g. `appreview@kratos.app` + a strong password). Confirm its email if your Supabase
-project requires it, sign in once, and seed it with a few workouts so the reviewer sees content
+demo login (e.g. `appreview@kratos.app` + a strong password). "Confirm email" is turned OFF in
+Supabase (decision 2026-08-15), so the account works immediately — just sign in once and seed it
+with a few workouts so the reviewer sees content
 (`npm run seed:demo` against that account). You'll paste this email + password into App Store
 Connect's App Review Information.
 

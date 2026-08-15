@@ -183,9 +183,12 @@ Apple its email and password. No test-OTP workaround is needed.
    - Password: a strong password you'll paste into App Store Connect
 2. Sign in once and **seed it with a few sample workouts** so the reviewer sees real content
    (start a routine → log a couple of sets → finish), or run `npm run seed:demo` against it.
-3. **Email confirmation:** if your Supabase project has "Confirm email" enabled, either confirm the
-   demo address once yourself, or turn confirmation off, so the reviewer isn't blocked on a
-   verification email.
+3. **Email confirmation — DECISION (2026-08-15): turned OFF.** "Confirm email" is disabled in
+   Supabase (Dashboard → Authentication → Sign In / Providers → Email → "Confirm email" = off), so
+   any new account — including the demo login — can sign in immediately with no verification link.
+   This is what keeps Apple's reviewer from being blocked. (Tradeoff: signups aren't email-verified,
+   which is acceptable for a showcase app. The "Forgot password?" recovery-code email is a separate
+   flow and still works.)
 
 **Then, in App Store Connect → App Review Information, turn ON "Sign-In required" and fill:**
 
