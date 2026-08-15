@@ -20,10 +20,13 @@ REGION = {
     'abdominals': 'Core',
 }
 VOCAB = set(REGION)
-MODALITIES = {'weight_reps', 'bodyweight_reps', 'time', 'distance_time'}
+MODALITIES = {'weight_reps', 'bodyweight_reps', 'weighted_bodyweight', 'time', 'distance_time'}
 
 # name, primary[], secondary[], equipment, mechanic, modality, aliases[]
+# WB = weighted_bodyweight: bodyweight-baseline movement that can OPTIONALLY carry
+# added load (belt+plate, vest, dumbbell) — logs reps with an optional +weight.
 W, B, T, D = 'weight_reps', 'bodyweight_reps', 'time', 'distance_time'
+WB = 'weighted_bodyweight'
 CMP, ISO = 'compound', 'isolation'
 
 E = [
@@ -37,53 +40,53 @@ E = [
  ("Dumbbell Fly", ["chest"], ["shoulders"], "dumbbell", ISO, W, ["chest fly","db fly"]),
  ("Incline Dumbbell Fly", ["chest"], ["shoulders"], "dumbbell", ISO, W, []),
  ("Cable Crossover", ["chest"], ["shoulders"], "cable", ISO, W, ["cable fly"]),
- ("Pec Deck", ["chest"], [], "machine", ISO, W, ["machine fly","pec deck fly"]),
- ("Push-Up", ["chest"], ["triceps","shoulders","abdominals"], "body only", CMP, B, ["pushup","press up"]),
- ("Chest Dip", ["chest"], ["triceps","shoulders"], "body only", CMP, B, ["dips","chest dips"]),
+ ("Pec Deck", ["chest"], ["shoulders"], "machine", ISO, W, ["machine fly","pec deck fly"]),
+ ("Push-Up", ["chest"], ["triceps","shoulders","abdominals"], "body only", CMP, WB, ["pushup","press up","weighted push up"]),
+ ("Chest Dip", ["chest"], ["triceps","shoulders"], "body only", CMP, WB, ["dips","chest dips","weighted dip"]),
  ("Dumbbell Pullover", ["chest"], ["lats","triceps"], "dumbbell", CMP, W, ["pullover"]),
- ("Diamond Push-Up", ["triceps"], ["chest","shoulders"], "body only", CMP, B, ["close grip pushup"]),
+ ("Diamond Push-Up", ["triceps"], ["chest","shoulders"], "body only", CMP, WB, ["close grip pushup"]),
 
  # ---------------- BACK ----------------
  ("Deadlift", ["glutes","hamstrings","lower back"], ["quadriceps","traps","forearms","lats"], "barbell", CMP, W, ["conventional deadlift","dl"]),
- ("Sumo Deadlift", ["glutes","quadriceps","hamstrings"], ["adductors","lower back","traps","forearms"], "barbell", CMP, W, []),
+ ("Sumo Deadlift", ["glutes","quadriceps","hamstrings","lower back"], ["adductors","traps","forearms"], "barbell", CMP, W, ["sumo","sumo dl"]),
  ("Romanian Deadlift", ["hamstrings","glutes"], ["lower back","forearms"], "barbell", CMP, W, ["rdl"]),
- ("Rack Pull", ["lower back","traps"], ["glutes","hamstrings","forearms"], "barbell", CMP, W, []),
- ("Pull-Up", ["lats"], ["biceps","middle back","forearms"], "body only", CMP, B, ["pullup"]),
- ("Chin-Up", ["lats","biceps"], ["middle back","forearms"], "body only", CMP, B, ["chinup"]),
+ ("Rack Pull", ["lower back","traps"], ["glutes","hamstrings","forearms"], "barbell", CMP, W, ["rack pulls"]),
+ ("Pull-Up", ["lats"], ["biceps","middle back","forearms"], "body only", CMP, WB, ["pullup","weighted pull up"]),
+ ("Chin-Up", ["lats","biceps"], ["middle back","forearms"], "body only", CMP, WB, ["chinup","weighted chin up"]),
  ("Lat Pulldown", ["lats"], ["biceps","middle back"], "cable", CMP, W, ["pulldown"]),
  ("Close-Grip Lat Pulldown", ["lats","biceps"], ["middle back"], "cable", CMP, W, []),
  ("Straight-Arm Pulldown", ["lats"], ["triceps"], "cable", ISO, W, ["straight arm pushdown"]),
  ("Bent-Over Barbell Row", ["middle back","lats"], ["biceps","lower back","traps"], "barbell", CMP, W, ["barbell row","bb row"]),
- ("Pendlay Row", ["middle back","lats"], ["biceps","traps"], "barbell", CMP, W, []),
+ ("Pendlay Row", ["middle back","lats"], ["biceps","traps"], "barbell", CMP, W, ["pendlay"]),
  ("One-Arm Dumbbell Row", ["lats","middle back"], ["biceps","forearms"], "dumbbell", CMP, W, ["db row","single arm row"]),
  ("Seated Cable Row", ["middle back","lats"], ["biceps","forearms"], "cable", CMP, W, ["cable row"]),
- ("T-Bar Row", ["middle back","lats"], ["biceps","traps"], "barbell", CMP, W, []),
+ ("T-Bar Row", ["middle back","lats"], ["biceps","traps"], "barbell", CMP, W, ["t bar row","tbar row"]),
  ("Chest-Supported Row", ["middle back","lats"], ["biceps"], "machine", CMP, W, ["seal row"]),
  ("Machine Row", ["middle back","lats"], ["biceps"], "machine", CMP, W, ["hammer strength row"]),
- ("Inverted Row", ["middle back","lats"], ["biceps"], "body only", CMP, B, ["bodyweight row"]),
- ("Face Pull", ["shoulders","traps"], ["middle back"], "cable", ISO, W, []),
- ("Back Extension", ["lower back"], ["glutes","hamstrings"], "body only", ISO, B, ["hyperextension"]),
+ ("Inverted Row", ["middle back","lats"], ["biceps"], "body only", CMP, WB, ["bodyweight row"]),
+ ("Face Pull", ["shoulders","traps"], ["middle back"], "cable", ISO, W, ["facepull","rope face pull"]),
+ ("Back Extension", ["lower back"], ["glutes","hamstrings"], "body only", ISO, WB, ["hyperextension","hyper extension","weighted back extension","45 degree back extension"]),
  ("Barbell Shrug", ["traps"], ["forearms"], "barbell", ISO, W, ["shrug"]),
  ("Dumbbell Shrug", ["traps"], ["forearms"], "dumbbell", ISO, W, []),
 
  # ---------------- LEGS ----------------
- ("Barbell Back Squat", ["quadriceps","glutes"], ["hamstrings","lower back","adductors"], "barbell", CMP, W, ["squat","back squat"]),
- ("Front Squat", ["quadriceps"], ["glutes","abdominals","lower back"], "barbell", CMP, W, []),
+ ("Barbell Back Squat", ["quadriceps","glutes"], ["hamstrings","lower back","adductors","abdominals"], "barbell", CMP, W, ["squat","back squat"]),
+ ("Front Squat", ["quadriceps"], ["glutes","abdominals","lower back","traps"], "barbell", CMP, W, ["front squat","bb front squat"]),
  ("Goblet Squat", ["quadriceps","glutes"], ["abdominals"], "dumbbell", CMP, W, []),
  ("Smith Machine Squat", ["quadriceps","glutes"], ["hamstrings"], "machine", CMP, W, []),
  ("Hack Squat", ["quadriceps"], ["glutes","hamstrings"], "machine", CMP, W, []),
  ("Leg Press", ["quadriceps","glutes"], ["hamstrings"], "machine", CMP, W, []),
- ("Bulgarian Split Squat", ["quadriceps","glutes"], ["hamstrings"], "dumbbell", CMP, W, ["split squat"]),
+ ("Bulgarian Split Squat", ["quadriceps","glutes"], ["hamstrings"], "dumbbell", CMP, W, ["split squat","bss","rfess","rear foot elevated split squat"]),
  ("Walking Lunge", ["quadriceps","glutes"], ["hamstrings"], "dumbbell", CMP, W, ["lunge"]),
  ("Reverse Lunge", ["quadriceps","glutes"], ["hamstrings"], "dumbbell", CMP, W, []),
  ("Step-Up", ["quadriceps","glutes"], ["hamstrings"], "dumbbell", CMP, W, []),
  ("Leg Extension", ["quadriceps"], [], "machine", ISO, W, ["quad extension"]),
  ("Lying Leg Curl", ["hamstrings"], [], "machine", ISO, W, ["leg curl","ham curl"]),
  ("Seated Leg Curl", ["hamstrings"], [], "machine", ISO, W, []),
- ("Nordic Hamstring Curl", ["hamstrings"], ["glutes"], "body only", ISO, B, ["nordic curl"]),
- ("Good Morning", ["hamstrings","lower back"], ["glutes"], "barbell", CMP, W, []),
+ ("Nordic Hamstring Curl", ["hamstrings"], ["glutes"], "body only", ISO, WB, ["nordic curl"]),
+ ("Good Morning", ["hamstrings","lower back"], ["glutes"], "barbell", CMP, W, ["goodmorning","good mornings"]),
  ("Hip Thrust", ["glutes"], ["hamstrings"], "barbell", CMP, W, ["barbell hip thrust"]),
- ("Glute Bridge", ["glutes"], ["hamstrings"], "body only", CMP, B, []),
+ ("Glute Bridge", ["glutes"], ["hamstrings"], "body only", CMP, WB, []),
  ("Romanian Deadlift (Dumbbell)", ["hamstrings","glutes"], ["lower back"], "dumbbell", CMP, W, ["db rdl"]),
  ("Single-Leg Deadlift", ["hamstrings","glutes"], ["lower back","abdominals"], "dumbbell", CMP, W, []),
  ("Sumo Squat", ["quadriceps","glutes","adductors"], ["hamstrings"], "dumbbell", CMP, W, ["plie squat"]),
@@ -92,11 +95,11 @@ E = [
  ("Standing Calf Raise", ["calves"], [], "machine", ISO, W, ["calf raise"]),
  ("Seated Calf Raise", ["calves"], [], "machine", ISO, W, []),
  ("Leg Press Calf Raise", ["calves"], [], "machine", ISO, W, ["calf press"]),
- ("Pistol Squat", ["quadriceps","glutes"], ["hamstrings"], "body only", CMP, B, ["single leg squat"]),
+ ("Pistol Squat", ["quadriceps","glutes"], ["hamstrings"], "body only", CMP, WB, ["single leg squat"]),
  ("Wall Sit", ["quadriceps"], ["glutes"], "body only", ISO, T, []),
 
  # ---------------- SHOULDERS ----------------
- ("Overhead Press", ["shoulders"], ["triceps","traps"], "barbell", CMP, W, ["ohp","military press","shoulder press"]),
+ ("Overhead Press", ["shoulders"], ["triceps","traps","abdominals"], "barbell", CMP, W, ["ohp","military press","shoulder press","standing press","strict press"]),
  ("Seated Dumbbell Shoulder Press", ["shoulders"], ["triceps"], "dumbbell", CMP, W, ["db shoulder press"]),
  ("Arnold Press", ["shoulders"], ["triceps"], "dumbbell", CMP, W, []),
  ("Machine Shoulder Press", ["shoulders"], ["triceps"], "machine", CMP, W, []),
@@ -113,7 +116,7 @@ E = [
  ("Barbell Curl", ["biceps"], ["forearms"], "barbell", ISO, W, ["bicep curl","bb curl"]),
  ("Dumbbell Curl", ["biceps"], ["forearms"], "dumbbell", ISO, W, ["db curl"]),
  ("Hammer Curl", ["biceps","forearms"], [], "dumbbell", ISO, W, []),
- ("Preacher Curl", ["biceps"], [], "barbell", ISO, W, []),
+ ("Preacher Curl", ["biceps"], [], "barbell", ISO, W, ["preacher curls","ez bar preacher curl"]),
  ("Incline Dumbbell Curl", ["biceps"], [], "dumbbell", ISO, W, []),
  ("Concentration Curl", ["biceps"], [], "dumbbell", ISO, W, []),
  ("Cable Curl", ["biceps"], ["forearms"], "cable", ISO, W, []),
@@ -125,7 +128,7 @@ E = [
  ("Triceps Pushdown", ["triceps"], [], "cable", ISO, W, ["cable pushdown","rope pushdown"]),
  ("Overhead Triceps Extension", ["triceps"], [], "dumbbell", ISO, W, ["overhead extension"]),
  ("Skull Crusher", ["triceps"], [], "e-z curl bar", ISO, W, ["lying triceps extension"]),
- ("Bench Dip", ["triceps"], ["chest","shoulders"], "body only", CMP, B, ["tricep dip"]),
+ ("Bench Dip", ["triceps"], ["chest","shoulders"], "body only", CMP, WB, ["tricep dip"]),
  ("Triceps Kickback", ["triceps"], [], "dumbbell", ISO, W, ["kickback"]),
  ("Cable Overhead Triceps Extension", ["triceps"], [], "cable", ISO, W, []),
 
@@ -138,13 +141,13 @@ E = [
  ("Plank", ["abdominals"], ["lower back"], "body only", ISO, T, ["front plank"]),
  ("Side Plank", ["abdominals"], [], "body only", ISO, T, []),
  ("Hollow Hold", ["abdominals"], [], "body only", ISO, T, []),
- ("Crunch", ["abdominals"], [], "body only", ISO, B, []),
- ("Sit-Up", ["abdominals"], [], "body only", CMP, B, ["situp"]),
+ ("Crunch", ["abdominals"], [], "body only", ISO, WB, []),
+ ("Sit-Up", ["abdominals"], [], "body only", ISO, WB, ["situp"]),
  ("Bicycle Crunch", ["abdominals"], [], "body only", ISO, B, []),
- ("Hanging Leg Raise", ["abdominals"], ["forearms"], "body only", CMP, B, []),
- ("Lying Leg Raise", ["abdominals"], [], "body only", ISO, B, ["leg raise"]),
+ ("Hanging Leg Raise", ["abdominals"], ["forearms"], "body only", ISO, WB, []),
+ ("Lying Leg Raise", ["abdominals"], [], "body only", ISO, WB, ["leg raise"]),
  ("Cable Crunch", ["abdominals"], [], "cable", ISO, W, []),
- ("Russian Twist", ["abdominals"], [], "body only", ISO, B, []),
+ ("Russian Twist", ["abdominals"], [], "body only", ISO, WB, []),
  ("Ab Wheel Rollout", ["abdominals"], ["lower back"], "other", CMP, B, ["ab rollout"]),
  ("Mountain Climber", ["abdominals"], ["shoulders"], "body only", CMP, B, []),
  ("Dead Bug", ["abdominals"], [], "body only", ISO, B, []),
@@ -158,7 +161,9 @@ E = [
  ("Hang Clean", ["glutes","hamstrings","traps"], ["quadriceps","shoulders","forearms"], "barbell", CMP, W, []),
  ("Kettlebell Swing", ["glutes","hamstrings"], ["lower back","shoulders","abdominals"], "kettlebells", CMP, W, ["kb swing"]),
  ("Thruster", ["quadriceps","glutes","shoulders"], ["triceps","abdominals"], "barbell", CMP, W, []),
- ("Clean and Press", ["shoulders","glutes"], ["hamstrings","quadriceps","triceps","traps"], "barbell", CMP, W, []),
+ # Glutes lead so the row label + Legs-filter placement agree (feedback #44: it showed
+ # only "SHOULDERS" while filed under LEGS). traps promoted — the clean pull is trap-heavy.
+ ("Clean and Press", ["glutes","shoulders","traps"], ["hamstrings","quadriceps","triceps"], "barbell", CMP, W, ["clean and press"]),
  ("Turkish Get-Up", ["shoulders","abdominals"], ["glutes","quadriceps"], "kettlebells", CMP, W, []),
  ("Burpee", ["quadriceps","chest"], ["shoulders","triceps","abdominals"], "body only", CMP, B, []),
  ("Box Jump", ["quadriceps","glutes"], ["calves","hamstrings"], "body only", CMP, B, []),
@@ -168,14 +173,16 @@ E = [
  # ---------------- CARDIO ----------------
  ("Treadmill Run", ["quadriceps","hamstrings"], ["calves","glutes"], "machine", CMP, D, ["running","treadmill"]),
  ("Stationary Bike", ["quadriceps","hamstrings"], ["calves","glutes"], "machine", CMP, D, ["cycling","spin bike"]),
- ("Rowing Machine", ["lats","middle back"], ["quadriceps","hamstrings","biceps"], "machine", CMP, D, ["erg","row erg"]),
+ # Leg drive is ~half the rowing stroke — quadriceps promoted to primary so the erg
+ # also surfaces under the Legs filter, not Back-only (audit finding).
+ ("Rowing Machine", ["lats","middle back","quadriceps"], ["hamstrings","glutes","biceps"], "machine", CMP, D, ["erg","row erg"]),
  ("Elliptical", ["quadriceps","hamstrings"], ["glutes","calves"], "machine", CMP, D, []),
  ("Stair Climber", ["quadriceps","glutes"], ["calves","hamstrings"], "machine", CMP, D, ["stairmaster"]),
  ("Jump Rope", ["calves"], ["shoulders","forearms"], "other", CMP, T, ["skipping"]),
  ("Incline Treadmill Walk", ["glutes","quadriceps"], ["calves","hamstrings"], "machine", CMP, D, ["incline walk"]),
 
  # ---------------- additional common variations ----------------
- ("Trap Bar Deadlift", ["quadriceps","glutes","hamstrings"], ["traps","forearms","lower back"], "other", CMP, W, ["hex bar deadlift"]),
+ ("Trap Bar Deadlift", ["quadriceps","glutes","hamstrings"], ["traps","forearms","lower back"], "other", CMP, W, ["hex bar deadlift","trap bar deadlift","trap bar dl"]),
  ("Dumbbell Deadlift", ["hamstrings","glutes","lower back"], ["quadriceps","forearms"], "dumbbell", CMP, W, []),
  ("Landmine Row", ["middle back","lats"], ["biceps","traps"], "barbell", CMP, W, ["meadows row"]),
  ("Renegade Row", ["middle back","lats"], ["abdominals","biceps"], "dumbbell", CMP, W, []),
@@ -183,7 +190,7 @@ E = [
  ("Cable Pull-Through", ["glutes","hamstrings"], ["lower back"], "cable", CMP, W, []),
  ("Cable Glute Kickback", ["glutes"], ["hamstrings"], "cable", ISO, W, ["glute kickback"]),
  ("Hip Thrust Machine", ["glutes"], ["hamstrings"], "machine", CMP, W, []),
- ("Cossack Squat", ["adductors","quadriceps"], ["glutes"], "body only", CMP, B, []),
+ ("Cossack Squat", ["adductors","quadriceps"], ["glutes"], "body only", CMP, WB, []),
  ("Reverse Pec Deck", ["shoulders"], ["middle back","traps"], "machine", ISO, W, ["rear delt machine"]),
  ("Standing Dumbbell Shoulder Press", ["shoulders"], ["triceps","abdominals"], "dumbbell", CMP, W, []),
  ("Machine Bicep Curl", ["biceps"], [], "machine", ISO, W, []),
@@ -191,13 +198,21 @@ E = [
  ("Reverse Curl", ["forearms","biceps"], [], "e-z curl bar", ISO, W, []),
  ("Zottman Curl", ["biceps","forearms"], [], "dumbbell", ISO, W, []),
  ("Rope Hammer Curl", ["biceps","forearms"], [], "cable", ISO, W, []),
- ("Incline Push-Up", ["chest"], ["triceps","shoulders"], "body only", CMP, B, []),
- ("Decline Push-Up", ["chest"], ["shoulders","triceps"], "body only", CMP, B, []),
+ ("Incline Push-Up", ["chest"], ["triceps","shoulders"], "body only", CMP, WB, []),
+ ("Decline Push-Up", ["chest"], ["shoulders","triceps"], "body only", CMP, WB, []),
  ("Cable Chest Press", ["chest"], ["triceps","shoulders"], "cable", CMP, W, []),
  ("Dumbbell Floor Press", ["chest","triceps"], ["shoulders"], "dumbbell", CMP, W, []),
  ("Superman", ["lower back"], ["glutes"], "body only", ISO, B, []),
  ("Reverse Crunch", ["abdominals"], [], "body only", ISO, B, []),
  ("Flutter Kicks", ["abdominals"], [], "body only", ISO, B, []),
+
+ # ---------------- coverage additions (2026-08-15 audit) ----------------
+ ("Machine Lateral Raise", ["shoulders"], [], "machine", ISO, W, ["machine side raise","lateral raise machine"]),
+ ("Glute-Ham Raise", ["hamstrings"], ["glutes","calves"], "machine", CMP, WB, ["ghr","glute ham raise"]),
+ ("Seated Barbell Overhead Press", ["shoulders"], ["triceps"], "barbell", CMP, W, ["seated ohp","seated military press","seated barbell press"]),
+ ("Smith Machine Bench Press", ["chest"], ["triceps","shoulders"], "machine", CMP, W, ["smith bench","smith machine bench"]),
+ ("Decline Dumbbell Press", ["chest"], ["triceps","shoulders"], "dumbbell", CMP, W, ["decline db press"]),
+ ("Air Bike", ["quadriceps","hamstrings"], ["shoulders","abdominals"], "machine", CMP, D, ["assault bike","echo bike","fan bike"]),
 ]
 
 def region_for(primary):

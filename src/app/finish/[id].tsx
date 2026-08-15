@@ -28,6 +28,17 @@ function topSet(sets: WorkoutSet[], modality: ExerciseModality): WorkoutSet | nu
         if (s.reps == null) return best;
         if (best?.reps == null) return s;
         return s.reps > best.reps ? s : best;
+      case 'weighted_bodyweight': {
+        // Heaviest added load wins; among unloaded (bodyweight) sets, most reps.
+        // Unlike weight_reps a null weight is a real set (counts as 0 load), so
+        // a bodyweight-only session still has a top set.
+        if (best == null) return s;
+        const sw = s.weight_kg ?? 0;
+        const bw = best.weight_kg ?? 0;
+        if (sw > bw) return s;
+        if (sw === bw && (s.reps ?? 0) > (best.reps ?? 0)) return s;
+        return best;
+      }
       case 'time':
         if (s.duration_seconds == null) return best;
         if (best?.duration_seconds == null) return s;

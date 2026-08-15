@@ -24,6 +24,10 @@ export type Profile = z.infer<typeof profileSchema>;
 export const exerciseModalitySchema = z.enum([
   'weight_reps',
   'bodyweight_reps',
+  // Bodyweight-baseline movement that can OPTIONALLY carry added external load
+  // (belt+plate, vest, dumbbell) — Pull-Up, Dip, Back Extension, etc. Logs reps
+  // with an optional +weight; a null weight is a pure-bodyweight set.
+  'weighted_bodyweight',
   'time',
   'distance_time',
 ]);

@@ -157,6 +157,14 @@ export default function WorkoutDetailScreen() {
             switch (modality) {
               case 'bodyweight_reps':
                 return (s.reps ?? 0) > (best?.reps ?? -1) ? s : best;
+              case 'weighted_bodyweight': {
+                // Heaviest added load, reps break ties (bodyweight sets = 0 load).
+                const sw = s.weight_kg ?? 0;
+                const bw = best?.weight_kg ?? -1;
+                if (sw > bw) return s;
+                if (sw === bw && (s.reps ?? 0) > (best?.reps ?? -1)) return s;
+                return best;
+              }
               case 'time':
               case 'distance_time':
                 return (s.duration_seconds ?? 0) > (best?.duration_seconds ?? -1) ? s : best;

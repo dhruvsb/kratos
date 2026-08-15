@@ -97,15 +97,23 @@ export default function ExerciseProgressScreen() {
   const profile = useProfile();
   const unit: Unit = profile.data?.default_unit ?? 'kg';
 
-  // One page-level modality — every session here is the same exercise, so a
-  // single metric applies to the whole page. Falls back to weight_reps until the
-  // exercise row loads (preserves the legacy lift behaviour).
-  const modality: ExerciseModality = exercise.data?.modality ?? 'weight_reps';
+  const rawModality: ExerciseModality = exercise.data?.modality ?? 'weight_reps';
 
   const entries = useMemo<ExerciseHistoryEntry[]>(
     () => (history.data?.pages ?? []).flat(),
     [history.data]
   );
+
+  // One page-level modality — every session here is the same exercise, so a single
+  // metric applies to the whole page. weighted_bodyweight is a special case: the
+  // chart can only plot one number, so resolve it to the added-load story when the
+  // user has EVER loaded this exercise, otherwise fall back to charting reps (so a
+  // pure-bodyweight lifter still gets a meaningful curve, not a flat zero line).
+  const modality: ExerciseModality = useMemo(() => {
+    if (rawModality !== 'weighted_bodyweight') return rawModality;
+    const everLoaded = entries.some((e) => e.sets.some((s) => s.weight_kg != null));
+    return everLoaded ? 'weight_reps' : 'bodyweight_reps';
+  }, [rawModality, entries]);
 
   const derived = useMemo(() => {
     const metric = metricOf(modality);

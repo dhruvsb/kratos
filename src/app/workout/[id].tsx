@@ -63,6 +63,10 @@ function valueHeaders(modality: ExerciseModality, unit: Unit): string[] {
   switch (modality) {
     case 'bodyweight_reps':
       return ['REPS'];
+    case 'weighted_bodyweight':
+      // Added load (optional) + reps — same 2-column layout as weight_reps, but the
+      // weight column reads "+KG" and is empty ("—") for pure-bodyweight sets.
+      return [`+${unit.toUpperCase()}`, 'REPS'];
     case 'time':
       return ['TIME'];
     case 'distance_time':
@@ -78,6 +82,9 @@ function valueCells(set: SetMetrics, modality: ExerciseModality, unit: Unit): st
   switch (modality) {
     case 'bodyweight_reps':
       return [set.reps == null ? '—' : String(set.reps)];
+    case 'weighted_bodyweight':
+      // formatWeight already renders "—" for a null (bodyweight) weight.
+      return [formatWeight(set.weight_kg, unit), set.reps == null ? '—' : String(set.reps)];
     case 'time':
       return [formatDuration(set.duration_seconds)];
     case 'distance_time':
@@ -262,7 +269,11 @@ export default function ActiveWorkoutScreen() {
   // before); the others drop the weight column and/or add duration + level.
   const modality: ExerciseModality = activeExercise?.exercise.modality ?? 'weight_reps';
   const isWeightModality = modality === 'weight_reps';
-  const usesReps = modality === 'weight_reps' || modality === 'bodyweight_reps';
+  const isWeightedBw = modality === 'weighted_bodyweight';
+  // The weight column shows for both weight_reps and weighted_bodyweight, but for the
+  // latter it's OPTIONAL added load (a null weight is a valid pure-bodyweight set).
+  const usesWeight = isWeightModality || isWeightedBw;
+  const usesReps = usesWeight || modality === 'bodyweight_reps';
   const usesDuration = modality === 'time' || modality === 'distance_time';
   const isCardio = modality === 'distance_time';
 
@@ -279,7 +290,7 @@ export default function ActiveWorkoutScreen() {
   // repeat what you did → else default to 12, so ✓ is a true one-tap log. Non-weight
   // modalities pre-fill only their own fields (reps / duration / duration+level) from
   // this session's last set, else last session's same-index set.
-  const prefillKg = prefillEnabled && isWeightModality
+  const prefillKg = prefillEnabled && usesWeight
     ? prevInSession?.weight_kg ?? best?.weight_kg ?? lastForNext?.weight_kg ?? null
     : null;
   const prefillReps = prefillEnabled && usesReps
@@ -311,7 +322,7 @@ export default function ActiveWorkoutScreen() {
           { text: formatLevel(prefillLevel), dim: prefillLevel == null },
         ]
       : [{ text: formatDuration(prefillDuration), dim: prefillDuration == null }]
-    : isWeightModality
+    : usesWeight
       ? [
           { text: formatWeight(prefillKg, unit), dim: prefillKg == null },
           { text: prefillReps == null ? '—' : String(prefillReps), dim: prefillReps == null },

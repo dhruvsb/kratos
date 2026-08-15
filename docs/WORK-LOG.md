@@ -7,6 +7,41 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-15 — #52/#44: `weighted_bodyweight` modality + full 156-exercise audit
+
+Device feedback (#51 empty-workout rename, #52 Back Extension has no weight field, #53 search keyboard won't
+dismiss) logged first. Then, on the #52 ask ("re-check all exercises where bodyweight-or-loaded is possible"),
+ran **3 parallel read-only audit agents** over the 150-exercise curated set — modality, categorization, and
+coverage — synthesized their findings, and implemented the modality + label + coverage streams (loaded carries
+deferred). Implementation kept sequential (all streams touch the one authoring file + overlapping grid code).
+
+**New `weighted_bodyweight` modality** — the product-correct answer over reclassifying to `weight_reps` (which
+would force a mandatory weight and render `0 kg × 12` for a bodyweight set). One exercise, optional +weight:
+reps lead, blank weight = pure bodyweight (`— × 12`), loaded = `+10 × 12`. Enum in `src/types/db.ts`; migration
+`0011` widens the `exercises_modality_check` CHECK (no new columns — `weight_kg` from 0010 stores the added
+load). Wired through `SetKeypad` (+KG optional field, bodyweight rep chips), `workout/[id].tsx` grid
+(`valueHeaders`/`valueCells`, `usesWeight`, prefill), `finish`/`history` top-set ranking (heaviest load, reps
+break ties, bodyweight sets still count — unlike `weight_reps` which skips null-weight), `formatSetByModality`
+(`+load × reps` / `N reps`), and the exercise-detail chart (resolves to load-progress if ever loaded, else reps).
+
+**Data (`build-curated-exercises.py` → regenerated JSON, 150→156):** 20 retagged `weighted_bodyweight`, 11 kept
+pure `bodyweight_reps` (plyo / high-rep ab / wheel). Category fixes: Clean and Press primaries reordered so the
+row label agrees with its Legs placement (**closes #44's reported case**); Rowing Machine + Sumo Deadlift now
+span Legs+Back; added secondaries (Front Squat traps, OHP/Back Squat abs, Pec Deck delts); Sit-Up/Hanging Leg
+Raise → isolation. 6 new exercises (Machine Lateral Raise, Glute-Ham Raise, Seated Barbell OHP, Smith Bench,
+Decline DB Press, Air Bike) + alias gaps (BSS, sumo, T-bar, face pull, …).
+
+**Rollout is NON-destructive:** the old `seed-exercises.ts` nukes `routine_exercises`/`workout_exercises`, so
+wrote **`scripts/update-exercise-metadata.ts`** — UPDATEs existing rows by name (ids preserved, user history
+intact), inserts the 6 new ones + aliases, touches no user data. Apply order: migration `0011`, then that
+script. `tsc` clean (app + scripts). **Not yet applied to the live DB or run on device.**
+
+Deferred + logged as follow-ups: general multi-region row-label fix (Burpee/Thruster/TGU still show one
+primary), a dedicated Forearms region, loaded carries (Farmer's Walk/Sled Push), and rekeying/retiring the
+dead `SEED_ALIASES` map.
+
+---
+
 ## 2026-08-14 — #49: reconciled Home to the final `Voice Logging.dc.html` (1a) design
 
 Imported the "Voice Logging" design (Claude Design project `fefd8154-…`) via the design MCP and diffed

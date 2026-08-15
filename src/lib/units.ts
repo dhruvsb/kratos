@@ -84,6 +84,11 @@ export function formatSetByModality(
   switch (modality) {
     case 'bodyweight_reps':
       return `${set.reps ?? '—'} reps`;
+    case 'weighted_bodyweight':
+      // Loaded → "+10 × 8" (the added load); pure bodyweight → "8 reps".
+      return set.weight_kg == null
+        ? `${set.reps ?? '—'} reps`
+        : `+${trimWeight(kgToDisplay(set.weight_kg, unit))} × ${set.reps ?? '—'}`;
     case 'time':
       return formatDuration(set.duration_seconds);
     case 'distance_time': {

@@ -173,7 +173,9 @@
     "primary_muscles": [
       "chest"
     ],
-    "secondary_muscles": [],
+    "secondary_muscles": [
+      "shoulders"
+    ],
     "body_region": [
       "Chest"
     ],
@@ -200,10 +202,11 @@
     ],
     "equipment": "body only",
     "mechanic": "compound",
-    "modality": "bodyweight_reps",
+    "modality": "weighted_bodyweight",
     "aliases": [
       "pushup",
-      "press up"
+      "press up",
+      "weighted push up"
     ]
   },
   {
@@ -220,10 +223,11 @@
     ],
     "equipment": "body only",
     "mechanic": "compound",
-    "modality": "bodyweight_reps",
+    "modality": "weighted_bodyweight",
     "aliases": [
       "dips",
-      "chest dips"
+      "chest dips",
+      "weighted dip"
     ]
   },
   {
@@ -259,7 +263,7 @@
     ],
     "equipment": "body only",
     "mechanic": "compound",
-    "modality": "bodyweight_reps",
+    "modality": "weighted_bodyweight",
     "aliases": [
       "close grip pushup"
     ]
@@ -294,21 +298,25 @@
     "primary_muscles": [
       "glutes",
       "quadriceps",
-      "hamstrings"
+      "hamstrings",
+      "lower back"
     ],
     "secondary_muscles": [
       "adductors",
-      "lower back",
       "traps",
       "forearms"
     ],
     "body_region": [
-      "Legs"
+      "Legs",
+      "Back"
     ],
     "equipment": "barbell",
     "mechanic": "compound",
     "modality": "weight_reps",
-    "aliases": []
+    "aliases": [
+      "sumo",
+      "sumo dl"
+    ]
   },
   {
     "canonical_name": "Romanian Deadlift",
@@ -347,7 +355,9 @@
     "equipment": "barbell",
     "mechanic": "compound",
     "modality": "weight_reps",
-    "aliases": []
+    "aliases": [
+      "rack pulls"
+    ]
   },
   {
     "canonical_name": "Pull-Up",
@@ -364,9 +374,10 @@
     ],
     "equipment": "body only",
     "mechanic": "compound",
-    "modality": "bodyweight_reps",
+    "modality": "weighted_bodyweight",
     "aliases": [
-      "pullup"
+      "pullup",
+      "weighted pull up"
     ]
   },
   {
@@ -385,9 +396,10 @@
     ],
     "equipment": "body only",
     "mechanic": "compound",
-    "modality": "bodyweight_reps",
+    "modality": "weighted_bodyweight",
     "aliases": [
-      "chinup"
+      "chinup",
+      "weighted chin up"
     ]
   },
   {
@@ -483,7 +495,9 @@
     "equipment": "barbell",
     "mechanic": "compound",
     "modality": "weight_reps",
-    "aliases": []
+    "aliases": [
+      "pendlay"
+    ]
   },
   {
     "canonical_name": "One-Arm Dumbbell Row",
@@ -542,7 +556,10 @@
     "equipment": "barbell",
     "mechanic": "compound",
     "modality": "weight_reps",
-    "aliases": []
+    "aliases": [
+      "t bar row",
+      "tbar row"
+    ]
   },
   {
     "canonical_name": "Chest-Supported Row",
@@ -596,7 +613,7 @@
     ],
     "equipment": "body only",
     "mechanic": "compound",
-    "modality": "bodyweight_reps",
+    "modality": "weighted_bodyweight",
     "aliases": [
       "bodyweight row"
     ]
@@ -617,7 +634,10 @@
     "equipment": "cable",
     "mechanic": "isolation",
     "modality": "weight_reps",
-    "aliases": []
+    "aliases": [
+      "facepull",
+      "rope face pull"
+    ]
   },
   {
     "canonical_name": "Back Extension",
@@ -633,9 +653,12 @@
     ],
     "equipment": "body only",
     "mechanic": "isolation",
-    "modality": "bodyweight_reps",
+    "modality": "weighted_bodyweight",
     "aliases": [
-      "hyperextension"
+      "hyperextension",
+      "hyper extension",
+      "weighted back extension",
+      "45 degree back extension"
     ]
   },
   {
@@ -681,7 +704,8 @@
     "secondary_muscles": [
       "hamstrings",
       "lower back",
-      "adductors"
+      "adductors",
+      "abdominals"
     ],
     "body_region": [
       "Legs"
@@ -702,7 +726,8 @@
     "secondary_muscles": [
       "glutes",
       "abdominals",
-      "lower back"
+      "lower back",
+      "traps"
     ],
     "body_region": [
       "Legs"
@@ -710,7 +735,10 @@
     "equipment": "barbell",
     "mechanic": "compound",
     "modality": "weight_reps",
-    "aliases": []
+    "aliases": [
+      "front squat",
+      "bb front squat"
+    ]
   },
   {
     "canonical_name": "Goblet Squat",
@@ -796,7 +824,10 @@
     "mechanic": "compound",
     "modality": "weight_reps",
     "aliases": [
-      "split squat"
+      "split squat",
+      "bss",
+      "rfess",
+      "rear foot elevated split squat"
     ]
   },
   {
@@ -912,7 +943,7 @@
     ],
     "equipment": "body only",
     "mechanic": "isolation",
-    "modality": "bodyweight_reps",
+    "modality": "weighted_bodyweight",
     "aliases": [
       "nordic curl"
     ]
@@ -933,7 +964,10 @@
     "equipment": "barbell",
     "mechanic": "compound",
     "modality": "weight_reps",
-    "aliases": []
+    "aliases": [
+      "goodmorning",
+      "good mornings"
+    ]
   },
   {
     "canonical_name": "Hip Thrust",
@@ -966,7 +1000,7 @@
     ],
     "equipment": "body only",
     "mechanic": "compound",
-    "modality": "bodyweight_reps",
+    "modality": "weighted_bodyweight",
     "aliases": []
   },
   {
@@ -1118,7 +1152,7 @@
     ],
     "equipment": "body only",
     "mechanic": "compound",
-    "modality": "bodyweight_reps",
+    "modality": "weighted_bodyweight",
     "aliases": [
       "single leg squat"
     ]
@@ -1146,7 +1180,8 @@
     ],
     "secondary_muscles": [
       "triceps",
-      "traps"
+      "traps",
+      "abdominals"
     ],
     "body_region": [
       "Shoulders"
@@ -1157,7 +1192,9 @@
     "aliases": [
       "ohp",
       "military press",
-      "shoulder press"
+      "shoulder press",
+      "standing press",
+      "strict press"
     ]
   },
   {
@@ -1408,7 +1445,10 @@
     "equipment": "barbell",
     "mechanic": "isolation",
     "modality": "weight_reps",
-    "aliases": []
+    "aliases": [
+      "preacher curls",
+      "ez bar preacher curl"
+    ]
   },
   {
     "canonical_name": "Incline Dumbbell Curl",
@@ -1566,7 +1606,7 @@
     ],
     "equipment": "body only",
     "mechanic": "compound",
-    "modality": "bodyweight_reps",
+    "modality": "weighted_bodyweight",
     "aliases": [
       "tricep dip"
     ]
@@ -1708,7 +1748,7 @@
     ],
     "equipment": "body only",
     "mechanic": "isolation",
-    "modality": "bodyweight_reps",
+    "modality": "weighted_bodyweight",
     "aliases": []
   },
   {
@@ -1721,8 +1761,8 @@
       "Core"
     ],
     "equipment": "body only",
-    "mechanic": "compound",
-    "modality": "bodyweight_reps",
+    "mechanic": "isolation",
+    "modality": "weighted_bodyweight",
     "aliases": [
       "situp"
     ]
@@ -1753,8 +1793,8 @@
       "Core"
     ],
     "equipment": "body only",
-    "mechanic": "compound",
-    "modality": "bodyweight_reps",
+    "mechanic": "isolation",
+    "modality": "weighted_bodyweight",
     "aliases": []
   },
   {
@@ -1768,7 +1808,7 @@
     ],
     "equipment": "body only",
     "mechanic": "isolation",
-    "modality": "bodyweight_reps",
+    "modality": "weighted_bodyweight",
     "aliases": [
       "leg raise"
     ]
@@ -1798,7 +1838,7 @@
     ],
     "equipment": "body only",
     "mechanic": "isolation",
-    "modality": "bodyweight_reps",
+    "modality": "weighted_bodyweight",
     "aliases": []
   },
   {
@@ -1999,23 +2039,26 @@
   {
     "canonical_name": "Clean and Press",
     "primary_muscles": [
+      "glutes",
       "shoulders",
-      "glutes"
+      "traps"
     ],
     "secondary_muscles": [
       "hamstrings",
       "quadriceps",
-      "triceps",
-      "traps"
+      "triceps"
     ],
     "body_region": [
+      "Legs",
       "Shoulders",
-      "Legs"
+      "Back"
     ],
     "equipment": "barbell",
     "mechanic": "compound",
     "modality": "weight_reps",
-    "aliases": []
+    "aliases": [
+      "clean and press"
+    ]
   },
   {
     "canonical_name": "Turkish Get-Up",
@@ -2157,15 +2200,17 @@
     "canonical_name": "Rowing Machine",
     "primary_muscles": [
       "lats",
-      "middle back"
+      "middle back",
+      "quadriceps"
     ],
     "secondary_muscles": [
-      "quadriceps",
       "hamstrings",
+      "glutes",
       "biceps"
     ],
     "body_region": [
-      "Back"
+      "Back",
+      "Legs"
     ],
     "equipment": "machine",
     "mechanic": "compound",
@@ -2271,7 +2316,9 @@
     "mechanic": "compound",
     "modality": "weight_reps",
     "aliases": [
-      "hex bar deadlift"
+      "hex bar deadlift",
+      "trap bar deadlift",
+      "trap bar dl"
     ]
   },
   {
@@ -2414,7 +2461,7 @@
     ],
     "equipment": "body only",
     "mechanic": "compound",
-    "modality": "bodyweight_reps",
+    "modality": "weighted_bodyweight",
     "aliases": []
   },
   {
@@ -2542,7 +2589,7 @@
     ],
     "equipment": "body only",
     "mechanic": "compound",
-    "modality": "bodyweight_reps",
+    "modality": "weighted_bodyweight",
     "aliases": []
   },
   {
@@ -2559,7 +2606,7 @@
     ],
     "equipment": "body only",
     "mechanic": "compound",
-    "modality": "bodyweight_reps",
+    "modality": "weighted_bodyweight",
     "aliases": []
   },
   {
@@ -2640,5 +2687,123 @@
     "mechanic": "isolation",
     "modality": "bodyweight_reps",
     "aliases": []
+  },
+  {
+    "canonical_name": "Machine Lateral Raise",
+    "primary_muscles": [
+      "shoulders"
+    ],
+    "secondary_muscles": [],
+    "body_region": [
+      "Shoulders"
+    ],
+    "equipment": "machine",
+    "mechanic": "isolation",
+    "modality": "weight_reps",
+    "aliases": [
+      "machine side raise",
+      "lateral raise machine"
+    ]
+  },
+  {
+    "canonical_name": "Glute-Ham Raise",
+    "primary_muscles": [
+      "hamstrings"
+    ],
+    "secondary_muscles": [
+      "glutes",
+      "calves"
+    ],
+    "body_region": [
+      "Legs"
+    ],
+    "equipment": "machine",
+    "mechanic": "compound",
+    "modality": "weighted_bodyweight",
+    "aliases": [
+      "ghr",
+      "glute ham raise"
+    ]
+  },
+  {
+    "canonical_name": "Seated Barbell Overhead Press",
+    "primary_muscles": [
+      "shoulders"
+    ],
+    "secondary_muscles": [
+      "triceps"
+    ],
+    "body_region": [
+      "Shoulders"
+    ],
+    "equipment": "barbell",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": [
+      "seated ohp",
+      "seated military press",
+      "seated barbell press"
+    ]
+  },
+  {
+    "canonical_name": "Smith Machine Bench Press",
+    "primary_muscles": [
+      "chest"
+    ],
+    "secondary_muscles": [
+      "triceps",
+      "shoulders"
+    ],
+    "body_region": [
+      "Chest"
+    ],
+    "equipment": "machine",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": [
+      "smith bench",
+      "smith machine bench"
+    ]
+  },
+  {
+    "canonical_name": "Decline Dumbbell Press",
+    "primary_muscles": [
+      "chest"
+    ],
+    "secondary_muscles": [
+      "triceps",
+      "shoulders"
+    ],
+    "body_region": [
+      "Chest"
+    ],
+    "equipment": "dumbbell",
+    "mechanic": "compound",
+    "modality": "weight_reps",
+    "aliases": [
+      "decline db press"
+    ]
+  },
+  {
+    "canonical_name": "Air Bike",
+    "primary_muscles": [
+      "quadriceps",
+      "hamstrings"
+    ],
+    "secondary_muscles": [
+      "shoulders",
+      "abdominals"
+    ],
+    "body_region": [
+      "Legs"
+    ],
+    "equipment": "machine",
+    "mechanic": "compound",
+    "modality": "distance_time",
+    "aliases": [
+      "assault bike",
+      "echo bike",
+      "fan bike"
+    ]
   }
 ]

@@ -37,7 +37,7 @@ type CuratedExercise = {
   body_region: string[];
   equipment: string | null;
   mechanic: 'compound' | 'isolation';
-  modality: 'weight_reps' | 'bodyweight_reps' | 'time' | 'distance_time';
+  modality: 'weight_reps' | 'bodyweight_reps' | 'weighted_bodyweight' | 'time' | 'distance_time';
   aliases: string[];
 };
 

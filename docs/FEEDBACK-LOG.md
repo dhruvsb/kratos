@@ -6,6 +6,62 @@ entry at top. When an item is fixed, mark it and move the detail into `WORK-LOG.
 
 ---
 
+## 2026-08-15 (16) — Hands-on device use: empty-workout naming, bodyweight+load exercises
+
+**Context:** user's own device session, History detail screenshot of an "Empty workout" (a session started
+and logged into without ever being named/attached to a routine — Lat Pulldown, Chest-Supported Row).
+
+| # | Item | Area | Done? | Sev | Effort |
+|---|------|------|-------|-----|--------|
+| 51 | Can't rename an "Empty workout" — a session logged without a routine/name has no rename affordance | History / naming | ⬜ Open | Low–Med | ? |
+| 52 | Back Extension (aka Hyperextension) has no weight field — it's bodyweight-or-loaded, same class of exercise as others that need a weight-optional modality re-check | Exercise data / modality | ✅ Done (code 2026-08-15) — needs DB apply | Med | M–L |
+| 53 | Exercise search modal keyboard won't dismiss on its own — user has to tap Enter, then tap outside, to close it | Search / keyboard | ⬜ Open | Low | ? |
+
+### 51. Can't rename an "Empty workout"
+**Seen:** a workout started/logged without picking a routine shows up in History titled literally
+**"Empty workout"**, with no apparent way to rename it after the fact.
+**Not yet investigated** — root cause / fix scope not looked at.
+
+### 52. Back Extension / Hyperextension needs a weight field — re-audit bodyweight-or-loaded exercises ✅ done (code) 2026-08-15
+**Seen:** Back Extension (also called Hyperextension) can be done pure bodyweight *or* with added load
+(plate held at chest, weighted vest, etc.), but the app didn't expose a weight input for it.
+**Done (2026-08-15) — new `weighted_bodyweight` modality + a full 156-exercise audit (3 parallel agents).**
+- **New modality `weighted_bodyweight`** (`src/types/db.ts`, migration `0011_weighted_bodyweight_modality.sql`
+  widens the `exercises_modality_check` constraint — no new columns, `weight_kg` already exists). Logs **reps
+  with an OPTIONAL added-weight** field: a blank weight is a pure-bodyweight set (`— × 12`), a loaded set reads
+  `+10 × 12`. One exercise, not two. Wired through every modality surface: `SetKeypad` (leads with reps, "+KG"
+  field, bodyweight rep chips), the active-workout grid (`workout/[id].tsx` `valueHeaders`/`valueCells` +
+  `usesWeight`/prefill), finish + history top-set ranking (heaviest load, reps break ties, bodyweight sets still
+  count), `formatSetByModality`, and the exercise-detail chart (resolves to load-progress when ever-loaded, else
+  reps). Dark theme untouched.
+- **20 exercises retagged** `weighted_bodyweight` (Pull-Up, Chin-Up, Chest/Bench Dip, Back Extension, Inverted
+  Row, Nordic Curl, Glute Bridge, Pistol/Cossack Squat, Push-Up family, Crunch, Sit-Up, Hanging/Lying Leg Raise,
+  Russian Twist, + new Glute-Ham Raise). **11 stay pure `bodyweight_reps`** (plyo / high-rep ab / wheel — never
+  loaded: Burpee, Box Jump, Mountain Climber, Dead Bug, Bicycle Crunch, V-Up, Reverse Crunch, Flutter Kicks,
+  Superman, Toes-to-Bar, Ab Wheel).
+- **Category fixes from the audit** (data-only, in `build-curated-exercises.py`): Clean and Press reordered so
+  the row label + Legs-filter agree (**resolves #44**); Rowing Machine + Sumo Deadlift now span Legs+Back; added
+  missing secondaries (Front Squat traps, OHP/Back Squat abs, Pec Deck delts); Sit-Up/Hanging Leg Raise mechanic
+  → isolation. **6 new exercises** (Machine Lateral Raise, Glute-Ham Raise, Seated Barbell OHP, Smith Bench,
+  Decline DB Press, Air Bike) → 150 → **156**. Alias gaps filled (BSS, sumo, T-bar, face pull, etc.).
+- **⚠️ DB apply required — do NOT run the old `seed-exercises.ts` (it wipes routines + workout sets).** Apply
+  order: (1) migration `0011`, then (2) **`npx tsx scripts/update-exercise-metadata.ts`** — a new
+  **non-destructive** sync that UPDATEs existing rows in place (ids preserved, history intact) + inserts the 6
+  new ones + aliases. `tsc` clean; **not yet run on device / against the live DB.**
+**Follow-ups (logged, not done):** deeper row-label fix for multi-region compounds (label still shows one
+primary muscle — reorder handled #44's case, but Burpee/Thruster/Turkish Get-Up remain partial); a dedicated
+**Forearms** region (wrist curls still bucket under Biceps); loaded carries (Farmer's Walk / Sled Push) still
+can't log their load; `SEED_ALIASES` is keyed to defunct free-exercise-db names — rekey to curated names or
+retire it (the inline curated aliases are the live path).
+
+### 53. Exercise search modal keyboard doesn't dismiss normally
+**Seen:** in the exercise-picker search sheet, the keyboard doesn't go down on its own (e.g. via a
+"Done" bar, tap-outside-to-dismiss on first tap, or scroll-to-dismiss) — user has to first press
+**Enter/return** and *then* tap outside the sheet to actually close the keyboard.
+**Not yet investigated** — root cause / fix scope not looked at.
+
+---
+
 ## 2026-08-14 (15) — Feature request: automatic weekly local CSV backup
 
 **Context:** user-requested, not from a device QA pass. Wants training history backed up automatically
@@ -13,7 +69,7 @@ rather than relying on a manual Settings → Export.
 
 | # | Item | Area | Done? | Sev | Effort |
 |---|------|------|-------|-----|--------|
-| 50 | **Automatic weekly backup** — export workout history to CSV on a schedule, save to a local directory, keep only the most recent 4 backups (delete older ones) | Data / backup | ⬜ Open | Med | M |
+| 50 | **Automatic weekly backup** — export workout history to CSV on a schedule, save to a local directory, keep only the most recent 4 backups (delete older ones) | Data / backup | ✅ Done (code 2026-08-14) | Med | M |
 
 ### 50. Automatic weekly CSV backup, local, 4-backup rotation ✅ Med — **done (code) 2026-08-14**
 **Shipped:** new `src/data/backup.ts` — `runBackup()` reuses `buildHevyExport()` and writes to durable
@@ -71,7 +127,7 @@ item: **`Voice Logging.dc.html`** (Claude Design project `fefd8154-7ec8-46fd-b3d
 |---|------|------|-------|-----|--------|
 | 45 | Time-based exercises (Plank, Side Plank, Dead Hang) logged this session **vanish from the finished summary** | Active workout / finish | ✅ FIXED 2026-08-14 (sim-verified) | **High** | S–M |
 | 46 | No **duration** set type — time-based lifts are forced into kg×reps, which is the wrong data model | Logging / schema | ✅ Done | Med | M |
-| 47 | No way to **delete** a routine — long-press menu offers only Duplicate / Rename / Archive | Routines | ⬜ Open | Med | S |
+| 47 | No way to **delete** a routine — long-press menu offers only Duplicate / Rename / Archive | Routines | ✅ Done (code 2026-08-14) | Med | S |
 | 48 | History **"Edit" doesn't edit** — it only offers "Delete workout"; want the full logging workflow on a past session | History / edit | ✅ Done (code 2026-08-14) | Med–High | M–L |
 | 49 | Latest **`Voice Logging.dc.html`** design hasn't shipped — mic FAB misaligned + stray history sub-line on Home | Design / Home | ✅ FIXED (code) 2026-08-14 | Med | M |
 
@@ -201,7 +257,7 @@ under a LEGS filter). Both verified in code.
 | # | Item | Area | Done? | Sev | Effort |
 |---|------|------|-------|-----|--------|
 | 43 | Region-filter chips render bottomless — the pill's bottom border is clipped, so each chip reads as an open-bottomed box | Library / layout | ✅ FIXED 2026-08-13 | Med | S |
-| 44 | A multi-region exercise (Clean and Press) appears under LEGS but its row shows only "SHOULDERS" → reads as mis-segregated | Search / taxonomy | ⬜ Open | Med | S |
+| 44 | A multi-region exercise (Clean and Press) appears under LEGS but its row shows only "SHOULDERS" → reads as mis-segregated | Search / taxonomy | ✅ Done (code 2026-08-15, this case) | Med | S |
 
 ### 43. Region chips render bottomless — pill bottom border clipped ⬜ Med
 **Seen:** each region chip (SHOULDERS · BICEPS · TRICEPS · LEGS · CORE) is drawn as a rounded pill, but the
@@ -219,7 +275,13 @@ above the 30px chip. Layout-only; no data change. Verify on both themes (border 
 horizontal `ScrollView` no longer clips at the chip's exact 30px — each pill's bottom border now renders.
 Layout-only, token-based (theme-safe). `tsc` green; not yet on device.
 
-### 44. Cross-region compound reads as mis-segregated ⬜ Med
+### 44. Cross-region compound reads as mis-segregated ✅ Med — **Clean and Press case done (code) 2026-08-15**
+**Done (2026-08-15):** Clean and Press primaries reordered to `['glutes','shoulders','traps']` (in
+`build-curated-exercises.py`) so the row label is **GLUTES** and agrees with its LEGS-filter placement.
+Ships with the #52 exercise-audit batch (needs the same DB apply). **The general display fix stays open** —
+other full-body compounds (Burpee, Thruster, Turkish Get-Up) still show a single primary muscle that can
+misread under one of their regions; the proper fix is a label that shows the region rollup for multi-region
+exercises, deferred to a focused visual-review pass. Original analysis below.
 **Seen:** under the **LEGS** filter, **Clean and Press** appears with the meta `SHOULDERS · BARBELL` — looks
 like a shoulders exercise wrongly filed under legs.
 **Root cause — it's a *display* mismatch, not bad data.** In `scripts/data/exercises-curated.json`, Clean

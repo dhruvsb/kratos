@@ -1,9 +1,10 @@
 // Set-entry keypad (mockup 05). A bottom sheet over the set grid. What it captures
 // adapts to the exercise's modality:
-//   weight_reps      → KG + REPS   (+ plate hint, rep chips)
-//   bodyweight_reps  → REPS        (rep chips)
-//   time             → DURATION    (mm:ss entry, duration chips)
-//   distance_time    → DURATION + LEVEL   (cardio; level = unitless machine setting)
+//   weight_reps         → KG + REPS   (+ plate hint, rep chips)
+//   bodyweight_reps     → REPS        (rep chips)
+//   weighted_bodyweight → +KG (optional) + REPS   (reps lead; blank weight = bodyweight)
+//   time                → DURATION    (mm:ss entry, duration chips)
+//   distance_time       → DURATION + LEVEL   (cardio; level = unitless machine setting)
 // Weight storage is kg; entry is in the profile's display unit and converted on LOG.
 // Used for both adding a new set and editing a logged one.
 import { useEffect, useMemo, useState } from 'react';
@@ -121,7 +122,11 @@ export function SetKeypad(props: SetKeypadProps) {
   const [levelStr, setLevelStr] = useState('');
 
   const isWeight = modality === 'weight_reps';
-  const isReps = modality === 'weight_reps' || modality === 'bodyweight_reps';
+  const isWeightedBw = modality === 'weighted_bodyweight';
+  // Weight field shows for both, but it's REQUIRED-ish only for weight_reps; for
+  // weighted_bodyweight it's optional added load (a blank weight is a bodyweight set).
+  const usesWeight = isWeight || isWeightedBw;
+  const isReps = isWeight || isWeightedBw || modality === 'bodyweight_reps';
   const isTime = modality === 'time';
   const isCardio = modality === 'distance_time';
   const usesDuration = isTime || isCardio;
@@ -234,7 +239,7 @@ export function SetKeypad(props: SetKeypadProps) {
     if (!canLog) return;
     haptics.log();
     props.onLog({
-      weightKg: isWeight ? weightKg : null,
+      weightKg: usesWeight ? weightKg : null,
       reps: isReps ? reps : null,
       durationSeconds: usesDuration ? durationSeconds : null,
       level: isCardio ? level : null,
@@ -256,7 +261,7 @@ export function SetKeypad(props: SetKeypadProps) {
           setActive('kg'); // hand focus back to weight — the common flow needs no switch
         },
       }))
-    : modality === 'bodyweight_reps'
+    : modality === 'bodyweight_reps' || isWeightedBw
       ? REP_CHIPS_BODYWEIGHT.map((n) => ({
           label: String(n),
           on: reps === n,
@@ -291,9 +296,11 @@ export function SetKeypad(props: SetKeypadProps) {
         </View>
 
         <View style={styles.fields}>
-          {isWeight && (
+          {usesWeight && (
             <Field
-              label={unit.toUpperCase()}
+              // Weighted-bodyweight: the number is ADDED load, so it reads "+KG"
+              // and can be left blank for a pure-bodyweight set.
+              label={isWeightedBw ? `+${unit.toUpperCase()}` : unit.toUpperCase()}
               value={kgStr || '0'}
               dim={kgStr === ''}
               active={active === 'kg'}

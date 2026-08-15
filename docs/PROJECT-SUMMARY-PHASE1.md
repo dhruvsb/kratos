@@ -41,8 +41,8 @@ updatable record of what was actually built from it, not a copy of the spec.
 | Local-first cache (persisted React Query) | ✅ **Built 2026-07-31** — cache persisted to AsyncStorage; cold start paints from disk then revalidates; `staleTime` tiered; wiped on sign-out/account-switch. Warm-relaunch hydration proven live 2026-08-06 (instant paint from disk, even offline). |
 | Instant interactions (navigate-first) | ✅ **Built 2026-07-31** — start/finish/discard/add-exercise optimistic: client-chosen row ids (`src/lib/ids.ts`) let START build the workout from the cached routine and navigate on the same tap; an FK-ordering await + snapshot rollback keep it safe; routine/last-session prefetch serves the 80%-repeat case; the 1s clock is isolated in `LiveClock`. Live-DB RLS harness green (10/10). |
 | **Offline-first logging (write offline, sync on reconnect)** | ✅ **Built + QA'd 2026-08-06** — the active-logging path (start new/from-routine → pick → log/edit/delete sets → finish/discard) works fully disconnected, syncs on reconnect in FK-safe serial order, and survives an app kill (persisted mutation queue, `src/data/offlineSync.ts` + `src/lib/network.ts`; connectivity truth via a HEAD probe, not NetInfo alone). History/calendar/progress/voice deliberately online-only. Verified against the live DB incl. a workout born wholly offline; `npm run test:offline` 11/11. NetInfo is a native dep (dev-client rebuilt). See WORK-LOG 2026-08-06. |
-| Exercise library seed script + alias map | ✅ Done and seeded live (**curated 150 exercises, 156 aliases** — rebuilt session 3 with rich metadata; see WORK-LOG) |
-| Manual UI — 12 `RepVoice Manual` screens on the dark LED theme | ✅ Built (2026-07-30 s2; **Calendar** added s4). Incl. **manual set logging** (grid + keypad), which was previously **missing** (voice-only). **Modality-aware since 2026-08-14 (#46):** the grid + keypad adapt to each exercise's `modality` — weight_reps (KG+REPS), bodyweight_reps (REPS), time (mm:ss), distance_time (duration+level); needs migration 0010. Static-verified, not yet on device. |
+| Exercise library seed script + alias map | ✅ Done and seeded live (**curated 156 exercises** as of 2026-08-15 — was 150; +6 from the #52 audit). Metadata + a `weighted_bodyweight` retag pass are **code-ready but not yet applied to the live DB** — apply via migration `0011` + the non-destructive `scripts/update-exercise-metadata.ts` (NOT the destructive `seed-exercises.ts`). See WORK-LOG 2026-08-15. |
+| Manual UI — 12 `RepVoice Manual` screens on the dark LED theme | ✅ Built (2026-07-30 s2; **Calendar** added s4). Incl. **manual set logging** (grid + keypad), which was previously **missing** (voice-only). **Modality-aware since 2026-08-14 (#46):** the grid + keypad adapt to each exercise's `modality` — weight_reps (KG+REPS), bodyweight_reps (REPS), **weighted_bodyweight (+KG optional + REPS, added 2026-08-15 #52)**, time (mm:ss), distance_time (duration+level); needs migrations 0010 + 0011. Static-verified, not yet on device. |
 | ↳ Core files | `src/app/{index,workout/[id],routine/[id],history/index,history/[id],exercise/[id],exercises,finish/[id],calendar}.tsx`, `src/components/{ui,ExercisePickerModal,workout/SetKeypad,workout/Caret}.tsx`, `src/data/calendar.ts`, `src/lib/units.ts` |
 | Hevy import | ❌ **Descoped** — removed from the Phase 1 plan entirely |
 | **In-app account deletion** (App Store Guideline 5.1.1(v)) | ✅ **Built + verified live 2026-08-08** — Settings → ACCOUNT → "Delete account" (two confirms) → `deleteAccount()` → RPC `public.delete_own_account()` (migration `0005`, security-definer, `auth.uid()`-only) → local sign-out wipes the persisted cache. Proven end-to-end against the live DB on a throwaway account: user, profile, routines, workouts, sets, voice_logs, custom exercises + aliases all gone; the seeded 150 untouched. |
@@ -140,8 +140,12 @@ supabase/migrations/0001_init.sql   Full schema: tables, indexes, RLS policies,
                                      profile-on-signup trigger, two SQL functions
                                      (search_exercises, last_session_sets)
 scripts/
-  seed-exercises.ts       Wipes + seeds the curated 150 from data/exercises-curated.json,
-                          idempotent
+  seed-exercises.ts       ⚠️ DESTRUCTIVE first-seed only: WIPES routine_exercises +
+                          workout_exercises, then re-inserts the curated set with fresh
+                          ids. Never run on a DB with real user data.
+  update-exercise-metadata.ts  Non-destructive sync (2026-08-15): UPDATEs existing rows
+                          in place (ids/history preserved) + inserts new exercises +
+                          aliases. Use this to roll out curated-JSON edits to a live DB.
   exercise-aliases.ts     Reviewable alias map (~70 lifts → shorthand like "RDL",
                           "OHP") — every key verified against the real dataset
   test-rls.ts             Creates 2 throwaway accounts, proves account B cannot
