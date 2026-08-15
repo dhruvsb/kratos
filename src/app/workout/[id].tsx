@@ -2,7 +2,7 @@
 // time: logged sets sit above one pre-filled pending row, so repeating last
 // session is a single tap on ✓; anything else opens the keypad (SetKeypad). PREV
 // stays in eyeshot as the number to beat. No microphone — voice drops back in
-// later on top of this same grid (see docs/design/RepVoice-VoiceFirst-v3.dc.html).
+// later on top of this same grid (see docs/design/Kratos-VoiceFirst-v3.dc.html).
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';

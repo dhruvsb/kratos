@@ -1,4 +1,4 @@
-// Home — "RepVoice Home Final" (ring dates + records). Whitespace-reduced: a fixed
+// Home — "Kratos Home Final" (ring dates + records). Whitespace-reduced: a fixed
 // single-line streak header, then a rolling five-week **ring-date** heatmap (each day a
 // circle — trained days get a filled accent ring, today a dashed ring), then the recent
 // workouts as rows of date · name · session volume. The floating glass tab pill + green

@@ -1,4 +1,4 @@
-# RepVoice — Product Principles
+# Kratos — Product Principles
 
 **Read this before any development work.** These are the standing priorities behind every
 design and engineering decision in this app. When a request would compromise one of these,
@@ -12,7 +12,7 @@ two ever conflict, raise it — don't guess.
 
 ## 0. Why this app exists
 
-RepVoice is **not** a commercial product and its primary purpose is **not** the author's own
+Kratos is **not** a commercial product and its primary purpose is **not** the author's own
 daily use. It is a **portfolio / showcase piece**. It will be judged as:
 
 - **Screenshots** — on a social profile, résumé, or product portfolio.

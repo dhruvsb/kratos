@@ -37,7 +37,7 @@
   "submit": {
     "production": {
       "ios": {
-        "bundleIdentifier": "com.dhruvshah.repvoice"
+        "bundleIdentifier": "com.dhruvshah.kratos"
       }
     }
   }

@@ -1,4 +1,4 @@
-# RepVoice — Feedback Log
+# Kratos — Feedback Log
 
 Running log of hands-on feedback from real use, with a code-level verification of each
 item (root cause + file references + proposed fix) so any session can pick it up. Newest
@@ -81,7 +81,7 @@ rather than relying on a manual Settings → Export.
 
 ### 50. Automatic weekly CSV backup, local, 4-backup rotation ✅ Med — **done (code) 2026-08-14**
 **Shipped:** new `src/data/backup.ts` — `runBackup()` reuses `buildHevyExport()` and writes to durable
-`Paths.document/backups/repvoice-backup-YYYY-MM-DD.csv` (v57 `File`/`Directory`/`Paths` API, not the purgeable
+`Paths.document/backups/kratos-backup-YYYY-MM-DD.csv` (v57 `File`/`Directory`/`Paths` API, not the purgeable
 cache dir); pure `backupsToDelete(names, 4)` rotation keeps the 4 newest; `useWeeklyBackup()` runs a foreground
 check-on-mount (once/session) and backs up when ≥7 days since the persisted `lastBackupAt` (`settings.ts`).
 Settings → DATA → **Automatic backup** row shows last-backup age + tap to "Back up now".
@@ -107,14 +107,14 @@ usage anywhere in the repo).
    Store review risk) and matches how the existing durability work (`docs/FEEDBACK-LOG.md` #32) already
    reasons about iOS backgrounding — recommend that over true background scheduling.
 2. **Durable local storage:** write to `Paths.document` (persists across launches, survives iOS's cache
-   eviction) under a dedicated subfolder, e.g. `backups/repvoice-YYYY-MM-DD.csv` — not the current
+   eviction) under a dedicated subfolder, e.g. `backups/kratos-YYYY-MM-DD.csv` — not the current
    `Paths.cache` used for the ephemeral share-sheet file.
 3. **Rotation (max 4):** after each write, list the backups subfolder, sort by the embedded date/mtime,
    and delete anything past the 4 most recent — a small pure function, unit-testable independent of the
    filesystem calls.
 **Open product questions to settle before building:** (a) should this be silent, or show a toast/Settings
 row ("Last backup: 3 days ago")? (b) does "local directory" mean purely on-device (invisible to the user
-unless they dig into the Files app via "On My iPhone → RepVoice") or should it also re-offer the share sheet
+unless they dig into the Files app via "On My iPhone → Kratos") or should it also re-offer the share sheet
 periodically? (c) should Settings gain a manual "Back up now" alongside the automatic one, and a way to
 browse/restore from a prior backup (ties into the existing CSV **import** path, which already round-trips)?
 Recommend keeping v1 silent + on-device-only + Settings status row, and treating restore as a separate
@@ -403,7 +403,7 @@ landed same-day (refraction/fade, consistent FAB, routines cross-fade, `isIntera
 
 ### 36. Native-tab-bar drag-lens glass ⬜ Low — **deferred (kept custom pill+FAB)**
 **Reported:** in Apple Music you can press a tab and drag your finger across the bar; a magnifying liquid-
-glass "lens" follows and morphs. Our custom floating **pill + separate FAB** (the `RepVoice Home.dc.html`
+glass "lens" follows and morphs. Our custom floating **pill + separate FAB** (the `Kratos Home.dc.html`
 design) uses `GlassView` with `isInteractive` (tap-morph) but **cannot reproduce the finger-drag-follow
 lens** — that's a built-in behavior of the native iOS 26 `UITabBar`, not the `GlassView` primitive.
 **Decision (2026-08-12):** keep the custom pill+FAB design (option 2); log the native route as backlog.
@@ -418,7 +418,7 @@ interaction against losing the bespoke design before doing this.
 
 ## 2026-08-09 (10) — "Rolling Weeks" Home redesign: deferred edge states
 
-**Context:** implementing the `RepVoice Home Rolling Weeks.dc.html` redesign (streak-first Home:
+**Context:** implementing the `Kratos Home Rolling Weeks.dc.html` redesign (streak-first Home:
 streak hero + rolling five-week heatmap + inline history + `+` quick-start sheet + 3-tab bar
 HOME · ROUTINES · ACCOUNT). Per product call, we ship the **normal-case visuals first** and track
 the two states the mockup doesn't draw, plus one data nicety, as backlog.
@@ -476,7 +476,7 @@ with 0006 temporarily stashed so only 0007 pushed — 0006 stays unapplied). **S
 with real, discriminating counts (Arms 5 · Back 4 · Biceps 1 · Chest/Push Day —), confirming the
 prior-session comparison works. `tsc` green.
 <details><summary>Original scope + earlier deferral note</summary>
-The `RepVoice Home Final.dc.html` design puts a **medal badge + PR count** (e.g. `🏅 3`, or `—` when
+The `Kratos Home Final.dc.html` design puts a **medal badge + PR count** (e.g. `🏅 3`, or `—` when
 none) at the right of each history row. **Deferred by product call (2026-08-12): do PR later, HIGH pri.**
 The rest of that design shipped same-day: **ring-date circular heatmap** and history rows recut to
 **date · DOW · name · session volume** (`WorkoutListItem.volume_kg`, Σ weight_kg × reps, added to
@@ -677,7 +677,7 @@ it as a ghosted/suggested value distinct from a hard prefill. (M)
 
 ### 22. Adopt iOS Liquid Glass (Home / Calendar / History) ✅ Med — **done (code) 2026-08-12, iOS-26 sim-verified**
 
-**Done (2026-08-12):** implemented via the `RepVoice Home.dc.html` design (single-line + liquid-glass
+**Done (2026-08-12):** implemented via the `Kratos Home.dc.html` design (single-line + liquid-glass
 tabs). The bottom chrome is now a floating **glass pill** (HOME · ROUTINES · SETTINGS, SVG icons +
 active-tab glass chip) plus a **green-glass `+` FAB** — real iOS-26 `GlassView` (`glassEffectStyle
 ="regular"`) with `colorScheme` bound to the **in-app** theme (`useThemeName()`), so the material matches
@@ -1090,7 +1090,7 @@ switching fields. Not yet run on device — verify chip sizing/spacing at 402pt 
 Getting there required two fixes (committed in `36696fd`):
 - `CODE_LEN 6 → 8` in `SignInScreen.tsx` — the Supabase project mails an **8-digit** OTP; the
   app only accepted 6 and auto-submitted on the 6th digit.
-- `UIViewControllerBasedStatusBarAppearance = true` in `ios/RepVoice/Info.plist` (and mirrored
+- `UIViewControllerBasedStatusBarAppearance = true` in `ios/Kratos/Info.plist` (and mirrored
   in `app.config.ts` → `ios.infoPlist`) — `react-native-screens` was throwing a fatal red-screen
   because `_layout.tsx` sets `statusBarStyle: 'light'` on the native Stack. NOTE: this repo has a
   committed `ios/` folder, so `expo run:ios` **skips prebuild** — `app.config.ts` alone did not

@@ -1,21 +1,21 @@
-# RepVoice — App Store Connect Listing Copy
+# Kratos — App Store Connect Listing Copy
 
-Ready-to-paste metadata for the RepVoice 1.0 submission. Every field notes Apple's
+Ready-to-paste metadata for the Kratos 1.0 submission. Every field notes Apple's
 character limit and stays inside it. Nothing here claims a feature the app can't back up
 (see `docs/CONTEXT.md` / the phase summaries). Pick the **primary** option unless a
 reviewer or A/B test says otherwise; alternatives are listed for quick swaps.
 
-Bundle id: `com.dhruvshah.repvoice` · iPhone only · Requires an account (email one-time-code sign-in).
+Bundle id: `com.dhruvshah.kratos` · iPhone only · Requires an account (email one-time-code sign-in).
 
 ---
 
 ## 1. App Name  (max 30 characters)
 
-- **Primary:** `RepVoice`  *(8)*
-- Alt A: `RepVoice: Workout Logger`  *(24)*
-- Alt B: `RepVoice — Lift Tracker`  *(23)*
+- **Primary:** `Kratos`  *(8)*
+- Alt A: `Kratos: Workout Logger`  *(24)*
+- Alt B: `Kratos — Lift Tracker`  *(23)*
 
-> Keep the bare `RepVoice` as the display name and let the **subtitle** carry the "what it
+> Keep the bare `Kratos` as the display name and let the **subtitle** carry the "what it
 > does" — a short, clean name reads best on the Home screen and in search.
 
 ## 2. Subtitle  (max 30 characters)
@@ -28,14 +28,14 @@ Bundle id: `com.dhruvshah.repvoice` · iPhone only · Requires an account (email
 
 > Editable any time without a new build — use it for seasonal/feature notes.
 
-`Say your set out loud and it's logged. RepVoice is the sleek, offline-first strength tracker that keeps you lifting, not typing.`  *(128)*
+`Say your set out loud and it's logged. Kratos is the sleek, offline-first strength tracker that keeps you lifting, not typing.`  *(128)*
 
 ## 4. Description  (max 4000 characters — this copy is ~1,510)
 
 ```
-Log every set at the speed of thought. RepVoice is a strength-training tracker built for one thing: getting your workout down and getting back to the bar.
+Log every set at the speed of thought. Kratos is a strength-training tracker built for one thing: getting your workout down and getting back to the bar.
 
-Just say it. Tap the mic, speak your set — "bench press, 80 kilos, 8 reps" — and RepVoice transcribes and logs it. No typing between sets.
+Just say it. Tap the mic, speak your set — "bench press, 80 kilos, 8 reps" — and Kratos transcribes and logs it. No typing between sets.
 
 Or tap it in. A fast set-grid and number keypad log weight, reps, and sets in a couple of taps. Every field pre-fills from your last session, so a repeat workout is mostly confirmation.
 
@@ -61,7 +61,7 @@ YOURS, EVERYWHERE
 • Apple Health sync backfills days you trained but forgot to log
 • Import and export your history via Hevy CSV — nothing is locked in
 
-RepVoice keeps the logging invisible so the training stays front and center. Start your next session in seconds.
+Kratos keeps the logging invisible so the training stays front and center. Start your next session in seconds.
 ```
 
 ## 5. Keywords  (max 100 characters, comma-separated, NO spaces after commas)
@@ -85,7 +85,7 @@ It does **not** have to be fancy; a single static page with a one-line descripti
 contact email is enough.
 
 **Suggested minimal option (you don't have one yet):** publish a one-page site for free via
-**GitHub Pages** (e.g. `https://dhruv-shah1.github.io/repvoice/`) or a public **Notion** page.
+**GitHub Pages** (e.g. `https://dhruvsb.github.io/kratos/`) or a public **Notion** page.
 Minimum content: app name, one sentence on what it does, a support contact
 (`dsooseven@gmail.com` or a dedicated alias), and a link to the privacy policy. You already
 have `docs/legal/privacy-policy.html` written — host it at the same place and this doubles as
@@ -103,7 +103,7 @@ if you want a "developer website" link on the product page. No penalty for omitt
 ## 10. What's New / Version 1.0 Release Notes
 
 ```
-Welcome to RepVoice 1.0.
+Welcome to Kratos 1.0.
 
 Log your lifts by voice or by tap, on a sleek dark or light theme:
 • Voice logging — speak a set, it's transcribed and logged
@@ -129,7 +129,7 @@ required slots have been retired — 6.9" is the single mandatory size.
 
 - **Count:** up to **10** screenshots per display size; ship **4–6** strong ones.
 - **Orientation:** portrait (the whole app is portrait).
-- **iPad:** **not needed** — RepVoice is iPhone-only, so no iPad (12.9"/13") screenshots are required or should be uploaded.
+- **iPad:** **not needed** — Kratos is iPhone-only, so no iPad (12.9"/13") screenshots are required or should be uploaded.
 - Capture on the **6.9" simulator or device**, dark theme, with a locked/clean status bar (full battery + signal, consistent time) so the frames look deliberate. Seed showcase data first (`npm run seed:demo`) so no screen is empty.
 
 **Suggested 5-shot sequence** (each with a short overlaid caption idea):

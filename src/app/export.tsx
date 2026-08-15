@@ -57,14 +57,14 @@ export default function ExportScreen() {
         setStage({ name: 'error', message: 'Sharing is not available on this device.' });
         return;
       }
-      const file = new File(Paths.cache, `repvoice-export-${todayStamp()}.csv`);
+      const file = new File(Paths.cache, `kratos-export-${todayStamp()}.csv`);
       if (file.exists) file.delete(); // overwrite a same-day export
       file.create();
       file.write(data.csv);
       await Sharing.shareAsync(file.uri, {
         mimeType: 'text/csv',
         UTI: 'public.comma-separated-values-text',
-        dialogTitle: 'Export RepVoice history',
+        dialogTitle: 'Export Kratos history',
       });
     } catch (e) {
       setStage({ name: 'error', message: e instanceof Error ? e.message : String(e) });

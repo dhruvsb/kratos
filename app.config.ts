@@ -3,15 +3,15 @@ import type { ExpoConfig } from 'expo/config';
 // Dynamic config so we can read Supabase credentials from .env at build time.
 // The values land in Constants.expoConfig.extra — never hardcode keys in source.
 const config: ExpoConfig = {
-  name: 'RepVoice',
-  slug: 'repvoice',
+  name: 'Kratos',
+  slug: 'kratos',
   version: '1.0.0',
   orientation: 'portrait',
   icon: './assets/images/icon.png',
-  scheme: 'repvoice',
+  scheme: 'kratos',
   userInterfaceStyle: 'automatic',
   ios: {
-    bundleIdentifier: 'com.dhruvshah.repvoice',
+    bundleIdentifier: 'com.dhruvshah.kratos',
     // Apple Development Team for code signing. Declared here so a prebuild bakes
     // DEVELOPMENT_TEAM into the generated Xcode project instead of us hand-editing
     // the gitignored ios/*.pbxproj (which a prebuild would wipe). Free Personal
@@ -31,7 +31,7 @@ const config: ExpoConfig = {
       // that Stack option was dropped in favour of the global one — which also
       // keeps the sign-in screen (rendered outside the Stack) theme-aware.
       // NOTE: ios/ is gitignored and not regenerated on every build, so
-      // ios/RepVoice/Info.plist carries the same value; keep the two in sync.
+      // ios/Kratos/Info.plist carries the same value; keep the two in sync.
       UIViewControllerBasedStatusBarAppearance: false,
       // Export-compliance declaration (App Store): the app uses only standard
       // HTTPS/TLS (Supabase + the transcribe/parse edge functions) — no custom or
@@ -71,8 +71,8 @@ const config: ExpoConfig = {
     [
       'expo-speech-recognition',
       {
-        microphonePermission: 'Allow RepVoice to use the microphone to log sets by voice.',
-        speechRecognitionPermission: 'Allow RepVoice to use speech recognition to log sets by voice.',
+        microphonePermission: 'Allow Kratos to use the microphone to log sets by voice.',
+        speechRecognitionPermission: 'Allow Kratos to use speech recognition to log sets by voice.',
       },
     ],
     // Audio recording for cloud ASR (design "Voice Logging" 1a): the recorder
@@ -81,18 +81,18 @@ const config: ExpoConfig = {
     [
       'expo-audio',
       {
-        microphonePermission: 'Allow RepVoice to record your voice to log sets and build routines.',
+        microphonePermission: 'Allow Kratos to record your voice to log sets and build routines.',
       },
     ],
     // Apple Health gap-fill: read-only import of strength sessions the user did
     // but forgot to log (src/lib/healthkit.ts → src/data/healthImport.ts). We
     // only ever READ, so just NSHealthShareUsageDescription — no update string,
-    // no background delivery. HealthKit is iOS-only; RepVoice ships iOS-only too.
+    // no background delivery. HealthKit is iOS-only; Kratos ships iOS-only too.
     [
       '@kingstinct/react-native-healthkit',
       {
         NSHealthShareUsageDescription:
-          'RepVoice reads your strength-training sessions from Apple Health to fill in days you worked out but forgot to log.',
+          'Kratos reads your strength-training sessions from Apple Health to fill in days you worked out but forgot to log.',
         background: false,
       },
     ],

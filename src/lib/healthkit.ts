@@ -2,7 +2,7 @@
 // one place the client is created" rule. Everything above this reads workouts
 // through src/data/healthImport.ts, never this file directly.
 //
-// iOS-ONLY. HealthKit exists on no other platform, and RepVoice ships to the
+// iOS-ONLY. HealthKit exists on no other platform, and Kratos ships to the
 // App Store and nowhere else — there is no Android/web target. Every entry point
 // here short-circuits off iOS so callers never need a Platform check of their own.
 import { Platform } from 'react-native';
@@ -24,7 +24,7 @@ export type HealthWorkout = {
 };
 
 // The two strength activity types we backfill. Walks, cardio, yoga etc. are
-// deliberately ignored — RepVoice only tracks lifting.
+// deliberately ignored — Kratos only tracks lifting.
 const STRENGTH_TYPES: ReadonlySet<WorkoutActivityType> = new Set([
   WorkoutActivityType.traditionalStrengthTraining,
   WorkoutActivityType.functionalStrengthTraining,

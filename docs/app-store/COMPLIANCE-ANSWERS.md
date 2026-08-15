@@ -1,7 +1,7 @@
-# App Store Connect — Compliance Answers (RepVoice)
+# App Store Connect — Compliance Answers (Kratos)
 
 **Purpose:** copy-paste-ready answers for every compliance/questionnaire screen you hit when
-submitting RepVoice for the first time. You have never submitted an app before, so each section
+submitting Kratos for the first time. You have never submitted an app before, so each section
 tells you *where* the screen is in App Store Connect, *what Apple asks*, and *exactly what to
 click / type*.
 
@@ -18,7 +18,7 @@ click / type*.
 - `ITSAppUsesNonExemptEncryption` is already set to `false` in `app.config.ts`.
 
 > Rule of thumb Apple applies: if data **leaves the device**, it counts as "collected." All of
-> RepVoice's account, fitness, audio, and user-content data leaves the device (it goes to
+> Kratos's account, fitness, audio, and user-content data leaves the device (it goes to
 > Supabase / OpenAI), so it is **Collected**. The AsyncStorage cache and CSV backups stay on
 > device and are **not** collected.
 
@@ -36,11 +36,11 @@ click / type*.
    **Used for tracking?** → **What purposes?**
 
 **"Used for Tracking" is No everywhere.** Apple's definition of tracking = linking your data with
-data from *other companies'* apps/websites for ads, or sharing it with data brokers. RepVoice does
+data from *other companies'* apps/websites for ads, or sharing it with data brokers. Kratos does
 neither — no ad SDK, no analytics SDK, no IDFA, no data sold. Everything is first-party app
 functionality. So every single data type below is **Tracking: No**.
 
-**"Linked to identity" is Yes** for the data types RepVoice stores, because every row is tied to
+**"Linked to identity" is Yes** for the data types Kratos stores, because every row is tied to
 the user's account (their `user_id` / email).
 
 ### Data types to declare as COLLECTED
@@ -108,7 +108,7 @@ On each of these, leave the box unchecked / choose "Not Collected":
 
 **Where:** App Store Connect → your app → **Age Rating** → **Edit** (or in the version's General
 tab). Apple's current questionnaire asks you to rate the *frequency/intensity* of each content
-type. For RepVoice the answer is **None / No** to everything.
+type. For Kratos the answer is **None / No** to everything.
 
 | Question | Answer |
 |---|---|
@@ -141,7 +141,7 @@ prompt is normally auto-answered — but here's what to say if you're ever asked
 
 - **"Does your app use encryption?"** → **Yes** (the app uses HTTPS/TLS to talk to Supabase and
   OpenAI).
-- **"Does your app qualify for the exemptions in Category 5, Part 2?"** → **Yes.** RepVoice only
+- **"Does your app qualify for the exemptions in Category 5, Part 2?"** → **Yes.** Kratos only
   uses **standard encryption**: HTTPS/TLS provided by iOS and the platform, plus Apple/OS-level
   data protection. It implements **no proprietary or non-standard cryptography**.
 - Because it's standard/exempt encryption, you do **not** need a **CCATS** classification or a
@@ -160,7 +160,7 @@ as above. Do **not** change this flag to `true` unless you add custom (non-stand
 (also appears as a checkbox during submission).
 
 - **"Does your app contain, show, or access third-party content?"** → **No.**
-- RepVoice's content is the user's own workout data plus your own curated exercise list. It does
+- Kratos's content is the user's own workout data plus your own curated exercise list. It does
   not display third-party media, music, video, or licensed content. Check the box confirming you
   have all necessary rights to the content in the app.
 
@@ -172,13 +172,13 @@ as above. Do **not** change this flag to `true` unless you add custom (non-stand
 
 ### 5a. Demo account / Sign-In (required — the app requires login)
 
-RepVoice uses **email OTP with no password**, so a reviewer *cannot* receive a code sent to your
+Kratos uses **email OTP with no password**, so a reviewer *cannot* receive a code sent to your
 inbox. You must give them credentials that work without checking any mailbox. Do this:
 
 **Set up a test OTP in Supabase** (one-time, before you submit):
 1. Supabase Dashboard → **Authentication** → **Providers / Email** (or **Auth → Settings**).
 2. Find **Test OTP** / **Test phone/email numbers** and add a fixed pair, e.g.:
-   - Email: `appreview@repvoice.app`
+   - Email: `appreview@kratos.app`
    - OTP code: `123456`
    This makes that exact email always accept that exact 6-digit code, with **no email actually
    sent**. Make sure the user record exists (sign in once yourself, or let `shouldCreateUser`
@@ -189,7 +189,7 @@ inbox. You must give them credentials that work without checking any mailbox. Do
 | Field | Value |
 |---|---|
 | Sign-in required | **Yes** (toggle on) |
-| User name | `appreview@repvoice.app` |
+| User name | `appreview@kratos.app` |
 | Password | `123456` |
 
 > App Store Connect only gives you "User name" and "Password" fields, so we reuse them: put the
@@ -200,11 +200,11 @@ inbox. You must give them credentials that work without checking any mailbox. Do
 ### 5b. Review Notes (ready to paste)
 
 ```
-RepVoice is a workout logger. Sign-in uses a one-time email code (OTP) — there is NO
+Kratos is a workout logger. Sign-in uses a one-time email code (OTP) — there is NO
 password field.
 
 HOW TO SIGN IN (a test account is pre-configured, no email inbox needed):
-1. On the sign-in screen, enter the email:  appreview@repvoice.app
+1. On the sign-in screen, enter the email:  appreview@kratos.app
 2. Tap "Send code."
 3. On the code screen, enter this fixed 6-digit code:  123456
    (This is a Supabase test OTP that always works for this email — no real email is sent.
@@ -277,6 +277,6 @@ Then re-host the updated policy and confirm the URL loads publicly before you hi
 - [ ] Age rating completed → **4+**.
 - [ ] Export compliance = exempt (already set via `ITSAppUsesNonExemptEncryption: false`).
 - [ ] Content Rights = No third-party content.
-- [ ] Supabase test OTP configured (`appreview@repvoice.app` / `123456`) and seeded with sample data.
+- [ ] Supabase test OTP configured (`appreview@kratos.app` / `123456`) and seeded with sample data.
 - [ ] App Review Information: Sign-In required ON, username/password + notes filled, contact info filled.
 ```

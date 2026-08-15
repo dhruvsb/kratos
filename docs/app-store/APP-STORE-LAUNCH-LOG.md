@@ -1,6 +1,6 @@
-# RepVoice — App Store Launch Log & Remaining-Steps Guide
+# Kratos — App Store Launch Log & Remaining-Steps Guide
 
-**Date:** 2026-08-15 · **Goal:** get RepVoice submitted to the App Store with full compliance
+**Date:** 2026-08-15 · **Goal:** get Kratos submitted to the App Store with full compliance
 and the best possible chance of a clean, fast approval.
 
 This one file is the record of the pre-launch compliance pass: **(A)** what was done for you in the
@@ -50,12 +50,12 @@ rendered in a browser to confirm the new sections read correctly.
 5. **Age rating:** 4+ (no objectionable content; data is private to the user, no social feed, no web
    browser).
 
-6. **App name stays `RepVoice`; subtitle "Speak your sets. Log faster."** — short name reads best;
+6. **App name stays `Kratos`; subtitle "Speak your sets. Log faster."** — short name reads best;
    the subtitle carries the "what it does." Alternatives are listed in `LISTING.md`.
 
 7. **Reviewer access via a Supabase test OTP.** The app logs in with an email one-time-code and no
    password, so an Apple reviewer can't receive a code. The fix is a fixed test email + code
-   (`appreview@repvoice.app` / `123456`) configured in Supabase, handed to Apple in the review notes.
+   (`appreview@kratos.app` / `123456`) configured in Supabase, handed to Apple in the review notes.
    This is a **hard blocker** — without it, review is rejected at the login screen.
 
 ---
@@ -71,14 +71,14 @@ rejection. Easiest free route:
 1. Create a free **GitHub Pages** site (or a public Notion page).
    - GitHub: make a public repo, put `privacy-policy.html` (from `docs/legal/`) in it, enable
      Settings → Pages. Your URL becomes something like
-     `https://dhruv-shah1.github.io/repvoice/privacy-policy.html`.
+     `https://dhruvsb.github.io/kratos/privacy-policy.html`.
 2. Add a tiny **support page** on the same site: app name, one line on what it does, and a contact
    email. That page's URL is your **Support URL**.
 3. Open both URLs in a browser to confirm they load. Keep them handy for Step 5.
 
 ### Step 2 — Set up the reviewer demo login in Supabase (≈10 min) **[BLOCKER]**
 Follow `COMPLIANCE-ANSWERS.md` §5a. In the Supabase dashboard, add a **test OTP**:
-`appreview@repvoice.app` → `123456` (no real email is sent). Sign in once with it so the account
+`appreview@kratos.app` → `123456` (no real email is sent). Sign in once with it so the account
 exists, and optionally seed it with a few workouts so the reviewer sees content
 (`npm run seed:demo` against that account).
 

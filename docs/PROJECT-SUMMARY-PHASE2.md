@@ -1,4 +1,4 @@
-# RepVoice — Project Summary (Phase 2: Voice Logging)
+# Kratos — Project Summary (Phase 2: Voice Logging)
 
 **Purpose of this file:** a standing knowledge base for both humans and future Claude
 Code sessions. Read this first before exploring the codebase — it should answer "what
@@ -60,7 +60,7 @@ still paused mid-implementation; see the top entries in `WORK-LOG.md`.
    the mid-tier model is worth its extra cost). This has never been run against the
    real API — the numbers in `eval/README.md`'s changelog are still empty.
 7. ✅ **Native dev client built and installed.** `expo-dev-client@~57.0.7` is installed,
-   `com.dhruvshah.repvoice` is the iOS bundle ID, and the app launches on the physical
+   `com.dhruvshah.kratos` is the iOS bundle ID, and the app launches on the physical
    iPhone. **Still required:** complete OTP login, then do a real workout logging sets
    by voice and note every friction point. Run Metro with:
    ```bash
@@ -300,7 +300,7 @@ scripts/harvest-eval-cases.ts    Pulls edited/discarded voice_logs into
 
 ## 8. Voice-first v2 redesign (2026-07-20)
 
-Implemented the 5-screen mockup `RepVoice Voice-First.dc.html` (Claude Design project
+Implemented the 5-screen mockup `Kratos Voice-First.dc.html` (Claude Design project
 `94a04f7d-7d08-41bc-a9c9-e0b31092bb93`), explicitly labeled "v2" — a cyan/quantum-black
 palette. A prior session had already built `src/theme/tokens.ts` +
 `components/voice/primitives.tsx`/`TabBar.tsx`/Home screen against an **earlier amber**

@@ -1,4 +1,4 @@
--- RepVoice Phase 1 schema. This migration is the contract for Phases 1–3.
+-- Kratos Phase 1 schema. This migration is the contract for Phases 1–3.
 -- Apply on a fresh project with `supabase db push`, or paste into the SQL editor.
 
 -- pg_trgm: Phase 2 fuzzy exercise-name matching depends on it (enabled NOW on purpose).

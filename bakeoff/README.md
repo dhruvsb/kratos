@@ -1,4 +1,4 @@
-# RepVoice voice-model bakeoff
+# Kratos voice-model bakeoff
 
 A **standalone** harness to answer the one question no public benchmark can:
 _which speech-to-text model actually understands **your** voice saying **workout

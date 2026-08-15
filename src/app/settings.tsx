@@ -35,7 +35,7 @@ import { useTheme, useThemeMode } from '@/theme/ThemeProvider';
 //
 // ⚠️ This must point at the live hosted copy before any TestFlight/App Store
 // submission — a 404 here is a review rejection.
-const PRIVACY_POLICY_URL = 'https://dhruv-shah1.github.io/repvoice/privacy-policy.html';
+const PRIVACY_POLICY_URL = 'https://dhruvsb.github.io/kratos/privacy-policy.html';
 
 function next<T>(list: readonly T[], current: T): T {
   const i = list.indexOf(current);
@@ -240,7 +240,7 @@ export default function SettingsScreen() {
         res.skipped ? 'Nothing to back up' : 'Backup saved',
         res.skipped
           ? 'Log or import a workout first, then your history will back up automatically.'
-          : `Saved ${res.workoutCount} ${res.workoutCount === 1 ? 'workout' : 'workouts'} (${res.setCount} sets). RepVoice keeps the last 4 backups on this device.`
+          : `Saved ${res.workoutCount} ${res.workoutCount === 1 ? 'workout' : 'workouts'} (${res.setCount} sets). Kratos keeps the last 4 backups on this device.`
       );
     } catch (e) {
       Alert.alert(
@@ -294,7 +294,7 @@ export default function SettingsScreen() {
           rows: [
             { label: 'Exercise library', onPress: () => router.push('/exercises') },
             { label: 'Import from Hevy', onPress: () => router.push('/import') },
-            // iOS-only: HealthKit exists nowhere else and RepVoice ships iOS-only.
+            // iOS-only: HealthKit exists nowhere else and Kratos ships iOS-only.
             ...(Platform.OS === 'ios'
               ? [
                   {
@@ -383,7 +383,7 @@ export default function SettingsScreen() {
         ))}
 
         <Text style={styles.footer}>
-          REPVOICE v1 · BUILD 41{'\n'}Weight is stored in kilograms, always. Voice logging arrives in
+          KRATOS v1 · BUILD 41{'\n'}Weight is stored in kilograms, always. Voice logging arrives in
           a later build.
         </Text>
       </ScrollView>

@@ -2,11 +2,11 @@
 //
 // This is the design phase that Phases 1–3 deferred (the file used to be an empty
 // placeholder). Every value here is lifted 1:1 from the Claude Design mockup
-// "RepVoice Manual.dc.html" (lime/quantum-black reskin) so screens read the
+// "Kratos Manual.dc.html" (lime/quantum-black reskin) so screens read the
 // same numbers the mockup did. Rule from that mockup's agent notes: never hardcode a
 // value that has a token.
 //
-// Type option 01 (RepVoice Manual, all 18 screens): Instrument Sans carries every UI
+// Type option 01 (Kratos Manual, all 18 screens): Instrument Sans carries every UI
 // name/heading, Geist Mono every numeral. Instrument Sans reads heavier than the old
 // Space Grotesk, so UI text steps down one weight (titles land on 600, names on 500);
 // the mono readouts keep their weight so the numbers still carry.

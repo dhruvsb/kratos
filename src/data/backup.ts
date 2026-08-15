@@ -34,10 +34,10 @@ export const BACKUP_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000;
 /** React Query key for the on-disk backup listing (Settings status row). */
 export const BACKUPS_KEY = ['backups'] as const;
 
-const FILE_PREFIX = 'repvoice-backup-';
-// repvoice-backup-YYYY-MM-DD.csv — the date stamp sorts lexicographically ==
+const FILE_PREFIX = 'kratos-backup-';
+// kratos-backup-YYYY-MM-DD.csv — the date stamp sorts lexicographically ==
 // chronologically, which the rotation relies on.
-const BACKUP_NAME_RE = /^repvoice-backup-\d{4}-\d{2}-\d{2}\.csv$/;
+const BACKUP_NAME_RE = /^kratos-backup-\d{4}-\d{2}-\d{2}\.csv$/;
 
 /** True for a filename this module created — so rotation never touches foreign files. */
 export function isBackupName(name: string): boolean {

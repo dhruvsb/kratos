@@ -1,6 +1,6 @@
 // Apple Health gap-fill (iOS-only). Backfills a blank "Strength Training"
 // placeholder for any day the user actually worked out but forgot to log in
-// RepVoice/Hevy — so the calendar stays honest with zero manual effort.
+// Kratos/Hevy — so the calendar stays honest with zero manual effort.
 //
 // Source-agnostic on purpose: it reads whatever wrote strength sessions into
 // Apple Health (Whoop today, an Amazfit Helio via the Zepp app later) — no
@@ -38,7 +38,7 @@ function dayKey(iso: string): string {
  * Read strength sessions from Apple Health and insert a blank placeholder for any
  * day with no workout yet. A HealthKit session is skipped if EITHER its exact id
  * was already imported (external_id) OR any workout already exists that calendar
- * day — a real RepVoice/Hevy log always wins. No exercises/sets are created; the
+ * day — a real Kratos/Hevy log always wins. No exercises/sets are created; the
  * placeholder just marks the day (a future feature can let the user tag muscle
  * groups onto it). No-ops entirely off iOS.
  */

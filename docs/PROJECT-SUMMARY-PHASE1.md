@@ -1,4 +1,4 @@
-# RepVoice — Project Summary (Phase 1)
+# Kratos — Project Summary (Phase 1)
 
 **Purpose of this file:** a standing knowledge base for both humans and future Claude
 Code sessions. Read this first before exploring the codebase — it should answer "what
@@ -9,7 +9,7 @@ file. Update it incrementally as work continues; keep it concise, not exhaustive
 
 ## 1. What this is
 
-RepVoice is a personal workout-logging app, replacing Hevy. Three planned phases:
+Kratos is a personal workout-logging app, replacing Hevy. Three planned phases:
 
 - **Phase 1 (this doc's scope)**: manual tracker backbone — no AI. Unlimited routines,
   fast set logging, last-session recall, history, exercise library.
@@ -42,7 +42,7 @@ updatable record of what was actually built from it, not a copy of the spec.
 | Instant interactions (navigate-first) | ✅ **Built 2026-07-31** — start/finish/discard/add-exercise optimistic: client-chosen row ids (`src/lib/ids.ts`) let START build the workout from the cached routine and navigate on the same tap; an FK-ordering await + snapshot rollback keep it safe; routine/last-session prefetch serves the 80%-repeat case; the 1s clock is isolated in `LiveClock`. Live-DB RLS harness green (10/10). |
 | **Offline-first logging (write offline, sync on reconnect)** | ✅ **Built + QA'd 2026-08-06** — the active-logging path (start new/from-routine → pick → log/edit/delete sets → finish/discard) works fully disconnected, syncs on reconnect in FK-safe serial order, and survives an app kill (persisted mutation queue, `src/data/offlineSync.ts` + `src/lib/network.ts`; connectivity truth via a HEAD probe, not NetInfo alone). History/calendar/progress/voice deliberately online-only. Verified against the live DB incl. a workout born wholly offline; `npm run test:offline` 11/11. NetInfo is a native dep (dev-client rebuilt). See WORK-LOG 2026-08-06. |
 | Exercise library seed script + alias map | ✅ Done and seeded live (**curated 156 exercises** as of 2026-08-15 — was 150; +6 from the #52 audit). Metadata + a `weighted_bodyweight` retag pass are **code-ready but not yet applied to the live DB** — apply via migration `0011` + the non-destructive `scripts/update-exercise-metadata.ts` (NOT the destructive `seed-exercises.ts`). See WORK-LOG 2026-08-15. |
-| Manual UI — 12 `RepVoice Manual` screens on the dark LED theme | ✅ Built (2026-07-30 s2; **Calendar** added s4). Incl. **manual set logging** (grid + keypad), which was previously **missing** (voice-only). **Modality-aware since 2026-08-14 (#46):** the grid + keypad adapt to each exercise's `modality` — weight_reps (KG+REPS), bodyweight_reps (REPS), **weighted_bodyweight (+KG optional + REPS, added 2026-08-15 #52)**, time (mm:ss), distance_time (duration+level); needs migrations 0010 + 0011. Static-verified, not yet on device. |
+| Manual UI — 12 `Kratos Manual` screens on the dark LED theme | ✅ Built (2026-07-30 s2; **Calendar** added s4). Incl. **manual set logging** (grid + keypad), which was previously **missing** (voice-only). **Modality-aware since 2026-08-14 (#46):** the grid + keypad adapt to each exercise's `modality` — weight_reps (KG+REPS), bodyweight_reps (REPS), **weighted_bodyweight (+KG optional + REPS, added 2026-08-15 #52)**, time (mm:ss), distance_time (duration+level); needs migrations 0010 + 0011. Static-verified, not yet on device. |
 | ↳ Core files | `src/app/{index,workout/[id],routine/[id],history/index,history/[id],exercise/[id],exercises,finish/[id],calendar}.tsx`, `src/components/{ui,ExercisePickerModal,workout/SetKeypad,workout/Caret}.tsx`, `src/data/calendar.ts`, `src/lib/units.ts` |
 | Hevy import | ❌ **Descoped** — removed from the Phase 1 plan entirely |
 | **In-app account deletion** (App Store Guideline 5.1.1(v)) | ✅ **Built + verified live 2026-08-08** — Settings → ACCOUNT → "Delete account" (two confirms) → `deleteAccount()` → RPC `public.delete_own_account()` (migration `0005`, security-definer, `auth.uid()`-only) → local sign-out wipes the persisted cache. Proven end-to-end against the live DB on a throwaway account: user, profile, routines, workouts, sets, voice_logs, custom exercises + aliases all gone; the seeded 150 untouched. |
@@ -72,7 +72,7 @@ OTP sign-in, the history/progress screens, and Hevy import/export end-to-end.
 
 ## 4. Key decisions & rationale
 
-- **App name**: "RepVoice" — placeholder, trivial to rename (just `app.config.ts` + package name).
+- **App name**: "Kratos" — placeholder, trivial to rename (just `app.config.ts` + package name).
 - **Weight stored in kg always** (`numeric(6,2)`). Unit conversion is display-only,
   driven by `profiles.default_unit`. Never store lb.
 - **Phase 1 screens are deliberately minimal**: the original logging and history surfaces use
@@ -175,5 +175,5 @@ Two SQL functions do the heavy lifting server-side (avoids N+1 queries from the 
 - Run the installed native client with Node 22 via
   `PATH="/opt/homebrew/opt/node@22/bin:$PATH" npx expo start --dev-client`.
 - Temporary Gmail SMTP is for private testing only. Replace it with a dedicated provider
-  and verified RepVoice-owned sending domain before external-user testing.
+  and verified Kratos-owned sending domain before external-user testing.
 - Phase 2 voice logging exists and is deployed; see `PROJECT-SUMMARY-PHASE2.md`.

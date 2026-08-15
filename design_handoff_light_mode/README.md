@@ -1,7 +1,7 @@
-# Handoff: RepVoice light mode ("Greige + Moss", option 2a)
+# Handoff: Kratos light mode ("Greige + Moss", option 2a)
 
 ## Overview
-RepVoice is a thumb-only weightlifting logger. It currently ships a dark theme. This handoff
+Kratos is a thumb-only weightlifting logger. It currently ships a dark theme. This handoff
 defines the **light theme** — a warm off-white ("greige") ground with a moss-green accent.
 
 It is a **theme change, not a redesign**: layout, type, spacing, copy and component structure are
@@ -11,7 +11,7 @@ unchanged from the existing dark build. The work is (1) replacing the color toke
 ## About the design files
 The HTML files in this bundle are **design references** — prototypes showing intended look, not
 production code to copy. Recreate them in the app's existing environment using its established
-patterns. Open `RepVoice Light Options.dc.html` in a browser to see all explorations; the
+patterns. Open `Kratos Light Options.dc.html` in a browser to see all explorations; the
 **top row, option `2a`** is the approved one. `RVHomeLight`, `RVLogLight` and `RVRestLight` open
 standalone and are already toned to 2a.
 
@@ -84,7 +84,7 @@ completed rows plain with `--t2` values and `--ok` ✓; the current row washed `
 `--line` track, ±30s as outlines and SKIP as the solid accent, "just logged" block below.
 
 ## Files
-- `RepVoice Light Options.dc.html` — all six palette explorations; **`2a` is approved**
+- `Kratos Light Options.dc.html` — all six palette explorations; **`2a` is approved**
 - `RVHomeLight.dc.html`, `RVLogLight.dc.html`, `RVRestLight.dc.html` — the approved screens
 - `support.js` — runtime needed to open the above in a browser (not for production)
 

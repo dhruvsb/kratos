@@ -36,7 +36,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
 /** Theme options offered by the Settings control (#17 Phase 3). */
 export const THEME_MODES: ThemeMode[] = ['system', 'light', 'dark'];
 
-const STORAGE_KEY = 'repvoice.settings.v1';
+const STORAGE_KEY = 'kratos.settings.v1';
 const SETTINGS_KEY = ['settings'] as const;
 
 /** Weekly-goal presets offered by the Settings picker (sessions/week). */

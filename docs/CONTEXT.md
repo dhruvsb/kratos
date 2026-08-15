@@ -1,4 +1,4 @@
-# RepVoice — Session Context (start here)
+# Kratos — Session Context (start here)
 
 **This is the fast-start dashboard. Read this first in any new chat**, then open the
 deeper docs only as needed. It holds the current state, what's pending, and the open
@@ -10,7 +10,7 @@ codebase or a huge prior conversation.
 > issues**) *and* append a dated entry to [`WORK-LOG.md`](./WORK-LOG.md). This file is the
 > snapshot; `WORK-LOG.md` is the full history. Keep this file short.
 
-**Last updated:** 2026-08-15 — **#51 + #53 + #42 FIXED (code), 3-agent parallel batch (tsc-clean, not device-verified).**
+**Last updated:** 2026-08-15 — **App renamed RepVoice → Kratos** across all source, config, and docs (bundle id now `com.dhruvshah.kratos`, tsc-clean). Needs a clean iOS prebuild + new provisioning profile; privacy-policy URL moved to `dhruvsb.github.io/kratos` (Pages repo still to be hosted).
 #51: History-detail workout **title is now tappable → rename** (`Alert.prompt`, iOS; blank clears back to
 "Empty workout"); new `renameWorkout`/`useRenameWorkout` (optimistic). #53: exercise search keyboard now
 **dismisses on scroll** (`keyboardDismissMode="on-drag"`) + return-key, in both `ExercisePickerModal` and the
@@ -76,7 +76,7 @@ routes incl. `/voice/record`, `/voice/preview`) green; **not yet run on the simu
 **Apple Health gap-fill (iOS-only) built.** New **Settings → DATA → "Sync
 from Apple Health"** button reads strength sessions (`traditional`/`functional` only) from the Health store
 and inserts a blank **"Strength Training"** placeholder for any day you worked out but forgot to log —
-day-level + `external_id: healthkit:<uuid>` dedup, a real RepVoice/Hevy log always wins. Source-agnostic
+day-level + `external_id: healthkit:<uuid>` dedup, a real Kratos/Hevy log always wins. Source-agnostic
 (Whoop now, Amazfit Helio via Zepp later — no app change). New `src/lib/healthkit.ts` (the only HealthKit
 touch-point) + `src/data/healthImport.ts` + `useSyncHealthWorkouts`; config plugin `@kingstinct/react-native-healthkit`
 (read-only, `NSHealthShareUsageDescription`). **iOS-only by design** — button hidden off iOS, every entry
@@ -112,14 +112,14 @@ for round-trip. `tsc` clean. Prior: **Backlog batch (5 fixes, code):** repo read
 (`HomeDayZero.tsx`); `ios.appleTeamId` moved into `app.config.ts` (survives prebuild); **#28** progressive-
 overload ghost in the set grid; **Task 5** in-app "Clear all history" (Settings → DATA; keeps routines) via
 new RPC `clear_own_workouts()` — **migration `0008` written, NOT applied** (apply before the row works live).
-`tsc` + `test:offline` 16/16 green; none on device yet. Prior: **"RepVoice Home" redesign shipped: single-line streak + liquid-glass tabs
-(#22).** Implemented the `RepVoice Home.dc.html` design — a floating **glass tab pill** (HOME · ROUTINES ·
+`tsc` + `test:offline` 16/16 green; none on device yet. Prior: **"Kratos Home" redesign shipped: single-line streak + liquid-glass tabs
+(#22).** Implemented the `Kratos Home.dc.html` design — a floating **glass tab pill** (HOME · ROUTINES ·
 SETTINGS, SVG icons via new `react-native-svg`, active-tab glass chip) + a **green-glass `+` FAB** beside
 it, real iOS-26 `GlassView` with `colorScheme` bound to the in-app theme and an opaque-token fallback off
 iOS 26 (`TabBar.tsx`, `HomeQuickStart.tsx`). Home reflowed to a **fixed single-line streak header** over a
 scrolling feed that dissolves under a bottom fade (`index.tsx`). **Verified on the iOS 26.5 simulator, both
 themes** (dark glass renders while OS is light; taps pass through; FAB sheet intact). Design calls
-followed as drawn: dropped the `REPVOICE.` wordmark; third tab labelled SETTINGS (was ACCOUNT). Prior:
+followed as drawn: dropped the `KRATOS.` wordmark; third tab labelled SETTINGS (was ACCOUNT). Prior:
 **Three parallel agents landed (one commit): #32 data durability, logging
 robustness, #19 Biceps/Triceps split.** All `tsc`-clean; `test:offline` **16/16** (5 new online-kill
 checks). **#32 (High) DONE (code):** forced cache flush on AppState background (`flushCache()`
@@ -133,7 +133,7 @@ wired into `workout/[id].tsx` (REMOVE control + long-press, `useRemoveWorkoutExe
 **Biceps + Triceps** (forearms folded into Biceps) = 7 regions in `muscles.ts`; curated JSON regenerated
 (re-seed `npm run seed` **left for the user**). **Two user follow-ups: apply `0006`; `npm run seed`.**
 Not yet on device. Prior: **"Rolling Weeks" Home redesign — ALL 3 PHASES DONE + simulator-verified both
-themes.** The full `RepVoice Home Rolling Weeks.dc.html` is implemented. **Phase 3:** a **scroll-pinned
+themes.** The full `Kratos Home Rolling Weeks.dc.html` is implemented. **Phase 3:** a **scroll-pinned
 compact streak bar** (`{streak} DAY STREAK · BEST n` + a 30-day micro sparkline from `computeStreak().micro`)
 that fades/slides in as the hero scrolls away — `Animated.ScrollView` + one native-driven `scrollY` (bar
 opacity, bg opacity reaching full in the first quarter to mask content, and a small slide); `pointerEvents:
@@ -142,7 +142,7 @@ bottom sheet** — routines ranked by 90-day usage, each `START →`, plus `+ NE
 the FAB rotates to `×` and lifts above the sheet as its close control (dynamic-height positioned via
 `onLayout`), scrim closes it too, all `Animated` (native driver). FAB uses the semantic `cta*` tokens (dark =
 dark circle + accent glyph/glow, light = solid moss fill), START routes through `useStartWorkoutFlow`.
-**Phase 1:** streak-first Home (`RepVoice Home Rolling Weeks.dc.html`): a big day-streak numeral, a
+**Phase 1:** streak-first Home (`Kratos Home Rolling Weeks.dc.html`): a big day-streak numeral, a
 rolling **five-week weekday-aligned heatmap** (worked = accent fill, rest = faint, skipped = dashed, today =
 accent ring), and the recent **history inline** — the calendar + history folded into Home. Bottom bar cut to
 **3 tabs: HOME · ROUTINES · ACCOUNT** (`HomeTabBar` in `components/voice/TabBar.tsx`); the routine list moved
@@ -275,18 +275,18 @@ directory rebuild — migrations 0003 & 0004 live. See WORK-LOG.
 
 ## What this is (10-second version)
 
-RepVoice = a workout logger (Expo/React Native + Supabase), built as a **portfolio /
+Kratos = a workout logger (Expo/React Native + Supabase), built as a **portfolio /
 showcase piece** (judged on screenshots, demo recordings, and a stranger trying it cold).
 Weight is always stored in kg. **Current focus: manual-first.** The whole manual loop
 (routine → start → pick exercises → log weight×reps×sets → per-exercise weight history)
-is now implemented on the dark "LED-instrument" theme per the `RepVoice Manual` design.
+is now implemented on the dark "LED-instrument" theme per the `Kratos Manual` design.
 Voice logging (Phase 2) is built but **unwired from the manual screens** and returns
 later on top of the same set grid. Three phases: **1** manual tracker, **2** voice
 logging via an LLM pipeline, **3** TBD (PRs/charts).
 
 > **Where the designs live:** [`docs/design/`](./design/) holds the imported Claude Design
-> canvases — `RepVoice-Manual.dc.html` (what's implemented) and
-> `RepVoice-VoiceFirst-v3.dc.html` (kept for the later voice phase), plus `support.js` so
+> canvases — `Kratos-Manual.dc.html` (what's implemented) and
+> `Kratos-VoiceFirst-v3.dc.html` (kept for the later voice phase), plus `support.js` so
 > both render standalone.
 
 ## Read order (deeper docs)
@@ -309,7 +309,7 @@ logging via an LLM pipeline, **3** TBD (PRs/charts).
 | **Offline-first logging (write while disconnected + sync)** | ✅ **Built + verified on-device 2026-08-06** — start→pick→log/edit/delete sets→finish all work offline and sync on reconnect, surviving app kill. NetInfo→`onlineManager` (writes pause, not roll back); replay-safe writes (client `set_number`/`position`/ids in mutation *variables*); persisted+resumable queue (`src/data/offlineSync.ts`, `resumePausedMutations`); offline picker (`useExerciseDirectory` + local filter); `OfflineBanner`. History/calendar/progress/voice stay online-only. `npm run test:offline` **8/8** on live DB **and the full loop proven on the simulator** (offline log → kill → relaunch → reconnect → rows verified in Supabase). **QA'd 2026-08-06 (6 fixes)**: banner cold-start seed, SYNCING-pill latch, offline cold-cache START alert, **serial resume** (`SerialResumeQueryClient` — RQ 5.101's own resume is concurrent `Promise.all`), foreground re-seed + 10s poll, and an **authoritative reachability probe** (HEAD `/auth/v1/health` — NetInfo can lie in both directions; a stale "online" makes writes fire→fail→roll back). Deep scenarios verified vs the live DB: offline edit/delete of unsynced sets, offline discard (net no-trace), stuck-queue recovery; harness `test:offline` **11/11**. |
 | **Instant interactions (navigate-first + prefetch)** | ✅ **Built 2026-07-31** — start/finish/discard/add-exercise are optimistic (client-chosen ids via `src/lib/ids.ts`, FK-ordering guard, snapshot rollback); routine + last-session prefetch serve the 80%-repeat case from cache; 1s clock isolated in `LiveClock`. Live-DB RLS harness green (10/10). On-device optimistic-feel smoke pending. |
 | **Exercise directory — curated + rich metadata** | ✅ **Rebuilt this session**: replaced the 873 free-exercise-db import with a curated 150-set carrying `primary_muscles[]`, `secondary_muscles[]`, `body_region[]` rollup, `mechanic`, `modality`. Source of truth: `scripts/data/exercises-curated.json` (regen via `scripts/build-curated-exercises.py`). Muscle taxonomy in `src/lib/muscles.ts`. |
-| **Manual-first UI — all 12 `RepVoice Manual` screens** | ✅ Built (dark LED theme); **now renders on the iOS simulator** (first run 2026-07-31 — Home, History, routines all render; full manual-loop walkthrough still pending) |
+| **Manual-first UI — all 12 `Kratos Manual` screens** | ✅ Built (dark LED theme); **now renders on the iOS simulator** (first run 2026-07-31 — Home, History, routines all render; full manual-loop walkthrough still pending) |
 | **"Entry & edges" screens 13–18** | ✅ **Built session 4**: 13 sign-in (LED, 6-box code) · 14 first-run + 16 resume (Home states) · 15 no-history grid · 17 fix-a-set from history + delete-workout · 18 real Settings screen. New local settings store `src/data/settings.ts` (AsyncStorage; drives pre-fill/rest/weekly-goal). 4-tab nav (HOME·CALENDAR·HISTORY·SETTINGS). Static-verified only. |
 | ↳ Manual set logging (grid + keypad) — *the core, previously missing* | ✅ Built (`workout/[id]`, `components/workout/SetKeypad`, `lib/units`) |
 | ↳ Home / routine editor / picker / history / past workout / exercise progress / library / finish | ✅ Built / restyled dark |
@@ -353,7 +353,7 @@ native-`UITabBar` drag-lens glass — deferred, keeping the custom pill+FAB.
       was added, so the current on-device build can't run the "Sync from Apple Health" button until a fresh
       `xcodebuild -allowProvisioningUpdates` install (same flow as the last device build). Until then it's
       `tsc`-verified only.
-- [ ] **Decide on the Android/web scaffolding** flagged in Open issues (RepVoice is iOS-only). Audit done
+- [ ] **Decide on the Android/web scaffolding** flagged in Open issues (Kratos is iOS-only). Audit done
       2026-08-13; three buckets: **(a) clearly dead → safe to delete** — `app.config.ts` `android:` block +
       3 `assets/images/android-icon-*.png` + `"android"` npm script + the `Platform.OS === 'android'`
       clauses in `lib/haptics.ts:20` & `lib/feedback.ts:38`; **(b) web → dead for shipping, but confirm
@@ -462,7 +462,7 @@ optimistic** (instant ✓, rollback on error) · ✅ **kg/lb unit toggle** in Se
 | ~~Med~~ | ✅ **Done 2026-08-13** — repo reads now `.parse()` through the zod schemas (flat rows + the numeric-bearing nested `sets`/`last_session` arrays); partial selects (`listWorkouts` volume, `getExerciseBests`) coerce `weight_kg` via `Number()`. A numeric-as-string can no longer make `weight_kg` a string. `tsc` + `test:offline` 16/16 green. | `src/data/*`, `src/types/db.ts` |
 | ~~Low~~ | ✅ **Done 2026-07-31** — body-region **muscle filter** chip row added to the picker *and* the library (`exercises.tsx`); `searchExercises(query, region?)` + `listExercisesByRegion()`. (RECENT tab still deferred.) Also new: per-workout **muscle split** on `history/[id].tsx` (`lib/muscleSplit.ts` + `components/MuscleSplit.tsx`). | `ExercisePickerModal.tsx` |
 | Low | Routine editor uses ↑/↓ reorder, not drag (= FEEDBACK **#8**, still open) | `src/app/routine/[id].tsx` |
-| New | **iOS-only cleanup (awaiting user decision):** RepVoice ships iOS-only, but non-iOS scaffolding remains — `android:` block + 3 `android-icon-*.png` assets + `web:` block in `app.config.ts`; `"android"`/`"web"` npm scripts; `react-native-web` dep; dead `Platform.OS === 'android'` clauses in `lib/haptics.ts` + `lib/feedback.ts` and the `!== 'web'` branch in `lib/supabase.ts`. All harmless but bloat. New iOS-only code (`healthkit.ts`, `healthImport.ts`) already guards correctly. **Do NOT remove without asking** — web-export was historically a `tsc`-adjacent CI check. | `app.config.ts`, `package.json`, `src/lib/*` |
+| New | **iOS-only cleanup (awaiting user decision):** Kratos ships iOS-only, but non-iOS scaffolding remains — `android:` block + 3 `android-icon-*.png` assets + `web:` block in `app.config.ts`; `"android"`/`"web"` npm scripts; `react-native-web` dep; dead `Platform.OS === 'android'` clauses in `lib/haptics.ts` + `lib/feedback.ts` and the `!== 'web'` branch in `lib/supabase.ts`. All harmless but bloat. New iOS-only code (`healthkit.ts`, `healthImport.ts`) already guards correctly. **Do NOT remove without asking** — web-export was historically a `tsc`-adjacent CI check. | `app.config.ts`, `package.json`, `src/lib/*` |
 | ~~Low~~ | ✅ **Done 2026-08-12** — `addExerciseToWorkout` now dedupes `(workout_id, exercise_id)` (returns the existing row as a no-op) | `src/data/workouts.ts` |
 | — | *(Phase 2 / voice — parked until voice resumes)* model IDs `gpt-5.6-luna/terra` unverified + eval never run; floor-mode auto-exit & PR-celebration wiring; voice dead code (`useVoiceSession.ts`, `useSessionSpeech`, `floorSensor.ts`); telemetry queries never invalidated; duplicated zod enums; `eval/README.md` stale `gpt-4o` refs | Phase 2 files |
 

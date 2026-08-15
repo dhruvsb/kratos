@@ -7,6 +7,32 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-15 — Rename RepVoice → Kratos (app-wide)
+
+Renamed the app from **RepVoice** to **Kratos** across every git-tracked, non-generated file
+(37 files) — all three case variants (`RepVoice`/`repvoice`/`REPVOICE` → `Kratos`/`kratos`/`KRATOS`).
+
+- **Identity/config:** `app.config.ts` (name, slug `kratos`, scheme `kratos`, `bundleIdentifier`
+  `com.dhruvshah.kratos`, all permission strings) and `eas.json` submit bundle id.
+- **User-visible strings:** sign-in wordmark, day-zero welcome, Settings version line.
+- **Storage keys / file prefixes** bumped: React Query cache `kratos.rq-cache.v1`, settings
+  `kratos.settings.v1`, backup/export prefixes `kratos-backup-`/`kratos-export-`. Safe — app
+  has never run on a device, so no real local data to orphan; caches/settings just repopulate.
+- **Design files renamed** (`git mv`): `Kratos-Manual.dc.html`, `Kratos-VoiceFirst-v3.dc.html`,
+  `Kratos Light Options.dc.html`; all in-doc references updated.
+- **Privacy-policy URL** → `https://dhruvsb.github.io/kratos/privacy-policy.html` (corrected to the
+  real GitHub account `dhruvsb` + new repo name).
+- **Not touched:** generated `build/` and gitignored `ios/` trees still say RepVoice — they get
+  regenerated with the Kratos name on the next clean prebuild/build.
+
+Verified: `tsc --noEmit` clean.
+
+**Follow-ups (outside code):** (1) clean iOS prebuild — the new bundle id needs a fresh provisioning
+profile (auto via `xcodebuild -allowProvisioningUpdates`); (2) host the GitHub Pages repo `kratos`
+under `dhruvsb` or the privacy-policy link 404s (App Store listing depends on it).
+
+---
+
 ## 2026-08-15 — App Store launch-compliance pass (paid membership now active)
 
 Apple Developer Program enrollment completed (individual — same team `TUR974K866`, now paid → 1-year
@@ -29,8 +55,8 @@ the compliance answers while the code/policy fixes were done inline.
   host policy/support pages, Supabase test OTP, EAS build+submit, 6.9" screenshots, ASC fields, EU trader
   status, on-device verification incl. confirming the real voice pipeline works).
 
-Decisions: category Health & Fitness / Sports; age 4+; name stays `RepVoice` / subtitle "Speak your sets.
-Log faster."; reviewer demo login = Supabase test OTP `appreview@repvoice.app` / `123456`.
+Decisions: category Health & Fitness / Sports; age 4+; name stays `Kratos` / subtitle "Speak your sets.
+Log faster."; reviewer demo login = Supabase test OTP `appreview@kratos.app` / `123456`.
 
 ## 2026-08-15 — #51 + #53 + #42: rename empty workout, keyboard dismiss, haptics dedup (3-agent parallel)
 
@@ -257,7 +283,7 @@ Comprehensive on-simulator QA of the whole app. **Cut short — see "not covered
   and the Stack's react-native-screens `statusBarStyle` (needs YES) were both in play; the plist
   said YES so it threw at launch. Both set the same theme value, so the global one won: plist →
   false, Stack option dropped (this also keeps the sign-in screen theme-aware). **Clean boot
-  confirmed.** `ios/RepVoice/Info.plist` is gitignored — kept in sync by hand.
+  confirmed.** `ios/Kratos/Info.plist` is gitignored — kept in sync by hand.
 
 **Open defect — voice recorder (`src/app/voice/record.tsx`)**
 - On the simulator the timer stays `00:00`, the level meter never moves, and **"Stop & review"
@@ -493,7 +519,7 @@ Device screenshot of the Exercise **Library** flagged two things; logged both in
 ## 2026-08-13 — Apple Health gap-fill (iOS-only): backfill forgotten strength days
 
 Built the "did I train at all that day?" backfill. Purpose: when a workout happened but wasn't logged in
-RepVoice/Hevy, the calendar shouldn't show a blank day — Apple Health (fed by Whoop today, an Amazfit
+Kratos/Hevy, the calendar shouldn't show a blank day — Apple Health (fed by Whoop today, an Amazfit
 Helio via the Zepp app later) knows a strength session occurred, so we mark the day.
 
 - **`src/lib/healthkit.ts`** (new) — the single HealthKit touch-point (mirrors the `supabase.ts` rule).
@@ -749,9 +775,9 @@ Follow-up still open: a first-class **resume banner** (#33) so resuming isn't di
 
 ---
 
-## 2026-08-12 — "RepVoice Home Final": ring-date heatmap + volume rows (records deferred)
+## 2026-08-12 — "Kratos Home Final": ring-date heatmap + volume rows (records deferred)
 
-Implemented the `RepVoice Home Final.dc.html` design (claude.ai/design), minus the PR records badge
+Implemented the `Kratos Home Final.dc.html` design (claude.ai/design), minus the PR records badge
 (deferred — see below). Sim-verified (light).
 
 - **Ring-date heatmap.** The heatmap cells are now **circles** (`HeatDot` in `index.tsx`): a worked day =
@@ -774,9 +800,9 @@ Implemented the `RepVoice Home Final.dc.html` design (claude.ai/design), minus t
 
 ---
 
-## 2026-08-12 — "RepVoice Home" redesign: single-line streak + liquid-glass tabs (#22)
+## 2026-08-12 — "Kratos Home" redesign: single-line streak + liquid-glass tabs (#22)
 
-Implemented the `RepVoice Home.dc.html` design (claude.ai/design project "Whitespace reduction design
+Implemented the `Kratos Home.dc.html` design (claude.ai/design project "Whitespace reduction design
 options"). **Verified on the iOS 26.5 simulator (iPhone 17 Pro), both themes.**
 
 - **Liquid-glass tab bar (#22).** `TabBar.tsx` rewritten as a floating **glass pill** — HOME · ROUTINES ·
@@ -791,7 +817,7 @@ options"). **Verified on the iOS 26.5 simulator (iPhone 17 Pro), both themes.**
   `FAB_BOTTOM` 96→24). Its MOST USED sheet + rotate-to-× open animation are unchanged and verified.
 - **Whitespace reduction.** `index.tsx` reflowed: a **fixed single-line streak header**
   (`● N DAY STREAK ──── BEST n`) above a scrolling feed (heatmap + history) that **dissolves under a
-  bottom fade** (`expo-linear-gradient`) into the tabs. Drops the big streak numeral, the `REPVOICE.`
+  bottom fade** (`expo-linear-gradient`) into the tabs. Drops the big streak numeral, the `KRATOS.`
   wordmark, and the scroll-pinned streak bar (the streak is always visible now).
 
 **Device-QA follow-up (same day, on the iPhone 15 / iOS 26.5.2 — glass renders on-device):** four
@@ -804,7 +830,7 @@ instead of cross-fading** — `routines` was never registered with `TAB_SCREEN` 
 (magnify-follow across tabs) is a native `UITabBar` behavior our custom pill+FAB can't fully reproduce —
 pending a call on custom-pill vs. native-tab-bar. Sim-verified; device rebuild in flight.
 
-**Two design calls to revisit if wanted:** the design drops the `REPVOICE.` wordmark from Home
+**Two design calls to revisit if wanted:** the design drops the `KRATOS.` wordmark from Home
 entirely, and labels the third tab **SETTINGS** (was ACCOUNT) — both followed as drawn. Needed a native
 rebuild for `react-native-svg` (hit + fixed a CocoaPods UTF-8 locale error: export `LANG=en_US.UTF-8`).
 `tsc` green; walked both themes on the simulator.
@@ -883,7 +909,7 @@ returns home with no History row added; `tsc` clean.
 
 ## 2026-08-09 — "Rolling Weeks" Home redesign, Phase 3 of 3 (scroll-pinned streak bar) — redesign COMPLETE
 
-The finishing flourish, and the last piece of `RepVoice Home Rolling Weeks.dc.html`: a compact streak bar
+The finishing flourish, and the last piece of `Kratos Home Rolling Weeks.dc.html`: a compact streak bar
 that pins to the top and fades in as the hero scrolls out of view, so the streak stays glanceable while you
 read history.
 
@@ -935,7 +961,7 @@ actually run are one tap from Home without going to the ROUTINES tab.
 ## 2026-08-09 — "Rolling Weeks" Home redesign, Phase 1 of 3 (streak Home + 3-tab IA)
 
 First slice of the big main-screen redesign imported from the Claude Design project
-(`RepVoice Home Rolling Weeks.dc.html`, via the design MCP). The mockup reworks Home into a
+(`Kratos Home Rolling Weeks.dc.html`, via the design MCP). The mockup reworks Home into a
 streak-first surface and folds the calendar heatmap + history into it, cutting the bottom bar to three
 tabs. Locked with the user: **adopt the 3-tab bar**, **rest-tolerant streak**, and **ship the visuals
 first, defer the edge states to backlog**.
@@ -1154,7 +1180,7 @@ Second half of the App Store prep. Nothing here changes app behaviour except one
 
 Prompted by the App Store launch question: an app that creates accounts **must** let the user delete
 the account *and its data* from inside the app — deactivation doesn't count, and a "email us to
-delete" flow is only allowed for highly-regulated industries. RepVoice creates accounts (email OTP)
+delete" flow is only allowed for highly-regulated industries. Kratos creates accounts (email OTP)
 and had no delete path, which is a near-certain 5.1.1(v) rejection. Built independently of the two
 parallel chats — no shared files.
 
@@ -1281,7 +1307,7 @@ Not committed (awaiting user).
 via a free Apple **Personal Team** (`TUR974K866`, dhruvsb@icloud.com) — no paid Apple Developer
 account, fully wireless once trusted, no cable needed for daily use. Signing cert expires every
 **7 days** (free-team limit); reinstall command is in the `ios-device-install` memory note.
-Getting there needed: `DEVELOPMENT_TEAM` wired into `ios/RepVoice.xcodeproj/project.pbxproj`
+Getting there needed: `DEVELOPMENT_TEAM` wired into `ios/Kratos.xcodeproj/project.pbxproj`
 (gitignored/regenerated — **should move into `app.config.ts`** so `expo prebuild` doesn't wipe
 it), and building with `xcodebuild -allowProvisioningUpdates` directly since `expo run:ios`
 doesn't pass that flag and can't self-heal a missing profile.
@@ -1604,7 +1630,7 @@ a signed-in session hitting live Supabase). The parser is deliberately DB-free s
   `statusBarStyle: 'light'` on the native Stack while `UIViewControllerBasedStatusBarAppearance`
   defaulted to NO. Set `true` via `ios.infoPlist` in `app.config.ts`. NOTE: the committed `ios/`
   folder is gitignored and `expo run:ios` skips prebuild, so the value had to be set directly in
-  `ios/RepVoice/Info.plist` too (local, not tracked); a clean prebuild regenerates it from config.
+  `ios/Kratos/Info.plist` too (local, not tracked); a clean prebuild regenerates it from config.
 
 **Feedback items closed this session** (see `FEEDBACK-LOG.md`):
 - **#1 History nav** — History was a dead-end (rendered no `TabBar`, and it's a pushed top-level
@@ -1631,7 +1657,7 @@ sim is a Supabase/network blip, unrelated to the diff (both muscle-split files a
 
 ## 2026-07-31 — Type refresh: "option 01" (Instrument Sans + Geist Mono) across all screens
 
-Implemented the updated `RepVoice Manual.dc.html` from the Claude Design project — the
+Implemented the updated `Kratos Manual.dc.html` from the Claude Design project — the
 "type option 01" pass. Two structural changes plus spacing polish, all driven through the
 token system so screens barely moved.
 
@@ -1699,7 +1725,7 @@ export bundles 13 routes. Not run on device.
 
 ## 2026-07-30 (session 4) — Calendar view (mockup 12, "five a week")
 
-**Context:** the `RepVoice Manual` design gained a 12th screen — a **Calendar** built on a
+**Context:** the `Kratos Manual` design gained a 12th screen — a **Calendar** built on a
 "five a week" goal (a count, not a streak: miss a day and the week still stands). Implemented
 **in isolation** (parallel chats were editing other files), so the whole feature is two new
 files and — at first — zero edits to existing code; the Home tab-wiring was added in a
@@ -1730,7 +1756,7 @@ calendar's `SETTINGS` tab is inert (Home owns the settings sheet). Not verified 
 
 ## 2026-07-30 (session 4) — "Entry & edges" screens 13–18 (built in an isolated worktree)
 
-**Context:** design canvas `RepVoice Manual.dc.html` grew an **Entry & edges** section (screens 13–18)
+**Context:** design canvas `Kratos Manual.dc.html` grew an **Entry & edges** section (screens 13–18)
 covering the states the happy-path 11 skipped. Imported the latest canvas via the Claude Design MCP
 and implemented all six. Done on branch `worktree-entry-edges-screens` so the main tree stayed free
 for parallel work; the untracked `src/app/calendar.tsx` (screen 12, another chat) is deliberately not
@@ -1815,18 +1841,18 @@ UI still only captures one muscle + equipment (no modality picker yet).
 
 ---
 
-## 2026-07-30 (session 2) — Manual-first pivot: implemented the "RepVoice Manual" design (11 screens)
+## 2026-07-30 (session 2) — Manual-first pivot: implemented the "Kratos Manual" design (11 screens)
 
 **Decision (user):** step back from voice-first. Make the **manual** logging loop work well
 first — add a routine, start it, pick exercises, enter weight × reps × sets, see per-exercise
 weight history, save routines. Voice comes later, layered back on top of the same set grid.
 The voice-first work is **not deleted** — designs and code are preserved.
 
-**Design source:** imported the Claude Design project *"RepVoice voice-first design"*
-(`claude.ai/design/p/638a7d3a…`). It already contained a dedicated **`RepVoice Manual.dc.html`**
+**Design source:** imported the Claude Design project *"Kratos voice-first design"*
+(`claude.ai/design/p/638a7d3a…`). It already contained a dedicated **`Kratos Manual.dc.html`**
 (11 screens, same dark LED-instrument language). All three design files were pulled into the
 repo so nothing depends on the cloud project — see [`docs/design/`](./design/):
-`RepVoice-Manual.dc.html`, `RepVoice-VoiceFirst-v3.dc.html`, `support.js`.
+`Kratos-Manual.dc.html`, `Kratos-VoiceFirst-v3.dc.html`, `support.js`.
 
 **Key finding that drove the work:** the app had **no manual set-creation UI at all** —
 `sets.addSet` / `useAddSet` existed but were called by nothing; sets could only be created by
@@ -1945,7 +1971,7 @@ prior conversation. Convention going forward: update `CONTEXT.md`'s three live s
 
 ## 2026-07-20 — Voice-first v2 redesign: console, floor mode, correction drawer
 
-**Session scope:** Implement the 5-screen Claude Design mockup `RepVoice Voice-First.dc.html`
+**Session scope:** Implement the 5-screen Claude Design mockup `Kratos Voice-First.dc.html`
 (project `94a04f7d-7d08-41bc-a9c9-e0b31092bb93`, labeled "v2"). Home was already
 partially restyled in a prior session against an amber palette from an earlier mockup
 iteration; confirmed with the user to replace it with v2's cyan/quantum-black palette
@@ -2006,12 +2032,12 @@ Function, and make the hosted email-auth flow usable for on-device testing.
   preserving its required JWT guard.
 - A native Expo development build now exists on the user's physical iPhone 15. The app
   compiles, installs, is trusted by iOS, launches, connects far enough to render the
-  RepVoice sign-in screen, and is ready for JavaScript updates through Metro.
+  Kratos sign-in screen, and is ready for JavaScript updates through Metro.
 - Hosted Supabase Auth now uses temporary Gmail custom SMTP for development. The
   `Magic link or OTP` template was changed from `{{ .ConfirmationURL }}` to
   `{{ .Token }}` and successfully delivered an 8-digit OTP. This Gmail sender is a
   development-only choice; replace it with a dedicated SMTP provider and verified
-  RepVoice-owned sending domain before inviting external users.
+  Kratos-owned sending domain before inviting external users.
 - Login has **not yet been confirmed end-to-end** after the OTP-length client fix. The
   immediate next action is to reload the development client, enter the latest 8-digit
   OTP, and verify that the authenticated app shell opens.
@@ -2036,11 +2062,11 @@ Function, and make the hosted email-auth flow usable for on-device testing.
 - Expo's native generation changed the package scripts to:
   - `npm run ios` → `expo run:ios`
   - `npm run android` → `expo run:android`
-- Added the stable iOS bundle identifier `com.dhruvshah.repvoice` in
+- Added the stable iOS bundle identifier `com.dhruvshah.kratos` in
   `app.config.ts`. This avoids Expo's anonymous bundle-ID prompt path and is the ID used
   by the generated Xcode target and installed app.
 - `npx expo run:ios --device` generated the ignored `ios/` directory, completed
-  prebuild/Pods/Xcode compilation, installed RepVoice on `Dhruv's iPhone`, and selected
+  prebuild/Pods/Xcode compilation, installed Kratos on `Dhruv's iPhone`, and selected
   the user's Xcode-managed Personal Team provisioning profile and Apple Development
   certificate. The user trusted that developer profile under iOS Settings and the app
   can launch.
@@ -2085,7 +2111,7 @@ Function, and make the hosted email-auth flow usable for on-device testing.
    ```bash
    PATH="/opt/homebrew/opt/node@22/bin:$PATH" npx expo start --dev-client
    ```
-2. Open RepVoice on the iPhone, reload if needed, enter a newly requested 8-digit OTP,
+2. Open Kratos on the iPhone, reload if needed, enter a newly requested 8-digit OTP,
    and verify successful navigation from `SignInScreen` into the signed-in app.
 3. Run the Phase 1 smoke test on-device: start empty workout → add Bench Press → add a
    manual set → finish workout → confirm it appears in History/last-session recall.
@@ -2102,7 +2128,7 @@ Function, and make the hosted email-auth flow usable for on-device testing.
    and the `workout/[id].tsx` rewire remain unfinished.
 7. Before any external-user testing, replace temporary Gmail SMTP with a dedicated
    provider (for example Resend/Postmark/SES) and a verified sender such as
-   `login@auth.<repvoice-domain>`. Do not ship personal Gmail as the production sender.
+   `login@auth.<kratos-domain>`. Do not ship personal Gmail as the production sender.
 
 ### Operational commands
 
@@ -2125,8 +2151,8 @@ untracked. Preserve these changes; do not reset them when starting the next sess
 
 ## 2026-07-19 — Voice-first redesign (IN PROGRESS, paused mid-session)
 
-**Session scope:** Implement the Claude Design mockup "RepVoice Voice-First"
-(`claude.ai/design/p/3490cf7c-7c24-47da-a2a7-dbc0f28ed54e`, project "RepVoice
+**Session scope:** Implement the Claude Design mockup "Kratos Voice-First"
+(`claude.ai/design/p/3490cf7c-7c24-47da-a2a7-dbc0f28ed54e`, project "Kratos
 Mobile App Mockup") — a dark LED-instrument redesign of the voice logging flow.
 User approved: full behavioral rebuild (not just visuals) + gyro floor mode +
 TTS/earcons, scoped to **voice-first screens only** (Home + active workout);
@@ -2189,7 +2215,7 @@ voice UI.
 - **`src/data/sets.ts` / `src/data/hooks.ts`** — added `useUpdateSet()` (the
   repo's `updateSet()` existed but had no hook; the correction drawer needs it).
 - **`src/app/index.tsx`** — Home screen fully rebuilt to the mockup (2e):
-  REPVOICE wordmark, TALK ring (LevelMeter + LED underline, tap-to-toggle via
+  KRATOS wordmark, TALK ring (LevelMeter + LED underline, tap-to-toggle via
   the *existing* `useSpeechToText`, not the new session hook — Home doesn't
   need a continuous mic), routine cards under "OR PRESS" (real data —
   `exercise_count`, not the mockup's fabricated "3 days ago"), bottom TabBar.
@@ -2229,7 +2255,7 @@ voice UI.
 4. **`src/components/voice/FloorMode.tsx`** (not started): mockup 2c, two
    states (`rest` / `echo`) as described in the mockup HTML pulled earlier in
    this conversation (still in this session's context if resumed same-session;
-   otherwise re-fetch via `DesignSync get_file` on `RepVoice Voice-First.dc.html`
+   otherwise re-fetch via `DesignSync get_file` on `Kratos Voice-First.dc.html`
    in project `3490cf7c-7c24-47da-a2a7-dbc0f28ed54e` — the full HTML/JS is
    there, sections `2c` for floor mode, `2h` for the state-machine spec).
 5. **Rest timer**: no rest-timer state exists anywhere yet. Owned by

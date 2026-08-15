@@ -82,7 +82,7 @@ export function SignInScreen() {
     >
       <View style={styles.body}>
         <Text style={styles.logo}>
-          REPVOICE<Text style={{ color: color.acc }}>.</Text>
+          KRATOS<Text style={{ color: color.acc }}>.</Text>
         </Text>
         <Text style={styles.lede}>
           No password. We email a code — after that the app stays signed in.

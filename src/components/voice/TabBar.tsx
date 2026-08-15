@@ -1,4 +1,4 @@
-// Bottom nav — the "RepVoice Home" design (single-line + liquid-glass tabs). A floating
+// Bottom nav — the "Kratos Home" design (single-line + liquid-glass tabs). A floating
 // translucent **glass pill** carrying three tabs (HOME · ROUTINES · SETTINGS), the active
 // one lit by a brighter inner glass chip. On Home a separate green-glass `+` FAB sits to
 // its right (rendered by HomeQuickStart), so the pill leaves a gap for it (`withFab`).

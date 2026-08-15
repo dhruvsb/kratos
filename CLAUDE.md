@@ -1,7 +1,7 @@
 @AGENTS.md
 @docs/AGENT-PROTOCOL.md
 
-# RepVoice — project conventions
+# Kratos — project conventions
 
 Workout logging app. Phase 1 = manual tracker backbone. Phase 2 adds voice/LLM logging. Phase 3 TBD.
 
@@ -30,7 +30,7 @@ changes what's built or decided — don't let the docs drift from reality.
   and shadow** — never hardcode a value that has a token, and never introduce a color/font
   outside the token set. Fonts are Instrument Sans (UI) + Geist Mono (numbers) — the "type
   option 01" refresh (2026-07-31). The reference designs live in `docs/design/`
-  (`RepVoice-Manual.dc.html` is what's implemented; the voice-first canvas is kept for Phase 2).
+  (`Kratos-Manual.dc.html` is what's implemented; the voice-first canvas is kept for Phase 2).
   - **Theming (#17, DONE — light + dark both ship):** `color`/`shadow` are **per-mode** — `tokens.ts`
     exports `themes.{dark,light}` (dark = the untouched LED palette; light = "Greige + Moss", from
     `design_handoff_light_mode/`), resolved at runtime by `useTheme()` (`src/theme/ThemeProvider.tsx`,
@@ -85,7 +85,7 @@ changes what's built or decided — don't let the docs drift from reality.
 
 - **Manual-first.** The full manual loop — add/save routine → start → pick exercises →
   log weight×reps×sets (set grid + keypad) → finish summary → history → per-exercise weight
-  history — is implemented across all 11 `RepVoice Manual` screens on the dark theme.
+  history — is implemented across all 11 `Kratos Manual` screens on the dark theme.
   Backbone (schema, RLS, repos, curated 150-exercise seed) is verified live.
 - Voice logging (Phase 2) is built but **unwired from the manual screens**; it returns later
   on top of the same set grid. Don't delete voice code.

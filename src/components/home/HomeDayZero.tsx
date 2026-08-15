@@ -22,7 +22,7 @@ export function HomeDayZero() {
     <View style={styles.wrap}>
       <View style={styles.hero}>
         <View style={styles.dot} />
-        <Text style={styles.kicker}>WELCOME TO REPVOICE</Text>
+        <Text style={styles.kicker}>WELCOME TO KRATOS</Text>
         <Text style={styles.title}>Your first workout starts here.</Text>
         <Text style={styles.body}>
           Log a session and your streak, heatmap, and history fill in automatically.

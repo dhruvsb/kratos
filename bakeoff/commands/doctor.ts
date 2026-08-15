@@ -18,7 +18,7 @@ function line(ok: boolean | 'warn', label: string, detail = ''): string {
 
 function main() {
   ensureDirs();
-  console.log('RepVoice voice-model bakeoff — doctor\n');
+  console.log('Kratos voice-model bakeoff — doctor\n');
 
   console.log('ASR providers:');
   for (const p of ALL_PROVIDERS) {

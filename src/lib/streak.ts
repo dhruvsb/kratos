@@ -1,4 +1,4 @@
-// Streak + rolling-heatmap math for the "Rolling Weeks" Home (RepVoice Home Rolling
+// Streak + rolling-heatmap math for the "Rolling Weeks" Home (Kratos Home Rolling
 // Weeks.dc.html). Pure and framework-free so it can be unit-reasoned in isolation —
 // the screen just renders what this returns.
 //

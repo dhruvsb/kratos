@@ -70,7 +70,7 @@ registerOfflineMutationDefaults(queryClient);
 
 export const persister = createAsyncStoragePersister({
   storage: AsyncStorage,
-  key: 'repvoice.rq-cache.v1',
+  key: 'kratos.rq-cache.v1',
 });
 
 // What gets written to disk. RQ's default persists only *paused* mutations (the

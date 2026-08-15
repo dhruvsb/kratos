@@ -1,5 +1,5 @@
 // LED-instrument primitives for the voice-first screens. Every atom here is a
-// direct translation of a treatment in the "RepVoice Voice-First" mockup:
+// direct translation of a treatment in the "Kratos Voice-First" mockup:
 // ghost-segment digits, the level meter, the drain bar, physical keycaps, the
 // listening pip, tick rules and parse chips. Colors/timing come from tokens.
 import { useEffect, useRef } from 'react';
