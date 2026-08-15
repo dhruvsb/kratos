@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Kratos — Support</title>
+<!--
+  The hosted support page. App Store Connect requires a Support URL for every app.
+  One page: app name + a working contact email. Self-contained (no external
+  CSS/fonts/scripts) so it drops onto GitHub Pages / Netlify / any static host as-is.
+  Keep the contact email working — Apple may email it during review.
+-->
+<style>
+  :root {
+    --bg: #020609;
+    --panel: #070d13;
+    --t1: #EAF3F9;
+    --t2: #8DA2B2;
+    --t3: #55636E;
+    --line: rgba(150, 205, 255, 0.09);
+    --line2: rgba(150, 205, 255, 0.18);
+    --acc: #A3E635;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--t1);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 64px 24px 96px;
+  }
+  .brand {
+    font-size: 13px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--acc);
+    margin: 0 0 8px;
+  }
+  h1 {
+    font-size: 30px;
+    margin: 0 0 8px;
+    letter-spacing: -0.01em;
+  }
+  .sub { color: var(--t2); margin: 0 0 40px; }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 28px 26px;
+    margin: 0 0 20px;
+  }
+  h2 {
+    font-size: 13px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--t3);
+    margin: 0 0 12px;
+  }
+  a { color: var(--acc); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .email { font-size: 20px; font-weight: 600; }
+  p { margin: 0 0 12px; color: var(--t2); }
+  p:last-child { margin-bottom: 0; }
+  .foot {
+    color: var(--t3);
+    font-size: 13px;
+    margin-top: 40px;
+    border-top: 1px solid var(--line);
+    padding-top: 20px;
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <p class="brand">Kratos</p>
+    <h1>Support</h1>
+    <p class="sub">A workout logging app for iPhone.</p>
+
+    <div class="card">
+      <h2>Contact</h2>
+      <p>Questions, bugs, or feedback? Email us and we'll get back to you.</p>
+      <p><a class="email" href="mailto:dhruvsb@icloud.com">dhruvsb@icloud.com</a></p>
+    </div>
+
+    <div class="card">
+      <h2>Privacy</h2>
+      <p>Read how Kratos handles your data in our
+        <a href="privacy-policy.html">Privacy Policy</a>.</p>
+    </div>
+
+    <p class="foot">© 2026 Kratos. All rights reserved.</p>
+  </div>
+</body>
+</html>
