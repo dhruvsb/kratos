@@ -11,9 +11,9 @@ Bundle id: `com.dhruvshah.kratos` · iPhone only · Requires an account (email o
 
 ## 1. App Name  (max 30 characters)
 
-- **Primary:** `Kratos`  *(8)*
-- Alt A: `Kratos: Workout Logger`  *(24)*
-- Alt B: `Kratos — Lift Tracker`  *(23)*
+- **Primary:** `Kratos`  *(6)*
+- Alt A: `Kratos: Workout Logger`  *(22)*
+- Alt B: `Kratos — Lift Tracker`  *(21)*
 
 > Keep the bare `Kratos` as the display name and let the **subtitle** carry the "what it
 > does" — a short, clean name reads best on the Home screen and in search.
@@ -28,7 +28,7 @@ Bundle id: `com.dhruvshah.kratos` · iPhone only · Requires an account (email o
 
 > Editable any time without a new build — use it for seasonal/feature notes.
 
-`Say your set out loud and it's logged. Kratos is the sleek, offline-first strength tracker that keeps you lifting, not typing.`  *(128)*
+`Say your set out loud and it's logged. Kratos is the sleek, offline-first strength tracker that keeps you lifting, not typing.`  *(126)*
 
 ## 4. Description  (max 4000 characters — this copy is ~1,510)
 
