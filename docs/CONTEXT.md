@@ -10,7 +10,7 @@ codebase or a huge prior conversation.
 > issues**) *and* append a dated entry to [`WORK-LOG.md`](./WORK-LOG.md). This file is the
 > snapshot; `WORK-LOG.md` is the full history. Keep this file short.
 
-**Last updated:** 2026-08-15 — **App renamed RepVoice → Kratos** across all source, config, and docs (bundle id now `com.dhruvshah.kratos`, tsc-clean). Needs a clean iOS prebuild + new provisioning profile; privacy-policy URL moved to `dhruvsb.github.io/kratos` (Pages repo still to be hosted).
+**Last updated:** 2026-08-15 — **App renamed RepVoice → Kratos** + **new photographic barbell icon**. Clean iOS prebuild done (bundle id `com.dhruvshah.kratos`, team `TUR974K866`), **built + installed + launched on device** (Dhruv's iPhone 15, iOS 26.6) via `devicectl`. Prebuild/pod install/xcodebuild all need `LANG=en_US.UTF-8` (Ruby 4.0 + CocoaPods 1.17 crash otherwise). Still to do: host `dhruvsb.github.io/kratos` Pages repo for the privacy-policy link.
 #51: History-detail workout **title is now tappable → rename** (`Alert.prompt`, iOS; blank clears back to
 "Empty workout"); new `renameWorkout`/`useRenameWorkout` (optimistic). #53: exercise search keyboard now
 **dismisses on scroll** (`keyboardDismissMode="on-drag"`) + return-key, in both `ExercisePickerModal` and the

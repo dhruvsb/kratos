@@ -27,9 +27,23 @@ Renamed the app from **RepVoice** to **Kratos** across every git-tracked, non-ge
 
 Verified: `tsc --noEmit` clean.
 
-**Follow-ups (outside code):** (1) clean iOS prebuild — the new bundle id needs a fresh provisioning
-profile (auto via `xcodebuild -allowProvisioningUpdates`); (2) host the GitHub Pages repo `kratos`
-under `dhruvsb` or the privacy-policy link 404s (App Store listing depends on it).
+**Same session — new icon + clean prebuild + on-device install:**
+- Swapped `assets/images/icon.png` for a photographic barbell (colored competition plates), 1024²
+  opaque. ⚠️ `scripts/build-app-icons.ts` still regenerates the old LED glyph — do **not** run
+  `npm run build:icons` or it overwrites the new icon.
+- `expo prebuild --clean -p ios` → regenerated `ios/Kratos.xcodeproj` (name **Kratos**, bundle id
+  `com.dhruvshah.kratos`, team `TUR974K866` baked in, new icon in AppIcon set).
+- ⚠️ **CocoaPods/Ruby-4.0 gotcha:** `pod install` (and the xcodebuild pod script phases) crash with
+  `Unicode Normalization not appropriate for ASCII-8BIT` unless `LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8`
+  is exported. Ran pod install + the build with that set.
+- Built signed **Release** for device (`xcodebuild -workspace Kratos.xcworkspace -scheme Kratos
+  -configuration Release -destination 'id=<UDID>' -allowProvisioningUpdates -derivedDataPath ./build`),
+  then installed + launched on **Dhruv's iPhone 15 (iOS 26.6)** via `xcrun devicectl device install/launch`
+  (`--timeout` needed; tunnel established even though `tunnelState` initially read `disconnected`).
+  Dev profile already trusted from prior same-team builds. **First real on-device install of the app.**
+
+**Follow-up (outside code):** host the GitHub Pages repo `kratos` under `dhruvsb` or the
+privacy-policy link 404s (App Store listing depends on it).
 
 ---
 
