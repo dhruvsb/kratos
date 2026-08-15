@@ -50,6 +50,10 @@ boxes/gradients.
 - New master → `assets/icon-source/app-icon-1024.png`; ran `npm run build:icons` to regenerate
   icon/splash/favicon/android-foreground. Refreshed the generated iOS AppIcon and rebuilt +
   reinstalled on device.
+- **Follow-up refinement (per on-device feedback):** more padding + depth shading (Developer-icon
+  feel). Scaled the barbell to 0.78 for margin, added a corner vignette
+  (`radial-gradient(circle at 50% 44%, transparent 40%, rgba(3,9,18,.55))`) and a deeper drop
+  shadow. Edited the render source, re-rendered, regenerated, rebuilt + reinstalled.
 
 ---
 
