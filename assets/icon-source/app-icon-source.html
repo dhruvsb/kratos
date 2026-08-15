@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+  html, body { margin:0; padding:0; background:#0e1216; }
+  .icon { position:relative; overflow:hidden; }
+  .layer { position:absolute; inset:0; }
+  .row { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); display:flex; align-items:center; justify-content:center; }
+  .shaft { background:linear-gradient(180deg,#f7fafc,#cbd5df 48%,#8d9aaa); flex:0 0 auto; }
+  .sleeve { background:linear-gradient(180deg,#ffffff,#d3dce6 45%,#8e9bab); flex:0 0 auto; }
+  .plate-red { background:linear-gradient(100deg,#ff9f8d 0 10%,#f05c45 26%,#c8341f 80%,#9d2010); flex:0 0 auto; }
+  .plate-steel-1 { background:linear-gradient(100deg,#ffffff 0 10%,#dae2ec 26%,#a4b2c2 80%,#7f8d9d); flex:0 0 auto; }
+  .plate-steel-2 { background:linear-gradient(100deg,#d5dee8 0 10%,#a7b4c4 26%,#71808f 80%,#4e5c6e); flex:0 0 auto; }
+  .sep { background:rgba(6,20,38,.5); flex:0 0 auto; }
+  .collar { background:linear-gradient(180deg,#ffffff,#cdd7e2 50%,#8695a6); flex:0 0 auto; }
+  .cap { background:linear-gradient(180deg,#ffffff,#d3dce6 45%,#8e9bab); flex:0 0 auto; }
+</style>
+</head>
+<body>
+<div class="icon" id="icon-1024-square" style="width:1024px;height:1024px;border-radius:0">
+  <div class="layer" style="background:linear-gradient(155deg,#3a424d 0%,#20262e 45%,#0e1216 100%)"></div>
+  <div class="layer" style="background-image:repeating-linear-gradient(to right,rgba(255,255,255,.05) 0 5px,transparent 5px 85.33px),repeating-linear-gradient(to bottom,rgba(255,255,255,.05) 0 5px,transparent 5px 85.33px)"></div>
+  <div class="layer" style="background:radial-gradient(circle at 28% 18%,rgba(255,255,255,.14),transparent 58%)"></div>
+  <div class="row" style="width:983px;filter:drop-shadow(0 20px 31px rgba(4,20,40,.5))">
+    <div class="shaft" style="width:205px;height:82px"></div>
+    <div class="sleeve" style="width:82px;height:133px;border-radius:8px"></div>
+    <div class="plate-red" style="width:164px;height:778px;border-radius:45px"></div>
+    <div class="sep" style="width:18px;height:737px"></div>
+    <div class="plate-steel-1" style="width:164px;height:778px;border-radius:45px"></div>
+    <div class="sep" style="width:18px;height:737px"></div>
+    <div class="plate-steel-2" style="width:164px;height:778px;border-radius:45px"></div>
+    <div class="collar" style="width:61px;height:246px;border-radius:16px"></div>
+    <div class="cap" style="width:102px;height:133px;border-radius:8px 29px 29px 8px"></div>
+  </div>
+</div>
+</body>
+</html>

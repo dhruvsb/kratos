@@ -2,11 +2,18 @@
  * Derive every app-icon / splash asset from ONE checked-in master image —
  * `assets/icon-source/app-icon-1024.png` is the single source of truth.
  *
- * The master is the photographic barbell icon (colored competition plates on a
- * near-black field, 1024² opaque). This script no longer draws anything; it just
- * resizes/insets the master into each output size, so re-running it reproduces the
- * current icon instead of clobbering it. To change the app icon, replace the
- * master file and re-run.
+ * The master is the "Reps" blueprint-barbell icon (loaded bar end — red + two steel
+ * plates, spring collar, end cap — on a graphite grid, 1024² opaque). It is pure CSS
+ * boxes + gradients; the exact source is `assets/icon-source/app-icon-source.html`.
+ * Reproduce the master by rendering that file at a true 1024²:
+ *   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new \
+ *     --force-device-scale-factor=1 --window-size=1024,1024 \
+ *     --screenshot=assets/icon-source/app-icon-1024.png \
+ *     "file://$PWD/assets/icon-source/app-icon-source.html"
+ *
+ * This script no longer draws anything; it just resizes/insets the master into each
+ * output size, so re-running it reproduces the current icon instead of clobbering it.
+ * To change the app icon, replace the master (or its source html) and re-run.
  *
  * Outputs (all referenced from app.config.ts):
  *   assets/images/icon.png                    1024² — copied byte-for-byte from the master

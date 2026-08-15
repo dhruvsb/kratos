@@ -35,6 +35,24 @@ frictionless showcase signups if desired. Recovery codes require the account to 
 
 ---
 
+## 2026-08-15 — New app icon: "Reps" blueprint barbell (from Claude Design handoff)
+
+Replaced the photographic-barbell icon with the **blueprint-barbell** design imported from the
+Claude Design project *Workout App Icon Design* (`App Icon.dc.html`, graphite variant): a loaded
+Olympic bar end — red + two steel plates, spring collar, end cap — on a graphite grid, 100% CSS
+boxes/gradients.
+
+- The handoff's `icon-1024-square.png` exceeds DesignSync's 256 KiB `get_file` cap (returns
+  `truncated`), so instead rendered the pixel-exact source (`icon.html` square block) to a true
+  1024² via headless Google Chrome (`--headless=new --force-device-scale-factor=1
+  --window-size=1024,1024 --screenshot`). Kept that exact render source in-repo as
+  `assets/icon-source/app-icon-source.html` (+ header note in the generator on how to reproduce).
+- New master → `assets/icon-source/app-icon-1024.png`; ran `npm run build:icons` to regenerate
+  icon/splash/favicon/android-foreground. Refreshed the generated iOS AppIcon and rebuilt +
+  reinstalled on device.
+
+---
+
 ## 2026-08-15 — Rename RepVoice → Kratos (app-wide)
 
 Renamed the app from **RepVoice** to **Kratos** across every git-tracked, non-generated file
