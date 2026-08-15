@@ -46,7 +46,6 @@ const config: ExpoConfig = {
       backgroundColor: '#020609', // color.bg — matches the generated background image
       foregroundImage: './assets/images/android-icon-foreground.png',
       backgroundImage: './assets/images/android-icon-background.png',
-      monochromeImage: './assets/images/android-icon-monochrome.png',
     },
     predictiveBackGestureEnabled: false,
   },

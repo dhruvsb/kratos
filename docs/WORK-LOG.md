@@ -29,8 +29,12 @@ Verified: `tsc --noEmit` clean.
 
 **Same session — new icon + clean prebuild + on-device install:**
 - Swapped `assets/images/icon.png` for a photographic barbell (colored competition plates), 1024²
-  opaque. ⚠️ `scripts/build-app-icons.ts` still regenerates the old LED glyph — do **not** run
-  `npm run build:icons` or it overwrites the new icon.
+  opaque. **`scripts/build-app-icons.ts` rewritten** to derive every output from a checked-in master
+  (`assets/icon-source/app-icon-1024.png`) instead of drawing the old LED-barbell SVG — so
+  `npm run build:icons` now reproduces the new icon (icon.png copied byte-for-byte; splash/favicon/
+  android-foreground resized from it). Dropped the Android **monochrome** layer (no meaningful
+  single-color form for a photo) + its `app.config.ts` reference. To rebrand later: replace the
+  master and re-run.
 - `expo prebuild --clean -p ios` → regenerated `ios/Kratos.xcodeproj` (name **Kratos**, bundle id
   `com.dhruvshah.kratos`, team `TUR974K866` baked in, new icon in AppIcon set).
 - ⚠️ **CocoaPods/Ruby-4.0 gotcha:** `pod install` (and the xcodebuild pod script phases) crash with
