@@ -10,9 +10,12 @@
   (Settings → ABOUT → "Privacy policy" opens this URL).
 
   Keep this file truthful about what the app actually does. As of writing that is:
-  Supabase is the only third party, there are no analytics/advertising/tracking SDKs
-  of any kind in the codebase, and no audio is recorded. If any of that changes, this
-  file changes in the same commit.
+  two third parties process data — Supabase (database + auth + edge functions) and
+  OpenAI (voice transcription + parsing); there are no analytics/advertising/tracking
+  SDKs of any kind in the codebase; audio IS recorded when the user uses voice logging
+  and is sent to OpenAI (via a Supabase Edge Function) for transcription; Apple Health
+  is read (optional, read-only) to backfill missed workout days. If any of that
+  changes, this file changes in the same commit.
 
   Self-contained on purpose (no external CSS/fonts/scripts) so it can be dropped on
   GitHub Pages, Netlify, Cloudflare Pages, or any static host as-is.
@@ -98,7 +101,7 @@
   <header>
     <p class="brand">RepVoice</p>
     <h1>Privacy Policy</h1>
-    <p class="dates">Effective 8 August 2026 &middot; Last updated 8 August 2026</p>
+    <p class="dates">Effective 8 August 2026 &middot; Last updated 15 August 2026</p>
   </header>
 
   <p>
@@ -110,10 +113,13 @@
   <div class="callout">
     <p>
       <strong>The short version.</strong> RepVoice stores the workouts you log and the email
-      address you sign in with. That is all. There is no analytics SDK, no advertising, no
-      tracking, and no third party receives your data other than the hosting provider that
-      runs the database. Nothing is ever sold. You can delete everything from inside the app
-      at any time, and the deletion is immediate and permanent.
+      address you sign in with. When you log a set <em>by voice</em>, the short audio clip you
+      record is sent to our speech provider (OpenAI) to turn it into text — that is the only time
+      audio leaves your device, and it happens only when you tap the mic. There is no analytics
+      SDK, no advertising, and no tracking. Two providers process data on our behalf: Supabase
+      (database and sign-in) and OpenAI (voice transcription). Nothing is ever sold or used for
+      advertising. You can delete everything from inside the app at any time, and the deletion is
+      immediate and permanent.
     </p>
   </div>
 
@@ -140,36 +146,49 @@
       history in the file you pick is read and stored as your own workout data. RepVoice reads
       only the file you explicitly select; it has no other access to your files.
     </li>
+    <li>
+      <strong>Voice recordings (only when you log by voice).</strong> If you tap the microphone
+      to log sets by voice, RepVoice records a short audio clip while you speak. That clip is sent
+      to our speech provider (OpenAI) to be transcribed into text and interpreted into the exercise,
+      weight, and reps you said; the resulting text may be stored with the workout it created. The
+      microphone is used only during that recording, only after you tap it, and never in the
+      background. If you never use voice logging, no audio is ever recorded.
+    </li>
+    <li>
+      <strong>Apple Health (optional, iOS only).</strong> If you grant permission, RepVoice reads
+      your <em>strength-training workout summaries</em> from Apple Health — read-only — to fill in
+      days you worked out but forgot to log. It reads nothing else from Health and never writes to
+      Health. You can decline this and the rest of the app works normally.
+    </li>
   </ul>
   <p>
-    RepVoice does <strong>not</strong> collect your name (unless you type one), location,
-    contacts, photos, health or fitness data from Apple Health, advertising identifiers,
-    device identifiers, or any usage, diagnostic, or behavioural analytics. It contains no
-    analytics, attribution, advertising, or crash-reporting software of any kind.
-  </p>
-  <p>
-    RepVoice does <strong>not record audio</strong>. A future version is planned to support
-    logging sets by voice; if microphone or speech-recognition permission is ever requested,
-    it will be at the moment you use that feature, and this policy will be updated to describe
-    it before the feature ships.
+    RepVoice does <strong>not</strong> collect your name (unless you type one), precise or coarse
+    location, contacts, photos, advertising identifiers, device identifiers, or any usage,
+    diagnostic, or behavioural analytics. It contains no analytics, attribution, advertising, or
+    crash-reporting software of any kind. Aside from the optional Apple Health backfill described
+    above, it reads nothing from Apple Health.
   </p>
 
   <h2>How the data is used</h2>
   <p>
-    Your data is used for one purpose: to run the app for you — to save your workouts, show
-    your history and progress, and keep you signed in. Your email address is additionally used
-    to send you the one-time sign-in code.
+    Your data is used to run the app for you — to save your workouts, show your history and
+    progress, and keep you signed in. Your email address is additionally used to send you the
+    one-time sign-in code. When you log by voice, your audio clip and its transcript are used
+    only to work out which sets you meant and to log them; the transcript may be kept with the
+    workout it created so you can see what was logged.
   </p>
   <p>
     Your data is <strong>never</strong> sold, rented, or shared for advertising; never used to
-    build a profile of you; never used to train machine-learning models; and never used to send
-    you marketing. There is no advertising in RepVoice.
+    build a profile of you; never used to send you marketing. Your voice recordings and their
+    transcripts are used only to provide voice logging — our speech provider (OpenAI) processes
+    them to return the transcription and does not use them to train its models (OpenAI does not
+    train on data sent through its API). There is no advertising in RepVoice.
   </p>
 
   <h2>Who else can access it</h2>
   <p>
-    RepVoice is built and run by an individual developer. Only one third party processes your
-    data:
+    RepVoice is built and run by an individual developer. Two third parties process your data,
+    each only to provide a specific part of the app:
   </p>
   <ul>
     <li>
@@ -180,6 +199,16 @@
       is contractually bound to protections at least equal to those described in this policy and
       required by the App Store Review Guidelines. See
       <a href="https://supabase.com/privacy" rel="noopener">supabase.com/privacy</a>.
+    </li>
+    <li>
+      <strong>OpenAI</strong> — provides the speech-to-text and language processing behind voice
+      logging. When (and only when) you log a set by voice, your audio clip and the resulting text
+      are sent to OpenAI through a Supabase Edge Function to be transcribed and interpreted, then
+      the text is returned to the app. OpenAI processes this only to return that result and does
+      not use API data to train its models. If you never use voice logging, no data is ever sent to
+      OpenAI. See
+      <a href="https://openai.com/policies/privacy-policy" rel="noopener">openai.com/policies/privacy-policy</a>
+      and its <a href="https://openai.com/enterprise-privacy" rel="noopener">API data-usage terms</a>.
     </li>
   </ul>
   <p>
@@ -247,7 +276,7 @@
     <a href="mailto:dsooseven@gmail.com">dsooseven@gmail.com</a>.
   </p>
 
-  <footer>REPVOICE &middot; PRIVACY POLICY &middot; V1</footer>
+  <footer>REPVOICE &middot; PRIVACY POLICY &middot; V2</footer>
 </main>
 </body>
 </html>

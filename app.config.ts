@@ -33,6 +33,12 @@ const config: ExpoConfig = {
       // NOTE: ios/ is gitignored and not regenerated on every build, so
       // ios/RepVoice/Info.plist carries the same value; keep the two in sync.
       UIViewControllerBasedStatusBarAppearance: false,
+      // Export-compliance declaration (App Store): the app uses only standard
+      // HTTPS/TLS (Supabase + the transcribe/parse edge functions) — no custom or
+      // non-exempt cryptography. Declaring this here answers the encryption question
+      // at build time so every upload skips the manual ITSAppUsesNonExemptEncryption
+      // prompt in App Store Connect. false = exempt (standard encryption only).
+      ITSAppUsesNonExemptEncryption: false,
     },
   },
   android: {

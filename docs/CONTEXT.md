@@ -403,15 +403,20 @@ native-`UITabBar` drag-lens glass — deferred, keeping the custom pill+FAB.
       cleanly (idempotent — should report all skipped).
 - [ ] **Host `docs/legal/privacy-policy.html` and set `PRIVACY_POLICY_URL`** in `src/app/settings.tsx`
       to the live URL (same URL goes in the App Store Connect privacy field). A 404 = rejection.
+      **Policy CONTENT updated 2026-08-15** to disclose audio→OpenAI + both processors + Apple Health
+      (it was inaccurate for a shipping-voice app); only hosting remains. See [`app-store/`](./app-store/).
 - [ ] **Push the Supabase vars to EAS** (`eas env:create` for `SUPABASE_URL` + `SUPABASE_ANON_KEY` in
       the `development`/`preview`/`production` environments). `.env` is gitignored, so a cloud build
       without these ships credential-less and can't sign in. Service-role / OpenAI keys stay local.
 - [ ] **`eas init`**, then paste the printed id into `app.config.ts` as `extra.eas.projectId` — the
       config is a dynamic `.ts` file, so the CLI can't write it for you.
-- [ ] **Decide what to do about the mic/speech permission strings** before submitting: the
-      `expo-speech-recognition` plugin puts them in the Info.plist, but Phase 2 voice is unwired, so
-      the build declares permissions it never uses — a known review flag. Either drop the plugin from
-      `app.config.ts` for the 1.0 submission or be ready to justify it.
+- [x] ~~**Decide what to do about the mic/speech permission strings**~~ — **resolved 2026-08-15: keep
+      them.** Voice logging is LIVE and reviewer-reachable (`MOCK_VOICE = false`; Home mic → `record.tsx`
+      → `expo-audio` → `transcribe` edge fn → OpenAI), so the mic permission is legitimately used. The
+      earlier "unwired" note only covered the unreachable `VoiceMicButton`/`useVoiceSession` path. Do NOT
+      drop `expo-speech-recognition` — it would strip the mic string the shipping feature needs. Review
+      notes explain the OpenAI audio call. Added `ITSAppUsesNonExemptEncryption: false` to `app.config.ts`.
+      Full launch record + user step-by-step in [`docs/app-store/APP-STORE-LAUNCH-LOG.md`](./app-store/APP-STORE-LAUNCH-LOG.md).
 - [ ] **See "Delete account" on device** (Settings → ACCOUNT) — the row is static-verified only.
       Don't smoke-test it on the real account; make a throwaway one, or re-run the live-DB check.
 - [ ] **Verify a real OTP sign-in from scratch** (sign out → enter email → 8-digit code). This

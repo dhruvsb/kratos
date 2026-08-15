@@ -7,6 +7,31 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-15 — App Store launch-compliance pass (paid membership now active)
+
+Apple Developer Program enrollment completed (individual — same team `TUR974K866`, now paid → 1-year
+certs + App Store Connect live). Did a pre-submission compliance audit and executed everything doable
+without the user's Apple/Supabase/hosting logins. **Two parallel agents** drafted the listing copy and
+the compliance answers while the code/policy fixes were done inline.
+
+- **Corrected a wrong prior read:** voice logging is **live and reviewer-reachable** (`MOCK_VOICE = false`;
+  Home mic → `record.tsx` → `expo-audio` → `transcribe` edge fn → OpenAI). The doc's "unwired" only refers
+  to the older, unreachable `VoiceMicButton`/`useVoiceSession` path. So the mic permission is legitimate —
+  the earlier idea to drop `expo-speech-recognition` was retracted (it would have broken a shipping feature).
+- **`app.config.ts`:** added `ITSAppUsesNonExemptEncryption: false` (standard HTTPS only → export-exempt;
+  auto-answers the upload prompt). `tsc` clean.
+- **`docs/legal/privacy-policy.html` rewritten to be truthful:** now discloses audio → **OpenAI**, names
+  **both** processors (Supabase + OpenAI), and describes the optional **Apple Health** read. The old copy
+  ("no audio", "Supabase is the only third party") was a real rejection risk now that voice ships.
+- **New `docs/app-store/`:** `LISTING.md` (all product-page text within Apple limits), `COMPLIANCE-ANSWERS.md`
+  (privacy labels, age rating 4+, export compliance, review notes, Supabase test-OTP demo-account recipe),
+  and `APP-STORE-LAUNCH-LOG.md` (this pass's record + a beginner step-by-step for the user-only remainder:
+  host policy/support pages, Supabase test OTP, EAS build+submit, 6.9" screenshots, ASC fields, EU trader
+  status, on-device verification incl. confirming the real voice pipeline works).
+
+Decisions: category Health & Fitness / Sports; age 4+; name stays `RepVoice` / subtitle "Speak your sets.
+Log faster."; reviewer demo login = Supabase test OTP `appreview@repvoice.app` / `123456`.
+
 ## 2026-08-15 — #51 + #53 + #42: rename empty workout, keyboard dismiss, haptics dedup (3-agent parallel)
 
 Three independent low-severity items fixed by **3 parallel implementation agents** with disjoint file
