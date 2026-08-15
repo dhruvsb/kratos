@@ -53,10 +53,11 @@ rendered in a browser to confirm the new sections read correctly.
 6. **App name stays `Kratos`; subtitle "Speak your sets. Log faster."** — short name reads best;
    the subtitle carries the "what it does." Alternatives are listed in `LISTING.md`.
 
-7. **Reviewer access via a Supabase test OTP.** The app logs in with an email one-time-code and no
-   password, so an Apple reviewer can't receive a code. The fix is a fixed test email + code
-   (`appreview@kratos.app` / `123456`) configured in Supabase, handed to Apple in the review notes.
-   This is a **hard blocker** — without it, review is rejected at the login screen.
+7. **Reviewer access via a real email + password demo account.** The app now uses email + password
+   sign-in (a one-time email code exists only for password recovery), so the reviewer just needs a
+   dedicated demo account's email + password, entered in App Store Connect's App Review Information.
+   Still a **hard blocker** — the app requires login — but simpler than the earlier test-OTP
+   workaround. (Updated 2026-08-15 when auth switched from code-only to email + password.)
 
 ---
 
@@ -76,11 +77,12 @@ rejection. Easiest free route:
    email. That page's URL is your **Support URL**.
 3. Open both URLs in a browser to confirm they load. Keep them handy for Step 5.
 
-### Step 2 — Set up the reviewer demo login in Supabase (≈10 min) **[BLOCKER]**
-Follow `COMPLIANCE-ANSWERS.md` §5a. In the Supabase dashboard, add a **test OTP**:
-`appreview@kratos.app` → `123456` (no real email is sent). Sign in once with it so the account
-exists, and optionally seed it with a few workouts so the reviewer sees content
-(`npm run seed:demo` against that account).
+### Step 2 — Create the reviewer demo account (≈10 min) **[BLOCKER]**
+Follow `COMPLIANCE-ANSWERS.md` §5a. In the app, tap **Create account** and register a dedicated
+demo login (e.g. `appreview@kratos.app` + a strong password). Confirm its email if your Supabase
+project requires it, sign in once, and seed it with a few workouts so the reviewer sees content
+(`npm run seed:demo` against that account). You'll paste this email + password into App Store
+Connect's App Review Information.
 
 ### Step 3 — Build the app and upload it to App Store Connect (≈45–60 min first time)
 Use the EAS route from our earlier chat (it also creates the app record for you):
@@ -123,7 +125,8 @@ Business** (or the banner's "Learn More"). Pick one; don't leave it blank.
 ### Step 7 — Test the whole app on a real device before submitting (≈30 min) **[STRONGLY RECOMMENDED]**
 A crash or a broken feature during review = rejection. Your build has never been fully walked on
 hardware. Do a clean install and verify:
-- **Real OTP sign-in from scratch** (sign out → email → code).
+- **Real sign-in from scratch** (create account → email + password → sign in; and try "Forgot
+  password?" → recovery code → set a new password).
 - **Full manual loop:** start a routine → log sets → finish → History → a progress chart.
 - **Voice logging actually works end-to-end** — this matters a lot now, because your listing
   advertises it and the reviewer *will* test it. ⚠️ `docs/CONTEXT.md` notes the voice model IDs were

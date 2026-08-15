@@ -5,7 +5,7 @@ character limit and stays inside it. Nothing here claims a feature the app can't
 (see `docs/CONTEXT.md` / the phase summaries). Pick the **primary** option unless a
 reviewer or A/B test says otherwise; alternatives are listed for quick swaps.
 
-Bundle id: `com.dhruvshah.kratos` · iPhone only · Requires an account (email one-time-code sign-in).
+Bundle id: `com.dhruvshah.kratos` · iPhone only · Requires an account (email + password sign-in).
 
 ---
 

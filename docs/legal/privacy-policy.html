@@ -10,12 +10,13 @@
   (Settings → ABOUT → "Privacy policy" opens this URL).
 
   Keep this file truthful about what the app actually does. As of writing that is:
-  two third parties process data — Supabase (database + auth + edge functions) and
-  OpenAI (voice transcription + parsing); there are no analytics/advertising/tracking
-  SDKs of any kind in the codebase; audio IS recorded when the user uses voice logging
-  and is sent to OpenAI (via a Supabase Edge Function) for transcription; Apple Health
-  is read (optional, read-only) to backfill missed workout days. If any of that
-  changes, this file changes in the same commit.
+  sign-in is email + password (Supabase Auth stores the password only as a secure hash;
+  a one-time email code exists only for password recovery); two third parties process
+  data — Supabase (database + auth + edge functions) and OpenAI (voice transcription +
+  parsing); there are no analytics/advertising/tracking SDKs of any kind in the codebase;
+  audio IS recorded when the user uses voice logging and is sent to OpenAI (via a Supabase
+  Edge Function) for transcription; Apple Health is read (optional, read-only) to backfill
+  missed workout days. If any of that changes, this file changes in the same commit.
 
   Self-contained on purpose (no external CSS/fonts/scripts) so it can be dropped on
   GitHub Pages, Netlify, Cloudflare Pages, or any static host as-is.
@@ -112,8 +113,8 @@
 
   <div class="callout">
     <p>
-      <strong>The short version.</strong> Kratos stores the workouts you log and the email
-      address you sign in with. When you log a set <em>by voice</em>, the short audio clip you
+      <strong>The short version.</strong> Kratos stores the workouts you log and the email and
+      password you sign in with (the password only ever in securely hashed form). When you log a set <em>by voice</em>, the short audio clip you
       record is sent to our speech provider (OpenAI) to turn it into text — that is the only time
       audio leaves your device, and it happens only when you tap the mic. There is no analytics
       SDK, no advertising, and no tracking. Two providers process data on our behalf: Supabase
@@ -127,9 +128,12 @@
   <p>Everything below is data <strong>you enter or import yourself</strong>. Nothing is gathered in the background.</p>
   <ul>
     <li>
-      <strong>Your email address.</strong> Collected when you sign in. Kratos uses one-time
-      email codes, so the address is both your account identifier and the only way to sign in.
-      No password is collected or stored.
+      <strong>Your email address and password.</strong> Collected when you create an account or
+      sign in. Kratos uses email-and-password sign-in; your email is your account identifier, and
+      your password is stored only in securely hashed form by our authentication provider
+      (Supabase) — it is never kept in plain text and is never visible to the developer. If you
+      forget your password, Kratos emails you a one-time code to sign in so you can set a new one;
+      that code is used only for recovery.
     </li>
     <li>
       <strong>Your workout data.</strong> The routines you create, the exercises you pick, and
@@ -172,8 +176,9 @@
   <h2>How the data is used</h2>
   <p>
     Your data is used to run the app for you — to save your workouts, show your history and
-    progress, and keep you signed in. Your email address is additionally used to send you the
-    one-time sign-in code. When you log by voice, your audio clip and its transcript are used
+    progress, and keep you signed in. Your email address and password are used to authenticate
+    you, and your email is additionally used to send you a one-time code if you need to recover a
+    forgotten password. When you log by voice, your audio clip and its transcript are used
     only to work out which sets you meant and to log them; the transcript may be kept with the
     workout it created so you can see what was logged.
   </p>
@@ -193,7 +198,8 @@
   <ul>
     <li>
       <strong>Supabase</strong> — provides the hosted database and authentication that Kratos
-      runs on, and delivers the one-time sign-in codes to your email address. Your account and
+      runs on (it verifies your email and password and stores the password as a secure hash), and
+      delivers the one-time password-recovery codes to your email address. Your account and
       workout data are stored on Supabase infrastructure in Singapore (AWS <code>ap-southeast-1</code>).
       Supabase processes this data only to provide that hosting on Kratos's instructions, and
       is contractually bound to protections at least equal to those described in this policy and

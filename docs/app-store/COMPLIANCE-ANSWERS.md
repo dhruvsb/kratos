@@ -7,7 +7,7 @@ click / type*.
 
 **App facts these answers are based on** (all verified in the repo):
 - iOS-only, free, requires an account.
-- Sign-in = email one-time-code (OTP), no password. (`src/data/auth.ts`)
+- Sign-in = email + password; a one-time email code is used only for password recovery. (`src/data/auth.ts`)
 - Fitness/health content (workouts, sets, PRs, streaks) stored in Supabase Postgres, isolated per
   user by row-level security.
 - Voice logging records the mic, base64-encodes the clip, and sends it through a Supabase Edge
@@ -47,7 +47,7 @@ the user's account (their `user_id` / email).
 
 | Apple Category → Type | Collected? | Linked to identity? | Used for tracking? | Purpose(s) to check |
 |---|---|---|---|---|
-| **Contact Info → Email Address** | Yes | Yes | No | **App Functionality**, **Account Management** (email is the login identifier / OTP) |
+| **Contact Info → Email Address** | Yes | Yes | No | **App Functionality**, **Account Management** (email is the login identifier) |
 | **Health & Fitness → Fitness** | Yes | Yes | No | **App Functionality** (workouts, sets, reps, weight, PRs, streaks; plus optional Apple Health import) |
 | **Health & Fitness → Health** | Yes | Yes | No | **App Functionality** — check this only because the Apple Health import reads strength-workout summaries. If you'd rather scope tightly, "Fitness" alone is defensible; declaring both is the safe choice. |
 | **User Content → Audio Data** | Yes | Yes | No | **App Functionality** (voice recording sent to OpenAI for speech-to-text so the user can log sets by voice) |
@@ -172,43 +172,42 @@ as above. Do **not** change this flag to `true` unless you add custom (non-stand
 
 ### 5a. Demo account / Sign-In (required — the app requires login)
 
-Kratos uses **email OTP with no password**, so a reviewer *cannot* receive a code sent to your
-inbox. You must give them credentials that work without checking any mailbox. Do this:
+Kratos uses **email + password** sign-in, so this is simple: create one real demo account and give
+Apple its email and password. No test-OTP workaround is needed.
 
-**Set up a test OTP in Supabase** (one-time, before you submit):
-1. Supabase Dashboard → **Authentication** → **Providers / Email** (or **Auth → Settings**).
-2. Find **Test OTP** / **Test phone/email numbers** and add a fixed pair, e.g.:
-   - Email: `appreview@kratos.app`
-   - OTP code: `123456`
-   This makes that exact email always accept that exact 6-digit code, with **no email actually
-   sent**. Make sure the user record exists (sign in once yourself, or let `shouldCreateUser`
-   create it) and, ideally, seed it with a couple of sample workouts so the reviewer sees content.
+**Create the demo account** (one-time, before you submit):
+1. In the app (or on the sign-in screen), tap **Create account** and register a dedicated review
+   login, e.g.:
+   - Email: `appreview@kratos.app` (any inbox you control — it just has to be a real address if
+     email confirmation is on; see note)
+   - Password: a strong password you'll paste into App Store Connect
+2. Sign in once and **seed it with a few sample workouts** so the reviewer sees real content
+   (start a routine → log a couple of sets → finish), or run `npm run seed:demo` against it.
+3. **Email confirmation:** if your Supabase project has "Confirm email" enabled, either confirm the
+   demo address once yourself, or turn confirmation off, so the reviewer isn't blocked on a
+   verification email.
 
-**Then, in App Store Connect App Review Information, turn ON "Sign-In required" and fill:**
+**Then, in App Store Connect → App Review Information, turn ON "Sign-In required" and fill:**
 
 | Field | Value |
 |---|---|
 | Sign-in required | **Yes** (toggle on) |
 | User name | `appreview@kratos.app` |
-| Password | `123456` |
+| Password | *(the demo account's real password)* |
 
-> App Store Connect only gives you "User name" and "Password" fields, so we reuse them: put the
-> **test email** in User name and the **fixed OTP code** in Password. Then explain it in the notes
-> (below) so the reviewer knows to *type the "password" as the one-time code on the OTP screen*,
-> not on a password field.
+> These map directly to the app's real email + password fields — no explanation needed. (The app
+> also has a "Forgot password?" flow that emails a one-time code, but the reviewer won't need it.)
 
 ### 5b. Review Notes (ready to paste)
 
 ```
-Kratos is a workout logger. Sign-in uses a one-time email code (OTP) — there is NO
-password field.
+Kratos is a workout logger. Sign-in is a standard email + password.
 
-HOW TO SIGN IN (a test account is pre-configured, no email inbox needed):
-1. On the sign-in screen, enter the email:  appreview@kratos.app
-2. Tap "Send code."
-3. On the code screen, enter this fixed 6-digit code:  123456
-   (This is a Supabase test OTP that always works for this email — no real email is sent.
-   The "Password" field in App Review Information contains this same code.)
+HOW TO SIGN IN:
+1. On the sign-in screen, enter the demo email and password from the App Review
+   Information fields above, and tap Sign In.
+   (There is also a "Forgot password?" option that emails a one-time recovery code, but
+   you do not need it — the password is provided.)
 
 CORE LOOP TO REVIEW:
 - From Home, tap "Start" (or pick a routine) → add exercises → log weight × reps × sets using
@@ -277,6 +276,6 @@ Then re-host the updated policy and confirm the URL loads publicly before you hi
 - [ ] Age rating completed → **4+**.
 - [ ] Export compliance = exempt (already set via `ITSAppUsesNonExemptEncryption: false`).
 - [ ] Content Rights = No third-party content.
-- [ ] Supabase test OTP configured (`appreview@kratos.app` / `123456`) and seeded with sample data.
+- [ ] Demo account (email + password, e.g. `appreview@kratos.app`) created, email-confirmed if required, and seeded with sample data.
 - [ ] App Review Information: Sign-In required ON, username/password + notes filled, contact info filled.
 ```
