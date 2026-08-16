@@ -87,8 +87,11 @@ changes what's built or decided — don't let the docs drift from reality.
   log weight×reps×sets (set grid + keypad) → finish summary → history → per-exercise weight
   history — is implemented across all 11 `Kratos Manual` screens on the dark theme.
   Backbone (schema, RLS, repos, curated 150-exercise seed) is verified live.
-- Voice logging (Phase 2) is built but **unwired from the manual screens**; it returns later
-  on top of the same set grid. Don't delete voice code.
+- Voice logging (Phase 2) is **LIVE and wired in** (`MOCK_VOICE = false`): Home/workout mic →
+  `src/app/voice/record.tsx` → `expo-audio` foreground recording → `transcribe` edge fn → OpenAI →
+  parsed sets on the same set grid. The mic permission (`NSMicrophoneUsageDescription`) is required
+  and shipped. (An *old* `VoiceMicButton`/`useVoiceSession` path is unreachable/unwired — that dead
+  path is what earlier "unwired" notes referred to; don't delete voice code.)
 - NOT yet done: first on-device OTP login + a real manual-loop walkthrough (the build is
   `tsc`- and web-export-verified only, never run on a device).
 - Read [`docs/CONTEXT.md`](docs/CONTEXT.md) for the live status / pending / open-issues detail.

@@ -6,6 +6,43 @@ entry at top. When an item is fixed, mark it and move the detail into `WORK-LOG.
 
 ---
 
+## 2026-08-15 (17) — Hands-on device use: PR drill-down, muscle-split granularity
+
+**Context:** reviewing a finished workout in History detail.
+
+| # | Item | Area | Done? | Sev | Effort |
+|---|------|------|-------|-----|--------|
+| 54 | The **"N personal records" banner isn't tappable** — can't see *which* PRs were hit on that session | History / PRs | ⬜ Open | Med | M |
+| 55 | Muscle split shows **body regions only** (e.g. "Legs 96% · Back 4%"), no sub-muscle breakup (glutes / hamstrings / quads) | History / muscle split | ⬜ Open | **Low** (maybe won't build) | M |
+
+### 54. PR banner has no drill-down — which records?
+**Seen:** opening a workout from History, the top shows e.g. **"5 personal records"** but it's not
+clickable, so there's no way to see which exercises/sets those PRs were. Same for the Home PR medal count.
+**Verified:** `PrBanner` (`components/PrBadge.tsx:37`) takes only `count` + `right` — **not a `Pressable`**,
+no drill-down. The per-workout count comes from `getWorkoutPrCounts()` (`workouts.ts`) which returns a bare
+**number per workout**, not the list of which exercises hit a PR. The finish screen (#35) *does* compute the
+actual NEW BESTS at finish time (`finish/[id].tsx` `topSet` vs pre-workout bests), but History only persists/
+reads the count — so a drill-down needs either (a) recomputing the PR set on the History detail (compare each
+exercise's session top set against its all-time best-before-this-workout, the `useExerciseBests` path already
+used at finish), or (b) storing the PR'd exercise ids at finish. **(a) is cleaner — no schema change.**
+**Fix (scope, not started):** make the banner tappable → a sheet/expand listing the PR'd exercises with the
+record value (e.g. "Back Extension · +10 × 8"), reusing the finish-screen best-comparison logic. Note the
+current PR detection is **weight_reps-only** (see #45 follow-up) — bodyweight / weighted_bodyweight PRs aren't
+flagged yet, so the drill-down would inherit that gap until PR logic is generalized.
+
+### 55. Muscle split is region-level only, no per-muscle breakdown
+**Seen:** the History muscle split reads e.g. "Legs 96% · Back 4%" — the user expected a finer breakup within
+a region (glutes / hamstrings / quads for a leg day). **User flagged this as low priority — may not build.**
+**Verified:** `muscleSplit()` (`lib/muscleSplit.ts`) intentionally rolls up to the **7 `BODY_REGIONS`** — each
+set attributes to the *regions* its primary/secondary muscles map to (primary full, secondary ×0.5), then
+normalizes. The finer 17-muscle vocabulary IS available upstream (`primary_muscles`/`secondary_muscles` +
+`MUSCLE_TO_REGION`), so a per-muscle split is derivable without new data — it'd be a second, drill-in view
+(tap a region → its muscle breakdown) rather than replacing the clean region bar.
+**Recommendation:** leave as-is for now (region-level reads clean and matches the "sleek/minimal" priority);
+revisit only if per-muscle insight becomes a wanted feature. Logged for completeness, not queued.
+
+---
+
 ## 2026-08-15 (16) — Hands-on device use: empty-workout naming, bodyweight+load exercises
 
 **Context:** user's own device session, History detail screenshot of an "Empty workout" (a session started
