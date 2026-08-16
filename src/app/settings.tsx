@@ -26,16 +26,14 @@ import {
 } from '@/data/hooks';
 import { GOAL_PRESETS, THEME_MODES, useSettings, useUpdateSettings } from '@/data/settings';
 import { useBackups, useRunBackupNow, useWeeklyBackup } from '@/data/backup';
+import { PRIVACY_POLICY_URL } from '@/lib/urls';
 import { font, radius, space, tracking, type Theme } from '@/theme/tokens';
 import { useTheme, useThemeMode } from '@/theme/ThemeProvider';
 
 // App Store Review Guideline 5.1.1(i) wants the privacy policy reachable from
 // *inside* the app as well as from the App Store listing, so it gets a row here.
-// The page itself is `docs/legal/privacy-policy.html`.
-//
-// ⚠️ This must point at the live hosted copy before any TestFlight/App Store
-// submission — a 404 here is a review rejection.
-const PRIVACY_POLICY_URL = 'https://dhruvsb.github.io/kratos/privacy-policy.html';
+// The URL lives in one place (src/lib/urls.ts) so the in-app link can't drift from
+// App Store Connect — a 404 here reads to Apple as a missing policy = rejection.
 
 function next<T>(list: readonly T[], current: T): T {
   const i = list.indexOf(current);
@@ -374,6 +372,20 @@ export default function SettingsScreen() {
           ],
         },
         {
+          title: 'PRIVACY',
+          rows: [
+            // 5.1.2(i): the AI voice-sharing consent must be revocable. Toggling
+            // off here withdraws it; the voice recorder re-prompts before the next
+            // upload. Label states the third party + data plainly.
+            {
+              label: 'Voice logging (sends audio to OpenAI)',
+              toggle: true,
+              on: s.voiceAiConsent,
+              onPress: () => updateSettings.mutate({ voiceAiConsent: !s.voiceAiConsent }),
+            },
+          ],
+        },
+        {
           title: 'ABOUT',
           rows: [
             { label: 'Privacy policy', onPress: () => WebBrowser.openBrowserAsync(PRIVACY_POLICY_URL) },
@@ -426,8 +438,7 @@ export default function SettingsScreen() {
         ))}
 
         <Text style={styles.footer}>
-          KRATOS v1 · BUILD 41{'\n'}Weight is stored in kilograms, always. Voice logging arrives in
-          a later build.
+          KRATOS v1{'\n'}Weight is stored in kilograms, always.
         </Text>
       </ScrollView>
 

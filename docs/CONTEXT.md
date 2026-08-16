@@ -10,7 +10,18 @@ codebase or a huge prior conversation.
 > issues**) *and* append a dated entry to [`WORK-LOG.md`](./WORK-LOG.md). This file is the
 > snapshot; `WORK-LOG.md` is the full history. Keep this file short.
 
-**Last updated:** 2026-08-15 — **Auth switched to email + password** (SignInScreen rewritten: SIGN IN /
+**Last updated:** 2026-08-16 — **Pre-submission App Store audit + 8 compliance fixes** (see
+[`docs/app-store/PRE-SUBMISSION-AUDIT.md`](./app-store/PRE-SUBMISSION-AUDIT.md)): fixed the in-app
+privacy-policy **404** (missing `/legal/`; URL now centralized in `src/lib/urls.ts`); **built the
+5.1.2(i) AI-consent gate** before audio → OpenAI (`components/voice/VoiceConsentGate.tsx` +
+`voiceAiConsent` in `data/settings.ts` + Settings → PRIVACY toggle; recorder gates the mic on it);
+and via new `plugins/withIosPrivacyCleanup.js` + `app.config.ts` stripped `UIBackgroundModes:[audio]`
+(2.5.4), the read-only-violating `NSHealthUpdateUsageDescription` (5.1.3), the dead
+`expo-speech-recognition` permission, and the unused motion string; dev telemetry screen now
+`__DEV__`-gated; stale "voice arrives later" footer removed. **All `tsc`-clean; native fixes verified by
+a real clean-room `expo prebuild`.** ⚠️ **Must build via EAS** (committed `ios/` is stale) + verify demo
+login on a clean install + keep the voice backend funded during review — see the audit checklist. Prior:
+**Auth switched to email + password** (SignInScreen rewritten: SIGN IN /
 CREATE ACCOUNT + SHOW/HIDE; "Forgot password?" = in-app one-time-code recovery, no deep links) with a new
 Settings → ACCOUNT → **"Set password"** (two secure prompts → `updateUser`; the migration path for the
 old code-only account). `auth.ts` +`signInWithPassword`/`signUpWithPassword`/`setPassword`/`sendRecoveryCode`/`verifyRecoveryCode`.

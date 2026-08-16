@@ -54,6 +54,11 @@ const config: ExpoConfig = {
     favicon: './assets/images/favicon.png',
   },
   plugins: [
+    // MUST stay FIRST: Expo runs withInfoPlist mods in REVERSE of this array's
+    // order, so listing this first makes it run LAST — after expo-audio has added
+    // its UIBackgroundModes 'audio'. It then strips that unneeded key (Kratos only
+    // records in the foreground) and any stray unused motion string. See the file.
+    './plugins/withIosPrivacyCleanup',
     'expo-router',
     [
       'expo-splash-screen',
@@ -65,15 +70,13 @@ const config: ExpoConfig = {
         imageWidth: 104,
       },
     ],
-    // On-device STT for voice logging (Phase 2) — needs a config plugin for
-    // the native mic/speech-recognizer permission strings.
-    [
-      'expo-speech-recognition',
-      {
-        microphonePermission: 'Allow Kratos to use the microphone to log sets by voice.',
-        speechRecognitionPermission: 'Allow Kratos to use speech recognition to log sets by voice.',
-      },
-    ],
+    // NOTE: expo-speech-recognition's config plugin is intentionally NOT listed.
+    // The shipping voice path is cloud ASR (expo-audio → the `transcribe` edge
+    // function); on-device speech recognition (src/lib/stt.ts) is unreachable dead
+    // code. Declaring NSSpeechRecognitionUsageDescription for a feature that never
+    // runs is an App Store rejection risk (a usage string with no corresponding
+    // functionality), so the plugin is dropped. The microphone permission string
+    // the live recorder needs is supplied by expo-audio below.
     // Audio recording for cloud ASR (design "Voice Logging" 1a): the recorder
     // captures a clip that the `transcribe` edge function sends to gpt-transcribe.
     // (expo-speech-recognition also declares mic usage; both strings are harmless.)
@@ -92,6 +95,13 @@ const config: ExpoConfig = {
       {
         NSHealthShareUsageDescription:
           'Kratos reads your strength-training sessions from Apple Health to fill in days you worked out but forgot to log.',
+        // Read-only: Kratos never writes to Apple Health. The plugin injects a
+        // generic NSHealthUpdateUsageDescription ("… wants to update your health
+        // data") by default — passing false suppresses it. Shipping a write
+        // (Update) permission string for a read-only app is a Guideline 5.1.3
+        // rejection risk. `background: false` likewise drops the
+        // healthkit.background-delivery entitlement we don't use.
+        NSHealthUpdateUsageDescription: false,
         background: false,
       },
     ],

@@ -1,6 +1,7 @@
 // Dev-only telemetry screen (Phase 2 spec, prompt 2.4): last 50 voice_logs
 // plus aggregate cards. Not linked prominently in nav — reached via the small
 // "Voice telemetry" link on the Home screen. Unstyled like everything else.
+import { Redirect } from 'expo-router';
 import { useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Empty, ErrorText, Loading } from '@/components/ui';
@@ -73,6 +74,16 @@ function computeAggregates(logs: VoiceLog[]) {
 }
 
 export default function VoiceTelemetryScreen() {
+  // Dev-only surface. In a Release/App Store build this route must not be
+  // reachable (it renders raw cost/latency/transcript internals on a bare white
+  // screen — a "beta/test" surface Apple rejects, and it's deep-link-addressable
+  // as kratos://dev/telemetry). Redirect any production hit straight home. Kept in
+  // a hook-free wrapper so the gate never reorders the inner screen's hooks.
+  if (!__DEV__) return <Redirect href="/" />;
+  return <VoiceTelemetryScreenInner />;
+}
+
+function VoiceTelemetryScreenInner() {
   const recent = useRecentVoiceLogs(50);
   const sinceIso = useMemo(startOfMonthIso, []);
   const monthly = useVoiceLogsSince(sinceIso);

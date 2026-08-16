@@ -7,6 +7,42 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-16 — Pre-submission App Store audit + compliance fixes (verified via clean-room prebuild)
+
+Full pre-submission codebase audit against the current Apple guidelines + 2025–2026 rejection trends
+(web-researched). Findings + the manual checklist live in
+[`docs/app-store/PRE-SUBMISSION-AUDIT.md`](./app-store/PRE-SUBMISSION-AUDIT.md). Eight fixes landed
+(all `tsc`-clean; the native ones proven by moving `ios/` aside and running a real
+`expo prebuild -p ios` — what EAS does — then restoring `ios/`):
+
+- **Privacy-policy 404 fixed (BLOCKER).** The in-app Settings link pointed at `…/kratos/privacy-policy.html`
+  (missing the `/legal/` segment) and 404'd while App Store Connect's URL was correct — a broken in-app
+  policy reads as missing (5.1.1). URL centralized in new `src/lib/urls.ts` so it can't drift again;
+  `settings.tsx` imports it.
+- **AI-consent gate built (5.1.2(i), tightened Nov 2025).** No consent existed before audio was sent to
+  OpenAI. New `src/components/voice/VoiceConsentGate.tsx` (names OpenAI + the audio + the purpose,
+  Allow/Not-now) shown by `voice/record.tsx` before the mic opens; choice persists as `voiceAiConsent`
+  in `data/settings.ts` and is revocable in a new **Settings → PRIVACY** toggle. The mic-start effect is
+  gated on consent; the recorder waits for the flag to load so returning users don't see a flash.
+- **Native/plist fixes via new `plugins/withIosPrivacyCleanup.js` + `app.config.ts`:** stripped
+  `UIBackgroundModes: [audio]` (foreground-only recorder ⇒ 2.5.4 risk); suppressed the read-only-violating
+  `NSHealthUpdateUsageDescription` (`NSHealthUpdateUsageDescription: false` on the healthkit plugin, 5.1.3);
+  dropped the dead-code `expo-speech-recognition` plugin so `NSSpeechRecognitionUsageDescription` (a usage
+  string with no shipping feature) is gone; defensively removed the unused `NSMotionUsageDescription`.
+  **Gotcha discovered:** Expo runs `withInfoPlist` mods in **reverse** of the plugins-array order, so the
+  cleanup plugin had to be listed **first** to run **last** (after expo-audio adds `audio`). Verified: the
+  generated `Info.plist` has none of these keys, and keeps `NSMicrophoneUsageDescription` +
+  `NSHealthShareUsageDescription` + `ITSAppUsesNonExemptEncryption: false` + a healthkit-only entitlement.
+- **Dev telemetry screen gated out of production** (`app/dev/telemetry.tsx` → `Redirect` home unless
+  `__DEV__`; was deep-link-reachable as `kratos://dev/telemetry`). **Stale Settings footer removed**
+  ("Voice logging arrives in a later build" — voice is the primary Home action now).
+
+Confirmed already-correct: no client secrets (only anon key bundled), account deletion, privacy manifest,
+empty-account crash-safety, graceful network errors. **Remaining risks are manual** (can't be coded):
+build via **EAS** so the plist fixes ship (the committed `ios/` is stale), verify the demo account signs in
+on a clean install, keep the voice backend funded during review, upload real iOS-only screenshots. See the
+audit's checklist.
+
 ## 2026-08-15 — Email + password auth; "Import from Hevy" → "Import workouts" + CSV guide
 
 Three related changes (code-complete, `tsc` clean; **not yet device-verified**):

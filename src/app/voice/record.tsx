@@ -20,6 +20,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MicGlyph } from '@/components/voice/MicGlyph';
 import { LevelMeter } from '@/components/voice/primitives';
 import { useProfile } from '@/data/hooks';
+import { useSettings, useUpdateSettings } from '@/data/settings';
+import { VoiceConsentGate } from '@/components/voice/VoiceConsentGate';
 import { transcribeAudio } from '@/data/transcribe';
 import {
   MOCK_TRANSCRIPTS,
@@ -58,6 +60,12 @@ export default function VoiceRecordScreen() {
   const profile = useProfile();
   const unit: Unit = profile.data?.default_unit ?? 'kg';
 
+  // AI data-sharing consent (Guideline 5.1.2). No audio is captured until the user
+  // has agreed to send it to OpenAI; the choice is persisted + revocable in Settings.
+  const settings = useSettings();
+  const updateSettings = useUpdateSettings();
+  const consented = settings.data?.voiceAiConsent ?? false;
+
   const [mockIntent, setMockIntent] = useState<MockIntent>('log');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -92,9 +100,11 @@ export default function VoiceRecordScreen() {
     }
   }, [recorder]);
 
-  // Start the real recording once on mount, and self-drive the timer + meter.
+  // Start the real recording once consent is granted, and self-drive the timer +
+  // meter. Gated on `consented` so the mic is never opened before the user agrees
+  // to the OpenAI upload (5.1.2); fires the moment consent flips true.
   useEffect(() => {
-    if (MOCK_VOICE || startedRef.current) return;
+    if (MOCK_VOICE || startedRef.current || !consented) return;
     startedRef.current = true;
     (async () => {
       try {
@@ -122,11 +132,12 @@ export default function VoiceRecordScreen() {
         setError(e instanceof Error ? e.message : "Couldn't start recording.");
       }
     })();
-    return () => {
-      void stopRecording();
-    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [consented]);
+
+  // Stop the mic if the screen unmounts mid-recording (kept separate from the
+  // consent-gated start effect so it always runs on teardown).
+  useEffect(() => () => void stopRecording(), [stopRecording]);
 
   // Mock timer + meter wander.
   useEffect(() => {
@@ -174,6 +185,11 @@ export default function VoiceRecordScreen() {
     else router.replace('/');
   }
 
+  // Persist the AI-sharing consent; the start effect above then opens the mic.
+  function grantConsent() {
+    updateSettings.mutate({ voiceAiConsent: true });
+  }
+
   async function stopAndReview() {
     if (busy) return;
     setBusy(true);
@@ -211,6 +227,18 @@ export default function VoiceRecordScreen() {
     transform: [{ scale: v.interpolate({ inputRange: [0, 1], outputRange: [1, 1.85] }) }],
     opacity: v.interpolate({ inputRange: [0, 1], outputRange: [0.55, 0] }),
   });
+
+  // Consent gate (5.1.2): on the real path, don't open the mic until the user has
+  // agreed to send audio to OpenAI. Wait for the persisted flag to load first so a
+  // returning (already-consented) user never sees the gate flash.
+  if (!MOCK_VOICE) {
+    if (settings.isPending) {
+      return <View style={[styles.screen, { paddingTop: insets.top + 24 }]} />;
+    }
+    if (!consented) {
+      return <VoiceConsentGate onAllow={grantConsent} onDeny={cancel} />;
+    }
+  }
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top + 24 }]}>

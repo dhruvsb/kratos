@@ -24,6 +24,13 @@ export type AppSettings = {
   /** Epoch ms of the last automatic/manual CSV backup (#50); null = never. Drives
    *  the weekly foreground-check scheduling in src/data/backup.ts. */
   lastBackupAt: number | null;
+  /** App Store Guideline 5.1.2(i): explicit, revocable consent for sending the
+   *  recorded voice clip to our third-party AI (OpenAI) for transcription. MUST be
+   *  granted before the first audio ever leaves the device — the voice recorder
+   *  gates on it (src/app/voice/record.tsx) and Settings can revoke it. Default
+   *  false so a fresh install is never in a shared-with-third-party state until the
+   *  user affirmatively taps Allow. */
+  voiceAiConsent: boolean;
 };
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -31,6 +38,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   weeklyGoal: 5,
   themeMode: 'system',
   lastBackupAt: null,
+  voiceAiConsent: false,
 };
 
 /** Theme options offered by the Settings control (#17 Phase 3). */
