@@ -12,6 +12,10 @@ const config: ExpoConfig = {
   userInterfaceStyle: 'automatic',
   ios: {
     bundleIdentifier: 'com.dhruvshah.kratos',
+    // Build number (CFBundleVersion). Bumped to 2 after Apple rejected build 1
+    // (1.0.0(1)) on upload — a rejected build number can't be reused. Increment
+    // this on every new binary for the same marketing version.
+    buildNumber: '2',
     // Apple Development Team for code signing. Declared here so a prebuild bakes
     // DEVELOPMENT_TEAM into the generated Xcode project instead of us hand-editing
     // the gitignored ios/*.pbxproj (which a prebuild would wipe). Free Personal
@@ -39,6 +43,17 @@ const config: ExpoConfig = {
       // at build time so every upload skips the manual ITSAppUsesNonExemptEncryption
       // prompt in App Store Connect. false = exempt (standard encryption only).
       ITSAppUsesNonExemptEncryption: false,
+      // Apple's SERVER-SIDE upload validator (stricter than Xcode's local check)
+      // rejected build 1.0.0(1) on 2026-08-16 with ITMS-90683 for these two: linked
+      // SDKs reference the Speech Recognition API (expo-speech-recognition) and the
+      // Photo Library API (image stack, e.g. SDWebImage via expo-image). The app does
+      // not actively use either, but Apple requires the purpose string whenever the
+      // API is *referenced* ("your app might not use these APIs, a purpose string is
+      // still required"). Suppressing them fails the upload — they MUST be present.
+      NSSpeechRecognitionUsageDescription:
+        'Allow Kratos to transcribe your speech so you can log sets by voice.',
+      NSPhotoLibraryUsageDescription:
+        'Allow Kratos to save images to your photo library.',
     },
   },
   android: {
@@ -95,13 +110,15 @@ const config: ExpoConfig = {
       {
         NSHealthShareUsageDescription:
           'Kratos reads your strength-training sessions from Apple Health to fill in days you worked out but forgot to log.',
-        // Read-only: Kratos never writes to Apple Health. The plugin injects a
-        // generic NSHealthUpdateUsageDescription ("… wants to update your health
-        // data") by default — passing false suppresses it. Shipping a write
-        // (Update) permission string for a read-only app is a Guideline 5.1.3
-        // rejection risk. `background: false` likewise drops the
-        // healthkit.background-delivery entitlement we don't use.
-        NSHealthUpdateUsageDescription: false,
+        // Kratos is read-only in practice, BUT the HealthKit entitlement itself
+        // permits writing, so Apple's upload validator HARD-BLOCKS the build
+        // (error 90683) unless an Update usage string is present — even for APIs
+        // the app never calls ("While your app might not use these APIs, a purpose
+        // string is still required."). Suppressing it (the old `false`) failed the
+        // upload on 2026-08-16. This string is required to ship; it is not a 5.1.3
+        // problem (declaring a validator-mandated capability isn't misuse).
+        NSHealthUpdateUsageDescription:
+          'Allow Kratos to save workouts you log to Apple Health.',
         background: false,
       },
     ],
