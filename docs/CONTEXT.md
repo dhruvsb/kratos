@@ -10,7 +10,24 @@ codebase or a huge prior conversation.
 > issues**) *and* append a dated entry to [`WORK-LOG.md`](./WORK-LOG.md). This file is the
 > snapshot; `WORK-LOG.md` is the full history. Keep this file short.
 
-**Last updated:** 2026-08-16 — **Pre-submission App Store audit + 8 compliance fixes** (see
+**Last updated:** 2026-08-16 — **APP SUBMITTED to the App Store — status "Waiting for Review"**
+(build **1.0.0 (2)**, submitted 22:10; Apple ID 6801877279). Built + signed **locally via Xcode
+archive** on team `TUR974K866` — which is now a **paid** Developer Program team (same ID after
+enrolling; the old "free Personal Team" note is stale) — and uploaded through Organizer. **EAS was NOT
+needed**; local archive works (runbook: [`docs/app-store/BUILD-AND-UPLOAD-RUNBOOK.md`](./app-store/BUILD-AND-UPLOAD-RUNBOOK.md),
+final checks: [`SUBMISSION-CHECKLIST.md`](./app-store/SUBMISSION-CHECKLIST.md)).
+**⚠️ Correction to the audit note below:** the audit **removed** `NSHealthUpdateUsageDescription` /
+`NSSpeechRecognitionUsageDescription` and suppressed `NSPhotoLibraryUsageDescription` as "unused" — but
+Apple's **server-side** validator (**ITMS-90683**) *requires* a purpose string for any API a **linked
+SDK references**, even if the app never calls it. Removing them caused two upload rejections; all three
+were **RE-ADDED** in `app.config.ts` `ios.infoPlist` + build bumped to **2** (commit `b2f4e9a`). 1.0.0(2)
+then passed Xcode **Validate App** and uploaded clean. Lesson: always run **Validate App** before
+uploading. **Voice logging is LIVE** (`MOCK_VOICE=false`), not "unwired" — the old CLAUDE.md note was
+stale and is fixed. Screenshots: **11 captured at 1320×2868** (`app-store-screenshots/`), **10 uploaded**
+to ASC. Privacy + support pages **hosted & live** at `dhruvsb.github.io/kratos/legal/`. All ASC metadata
+saved (App Privacy published, pricing, DSA non-trader, reviewer demo `appreview@kratos.app` — password
+reset to the documented `KratosReview2026!` and verified working). **Keep Supabase project + OpenAI billing
+alive through review** (reviewer taps the mic). Prior: **Pre-submission App Store audit + 8 compliance fixes** (see
 [`docs/app-store/PRE-SUBMISSION-AUDIT.md`](./app-store/PRE-SUBMISSION-AUDIT.md)): fixed the in-app
 privacy-policy **404** (missing `/legal/`; URL now centralized in `src/lib/urls.ts`); **built the
 5.1.2(i) AI-consent gate** before audio → OpenAI (`components/voice/VoiceConsentGate.tsx` +

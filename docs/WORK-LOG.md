@@ -7,6 +7,34 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-16 — APP STORE SUBMITTED (build 1.0.0 (2), "Waiting for Review")
+
+Took Kratos from "no build uploaded" to a live submission. Sequence and the things learned:
+
+- **Hosting:** confirmed the privacy-policy + support pages are live on GitHub Pages
+  (`dhruvsb.github.io/kratos/legal/{privacy-policy,support}.html`) — the in-app 404 was just the
+  old on-device build predating the fix.
+- **Screenshots:** captured **11 at native 1320×2868** (6.9") on an iPhone 17 Pro Max simulator
+  (`app-store-screenshots/`) by injecting a valid Supabase session into AsyncStorage to bypass flaky
+  simulator taps; the reviewer demo account password was reset to the documented `KratosReview2026!`
+  and verified working via the API. Cowork uploaded 10 to ASC (Apple caps at 10).
+- **Build:** local **Xcode archive** (EAS not needed). `TUR974K866` turned out to be the **paid**
+  team (same ID after Developer Program enrollment), so signing "just worked." Verified each archive
+  embeds the Supabase URL+anon key (empty-config would break sign-in).
+- **The hard part — three ITMS-90683 rounds.** The earlier audit had *removed* HealthKit-update,
+  Speech-recognition, and Photo-library purpose strings as "unused." Apple's **server-side** validator
+  requires a purpose string for any API a **linked SDK references** regardless of use, so:
+  1st upload rejected (HealthUpdate) → re-added → 2nd upload rejected server-side (Photo + Speech) →
+  re-added all three, bumped build to **2**. Xcode **Validate App** then passed clean (dSYM warnings
+  are harmless), uploaded, processed, attached, **submitted**. Fix committed in `b2f4e9a`
+  (`app.config.ts` `ios.infoPlist` + `ios.buildNumber: '2'`).
+- **Docs added:** `BUILD-AND-UPLOAD-RUNBOOK.md`, `SUBMISSION-CHECKLIST.md` (browser runbook for the
+  final ASC verification). CLAUDE.md "voice unwired" line corrected (voice logging is LIVE).
+- **Lesson:** run Xcode **Validate App** before every upload — it runs Apple's real server-side check
+  in ~1 min and avoids the ~1h upload→reject→email loop.
+- **Still live-critical during review:** Supabase project (edge fns `transcribe`/`parse-utterance` +
+  DB) and OpenAI billing must stay up — reviewer will test voice logging.
+
 ## 2026-08-16 — Pre-submission App Store audit + compliance fixes (verified via clean-room prebuild)
 
 Full pre-submission codebase audit against the current Apple guidelines + 2025–2026 rejection trends
