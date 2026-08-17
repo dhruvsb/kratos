@@ -10,7 +10,15 @@ codebase or a huge prior conversation.
 > issues**) *and* append a dated entry to [`WORK-LOG.md`](./WORK-LOG.md). This file is the
 > snapshot; `WORK-LOG.md` is the full history. Keep this file short.
 
-**Last updated:** 2026-08-16 — **APP SUBMITTED to the App Store — status "Waiting for Review"**
+**Last updated:** 2026-08-17 — **Langfuse LLM observability wired into the voice pipeline.** Both
+edge functions (`transcribe` + `parse-utterance`) now trace every call to Langfuse through a
+dependency-free ingestion client (`supabase/functions/_shared/observability/langfuse.ts`) — the
+official SDK doesn't fit Deno edge (OTEL + background flush). Session-linked (one `voice_session_id`
+groups transcribe+parse into one Langfuse session), with ASR **per-minute** cost (`asrCostUsd` in
+`prices.ts`), parse token/cost telemetry, and a `parse_confidence` score. **Safe no-op until the
+`LANGFUSE_*` secrets are set** — functions behave exactly as before. `tsc` clean; edge functions are
+Deno (excluded from tsc). **To activate:** `supabase secrets set LANGFUSE_{PUBLIC,SECRET}_KEY … LANGFUSE_BASE_URL`
+then `supabase functions deploy transcribe parse-utterance` (see PHASE2 §11). Prior: **APP SUBMITTED to the App Store — status "Waiting for Review"**
 (build **1.0.0 (2)**, submitted 22:10; Apple ID 6801877279). Built + signed **locally via Xcode
 archive** on team `TUR974K866` — which is now a **paid** Developer Program team (same ID after
 enrolling; the old "free Personal Team" note is stale) — and uploaded through Organizer. **EAS was NOT
@@ -353,6 +361,7 @@ logging via an LLM pipeline, **3** TBD (PRs/charts).
 | Two-theme white/dark patchwork | ✅ **Resolved** — every screen is now dark; `_layout` header config dropped |
 | **Light theme (#17) + System·Light·Dark toggle** | ✅ **Built + simulator-verified 2026-08-08** — real "Greige + Moss" light palette (`design_handoff_light_mode/`) in `tokens.ts`; all ~28 screens/components read `useTheme()` (memoized `makeStyles` factory); semantic `cta*`/`check*` tokens + `KeyCap` theme-branch carry the 4 non-swap rules so **dark is unchanged**; Settings → APPEARANCE → Theme + theme-aware `_layout` chrome. **Walked on the iOS simulator** (Home / active workout / Calendar / Settings; both CTA + ✓-chip rules confirmed; toggle flips the app live; dark byte-identical). `tsc` + web-export green. Not yet on physical device (installed Release build has old JS bundled — needs a rebuild). |
 | Phase 2 voice pipeline (extraction → resolution → kg) | ✅ Built; edge fn deployed + auth-guarded; **unwired from manual UI** (returns later) |
+| **Langfuse LLM observability (voice pipeline)** | ✅ **Built 2026-08-17** — both edge functions traced (`voice.transcribe` + `voice.parse`), session-linked, ASR per-minute cost + parse tokens/cost + `parse_confidence` score, via a dependency-free ingestion client (safe no-op without the secrets). **Activate:** set `LANGFUSE_*` secrets + redeploy the two functions. Not yet confirmed against a live Langfuse project. See PHASE2 §11. |
 | Native iOS Release build on physical iPhone 15 | ✅ **Installed + running 2026-08-08** — free Apple Personal Team (`TUR974K866`), no cable needed day-to-day, 7-day cert (reinstall route in `WORK-LOG.md`). |
 | First OTP login + on-device smoke test of the manual loop | 🟡 **Partial** — app runs on real hardware, signed in via a persisted session, and **#1 History nav** + **#10 tab transitions** verified live. Still to do: a real OTP sign-in from scratch (8-digit code now supported) and walk the full loop (start routine → log sets via ✓ and keypad → finish → History → progress). |
 | Eval baseline (`npm run eval`) | ❌ Never run against the real API (Phase 2 concern) |
@@ -464,6 +473,11 @@ native-`UITabBar` drag-lens glass — deferred, keeping the custom pill+FAB.
 - [ ] Log ~4 real workouts on-device (the real "done" bar for the manual tracker) — this also
       populates the new **Calendar** tab; verify the week card / month grid / 12-week bars read
       right against real workout days.
+- [ ] **Activate Langfuse monitoring** — create a project at cloud.langfuse.com (free tier) or
+      self-host, then `supabase secrets set LANGFUSE_PUBLIC_KEY=… LANGFUSE_SECRET_KEY=… LANGFUSE_BASE_URL=…`
+      and `supabase functions deploy transcribe parse-utterance`. Record a voice log and confirm the
+      transcribe+parse traces appear under one session in Langfuse. Code is done + `tsc`-clean; only the
+      secrets + a redeploy remain (see PHASE2 §11).
 - [ ] *(Phase 2, when voice resumes)* Apply migration `0003` to the live DB; run `npm run eval`.
 - [ ] Replace temporary Gmail SMTP with a dedicated provider before any external-user testing.
 - [x] ~~See light mode on device~~ — **done on the iOS simulator 2026-08-08**: walked Home, active

@@ -10,7 +10,8 @@
 // Secrets: OPENAI_API_KEY (already set for parse-utterance — shared).
 import { createClient } from '@supabase/supabase-js';
 import OpenAI, { toFile } from 'openai';
-import { ASR_MODEL } from '../_shared/pipeline/prices.ts';
+import { ASR_MODEL, asrCostUsd } from '../_shared/pipeline/prices.ts';
+import { langfuseFromEnv } from '../_shared/observability/langfuse.ts';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -66,6 +67,11 @@ Deno.serve(async (req) => {
     mime_type?: string;
     filename?: string;
     prompt?: string;
+    // Observability: clip length from the recorder (drives per-minute ASR cost)
+    // and the voice-session id that links this trace to the parse-utterance trace
+    // for the same utterance in Langfuse. Both optional — absent on older clients.
+    duration_ms?: number;
+    session_id?: string;
   };
   try {
     body = await req.json();
@@ -74,11 +80,31 @@ Deno.serve(async (req) => {
   }
   if (!body.audio_base64) return json(400, { error: 'audio_base64 is required' });
 
+  const mimeType = body.mime_type ?? 'audio/m4a';
+  const prompt = body.prompt ?? GYM_ASR_PROMPT;
+  const durationMs = body.duration_ms ?? null;
+
+  // Langfuse trace for this transcription. No-op when the LANGFUSE_* secrets are
+  // unset; flushed once at the end of both the success and error paths.
+  const lf = langfuseFromEnv();
+  const bytes = decodeBase64(body.audio_base64);
+  const trace = lf.trace({
+    name: 'voice.transcribe',
+    userId: user.id,
+    sessionId: body.session_id,
+    input: { prompt, mime_type: mimeType, audio_bytes: bytes.byteLength, duration_ms: durationMs },
+    tags: ['voice', 'asr'],
+    metadata: { function: 'transcribe' },
+  });
+  const generation = trace.generation({
+    name: 'asr.transcription',
+    model: ASR_MODEL,
+    modelParameters: { language: 'en' },
+    input: { prompt, mime_type: mimeType, audio_bytes: bytes.byteLength, duration_ms: durationMs },
+  });
+
   try {
-    const bytes = decodeBase64(body.audio_base64);
-    const file = await toFile(bytes, body.filename ?? 'audio.m4a', {
-      type: body.mime_type ?? 'audio/m4a',
-    });
+    const file = await toFile(bytes, body.filename ?? 'audio.m4a', { type: mimeType });
     const transcription = await new OpenAI({ apiKey: openAiKey }).audio.transcriptions.create({
       file,
       model: ASR_MODEL,
@@ -87,11 +113,29 @@ Deno.serve(async (req) => {
       // (the current routine's exercise names); otherwise a static gym-domain
       // prime nudges number/exercise recognition. Region stripped to ISO-639-1.
       language: 'en',
-      prompt: body.prompt ?? GYM_ASR_PROMPT,
+      prompt,
     });
-    return json(200, { text: transcription.text ?? '' });
+    const text = transcription.text ?? '';
+
+    const cost = asrCostUsd(durationMs);
+    generation.end({
+      output: text,
+      usageDetails: durationMs != null ? { seconds: durationMs / 1000 } : undefined,
+      costDetails: cost > 0 ? { input: cost, total: cost } : undefined,
+    });
+    trace.end({ output: { text } });
+    await lf.flush();
+
+    return json(200, { text });
   } catch (err) {
     console.error('transcribe failed:', err);
+    generation.end({
+      level: 'ERROR',
+      statusMessage: err instanceof Error ? err.message : String(err),
+    });
+    trace.update({ metadata: { error: true } });
+    trace.end();
+    await lf.flush();
     return json(502, {
       error: 'transcribe failed',
       detail: err instanceof Error ? err.message : String(err),

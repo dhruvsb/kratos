@@ -8,6 +8,7 @@ import { parseContextSchema } from '../_shared/parse-types.ts';
 import { parseUtterance } from '../_shared/pipeline/pipeline.ts';
 import { OpenAiLlm } from '../_shared/pipeline/llm.ts';
 import { PARSE_MODEL_DEFAULT, MODEL_PRICES } from '../_shared/pipeline/prices.ts';
+import { langfuseFromEnv } from '../_shared/observability/langfuse.ts';
 import type {
   CatalogExercise,
   ExerciseCatalog,
@@ -102,6 +103,9 @@ Deno.serve(async (req) => {
     stt_source?: string;
     workout_id?: string | null;
     model?: string;
+    // Links this parse trace to the transcribe trace for the same utterance in
+    // Langfuse (one voice interaction = one session). Optional.
+    session_id?: string;
   };
   try {
     body = await req.json();
@@ -122,12 +126,45 @@ Deno.serve(async (req) => {
   const model =
     body.model && MODEL_PRICES[body.model] ? body.model : PARSE_MODEL_DEFAULT;
 
+  // Langfuse trace for this parse. No-op when the LANGFUSE_* secrets are unset;
+  // shares the utterance's session_id so it groups with the transcribe trace.
+  const lf = langfuseFromEnv();
+  const trace = lf.trace({
+    name: 'voice.parse',
+    userId: user.id,
+    sessionId: body.session_id,
+    input: { transcript, context: contextParsed.data, stt_source: body.stt_source ?? 'unknown' },
+    tags: ['voice', 'parse'],
+    metadata: { function: 'parse-utterance' },
+  });
+  const generation = trace.generation({
+    name: 'parse.pipeline',
+    model,
+    input: { transcript, context: contextParsed.data },
+  });
+
   try {
     const { result, telemetry } = await parseUtterance(
       transcript,
       contextParsed.data,
       { llm: new OpenAiLlm(model, openAiKey), catalog: new DbCatalog(db) }
     );
+
+    // The pipeline makes 1–N internal LLM calls (extraction + per-exercise
+    // resolution); telemetry is their aggregate, reported here as one generation.
+    generation.end({
+      output: result,
+      usageDetails: {
+        input: telemetry.tokens_in,
+        output: telemetry.tokens_out,
+        total: telemetry.tokens_in + telemetry.tokens_out,
+      },
+      costDetails: { total: telemetry.cost_usd },
+      metadata: { llm_calls: telemetry.llm_calls, intent: result.intent },
+    });
+    trace.score({ name: 'parse_confidence', value: result.confidence });
+    trace.end({ output: result, metadata: { intent: result.intent } });
+    await lf.flush();
 
     const { data: log, error: logError } = await db
       .from('voice_logs')
@@ -151,6 +188,13 @@ Deno.serve(async (req) => {
     return json(200, { voice_log_id: log?.id ?? null, result, telemetry });
   } catch (err) {
     console.error('parse failed:', err);
+    generation.end({
+      level: 'ERROR',
+      statusMessage: err instanceof Error ? err.message : String(err),
+    });
+    trace.update({ metadata: { error: true } });
+    trace.end();
+    await lf.flush();
     return json(502, {
       error: 'parse failed',
       detail: err instanceof Error ? err.message : String(err),

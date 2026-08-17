@@ -195,6 +195,9 @@ export default function VoiceRecordScreen() {
     setBusy(true);
     setError(null);
     haptics.success();
+    // One id per utterance: links the transcribe + parse traces into a single
+    // Langfuse session so the whole voice interaction is one row in monitoring.
+    const sessionId = `voice_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
     try {
       let transcript: string;
       if (MOCK_VOICE) {
@@ -203,7 +206,10 @@ export default function VoiceRecordScreen() {
         await stopRecording();
         const uri = recorder.uri;
         if (!uri) throw new Error('No audio was recorded.');
-        transcript = await transcribeAudio(uri);
+        transcript = await transcribeAudio(uri, 'audio/m4a', {
+          durationMs: seconds * 1000,
+          sessionId,
+        });
         if (!transcript) {
           setError("Didn't catch that — try again.");
           setBusy(false);
@@ -214,6 +220,7 @@ export default function VoiceRecordScreen() {
         transcript,
         forceKind: mockIntent,
         context: { session_exercises: [], recent_exercises: [], default_unit: unit },
+        sessionId,
       });
       setVoiceDraft(result);
       router.replace('/voice/preview');

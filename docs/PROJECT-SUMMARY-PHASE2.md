@@ -41,6 +41,7 @@ still paused mid-implementation; see the top entries in `WORK-LOG.md`.
 | Native Expo development client | ✅ Built, signed, installed, trusted, and launches on iPhone 15 |
 | Voice capture UI: mic button, on-device STT, confirmation card, ambiguity chips, unmatched-exercise flow, undo snackbar | ✅ Built — **on-device voice workflow not yet exercised because first login is still pending** |
 | Telemetry dev screen (`/dev/telemetry`): acceptance rate, edit rate by field, ambiguity rate, p50/p95 latency, cost vs. budget | ✅ Done |
+| **Langfuse LLM observability** (both edge functions traced; session-linked; ASR cost + parse tokens/cost + confidence score) | ✅ Built 2026-08-17 (see §11) — activate with the `LANGFUSE_*` secrets |
 | Voice-first v2 redesign (Home, Voice console, Floor mode resting/PR, Correction drawer) | ✅ Built 2026-07-20, see §8 — History/Settings screens still Phase 1 unstyled |
 
 ## 3. Deployment completed and remaining validation
@@ -399,3 +400,47 @@ are untouched and unwired; keep them (don't delete voice code).
 `components/workout/VoiceUndoBanner.tsx`. **Touched:** `HomeQuickStart.tsx` (FAB→mic),
 `workout/[id].tsx` (banner), `_layout.tsx` (route animations). `tsc` + web-export (18 routes)
 green; **not yet run on simulator/device** (no new native deps → no dev-client rebuild needed).
+
+## 11. Langfuse LLM observability (2026-08-17)
+
+Full LLM monitoring for the voice pipeline — every ASR + parse call becomes a Langfuse trace
+(latency, cost, tokens, input/output, errors, a confidence score). Answers "how is my LLM
+performing" without a bespoke dashboard.
+
+**Why Langfuse:** the free/open-source (MIT) leader — self-host free, or a 50k-events/mo cloud
+free tier. Gives tracing + prompt/version views + LLM-as-judge evals in one place.
+
+**Why a hand-rolled ingestion client** (`supabase/functions/_shared/observability/langfuse.ts`):
+the official `langfuse` npm SDK is built on OpenTelemetry + a background flush loop + Node
+built-ins, none of which fit Supabase Edge (Deno) — in edge you must flush *before* the
+response returns. The module is a small, dependency-free client that speaks Langfuse's public
+batch ingestion API directly (`POST /api/public/ingestion`, HTTP Basic auth). It is a **safe
+no-op when the `LANGFUSE_*` secrets are unset** (functions behave exactly as before), and
+`flush()` swallows its own network/HTTP errors — monitoring must never break the request path.
+
+**What's traced:**
+- `transcribe` → trace `voice.transcribe` + generation `asr.transcription`. Input
+  (prompt/mime/audio-bytes/duration), output text, ASR cost via `asrCostUsd(duration_ms)` in
+  `prices.ts` (ASR is billed per **audio-minute**, not per token; duration comes from the
+  recorder, not from decoding the container). Errors → `level: ERROR` + statusMessage.
+- `parse-utterance` → trace `voice.parse` + generation `parse.pipeline`. The pipeline makes
+  1–N internal LLM calls; their aggregate telemetry (already computed) becomes one generation
+  with token `usageDetails` + `costDetails`, plus a **`parse_confidence` score** on the trace.
+- **Session linkage:** the recorder mints one `voice_session_id` per utterance
+  (`record.tsx`) and threads it through `transcribe.ts` → `voice.ts`/`voiceParse.ts`, so the
+  transcribe + parse traces group as **one Langfuse session** = one voice interaction.
+
+**Files:** added `_shared/observability/langfuse.ts`; touched `_shared/pipeline/prices.ts`
+(`ASR_USD_PER_MINUTE` + `asrCostUsd`), `transcribe/index.ts`, `parse-utterance/index.ts`,
+`src/data/{transcribe,voice,voiceParse}.ts`, `src/app/voice/record.tsx`, `.env.example`.
+
+**Activate:** set the three secrets, then redeploy the two functions:
+```bash
+supabase secrets set LANGFUSE_PUBLIC_KEY=pk-lf-...   \
+                     LANGFUSE_SECRET_KEY=sk-lf-...   \
+                     LANGFUSE_BASE_URL=https://cloud.langfuse.com   # or self-host URL
+supabase functions deploy transcribe parse-utterance
+```
+Keys come from Langfuse → Settings → API Keys (free tier at cloud.langfuse.com). Left to do:
+set the secrets against a real project and confirm traces land; consider registering the
+model prices in Langfuse (our model ids are fictional, so cost is supplied via `costDetails`).

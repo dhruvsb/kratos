@@ -7,11 +7,21 @@ import { supabase } from '@/lib/supabase';
 
 export async function transcribeAudio(
   uri: string,
-  mimeType = 'audio/m4a'
+  mimeType = 'audio/m4a',
+  // Observability (optional): the recorder's clip length (→ per-minute ASR cost)
+  // and a voice-session id shared with the parse call so both land in one Langfuse
+  // session for the utterance. Purely for monitoring — omitting them is harmless.
+  opts?: { durationMs?: number; sessionId?: string }
 ): Promise<string> {
   const audioBase64 = await new File(uri).base64();
   const { data, error } = await supabase.functions.invoke('transcribe', {
-    body: { audio_base64: audioBase64, mime_type: mimeType, filename: 'audio.m4a' },
+    body: {
+      audio_base64: audioBase64,
+      mime_type: mimeType,
+      filename: 'audio.m4a',
+      duration_ms: opts?.durationMs,
+      session_id: opts?.sessionId,
+    },
   });
   if (error) throw error;
   return (data as { text?: string }).text?.trim() ?? '';

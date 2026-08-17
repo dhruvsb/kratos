@@ -18,6 +18,8 @@ export async function parseVoiceUtterance(input: {
   context: ParseContext;
   sttSource: string;
   workoutId?: string | null;
+  /** Shared with the transcribe call so both traces group as one Langfuse session. */
+  sessionId?: string;
 }): Promise<VoiceParseResponse> {
   const { data, error } = await supabase.functions.invoke('parse-utterance', {
     body: {
@@ -25,6 +27,7 @@ export async function parseVoiceUtterance(input: {
       context: input.context,
       stt_source: input.sttSource,
       workout_id: input.workoutId ?? null,
+      session_id: input.sessionId,
     },
   });
   if (error) throw error;

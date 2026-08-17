@@ -123,6 +123,8 @@ export async function parseVoiceIntent(input: {
   workoutId?: string | null;
   sttSource?: string;
   forceKind?: MockIntent;
+  /** Shared with the transcribe call so both traces group as one Langfuse session. */
+  sessionId?: string;
 }): Promise<VoiceParseResult> {
   if (MOCK_VOICE) return mockParse(input);
 
@@ -133,6 +135,7 @@ export async function parseVoiceIntent(input: {
     context,
     sttSource: input.sttSource ?? ASR_SOURCE,
     workoutId: input.workoutId ?? null,
+    sessionId: input.sessionId,
   });
   return adaptResult(result, input.transcript);
 }

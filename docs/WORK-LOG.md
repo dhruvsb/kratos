@@ -7,6 +7,37 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-17 — Langfuse LLM observability wired into the voice pipeline
+
+Answered a "how do I monitor my LLM performance" question by building it: full Langfuse
+tracing across **both** voice edge functions, so every transcription and parse is a trace
+in Langfuse (latency, cost, tokens, input/output, errors, a confidence score).
+
+- **Why Langfuse, hand-rolled client:** Langfuse is the free/open-source (MIT) leader —
+  self-host free or a 50k-events/mo cloud free tier. The official `langfuse` npm SDK is
+  OTEL + background-flush + Node built-ins, none of which fit Supabase Edge (Deno), where
+  you must flush *before* the response returns. So `_shared/observability/langfuse.ts` is a
+  small, dependency-free client that POSTs to Langfuse's public `/api/public/ingestion`
+  batch API (HTTP Basic auth, public+secret keys). It's a **safe no-op when the `LANGFUSE_*`
+  secrets are absent** — the functions behave exactly as before — and `flush()` swallows its
+  own errors so a monitoring outage never turns a good transcription into a 5xx.
+- **`transcribe`:** trace `voice.transcribe` + generation `asr.transcription` — input
+  (prompt/mime/bytes/duration), output text, ASR **per-minute** cost (`asrCostUsd` in
+  `prices.ts`, from the recorder-reported `duration_ms`; ASR is billed per audio-minute, not
+  per token), errors captured with `level: ERROR`.
+- **`parse-utterance`:** trace `voice.parse` + generation `parse.pipeline` — aggregates the
+  pipeline's 1–N internal LLM calls (existing telemetry) into one generation with token
+  `usageDetails` + `costDetails`, plus a **`parse_confidence` score** on the trace.
+- **Session linkage:** the recorder mints one `voice_session_id` per utterance and passes it
+  to both calls (`transcribe.ts`, `voice.ts`, `voiceParse.ts`, `record.tsx`), so transcribe +
+  parse group as **one Langfuse session** — the whole voice interaction is one row in monitoring.
+- **Config:** `.env.example` documents the three `supabase secrets set LANGFUSE_*` commands
+  (keys from cloud.langfuse.com free tier or a self-host). Nothing to deploy beyond the
+  secrets + a `supabase functions deploy transcribe parse-utterance`.
+- **Verified:** `tsc --noEmit` clean (client). Edge functions are Deno (excluded from tsc, no
+  `deno` binary in this env) — reviewed against the Deno runtime API. **Not yet exercised
+  against a live Langfuse project** (owner sets the secrets + deploys).
+
 ## 2026-08-16 — APP STORE SUBMITTED (build 1.0.0 (2), "Waiting for Review")
 
 Took Kratos from "no build uploaded" to a live submission. Sequence and the things learned:

@@ -22,9 +22,23 @@ export const PARSE_MODEL_MID = 'gpt-5.6-terra';
 // the 2026-08 bakeoff (see PROJECT-SUMMARY-PHASE2 §5). SET THE EXACT ID: the user
 // specified the new "gpt-transcribe" model; adjust here if the platform id differs
 // (e.g. 'gpt-4o-transcribe'). Transcription is billed per audio-minute, not per
-// token, so it isn't in MODEL_PRICES / costUsd — cost tracking for ASR (if wanted)
-// would be a duration-based add-on, tracked separately from the parse telemetry.
+// token, so it isn't in MODEL_PRICES / costUsd — cost tracking for ASR is the
+// duration-based add-on below (asrCostUsd), tracked separately from parse telemetry
+// and reported to Langfuse from the transcribe function.
 export const ASR_MODEL = 'gpt-transcribe';
+
+// ASR is billed per AUDIO-MINUTE, not per token. Placeholder rate — CONFIRM on
+// platform.openai.com before trusting budget maths (gpt-4o-transcribe was
+// ~$0.006/audio-minute at 2026-08; adjust when the gpt-transcribe rate is known).
+export const ASR_USD_PER_MINUTE = 0.006;
+
+// Cost of one transcription from the client-reported clip duration. Duration comes
+// from the recorder (it owns the wall-clock timer), not from decoding the audio
+// container server-side. Returns 0 when duration is unknown so telemetry still logs.
+export function asrCostUsd(durationMs: number | null | undefined): number {
+  if (durationMs == null || !Number.isFinite(durationMs) || durationMs <= 0) return 0;
+  return (durationMs / 60_000) * ASR_USD_PER_MINUTE;
+}
 
 export interface ModelPrice {
   inputUsdPerMTok: number;
