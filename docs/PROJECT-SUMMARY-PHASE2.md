@@ -42,6 +42,7 @@ still paused mid-implementation; see the top entries in `WORK-LOG.md`.
 | Voice capture UI: mic button, on-device STT, confirmation card, ambiguity chips, unmatched-exercise flow, undo snackbar | ✅ Built — **on-device voice workflow not yet exercised because first login is still pending** |
 | Telemetry dev screen (`/dev/telemetry`): acceptance rate, edit rate by field, ambiguity rate, p50/p95 latency, cost vs. budget | ✅ Done |
 | **Langfuse LLM observability** (both edge functions traced; session-linked; ASR cost + parse tokens/cost + confidence score) | ✅ Built 2026-08-17 (see §11) — activate with the `LANGFUSE_*` secrets |
+| **LLM-as-judge faithfulness eval** (background, sampled; scores transcript→parse faithfulness onto the Langfuse trace) | ✅ Built 2026-08-17 (see §11) — enable with `FAITHFULNESS_JUDGE_SAMPLE_RATE` |
 | Voice-first v2 redesign (Home, Voice console, Floor mode resting/PR, Correction drawer) | ✅ Built 2026-07-20, see §8 — History/Settings screens still Phase 1 unstyled |
 
 ## 3. Deployment completed and remaining validation
@@ -430,9 +431,27 @@ no-op when the `LANGFUSE_*` secrets are unset** (functions behave exactly as bef
   (`record.tsx`) and threads it through `transcribe.ts` → `voice.ts`/`voiceParse.ts`, so the
   transcribe + parse traces group as **one Langfuse session** = one voice interaction.
 
-**Files:** added `_shared/observability/langfuse.ts`; touched `_shared/pipeline/prices.ts`
-(`ASR_USD_PER_MINUTE` + `asrCostUsd`), `transcribe/index.ts`, `parse-utterance/index.ts`,
-`src/data/{transcribe,voice,voiceParse}.ts`, `src/app/voice/record.tsx`, `.env.example`.
+**LLM-as-judge faithfulness eval** (`_shared/observability/faithfulness.ts`): the quality
+signal telemetry can't give you — a parse can be fast/cheap and still *wrong* (invented a set,
+misheard 80→18 kg, wrong intent). After each parse, `judgeFaithfulness` grades the
+(transcript → parsed JSON) pair 0–1 and the result is attached to the trace as a
+**`faithfulness` score** plus a `judge.faithfulness` generation (its own token/cost line). It:
+- **reuses the pipeline's `LlmClient` seam** (same provider isolation as the parse — no second
+  SDK; swap the judge model with one env var);
+- runs **in the background** via `EdgeRuntime.waitUntil`, so it never adds latency to the
+  user's parse response;
+- is **sampled and off by default** — it's an extra LLM call per parse, gated by
+  `FAITHFULNESS_JUDGE_SAMPLE_RATE` (0 = off, 1.0 = every parse, 0.2 = 20%), judge model via
+  `FAITHFULNESS_JUDGE_MODEL` (defaults to the cheapest parse model).
+
+To backfill quality scores on *historical* parses, a node/tsx script could read `voice_logs`
+(it stores `transcript` + `parsed`) and post `faithfulness` scores to Langfuse the same way —
+not built yet; the online judge covers all new calls.
+
+**Files:** added `_shared/observability/langfuse.ts` + `_shared/observability/faithfulness.ts`;
+touched `_shared/pipeline/prices.ts` (`ASR_USD_PER_MINUTE` + `asrCostUsd`), `transcribe/index.ts`,
+`parse-utterance/index.ts`, `src/data/{transcribe,voice,voiceParse}.ts`, `src/app/voice/record.tsx`,
+`.env.example`.
 
 **Activate:** set the three secrets, then redeploy the two functions:
 ```bash
@@ -441,6 +460,12 @@ supabase secrets set LANGFUSE_PUBLIC_KEY=pk-lf-...   \
                      LANGFUSE_BASE_URL=https://cloud.langfuse.com   # or self-host URL
 supabase functions deploy transcribe parse-utterance
 ```
+To also turn on the faithfulness judge, add:
+```bash
+supabase secrets set FAITHFULNESS_JUDGE_SAMPLE_RATE=1.0   # every parse; use 0.2 for 20% sampling
+supabase functions deploy parse-utterance
+```
 Keys come from Langfuse → Settings → API Keys (free tier at cloud.langfuse.com). Left to do:
-set the secrets against a real project and confirm traces land; consider registering the
-model prices in Langfuse (our model ids are fictional, so cost is supplied via `costDetails`).
+set the secrets against a real project and confirm traces + faithfulness scores land; consider
+registering the model prices in Langfuse (our model ids are fictional, so cost is supplied via
+`costDetails`).

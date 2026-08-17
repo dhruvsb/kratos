@@ -7,8 +7,10 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { parseContextSchema } from '../_shared/parse-types.ts';
 import { parseUtterance } from '../_shared/pipeline/pipeline.ts';
 import { OpenAiLlm } from '../_shared/pipeline/llm.ts';
-import { PARSE_MODEL_DEFAULT, MODEL_PRICES } from '../_shared/pipeline/prices.ts';
-import { langfuseFromEnv } from '../_shared/observability/langfuse.ts';
+import { PARSE_MODEL_DEFAULT, MODEL_PRICES, costUsd } from '../_shared/pipeline/prices.ts';
+import { langfuseFromEnv, type Langfuse, type LangfuseTrace } from '../_shared/observability/langfuse.ts';
+import { judgeFaithfulness } from '../_shared/observability/faithfulness.ts';
+import type { ParseResult } from '../_shared/parse-types.ts';
 import type {
   CatalogExercise,
   ExerciseCatalog,
@@ -72,6 +74,84 @@ class DbCatalog implements ExerciseCatalog {
       })
     );
   }
+}
+
+// LLM-as-judge config. The faithfulness judge is an EXTRA LLM call per parse, so it
+// is off by default and sampled: set FAITHFULNESS_JUDGE_SAMPLE_RATE to a fraction
+// (e.g. 1.0 = every parse, 0.2 = 20%) to turn it on. Judge model defaults to the
+// cheapest parse model; override with FAITHFULNESS_JUDGE_MODEL (must be priced).
+function judgeSampleRate(): number {
+  const raw = Number(Deno.env.get('FAITHFULNESS_JUDGE_SAMPLE_RATE') ?? '0');
+  return Number.isFinite(raw) ? Math.max(0, Math.min(1, raw)) : 0;
+}
+function judgeModel(): string {
+  const override = Deno.env.get('FAITHFULNESS_JUDGE_MODEL');
+  return override && MODEL_PRICES[override] ? override : PARSE_MODEL_DEFAULT;
+}
+
+/**
+ * Schedule the faithfulness judge on the request's background — never blocking the
+ * user's response. Adds a `judge.faithfulness` generation (its own cost line) and a
+ * `faithfulness` score to the already-flushed trace, then flushes that second batch.
+ * No-op unless Langfuse is enabled AND this call falls inside the sample rate.
+ */
+function scheduleFaithfulnessJudge(input: {
+  lf: Langfuse;
+  trace: LangfuseTrace;
+  transcript: string;
+  result: ParseResult;
+  openAiKey: string;
+}): void {
+  if (!input.lf.enabled) return; // nothing to attach the score to
+  if (Math.random() >= judgeSampleRate()) return;
+
+  const model = judgeModel();
+  const task = (async () => {
+    try {
+      const gen = input.trace.generation({
+        name: 'judge.faithfulness',
+        model,
+        input: { transcript: input.transcript, parsed: input.result },
+      });
+      const judged = await judgeFaithfulness(
+        new OpenAiLlm(model, input.openAiKey),
+        input.transcript,
+        input.result
+      );
+      const tokens = judged.usage.inputTokens + judged.usage.outputTokens;
+      gen.end({
+        output: {
+          faithful: judged.faithful,
+          score: judged.score,
+          issues: judged.issues,
+          reasoning: judged.reasoning,
+        },
+        usageDetails: {
+          input: judged.usage.inputTokens,
+          output: judged.usage.outputTokens,
+          total: tokens,
+        },
+        costDetails: {
+          total: costUsd(model, judged.usage.inputTokens, judged.usage.outputTokens),
+        },
+      });
+      input.trace.score({
+        name: 'faithfulness',
+        value: judged.score,
+        comment: judged.reasoning || (judged.issues.length ? judged.issues.join('; ') : undefined),
+      });
+      await input.lf.flush();
+    } catch (err) {
+      console.error('faithfulness judge failed:', err instanceof Error ? err.message : err);
+    }
+  })();
+
+  // Keep the edge worker alive for the background task when the runtime supports it
+  // (Supabase Edge exposes EdgeRuntime.waitUntil). Without it, run detached best-effort.
+  const runtime = (globalThis as { EdgeRuntime?: { waitUntil?: (p: Promise<unknown>) => void } })
+    .EdgeRuntime;
+  if (runtime?.waitUntil) runtime.waitUntil(task);
+  else void task;
 }
 
 Deno.serve(async (req) => {
@@ -184,6 +264,9 @@ Deno.serve(async (req) => {
       .select('id')
       .single();
     if (logError) console.error('voice_logs insert failed:', logError.message);
+
+    // Grade parse faithfulness in the background (sampled; never blocks the reply).
+    scheduleFaithfulnessJudge({ lf, trace, transcript, result, openAiKey });
 
     return json(200, { voice_log_id: log?.id ?? null, result, telemetry });
   } catch (err) {

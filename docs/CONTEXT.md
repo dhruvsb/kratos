@@ -15,7 +15,8 @@ edge functions (`transcribe` + `parse-utterance`) now trace every call to Langfu
 dependency-free ingestion client (`supabase/functions/_shared/observability/langfuse.ts`) — the
 official SDK doesn't fit Deno edge (OTEL + background flush). Session-linked (one `voice_session_id`
 groups transcribe+parse into one Langfuse session), with ASR **per-minute** cost (`asrCostUsd` in
-`prices.ts`), parse token/cost telemetry, and a `parse_confidence` score. **Safe no-op until the
+`prices.ts`), parse token/cost telemetry, a `parse_confidence` score, and an **LLM-as-judge
+`faithfulness` score** (background via `EdgeRuntime.waitUntil`, sampled, off by default). **Safe no-op until the
 `LANGFUSE_*` secrets are set** — functions behave exactly as before. `tsc` clean; edge functions are
 Deno (excluded from tsc). **To activate:** `supabase secrets set LANGFUSE_{PUBLIC,SECRET}_KEY … LANGFUSE_BASE_URL`
 then `supabase functions deploy transcribe parse-utterance` (see PHASE2 §11). Prior: **APP SUBMITTED to the App Store — status "Waiting for Review"**
@@ -362,6 +363,7 @@ logging via an LLM pipeline, **3** TBD (PRs/charts).
 | **Light theme (#17) + System·Light·Dark toggle** | ✅ **Built + simulator-verified 2026-08-08** — real "Greige + Moss" light palette (`design_handoff_light_mode/`) in `tokens.ts`; all ~28 screens/components read `useTheme()` (memoized `makeStyles` factory); semantic `cta*`/`check*` tokens + `KeyCap` theme-branch carry the 4 non-swap rules so **dark is unchanged**; Settings → APPEARANCE → Theme + theme-aware `_layout` chrome. **Walked on the iOS simulator** (Home / active workout / Calendar / Settings; both CTA + ✓-chip rules confirmed; toggle flips the app live; dark byte-identical). `tsc` + web-export green. Not yet on physical device (installed Release build has old JS bundled — needs a rebuild). |
 | Phase 2 voice pipeline (extraction → resolution → kg) | ✅ Built; edge fn deployed + auth-guarded; **unwired from manual UI** (returns later) |
 | **Langfuse LLM observability (voice pipeline)** | ✅ **Built 2026-08-17** — both edge functions traced (`voice.transcribe` + `voice.parse`), session-linked, ASR per-minute cost + parse tokens/cost + `parse_confidence` score, via a dependency-free ingestion client (safe no-op without the secrets). **Activate:** set `LANGFUSE_*` secrets + redeploy the two functions. Not yet confirmed against a live Langfuse project. See PHASE2 §11. |
+| **LLM-as-judge faithfulness eval** | ✅ **Built 2026-08-17** — after each parse, a background (`EdgeRuntime.waitUntil`, zero added latency) sampled LLM call grades transcript→parse faithfulness 0–1 and attaches it as a `faithfulness` score on the Langfuse trace. Off by default; **enable** with `FAITHFULNESS_JUDGE_SAMPLE_RATE` (+ optional `FAITHFULNESS_JUDGE_MODEL`). Reuses the pipeline's `LlmClient` (no second SDK). See PHASE2 §11. |
 | Native iOS Release build on physical iPhone 15 | ✅ **Installed + running 2026-08-08** — free Apple Personal Team (`TUR974K866`), no cable needed day-to-day, 7-day cert (reinstall route in `WORK-LOG.md`). |
 | First OTP login + on-device smoke test of the manual loop | 🟡 **Partial** — app runs on real hardware, signed in via a persisted session, and **#1 History nav** + **#10 tab transitions** verified live. Still to do: a real OTP sign-in from scratch (8-digit code now supported) and walk the full loop (start routine → log sets via ✓ and keypad → finish → History → progress). |
 | Eval baseline (`npm run eval`) | ❌ Never run against the real API (Phase 2 concern) |
@@ -477,7 +479,9 @@ native-`UITabBar` drag-lens glass — deferred, keeping the custom pill+FAB.
       self-host, then `supabase secrets set LANGFUSE_PUBLIC_KEY=… LANGFUSE_SECRET_KEY=… LANGFUSE_BASE_URL=…`
       and `supabase functions deploy transcribe parse-utterance`. Record a voice log and confirm the
       transcribe+parse traces appear under one session in Langfuse. Code is done + `tsc`-clean; only the
-      secrets + a redeploy remain (see PHASE2 §11).
+      secrets + a redeploy remain (see PHASE2 §11). To also turn on the **faithfulness judge**, set
+      `FAITHFULNESS_JUDGE_SAMPLE_RATE=1.0` and redeploy `parse-utterance` — then check the `faithfulness`
+      score on each `voice.parse` trace.
 - [ ] *(Phase 2, when voice resumes)* Apply migration `0003` to the live DB; run `npm run eval`.
 - [ ] Replace temporary Gmail SMTP with a dedicated provider before any external-user testing.
 - [x] ~~See light mode on device~~ — **done on the iOS simulator 2026-08-08**: walked Home, active

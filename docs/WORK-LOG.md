@@ -34,6 +34,13 @@ in Langfuse (latency, cost, tokens, input/output, errors, a confidence score).
 - **Config:** `.env.example` documents the three `supabase secrets set LANGFUSE_*` commands
   (keys from cloud.langfuse.com free tier or a self-host). Nothing to deploy beyond the
   secrets + a `supabase functions deploy transcribe parse-utterance`.
+- **LLM-as-judge faithfulness eval** (`_shared/observability/faithfulness.ts`): the quality
+  signal telemetry can't give — a parse can be fast/cheap and still wrong. After each parse an
+  extra LLM call grades the (transcript → parsed JSON) pair 0–1 and attaches a **`faithfulness`
+  score** + a `judge.faithfulness` generation (own cost line) to the trace. Reuses the pipeline's
+  `LlmClient` seam (no second SDK), runs **in the background** (`EdgeRuntime.waitUntil` — zero
+  added parse latency), and is **sampled + off by default** (`FAITHFULNESS_JUDGE_SAMPLE_RATE`,
+  judge model via `FAITHFULNESS_JUDGE_MODEL`) since it's an extra paid call per parse.
 - **Verified:** `tsc --noEmit` clean (client). Edge functions are Deno (excluded from tsc, no
   `deno` binary in this env) — reviewed against the Deno runtime API. **Not yet exercised
   against a live Langfuse project** (owner sets the secrets + deploys).
