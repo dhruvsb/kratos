@@ -7,6 +7,26 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-20 — Connected to GitHub; reconciled local + cloud history
+
+`origin` (`github.com/dhruvsb/kratos`) had a `main` with unrelated placeholder history (web-UI
+uploads, no real dev history) plus a separate `claude/llm-performance-monitoring-9gvh7c` branch
+holding real Langfuse/faithfulness-eval work from a cloud Claude Code session. Reconciled:
+
+- `build/` (Xcode intermediates — module caches, `.scan` files, one 174MB `.a`) had been
+  accidentally committed on local `master`, both bloating the repo and (once `origin/main` was
+  overwritten) blocking the push on GitHub's 100MB file-size limit. Gitignored `build/` and used
+  `git filter-repo --path build --invert-paths` to strip it from every commit on `master`
+  (rewrites `master` from `03c7288` onward; the other two local branches don't descend from that
+  commit and are untouched).
+- Force-pushed local `master` → `origin/main` — local `master` is now the source of truth on
+  GitHub, replacing the placeholder history.
+- Cherry-picked the two Langfuse/faithfulness commits from `claude/llm-performance-monitoring-9gvh7c`
+  onto `master` (clean, no conflicts) and fast-forward-pushed — see the 2026-08-17 entry below for
+  what that work does. `tsc --noEmit` clean after the merge.
+- `origin/claude/llm-performance-monitoring-9gvh7c` is now fully superseded/mergeable — left as-is
+  pending a decision on whether to delete it.
+
 ## 2026-08-17 — Langfuse LLM observability wired into the voice pipeline
 
 Answered a "how do I monitor my LLM performance" question by building it: full Langfuse

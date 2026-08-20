@@ -10,7 +10,13 @@ codebase or a huge prior conversation.
 > issues**) *and* append a dated entry to [`WORK-LOG.md`](./WORK-LOG.md). This file is the
 > snapshot; `WORK-LOG.md` is the full history. Keep this file short.
 
-**Last updated:** 2026-08-17 — **Langfuse LLM observability wired into the voice pipeline.** Both
+**Last updated:** 2026-08-20 — **Connected to GitHub** (`github.com/dhruvsb/kratos`); `master` is
+now pushed as `origin/main` (replacing unrelated placeholder history that was there from web-UI
+uploads). Stripped accidentally-committed `build/` (Xcode intermediates) from git history via
+`filter-repo` — it was blocking the push on GitHub's file-size limit. Cherry-picked the Langfuse
+observability work in from a cloud Claude Code session (see 2026-08-17 entry) — it's now on
+`master`. See [`WORK-LOG.md`](./WORK-LOG.md) 2026-08-20 for details. Prior: **Langfuse LLM
+observability wired into the voice pipeline.** Both
 edge functions (`transcribe` + `parse-utterance`) now trace every call to Langfuse through a
 dependency-free ingestion client (`supabase/functions/_shared/observability/langfuse.ts`) — the
 official SDK doesn't fit Deno edge (OTEL + background flush). Session-linked (one `voice_session_id`
