@@ -41,7 +41,8 @@ still paused mid-implementation; see the top entries in `WORK-LOG.md`.
 | Native Expo development client | ✅ Built, signed, installed, trusted, and launches on iPhone 15 |
 | Voice capture UI: mic button, on-device STT, confirmation card, ambiguity chips, unmatched-exercise flow, undo snackbar | ✅ Built — **on-device voice workflow not yet exercised because first login is still pending** |
 | Telemetry dev screen (`/dev/telemetry`): acceptance rate, edit rate by field, ambiguity rate, p50/p95 latency, cost vs. budget | ✅ Done |
-| **Langfuse LLM observability** (both edge functions traced; session-linked; ASR cost + parse tokens/cost + confidence score) | ✅ Built 2026-08-17 (see §11) — activate with the `LANGFUSE_*` secrets |
+| **Langfuse LLM observability** (both edge functions traced; session-linked; ASR cost + parse tokens/cost + confidence score) | ✅ **LIVE 2026-08-20** (see §11) — Cloud (US) project active, functions deployed, verified via eval bridge |
+| **Offline eval → Langfuse experiments** (golden set as a dataset; runs logged with per-case scores) | ✅ Built 2026-08-20 (see §12) — `npm run eval:dataset` + `npm run eval -- --langfuse` |
 | **LLM-as-judge faithfulness eval** (background, sampled; scores transcript→parse faithfulness onto the Langfuse trace) | ✅ Built 2026-08-17 (see §11) — enable with `FAITHFULNESS_JUDGE_SAMPLE_RATE` |
 | Voice-first v2 redesign (Home, Voice console, Floor mode resting/PR, Correction drawer) | ✅ Built 2026-07-20, see §8 — History/Settings screens still Phase 1 unstyled |
 
@@ -465,7 +466,30 @@ To also turn on the faithfulness judge, add:
 supabase secrets set FAITHFULNESS_JUDGE_SAMPLE_RATE=1.0   # every parse; use 0.2 for 20% sampling
 supabase functions deploy parse-utterance
 ```
-Keys come from Langfuse → Settings → API Keys (free tier at cloud.langfuse.com). Left to do:
-set the secrets against a real project and confirm traces + faithfulness scores land; consider
-registering the model prices in Langfuse (our model ids are fictional, so cost is supplied via
-`costDetails`).
+Keys come from Langfuse → Settings → API Keys (free tier at cloud.langfuse.com).
+
+**Status — LIVE (2026-08-20).** A Langfuse Cloud (US) project is active; all three `LANGFUSE_*`
+secrets are set and both functions are deployed. Faithfulness judge is ON at sample rate `1.0`
+(every parse). Verified end-to-end via the offline eval bridge — traces carry the raw transcript
+as input and 6 scores/trace attach (see §12). Because the model ids are fictional, cost is supplied
+directly via `costDetails` (no Langfuse model-price table needed). **Only remaining:** watch a real
+on-device voice log land as a live `voice.transcribe`+`voice.parse` session (pending the device
+walkthrough).
+
+## 12. Offline eval → Langfuse experiments (2026-08-20)
+
+The offline golden-set eval (`eval/`, unchanged scoring) now also logs to Langfuse so parse
+quality is trackable over time and comparable across models/prompts in the UI — the offline
+counterpart to the online faithfulness judge (§11).
+
+- `eval/langfuse.ts` — Node-side Langfuse client (official `langfuse` SDK, **devDependency**, only
+  ever loaded by these `tsx` scripts, never bundled into the Expo client) + the canonical dataset
+  name `kratos-golden-v1` and stable per-item ids.
+- `npm run eval:dataset` (`eval/push-dataset.ts`) — upserts `eval/golden/v1.jsonl` as a Langfuse
+  Dataset (idempotent; re-run after editing the golden set).
+- `npm run eval -- --langfuse [--run-name=…]` — per case, emits a trace (transcript in, parse out)
+  linked to its dataset item under a run name, with per-case scores `pass` / `field_accuracy` /
+  `intent_match` / `ambiguity_correct` / `cost_usd` / `latency_ms`. One run per model; `--compare`
+  makes two comparable runs. Still writes the local `.md` report.
+- First run: "first-verify", **98.9%** field accuracy (188/190), 4 real failures surfaced. See
+  `eval/README.md` → "Langfuse experiment mode".

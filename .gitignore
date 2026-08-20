@@ -45,6 +45,9 @@ example
 # Xcode build intermediates (regenerable, huge)
 /build
 
+# Eval run reports (regenerable via `npm run eval`)
+eval/reports/
+
 # env files (secrets)
 .env
 .env.local

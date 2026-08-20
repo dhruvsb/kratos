@@ -7,6 +7,32 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-20 — Langfuse activated (live) + offline eval → Langfuse experiments
+
+Took the merged-but-dormant Langfuse work (see 2026-08-17) all the way live, and built the
+offline-eval → Langfuse bridge so parse quality is trackable in one platform.
+
+- **Activated live tracing.** Created a Langfuse Cloud (US) project, set the three
+  `LANGFUSE_*` secrets in Supabase (`supabase secrets set`), and redeployed `transcribe` +
+  `parse-utterance`. Both now emit session-linked traces on every real voice call (raw
+  transcript in, parsed sets out, ASR per-minute cost + parse tokens/cost/latency,
+  `parse_confidence` score). Gotcha: the first `secrets set` only landed `LANGFUSE_SECRET_KEY`
+  (public key + base URL missing on the first pass) — re-set the two from `.env` via shell
+  substitution, then confirmed all three via `supabase secrets list`.
+- **Faithfulness judge ON** — `FAITHFULNESS_JUDGE_SAMPLE_RATE=1.0` (grade every parse), running
+  in the background so it never adds parse latency. Dial the rate down if per-parse cost matters.
+- **Offline eval → Langfuse experiments (new).** `eval/langfuse.ts` (official SDK, devDep, never
+  bundled), `eval/push-dataset.ts` (`npm run eval:dataset` → dataset `kratos-golden-v1`, idempotent),
+  and `eval/run.ts --langfuse [--run-name=]` (per case: a trace linked to its dataset item with
+  `pass`/`field_accuracy`/`intent_match`/`ambiguity_correct`/`cost_usd`/`latency_ms` scores; one run
+  per model; still writes the local `.md`). Offline counterpart to the online judge.
+- **Verified end-to-end.** Pushed the 50-item dataset, ran experiment "first-verify"
+  (**98.9%** field accuracy, 4 real failures surfaced), and confirmed via the Langfuse API that the
+  run registered, traces carry the raw transcript as input, and 6 scores/trace attach. (Eval bridge
+  committed `bf3704b`; activation is infra-side — secrets + deploy, no further code.)
+- **Not yet:** a real on-device voice log producing a live `voice.transcribe`+`voice.parse` session
+  in Langfuse — blocked on the same pending device walkthrough as the manual loop.
+
 ## 2026-08-20 — Progress screen scaffolding (key-lifts progression board)
 
 New **Progress** page (`src/app/progress.tsx`, route `/progress`) — Phase-3 scaffolding for

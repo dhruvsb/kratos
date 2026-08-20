@@ -10,7 +10,13 @@ codebase or a huge prior conversation.
 > issues**) *and* append a dated entry to [`WORK-LOG.md`](./WORK-LOG.md). This file is the
 > snapshot; `WORK-LOG.md` is the full history. Keep this file short.
 
-**Last updated:** 2026-08-20 — **Progress screen scaffolding shipped (code).** New `/progress`
+**Last updated:** 2026-08-20 — **Langfuse LLM observability is now LIVE.** Langfuse Cloud (US)
+project active; all three `LANGFUSE_*` secrets set + both voice edge functions deployed, so every
+live transcribe+parse is a session-linked trace (raw transcript in, parsed sets out, tokens/cost/
+latency). Faithfulness judge ON (every parse). Offline eval bridge added: golden set → Langfuse
+dataset `kratos-golden-v1` + `npm run eval -- --langfuse` experiment runs (verified: "first-verify"
+run, 98.9% field acc, traces+scores confirmed via API). Only a real on-device voice session remains
+to watch land in Langfuse. Prior: **Progress screen scaffolding shipped (code).** New `/progress`
 page (`src/app/progress.tsx`) + `src/data/progression.ts` + `useKeyLiftProgress()`: 12 curated
 headline lifts in 4 muscle groups (Chest/Back/Quads/Hamstring, 3 each), each card showing BEST /
 LAST / suggested NEXT TARGET, tap → `/exercise/[id]`. Reached from a new "KEY LIFTS · PROGRESS"
@@ -374,8 +380,9 @@ logging via an LLM pipeline, **3** TBD (PRs/charts).
 | Two-theme white/dark patchwork | ✅ **Resolved** — every screen is now dark; `_layout` header config dropped |
 | **Light theme (#17) + System·Light·Dark toggle** | ✅ **Built + simulator-verified 2026-08-08** — real "Greige + Moss" light palette (`design_handoff_light_mode/`) in `tokens.ts`; all ~28 screens/components read `useTheme()` (memoized `makeStyles` factory); semantic `cta*`/`check*` tokens + `KeyCap` theme-branch carry the 4 non-swap rules so **dark is unchanged**; Settings → APPEARANCE → Theme + theme-aware `_layout` chrome. **Walked on the iOS simulator** (Home / active workout / Calendar / Settings; both CTA + ✓-chip rules confirmed; toggle flips the app live; dark byte-identical). `tsc` + web-export green. Not yet on physical device (installed Release build has old JS bundled — needs a rebuild). |
 | Phase 2 voice pipeline (extraction → resolution → kg) | ✅ Built; edge fn deployed + auth-guarded; **unwired from manual UI** (returns later) |
-| **Langfuse LLM observability (voice pipeline)** | ✅ **Built 2026-08-17** — both edge functions traced (`voice.transcribe` + `voice.parse`), session-linked, ASR per-minute cost + parse tokens/cost + `parse_confidence` score, via a dependency-free ingestion client (safe no-op without the secrets). **Activate:** set `LANGFUSE_*` secrets + redeploy the two functions. Not yet confirmed against a live Langfuse project. See PHASE2 §11. |
-| **LLM-as-judge faithfulness eval** | ✅ **Built 2026-08-17** — after each parse, a background (`EdgeRuntime.waitUntil`, zero added latency) sampled LLM call grades transcript→parse faithfulness 0–1 and attaches it as a `faithfulness` score on the Langfuse trace. Off by default; **enable** with `FAITHFULNESS_JUDGE_SAMPLE_RATE` (+ optional `FAITHFULNESS_JUDGE_MODEL`). Reuses the pipeline's `LlmClient` (no second SDK). See PHASE2 §11. |
+| **Langfuse LLM observability (voice pipeline)** | ✅ **LIVE 2026-08-20** — Langfuse Cloud (US) project active; both edge functions deployed + traced (`voice.transcribe` + `voice.parse`), session-linked, ASR per-minute cost + parse tokens/cost + `parse_confidence` score. Verified end-to-end via the eval bridge (traces + scores confirmed via API). Live on-device voice session still to be observed. See PHASE2 §11. |
+| **LLM-as-judge faithfulness eval** | ✅ **LIVE 2026-08-20** — `FAITHFULNESS_JUDGE_SAMPLE_RATE=1.0` (every parse), background via `EdgeRuntime.waitUntil` (zero added latency), grades transcript→parse faithfulness 0–1 onto the trace. Dial down the sample rate if cost matters. See PHASE2 §11. |
+| **Langfuse eval experiments (offline)** | ✅ **Built 2026-08-20** — `npm run eval:dataset` pushes the 50-case golden set as dataset `kratos-golden-v1`; `npm run eval -- --langfuse` logs each run as a comparable experiment (per-case `pass`/`field_accuracy`/`intent_match`/`ambiguity_correct`/`cost_usd`/`latency_ms` scores). First run "first-verify" = 98.9% field acc. See `eval/README.md`. |
 | Native iOS Release build on physical iPhone 15 | ✅ **Installed + running 2026-08-08** — free Apple Personal Team (`TUR974K866`), no cable needed day-to-day, 7-day cert (reinstall route in `WORK-LOG.md`). |
 | First OTP login + on-device smoke test of the manual loop | 🟡 **Partial** — app runs on real hardware, signed in via a persisted session, and **#1 History nav** + **#10 tab transitions** verified live. Still to do: a real OTP sign-in from scratch (8-digit code now supported) and walk the full loop (start routine → log sets via ✓ and keypad → finish → History → progress). |
 | Eval baseline (`npm run eval`) | ❌ Never run against the real API (Phase 2 concern) |
@@ -487,13 +494,12 @@ native-`UITabBar` drag-lens glass — deferred, keeping the custom pill+FAB.
 - [ ] Log ~4 real workouts on-device (the real "done" bar for the manual tracker) — this also
       populates the new **Calendar** tab; verify the week card / month grid / 12-week bars read
       right against real workout days.
-- [ ] **Activate Langfuse monitoring** — create a project at cloud.langfuse.com (free tier) or
-      self-host, then `supabase secrets set LANGFUSE_PUBLIC_KEY=… LANGFUSE_SECRET_KEY=… LANGFUSE_BASE_URL=…`
-      and `supabase functions deploy transcribe parse-utterance`. Record a voice log and confirm the
-      transcribe+parse traces appear under one session in Langfuse. Code is done + `tsc`-clean; only the
-      secrets + a redeploy remain (see PHASE2 §11). To also turn on the **faithfulness judge**, set
-      `FAITHFULNESS_JUDGE_SAMPLE_RATE=1.0` and redeploy `parse-utterance` — then check the `faithfulness`
-      score on each `voice.parse` trace.
+- [x] ~~**Activate Langfuse monitoring**~~ — **DONE 2026-08-20**. Langfuse Cloud (US) project live;
+      all three `LANGFUSE_*` secrets set + both functions deployed; faithfulness judge ON
+      (`FAITHFULNESS_JUDGE_SAMPLE_RATE=1.0`). Verified via the offline eval bridge (dataset +
+      "first-verify" experiment run, traces + 6 scores/trace confirmed via API). **Still to confirm:**
+      a real on-device voice log producing a live `voice.transcribe`+`voice.parse` session (needs the
+      device walkthrough that's still pending).
 - [ ] *(Phase 2, when voice resumes)* Apply migration `0003` to the live DB; run `npm run eval`.
 - [ ] Replace temporary Gmail SMTP with a dedicated provider before any external-user testing.
 - [x] ~~See light mode on device~~ — **done on the iOS simulator 2026-08-08**: walked Home, active
