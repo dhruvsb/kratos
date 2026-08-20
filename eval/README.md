@@ -70,6 +70,32 @@ have just changed their mind).
 npx tsx scripts/harvest-eval-cases.ts
 ```
 
+## Langfuse experiment mode (accuracy over time, in the UI)
+
+The local markdown report is a point-in-time snapshot. To track parse quality **over
+time** and compare models/prompts in one place, push the golden set to Langfuse as a
+**Dataset** and log each eval run against it as an **experiment run**:
+
+```
+npm run eval:dataset              # one-time (and after editing v1.jsonl): upsert the
+                                  # golden set as Langfuse dataset "kratos-golden-v1"
+npm run eval -- --langfuse        # run + log each case as a trace linked to the dataset,
+                                  # with per-case scores; one run per model
+npm run eval -- --langfuse --compare              # both models = two comparable runs
+npm run eval -- --langfuse --run-name=prompt-v2   # name the run (e.g. before/after a change)
+```
+
+Needs `LANGFUSE_PUBLIC_KEY` / `LANGFUSE_SECRET_KEY` (+ optional `LANGFUSE_BASE_URL`) in
+`.env` — the same key pair set as Supabase secrets for the live edge functions. Each run
+appears under **Datasets → kratos-golden-v1 → Runs** with these per-case scores:
+`pass`, `field_accuracy`, `intent_match`, `ambiguity_correct`, `cost_usd`, `latency_ms`.
+Langfuse aggregates them per run, so two runs sit side by side and a regression is visible
+at a glance. The run still writes the local `.md` report too — nothing is lost.
+
+This is the **offline** eval (golden set, no user data). It's complementary to the
+**online** `faithfulness` judge that scores real production parses on their own Langfuse
+traces (see `supabase/functions/_shared/observability/faithfulness.ts`).
+
 ## Model comparison
 
 `npm run eval:compare` runs the full golden set against both `PARSE_MODEL_DEFAULT`

@@ -6,14 +6,20 @@
  *   npm run eval            # score PARSE_MODEL_DEFAULT (gpt-5.6-luna)
  *   npm run eval:compare    # score PARSE_MODEL_DEFAULT and PARSE_MODEL_MID (gpt-5.6-terra),
  *                           # report accuracy vs cost per 1,000 parses side by side
+ *   npm run eval -- --langfuse            # ALSO log each run to Langfuse as an experiment
+ *   npm run eval -- --langfuse --run-name=my-run   # ...under an explicit run name
  *
- * Needs OPENAI_API_KEY in .env. Exercise matching runs against the 25-item
- * fixture in eval/golden/fixtures/exercises.json, not the real seeded library —
- * see eval/README.md for why, and how to point this at real data later.
+ * Needs OPENAI_API_KEY in .env. `--langfuse` additionally needs LANGFUSE_* in .env
+ * and the golden set already pushed as a dataset (`npm run eval:dataset`). Exercise
+ * matching runs against the 25-item fixture in eval/golden/fixtures/exercises.json,
+ * not the real seeded library — see eval/README.md for why, and how to point this at
+ * real data later.
  */
 import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { config } from 'dotenv';
+import type { Langfuse } from 'langfuse';
+import { GOLDEN_DATASET, datasetItemId, makeLangfuse, LANGFUSE_ENV_HINT } from './langfuse';
 import {
   parseContextSchema,
   type Intent,
@@ -88,6 +94,8 @@ interface CaseScore {
   costUsd: number;
   latencyMs: number;
   error?: string;
+  /** The raw pipeline output (for Langfuse trace output); undefined on error. */
+  parseResult?: unknown;
 }
 
 function loadGolden(): GoldenCase[] {
@@ -160,6 +168,7 @@ async function runCase(
       fieldChecks,
       costUsd: telemetry.cost_usd,
       latencyMs: telemetry.latency_ms,
+      parseResult: result,
     };
   } catch (err) {
     return {
@@ -323,6 +332,68 @@ function renderReport(summaries: Summary[]): string {
   return lines.join('\n');
 }
 
+// Per-case field accuracy (0–1). Cases that assert no fields (e.g. ambiguous ones
+// that should only ask) count as 1 — their signal is intent/ambiguity, not fields.
+function caseFieldAccuracy(score: CaseScore): number {
+  if (score.fieldChecks.length === 0) return 1;
+  return score.fieldChecks.filter((c) => c.match).length / score.fieldChecks.length;
+}
+
+function caseIsPass(score: CaseScore): boolean {
+  return (
+    !score.error &&
+    score.intentMatch &&
+    score.mustAskMatch &&
+    score.entryCountMatch &&
+    score.fieldChecks.every((c) => c.match)
+  );
+}
+
+// A dataset item, narrowed to the one method we use (link a trace into a run).
+interface LinkableItem {
+  id: string;
+  link: (obj: object, runName: string, args?: { metadata?: unknown }) => Promise<unknown>;
+}
+
+// Handle to a Langfuse experiment run: the client, the dataset items (for linking),
+// and the run name that groups this invocation's cases in the UI.
+interface LangfuseRun {
+  langfuse: Langfuse;
+  runName: string;
+  itemByCaseId: Map<string, LinkableItem>;
+}
+
+// Emit one Langfuse trace for a scored case and link it into the dataset run, with
+// per-case scores (pass / field_accuracy / intent / ambiguity / cost / latency).
+async function emitLangfuseCase(run: LangfuseRun, golden: GoldenCase, score: CaseScore): Promise<void> {
+  const { langfuse, runName } = run;
+  const trace = langfuse.trace({
+    name: 'eval.parse',
+    input: { transcript: golden.transcript, context: golden.context ?? {} },
+    output: score.parseResult ?? { error: score.error ?? 'unknown' },
+    metadata: { case_id: golden.id, category: golden.category, run: runName },
+    tags: ['eval', golden.category],
+  });
+
+  const pass = caseIsPass(score);
+  trace.score({ name: 'pass', value: pass ? 1 : 0 });
+  trace.score({ name: 'field_accuracy', value: caseFieldAccuracy(score) });
+  trace.score({ name: 'intent_match', value: score.intentMatch ? 1 : 0 });
+  trace.score({ name: 'ambiguity_correct', value: score.mustAskMatch ? 1 : 0 });
+  trace.score({ name: 'cost_usd', value: score.costUsd });
+  trace.score({ name: 'latency_ms', value: score.latencyMs });
+  if (score.error) {
+    trace.score({ name: 'pipeline_error', value: 1, comment: score.error });
+  }
+
+  // Link the trace to its golden dataset item so it shows up under this run in the
+  // dataset's "Runs" view. Skipped (with a warning) if the item isn't in the dataset.
+  const item = run.itemByCaseId.get(golden.id);
+  if (item) {
+    await item.link(trace, runName, { metadata: { pass } });
+  }
+}
+
 async function main() {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
@@ -331,21 +402,62 @@ async function main() {
   }
 
   const compare = process.argv.includes('--compare');
+  const useLangfuse = process.argv.includes('--langfuse');
+  const runNameArg = process.argv.find((a) => a.startsWith('--run-name='))?.split('=')[1];
   const models = compare ? [PARSE_MODEL_DEFAULT, PARSE_MODEL_MID] : [PARSE_MODEL_DEFAULT];
   const golden = loadGolden();
+
+  // Set up the Langfuse experiment once (shared across models). Each model becomes
+  // its own run name so the dataset's Runs view compares them side by side.
+  let langfuse: Langfuse | null = null;
+  const itemByCaseId = new Map<string, LinkableItem>();
+  if (useLangfuse) {
+    langfuse = makeLangfuse();
+    if (!langfuse) {
+      console.error(`--langfuse given but Langfuse is not configured.\n${LANGFUSE_ENV_HINT}`);
+      process.exit(1);
+    }
+    try {
+      const dataset = await langfuse.getDataset(GOLDEN_DATASET);
+      for (const it of dataset.items) {
+        // Recover the case id from the item's stable id (datasetItemId(caseId)).
+        const caseId = golden.find((g) => datasetItemId(g.id) === it.id)?.id;
+        if (caseId) itemByCaseId.set(caseId, it as unknown as LinkableItem);
+      }
+      console.log(`Langfuse: dataset "${GOLDEN_DATASET}" has ${itemByCaseId.size}/${golden.length} matching items.`);
+      if (itemByCaseId.size === 0) {
+        console.warn('  No items matched — did you run `npm run eval:dataset` first? Traces will still be logged, just not linked to the dataset.');
+      }
+    } catch (err) {
+      console.warn(`Langfuse: could not load dataset "${GOLDEN_DATASET}" (${err instanceof Error ? err.message : err}). Traces will be logged unlinked.`);
+    }
+  }
+
+  const runStamp = new Date().toISOString().slice(0, 16).replace(':', '');
 
   const summaries: Summary[] = [];
   for (const model of models) {
     console.log(`\nRunning ${golden.length} cases against ${model}...`);
     const catalog = loadCatalog(); // fresh instance per model — no shared state
     const scores: CaseScore[] = [];
+    const lfRun: LangfuseRun | null = langfuse
+      ? { langfuse, runName: runNameArg ? (compare ? `${runNameArg}-${model}` : runNameArg) : `${model}@${runStamp}`, itemByCaseId }
+      : null;
     for (const goldenCase of golden) {
       const score = await runCase(goldenCase, model, apiKey, catalog);
       scores.push(score);
+      if (lfRun) await emitLangfuseCase(lfRun, goldenCase, score);
       process.stdout.write(score.error ? 'E' : score.fieldChecks.every((c) => c.match) && score.intentMatch && score.mustAskMatch ? '.' : 'F');
     }
     console.log('');
+    if (lfRun) console.log(`Langfuse run logged: "${lfRun.runName}"`);
     summaries.push(summarize(model, scores));
+  }
+
+  if (langfuse) {
+    await langfuse.flushAsync();
+    const base = (process.env.LANGFUSE_BASE_URL ?? 'https://cloud.langfuse.com').replace(/\/+$/, '');
+    console.log(`\nLangfuse experiment: ${base} → Datasets → ${GOLDEN_DATASET} → Runs`);
   }
 
   const report = renderReport(summaries);

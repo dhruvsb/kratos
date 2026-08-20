@@ -58,6 +58,7 @@
     "@resvg/resvg-js": "^2.6.2",
     "@types/react": "~19.2.2",
     "dotenv": "^17.4.2",
+    "langfuse": "^3.38.20",
     "tsx": "^4.23.1",
     "typescript": "~6.0.3"
   },
@@ -75,6 +76,7 @@
     "build:icons": "tsx scripts/build-app-icons.ts",
     "eval": "tsx eval/run.ts",
     "eval:compare": "tsx eval/run.ts --compare",
+    "eval:dataset": "tsx eval/push-dataset.ts",
     "parse-cli": "tsx scripts/parse-cli.ts",
     "harvest-eval-cases": "tsx scripts/harvest-eval-cases.ts",
     "bake": "tsx bakeoff/commands/run.ts",
