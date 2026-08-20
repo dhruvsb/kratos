@@ -22,7 +22,11 @@ headline lifts in 4 muscle groups (Chest/Back/Quads/Hamstring, 3 each), each car
 LAST / suggested NEXT TARGET, tap → `/exercise/[id]`. Reached from a new "KEY LIFTS · PROGRESS"
 row on Home. Data is real (one batched `getKeyLiftProgress()` over finished-workout sets,
 modality-aware); **design intentionally basic — to be finalized later.** `tsc` clean; web-export
-19 routes; not yet on sim/device. Prior: **Connected to GitHub** (`github.com/dhruvsb/kratos`); `master` is
+19 routes. **SIM-VERIFIED (iPhone 17 Pro, Release): logged in via the reviewer demo account, all
+four groups render with live BEST→NEXT numbers + empty states, card→detail nav works.** New
+**[`docs/SIM-WALKTHROUGH.md`](./SIM-WALKTHROUGH.md)** documents the demo login (`appreview@kratos.app`)
++ the three stale-`voice_app`-path build fixes + the Xcode-26 "build Release" workaround — so sim
+runs don't stall on login or re-derive build blockers. Prior: **Connected to GitHub** (`github.com/dhruvsb/kratos`); `master` is
 now pushed as `origin/main` (replacing unrelated placeholder history that was there from web-UI
 uploads). Stripped accidentally-committed `build/` (Xcode intermediates) from git history via
 `filter-repo` — it was blocking the push on GitHub's file-size limit. Cherry-picked the Langfuse

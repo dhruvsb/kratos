@@ -58,7 +58,21 @@ Data is real, reusing the same finished-workout sets everything else reads:
 **Design is intentionally basic** (built from existing tokens/components) and meant to be
 finalized later — this is the scaffolding pass. New typed route required a router-typegen
 refresh (`expo start` regenerates `.expo/types/router.d.ts`). `tsc` clean; `expo export --platform
-web` bundles all **19** routes (incl. `/progress`). Not yet run on the simulator/device.
+web` bundles all **19** routes (incl. `/progress`).
+
+**SIM-VERIFIED (same day, iPhone 17 Pro sim, Release build):** signed in with the reviewer demo
+account → Home shows the new **"KEY LIFTS · PROGRESS"** row → Progress screen renders all four
+groups with real data: Barbell Bench Press BEST 77.5×8 → NEXT **80×8** (17d ago), Barbell Back
+Squat 107.5×6 → **110×6**, Lying Leg Curl 45×10 → **47.5×10**, Dumbbell Bench 30×10 → **32.5×10**;
+un-logged lifts show the empty state; tapping a card opens `/exercise/[id]`. The +2.5 kg next-target
+suggestion and days-ago labels are correct.
+
+Getting it onto the sim cleared **three stale-path build blockers** (the repo moved from
+`~/voice_app` → `~/Projects/Kratos`): a stale `.DerivedData` module cache, a missing generated
+codegen file (from over-deleting `ios/build`), and a baked `HERMES_CLI_PATH` in the Pods xcconfigs.
+Also hit the **Xcode-26 Debug-dylib `SwiftUICore` link bug** → built **Release** to sidestep it. All
+of this + the **demo-login walkthrough** is now documented in
+[`docs/SIM-WALKTHROUGH.md`](./SIM-WALKTHROUGH.md) so future sim runs don't re-derive it.
 
 ## 2026-08-20 — Connected to GitHub; reconciled local + cloud history
 
