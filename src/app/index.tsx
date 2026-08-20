@@ -19,7 +19,7 @@ import { useWorkoutDays } from '@/data/calendar';
 import { useWorkoutList, useWorkoutPrCounts } from '@/data/hooks';
 import { addDays, mondayOf, startOfDay } from '@/lib/dates';
 import { computeStreak, type HeatCell } from '@/lib/streak';
-import { font, space, tracking, type Theme } from '@/theme/tokens';
+import { font, radius, space, tracking, type Theme } from '@/theme/tokens';
 import { useTheme } from '@/theme/ThemeProvider';
 
 const DOW = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
@@ -141,6 +141,12 @@ export default function HomeScreen() {
             </View>
           ))}
         </View>
+
+        {/* Entry to the key-lifts progression board. */}
+        <Pressable style={styles.progressLink} onPress={() => router.push('/progress')}>
+          <Text style={styles.progressLinkText}>KEY LIFTS · PROGRESS</Text>
+          <Text style={styles.progressLinkChev}>›</Text>
+        </Pressable>
 
         {/* Centered HISTORY rule (design 3c). */}
         <View style={styles.histHead}>
@@ -267,6 +273,19 @@ const makeStyles = (color: Theme['color']) =>
     cellNum: { fontFamily: font.numMedium, fontSize: 14 },
 
     // Centered HISTORY divider
+    progressLink: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginTop: space.xxl,
+      paddingHorizontal: space.lg,
+      height: 46,
+      borderWidth: 1,
+      borderColor: color.line2,
+      borderRadius: radius.ctl,
+    },
+    progressLinkText: { fontFamily: font.numSemibold, fontSize: 10.5, letterSpacing: tracking.label, color: color.t2 },
+    progressLinkChev: { fontFamily: font.uiMedium, fontSize: 18, color: color.t3 },
     histHead: { flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: space.xxl },
     histHeadLabel: { fontFamily: font.numSemibold, fontSize: 12, letterSpacing: 1.8, color: color.t1b },
     histHeadRule: { flex: 1, height: 1, backgroundColor: color.line },

@@ -7,6 +7,33 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-20 — Progress screen scaffolding (key-lifts progression board)
+
+New **Progress** page (`src/app/progress.tsx`, route `/progress`) — Phase-3 scaffolding for
+tracking headline lifts, per Dhruv's request. Twelve curated lifts grouped into four muscle
+groups (three each): **Chest** (Barbell / Incline Barbell / Dumbbell Bench Press), **Back**
+(Deadlift, Pull-Up, Bent-Over Barbell Row), **Quads** (Barbell Back Squat, Leg Press, Leg
+Extension), **Hamstring** (Romanian Deadlift, Lying / Seated Leg Curl). Each lift renders a card:
+**BEST** (all-time top set), **LAST** (most recent session's top set + days-ago), and a
+suggested **NEXT TARGET** — so before, say, a chest day you can glance at where Incline Bench
+sits and what to aim for. Tapping a card opens the existing per-exercise progress screen
+(`/exercise/[id]`). Reachable via a new **"KEY LIFTS · PROGRESS"** row on Home (between the
+heatmap and history).
+
+Data is real, reusing the same finished-workout sets everything else reads:
+- `src/data/progression.ts` — the `KEY_LIFT_GROUPS` config (canonical names, matched to the
+  seed), a **batched** `getKeyLiftProgress()` (one query over all 12 lifts' sets → per-exercise
+  best / last-session top / session count, modality-aware via the same metric rules as
+  `exercise/[id].tsx`), and a naive `suggestNextTarget()` (weighted: +2.5 kg same reps;
+  bodyweight: +1 rep; time: +10 s).
+- `useKeyLiftProgress()` in `hooks.ts` resolves the curated names against the cached exercise
+  directory (ids stay DB-owned) and fires the batched query.
+
+**Design is intentionally basic** (built from existing tokens/components) and meant to be
+finalized later — this is the scaffolding pass. New typed route required a router-typegen
+refresh (`expo start` regenerates `.expo/types/router.d.ts`). `tsc` clean; `expo export --platform
+web` bundles all **19** routes (incl. `/progress`). Not yet run on the simulator/device.
+
 ## 2026-08-20 — Connected to GitHub; reconciled local + cloud history
 
 `origin` (`github.com/dhruvsb/kratos`) had a `main` with unrelated placeholder history (web-UI

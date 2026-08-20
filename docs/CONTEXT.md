@@ -10,7 +10,13 @@ codebase or a huge prior conversation.
 > issues**) *and* append a dated entry to [`WORK-LOG.md`](./WORK-LOG.md). This file is the
 > snapshot; `WORK-LOG.md` is the full history. Keep this file short.
 
-**Last updated:** 2026-08-20 — **Connected to GitHub** (`github.com/dhruvsb/kratos`); `master` is
+**Last updated:** 2026-08-20 — **Progress screen scaffolding shipped (code).** New `/progress`
+page (`src/app/progress.tsx`) + `src/data/progression.ts` + `useKeyLiftProgress()`: 12 curated
+headline lifts in 4 muscle groups (Chest/Back/Quads/Hamstring, 3 each), each card showing BEST /
+LAST / suggested NEXT TARGET, tap → `/exercise/[id]`. Reached from a new "KEY LIFTS · PROGRESS"
+row on Home. Data is real (one batched `getKeyLiftProgress()` over finished-workout sets,
+modality-aware); **design intentionally basic — to be finalized later.** `tsc` clean; web-export
+19 routes; not yet on sim/device. Prior: **Connected to GitHub** (`github.com/dhruvsb/kratos`); `master` is
 now pushed as `origin/main` (replacing unrelated placeholder history that was there from web-UI
 uploads). Stripped accidentally-committed `build/` (Xcode intermediates) from git history via
 `filter-repo` — it was blocking the push on GitHub's file-size limit. Cherry-picked the Langfuse

@@ -16,6 +16,7 @@ import * as routines from './routines';
 import type { RoutineDetail } from './routines';
 import * as sets from './sets';
 import * as voice from './voice';
+import * as progression from './progression';
 import * as workouts from './workouts';
 import type { WorkoutDetail, WorkoutExerciseDetail } from './workouts';
 import type { Exercise, Workout, WorkoutSet } from '@/types/db';
@@ -252,6 +253,29 @@ export function useExerciseBests(workoutId: string | undefined, exerciseIds: str
     enabled: !!workoutId && exerciseIds.length > 0,
     staleTime: 30 * MINUTE, // the pre-workout baseline never changes for this id
   });
+}
+
+/** Key-lift progression (Progress screen). Resolves the curated canonical names to
+ *  live exercise rows via the cached directory, then batches one progression query
+ *  over them. Enabled only once the directory is loaded so ids are available. */
+export function useKeyLiftProgress() {
+  const directory = useExerciseDirectory();
+  const byName = new Map((directory.data ?? []).map((e) => [e.canonical_name, e] as const));
+  const resolved = progression.ALL_KEY_LIFT_NAMES
+    .map((name) => byName.get(name))
+    .filter((e): e is Exercise => e != null);
+  const ids = resolved.map((e) => e.id);
+
+  const query = useQuery({
+    queryKey: ['keyLiftProgress', ...ids],
+    queryFn: () => progression.getKeyLiftProgress(resolved),
+    enabled: ids.length > 0,
+    staleTime: STALE.exerciseHistory,
+  });
+
+  // Hand back the resolved directory rows too, so the screen can render names /
+  // modalities without a second directory pass.
+  return { ...query, exercisesByName: byName, directoryLoading: directory.isLoading };
 }
 
 export function useExerciseHistory(exerciseId: string | undefined) {
