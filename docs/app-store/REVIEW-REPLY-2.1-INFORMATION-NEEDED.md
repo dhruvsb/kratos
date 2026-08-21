@@ -22,74 +22,75 @@ correspondence.
 ## Paste this into the Resolution Center reply + the Notes field
 
 ```
-Hi, and thanks for reviewing Kratos. I'm the sole developer. Everything you
-asked for, in order.
+Hi, thanks for looking at Kratos. I'm the only person working on it, so I can
+answer anything else you need. Here are the seven items you asked for.
 
 1. SCREEN RECORDING
-Attached, captured on a physical iPhone 15 (iOS 26.6), beginning at app launch.
-It shows: creating an account, signing in with the demo account, the calendar /
-history view, routines and settings, starting a workout from a routine, logging
-weight, reps and sets, saving it and viewing it in history, voice logging with
-the microphone permission prompt, "Sync from Apple Health" with the Health
-permission prompt, the voice-logging toggle, and deleting an account. The app is
-free: no paid content, in-app purchases or subscriptions.
+Attached, captured on a physical iPhone 15 running iOS 26.6, starting at app
+launch. It covers creating an account, signing in with the demo account,
+the calendar and history view, routines and settings,
+starting a workout from a routine and logging weight, reps and sets, saving and
+reopening it in history, voice logging with the microphone permission
+prompt, Sync from Apple Health with the Health permission prompt, the voice
+logging switch, and deleting an account. The app is free with no in-app
+purchases, so there is no paid content.
 
-2. DEVICES / OS TESTED BEFORE SUBMISSION
-iPhone 15 and iPhone 16 on iOS 26.6 (physical devices), plus iPhone 16 Pro Max
-and iPhone 17 Pro simulators on iOS 26.x. The app is iOS-only, built with Expo
-SDK 57 / React Native.
+2. DEVICES AND OS VERSIONS TESTED
+iPhone 15 and iPhone 16 on iOS 26.6 as physical devices, plus the iPhone 16 Pro
+Max and iPhone 17 Pro simulators on iOS 26. The app is iOS only, built with Expo
+SDK 57 and React Native.
 
-3. WHAT THE APP DOES + TARGET AUDIENCE
-Kratos is a workout logger for people who lift weights. Logging sets during a
-workout is slow and fiddly, so people either skip it or lose their training
-history. Kratos makes it fast two ways: a tap-based set grid with a keypad, and
-optional voice logging (say "bench press 80 kilos for 8 reps" and it is parsed
-into a set). It also keeps routines, a curated exercise library,
-workout history, per-exercise weight progress, streaks and a calendar. It is for
-adults who train with weights and want a quick, private log.
+3. WHAT THE APP DOES AND WHO IT IS FOR
+Kratos is a workout logger for people who lift weights. Logging sets while you
+train is slow and fiddly, so people either stop doing it or lose track
+of what they lifted last time. Kratos handles that two ways: a set grid with a
+keypad, and optional voice logging, where you say something like "bench press 80
+kilos for 8 reps" and it becomes a logged set. It also keeps
+routines, an exercise library, workout history, weight progress per exercise,
+streaks and a calendar. It is for adults who lift and want a fast, private
+record.
 
-4. HOW TO SET UP AND ACCESS THE MAIN FEATURES
-Sign-in is a standard email + password. Demo credentials (also in App Review
-Information): appreview@kratos.app / KratosReview2026!
-a. On the sign-in screen, enter the demo email + password and tap Sign In. (A
-   "Forgot password?" option emails a one-time code, but you won't need it.)
-b. Core loop: from Home, tap Start or pick a routine, add exercises, log weight
-   x reps x sets with the set grid and on-screen keypad, then tap Finish for the
-   summary. Finished workouts appear on Home (calendar plus a dated history
-   list); tap one to open it, and tap an exercise inside it for that lift's
-   weight history.
-c. Voice logging (optional): tap the microphone and say a set out loud. iOS
-   prompts for microphone permission; the clip is sent over HTTPS to our server,
-   transcribed, and parsed into a set. The microphone is used only for this and
-   can be turned off in Settings.
-d. Apple Health (optional): reads (read-only) recent strength-workout summaries
-   to fill in days you forgot to log. Declining blocks nothing.
-No sample files needed. Weights show in kg by default, switchable to lb.
+4. SETTING UP AND REACHING THE MAIN FEATURES
+Sign-in is email and password. The demo account is in the App Review Information
+fields and here: appreview@kratos.app / KratosReview2026!
+a. Enter the demo email and password on the sign-in screen and tap Sign In.
+b. Main loop: from Home, tap Start or choose a routine, add exercises, log
+   weight, reps and sets with the grid and keypad, then tap Finish for the
+   summary. Finished workouts appear on Home in the calendar and history list.
+   Tap one to open it, and tap an exercise inside it for that lift's weight
+   history.
+c. Voice logging is optional. Tap the microphone and say a set out loud. iOS
+   asks for microphone permission first. The clip goes over HTTPS to our server,
+   is transcribed and parsed into a set. The microphone is used for nothing else
+   and can be turned off in Settings.
+d. Apple Health is optional and read-only. It reads recent strength workout
+   summaries so days you forgot to log still appear. Declining blocks nothing.
+No sample files needed. Weights are in kg by default, switchable to lb.
 
-5. EXTERNAL SERVICES USED FOR CORE FUNCTIONALITY
-- Supabase, for authentication, the Postgres database, and serverless Edge
-  Functions (it hosts the account, all workout data, and the voice endpoint).
-  Data is isolated per user with row-level security.
-- OpenAI, for speech-to-text and parsing of the spoken set. Audio and the
-  transcript go to OpenAI through that Edge Function purely to return the
-  transcription / parse, never for advertising or tracking, and the user gives
-  explicit in-app consent before the first upload.
-No analytics, ads, crash-reporting or tracking SDKs, and no IDFA. No data is
-sold. Both are named in the privacy policy:
+5. EXTERNAL SERVICES
+Supabase handles authentication, the Postgres database and the Edge Functions.
+It holds the account, all workout data and the server-side voice endpoint, with
+row-level security so each user only reads their own rows.
+OpenAI handles speech to text and parsing of the spoken set. The audio and the
+resulting text go through that Edge Function only to return the transcription
+and the parse, never for advertising or tracking, and the user has to agree in
+the app before the first upload.
+No analytics, advertising, crash reporting or tracking SDKs, no IDFA, and no
+data is sold. Both are named in the privacy policy:
 https://dhruvsb.github.io/kratos/legal/privacy-policy.html
 
 6. REGIONAL DIFFERENCES
-None. Same features and content in all regions, no region-gated functionality,
-no regional pricing (free worldwide), no location-based behavior. The only
-variation is the default weight unit (kg / lb), changeable in Settings.
+None. Features and content are the same in every region, nothing is
+region-gated, the app is free worldwide, and nothing depends on location. The
+only difference a user sees is the weight unit, kg or lb, set in Settings.
 
-7. REGULATED INDUSTRY / THIRD-PARTY PROTECTED MATERIAL
-Neither applies. Kratos is a personal fitness self-tracking app: not a medical
-device, no medical advice, already declared as "not a regulated medical device"
-in App Information. No protected third-party material, the exercise library is
-my own content and everything else is the user's own workout data.
+7. REGULATED INDUSTRY AND THIRD-PARTY MATERIAL
+Neither applies. Kratos is a personal fitness tracker, not a medical device, and
+gives no medical advice. That is already declared as not a regulated medical
+device in App Information. There is no protected third-party material in it: the
+exercise library is my own and everything else is the user's own data.
 
-Thanks again. If anything needs more detail, just say and I'll send it.
+Thanks again. If you need anything else, just ask and I will send it over.
 ```
 
 ---
