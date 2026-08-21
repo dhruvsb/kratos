@@ -24,9 +24,11 @@ resolve. It wasn't one bad path — **every** URL under `dhruvsb.github.io/krato
   and GitHub-Pro options), and enabled Pages from `main` at `/`. Both URLs verified **200**, policy
   content re-read (names Supabase + OpenAI, covers mic audio + Apple Health). Same URL = build 2 needs
   no rebuild.
-- **Open consequence.** The repo is public and `KratosReview2026!` appears in 7 tracked docs *and* in
-  git history, so the reviewer demo credential is published. Rotate it, then update ASC → App Review
-  Information, the 2.1 reply text, and the docs that quote it.
+- **Deferred consequence.** The repo is public and `KratosReview2026!` appears in 7 tracked docs *and*
+  in git history, so the reviewer demo credential is published. **Rotation deferred until after
+  approval** (owner's decision): changing it now would break the reviewer's sign-in mid-review, and the
+  account holds only seeded demo data behind RLS. Once approved: rotate, then update ASC → App Review
+  Information and the docs that quote it.
 - **Process lesson.** A URL in a doc is not evidence the site is up. `curl -o /dev/null -w '%{http_code}'`
   every public URL before a submission or a review reply — I pasted this one from `urls.ts` without
   fetching it, which is how a dead link nearly went to a reviewer.

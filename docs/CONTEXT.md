@@ -17,8 +17,9 @@ Policy link compiled into **build 1.0.0 (2)** (5.1.1 rejection risk) *and* the S
 live in App Store Connect. Fix: `legal/` + `.nojekyll` at the repo root, **`dhruvsb/kratos` made
 PUBLIC**, Pages enabled (source `main`, folder `/`) — same URLs, verified 200, so no new build is
 needed. **⚠️ Consequence: the reviewer demo password is in this now-public repo (7 docs + git
-history) — rotate `appreview@kratos.app`, then update ASC → App Review Information and every doc that
-quotes it.** Rule going forward: `curl` the legal URLs before any submission or review reply.
+history). Rotation deliberately DEFERRED until the app is approved** (owner's call — changing it
+mid-review would break the reviewer's sign-in). **After approval:** rotate `appreview@kratos.app`,
+then update ASC → App Review Information and the docs that quote it. Rule going forward: `curl` the legal URLs before any submission or review reply.
 Prior: **Permission prompts + professional error copy.** The native iOS
 **microphone** alert now fires where the user opts in — Settings → PRIVACY → "Voice logging" — via a new
 `src/lib/permissions.ts` (`ensureMicPermission`, `ensureHealthPermission`, `openHealthAccessSettings`);
