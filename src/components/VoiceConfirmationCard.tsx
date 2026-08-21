@@ -15,6 +15,7 @@ import { ExercisePickerModal } from './ExercisePickerModal';
 import { DrainBar, KeyCap, ParseChip } from './voice/primitives';
 import { font, radius, space, timing, tracking, type Theme } from '@/theme/tokens';
 import { useTheme } from '@/theme/ThemeProvider';
+import { userMessage } from '@/lib/errors';
 
 const SET_TYPES: SetType[] = ['normal', 'warmup', 'drop', 'failure'];
 const SET_TYPE_LABEL: Record<SetType, string> = {
@@ -448,7 +449,9 @@ export function VoiceConfirmationCard({
                   />
                 </View>
                 {confirm.error != null && (
-                  <Text style={styles.errorText}>{confirm.error.message}</Text>
+                  <Text style={styles.errorText}>
+                    {userMessage(confirm.error, 'That couldn’t be saved. Try again.')}
+                  </Text>
                 )}
               </>
             )}

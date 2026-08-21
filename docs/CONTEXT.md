@@ -10,7 +10,18 @@ codebase or a huge prior conversation.
 > issues**) *and* append a dated entry to [`WORK-LOG.md`](./WORK-LOG.md). This file is the
 > snapshot; `WORK-LOG.md` is the full history. Keep this file short.
 
-**Last updated:** 2026-08-21 — **Reverted the dedicated Progress screen (product decision).** Removed
+**Last updated:** 2026-08-21 — **Permission prompts + professional error copy.** The native iOS
+**microphone** alert now fires where the user opts in — Settings → PRIVACY → "Voice logging" — via a new
+`src/lib/permissions.ts` (`ensureMicPermission`, `ensureHealthPermission`, `openHealthAccessSettings`);
+when iOS won't ask again, a plain alert offers **Open Settings**. The recorder no longer pretends to
+record without access: it shows a **MICROPHONE OFF** state + Open Settings CTA. Apple Health now presents
+its sheet explicitly and, once iOS has stopped asking, "Nothing new to add" adds an **Open Health** route
+(HealthKit never reveals read access). **No raw native/Postgres error text ever reaches a user** — new
+`src/lib/errors.ts` `userMessage()` sanitizes every user-visible catch (killed the
+"UnexpectedException … AsyncFunctionDefinition.swift:126" recorder message). **SIM-VERIFIED (iPhone 17 Pro,
+dev build): native mic alert on the toggle, denied-state alert + recorder blocked state, recording works
+when granted, both Health-sync paths.** Note for App-Store demo videos: iOS only shows each permission
+alert once per install — **delete the app first** to record a fresh prompt. Prior: **Reverted the dedicated Progress screen (product decision).** Removed
 `src/app/progress.tsx` (`/progress`), `src/data/progression.ts`, `useKeyLiftProgress()`, and the Home
 "KEY LIFTS · PROGRESS" entry row — no dedicated top-lifts progress screen for now. **Per-exercise history
 (`/exercise/[id]` chart + session list) and Home's inline history are untouched.** Clean forward removal

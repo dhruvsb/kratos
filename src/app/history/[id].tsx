@@ -25,6 +25,7 @@ import { formatSetByModality, formatWeight } from '@/lib/units';
 import { muscleSplit } from '@/lib/muscleSplit';
 import { font, space, tracking, type Theme } from '@/theme/tokens';
 import { useTheme } from '@/theme/ThemeProvider';
+import { userMessage } from '@/lib/errors';
 
 type EditState = {
   setId: string;
@@ -115,7 +116,7 @@ export default function WorkoutDetailScreen() {
             const next = value?.trim() ? value.trim() : null;
             if (next === (detail.title ?? null)) return;
             renameWorkout.mutate(next, {
-              onError: (e) => Alert.alert("Couldn't rename workout", e.message),
+              onError: (e) => Alert.alert("Couldn't rename workout", userMessage(e, 'Something went wrong. Check your connection and try again.')),
             });
           },
         },

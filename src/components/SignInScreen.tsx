@@ -24,6 +24,7 @@ import {
 } from '@/data/auth';
 import { font, radius, space, tracking, type Theme } from '@/theme/tokens';
 import { useTheme } from '@/theme/ThemeProvider';
+import { userMessage } from '@/lib/errors';
 
 const CODE_LEN = 8; // must match the Supabase project's email-OTP length (currently 8 digits)
 const MIN_PASSWORD = 6; // Supabase's default minimum
@@ -74,7 +75,7 @@ export function SignInScreen() {
         }
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Something went wrong. Try again.');
+      setError(userMessage(e, 'Something went wrong. Try again.'));
     } finally {
       setBusy(false);
     }
@@ -90,7 +91,7 @@ export function SignInScreen() {
       setCode('');
       setTimeout(() => codeInput.current?.focus(), 120);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not send the code.');
+      setError(userMessage(e, 'Could not send the code. Check your connection and try again.'));
     } finally {
       setBusy(false);
     }
@@ -103,7 +104,7 @@ export function SignInScreen() {
       await verifyRecoveryCode(email.trim(), token);
       // Signed in — _layout swaps the tree. Set a new password from Settings.
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'That code did not match.');
+      setError(userMessage(e, 'That code did not match. Check it and try again.'));
       setCode('');
       codeInput.current?.focus();
     } finally {

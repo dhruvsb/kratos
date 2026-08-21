@@ -3,6 +3,7 @@
 // Phase-1 screen that leans on Btn/Loading/Empty/ErrorText darkens with this file.
 import { useMemo } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { userMessage } from '@/lib/errors';
 import { font, radius, space, tracking, type Theme } from '@/theme/tokens';
 import { useTheme } from '@/theme/ThemeProvider';
 
@@ -65,7 +66,8 @@ export function Empty({ text }: { text: string }) {
 export function ErrorText({ error }: { error: unknown }) {
   const { color } = useTheme();
   const styles = useMemo(() => makeStyles(color), [color]);
-  const message = error instanceof Error ? error.message : String(error);
+  // Never render a raw native/Postgres string at the user (see lib/errors.ts).
+  const message = userMessage(error, 'Something went wrong. Pull to refresh, or try again.');
   return <Text style={styles.errorText}>{message}</Text>;
 }
 

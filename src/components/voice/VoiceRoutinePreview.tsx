@@ -22,6 +22,7 @@ import type { ParsedRoutineExercise, VoiceParseResult } from '@/data/voiceParse'
 import type { Exercise } from '@/types/db';
 import { font, radius, space, tracking, type Theme } from '@/theme/tokens';
 import { useTheme } from '@/theme/ThemeProvider';
+import { userMessage } from '@/lib/errors';
 
 type RoutineResult = Extract<VoiceParseResult, { kind: 'routine' }>;
 
@@ -94,7 +95,7 @@ export function VoiceRoutinePreview({ result }: { result: RoutineResult }) {
           setVoiceDraft(null);
           router.replace('/routines');
         },
-        onError: (e) => Alert.alert("Couldn't save routine", e.message),
+        onError: (e) => Alert.alert("Couldn't save routine", userMessage(e, 'Something went wrong. Check your connection and try again.')),
       }
     );
   }

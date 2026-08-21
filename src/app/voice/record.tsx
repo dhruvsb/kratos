@@ -8,14 +8,13 @@
 //            → parseVoiceIntent. The meter/timer read the live recorder state.
 //  • mock  — no mic; a canned transcript + a small MOCK toggle pick the example.
 import {
-  AudioModule,
   RecordingPresets,
   setAudioModeAsync,
   useAudioRecorder,
 } from 'expo-audio';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MicGlyph } from '@/components/voice/MicGlyph';
 import { LevelMeter } from '@/components/voice/primitives';
@@ -32,6 +31,8 @@ import {
 import { setVoiceDraft } from '@/data/voiceDraft';
 import type { Unit } from '@/types/db';
 import { haptics } from '@/lib/haptics';
+import { userMessage } from '@/lib/errors';
+import { ensureMicPermission } from '@/lib/permissions';
 import { font, radius, space, tracking, type Theme } from '@/theme/tokens';
 import { useTheme } from '@/theme/ThemeProvider';
 
@@ -69,6 +70,9 @@ export default function VoiceRecordScreen() {
   const [mockIntent, setMockIntent] = useState<MockIntent>('log');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Mic access refused (or refused on an earlier run): the screen stops pretending
+  // to record and turns into a one-tap route to iOS Settings.
+  const [micBlocked, setMicBlocked] = useState(false);
 
   // Real recorder (only driven when !MOCK_VOICE). Hooks must run unconditionally.
   const recorder = useAudioRecorder(RECORDING_OPTIONS);
@@ -108,9 +112,14 @@ export default function VoiceRecordScreen() {
     startedRef.current = true;
     (async () => {
       try {
-        const perm = await AudioModule.requestRecordingPermissionsAsync();
-        if (!perm.granted) {
-          setError('Microphone permission is off. Enable it in Settings to log by voice.');
+        // Shows the native iOS microphone alert on a first run. `explain: false`
+        // suppresses the "access is off" alert — this screen already says so
+        // inline and carries its own Open Settings button, and stacking a modal
+        // on top of that reads as nagging.
+        const allowed = await ensureMicPermission(false);
+        if (!allowed) {
+          setMicBlocked(true);
+          setError('Turn on the microphone to log sets by voice.');
           return;
         }
         await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: true });
@@ -129,7 +138,7 @@ export default function VoiceRecordScreen() {
           }
         }, 300);
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Couldn't start recording.");
+        setError(userMessage(e, 'Couldn’t start recording. Close this and try again.'));
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -205,7 +214,11 @@ export default function VoiceRecordScreen() {
       } else {
         await stopRecording();
         const uri = recorder.uri;
-        if (!uri) throw new Error('No audio was recorded.');
+        if (!uri) {
+          setError('Nothing was recorded. Try again and speak after the timer starts.');
+          setBusy(false);
+          return;
+        }
         transcript = await transcribeAudio(uri, 'audio/m4a', {
           durationMs: seconds * 1000,
           sessionId,
@@ -225,7 +238,7 @@ export default function VoiceRecordScreen() {
       setVoiceDraft(result);
       router.replace('/voice/preview');
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Couldn't process that recording.");
+      setError(userMessage(e, 'Couldn’t process that recording. Try saying it again.'));
       setBusy(false);
     }
   }
@@ -251,8 +264,10 @@ export default function VoiceRecordScreen() {
     <View style={[styles.screen, { paddingTop: insets.top + 24 }]}>
       <View style={styles.head}>
         <View style={styles.recRow}>
-          <BlinkDot color={color.warn} />
-          <Text style={styles.recLabel}>RECORDING</Text>
+          {!micBlocked && <BlinkDot color={color.warn} />}
+          <Text style={[styles.recLabel, micBlocked && { color: color.t3 }]}>
+            {micBlocked ? 'MICROPHONE OFF' : 'RECORDING'}
+          </Text>
         </View>
         <Pressable onPress={cancel} hitSlop={12}>
           <Text style={styles.cancel}>CANCEL</Text>
@@ -280,14 +295,18 @@ export default function VoiceRecordScreen() {
 
       <View style={styles.center}>
         <View style={styles.ringWrap}>
-          <Animated.View style={[styles.ring, ringStyle(ring1)]} />
-          <Animated.View style={[styles.ring, ringStyle(ring2)]} />
-          <View style={styles.micDisc}>
-            <MicGlyph size={50} color={color.acc} strokeWidth={1.6} />
+          {!micBlocked && (
+            <>
+              <Animated.View style={[styles.ring, ringStyle(ring1)]} />
+              <Animated.View style={[styles.ring, ringStyle(ring2)]} />
+            </>
+          )}
+          <View style={[styles.micDisc, micBlocked && styles.micDiscOff]}>
+            <MicGlyph size={50} color={micBlocked ? color.t3 : color.acc} strokeWidth={1.6} />
           </View>
         </View>
 
-        <LevelMeter level={level} height={72} style={{ gap: 4 }} />
+        <LevelMeter level={micBlocked ? 0 : level} height={72} style={{ gap: 4 }} />
 
         <View style={styles.readout}>
           <Text style={styles.timer}>{mmss(seconds)}</Text>
@@ -298,12 +317,20 @@ export default function VoiceRecordScreen() {
       </View>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + space.xl }]}>
-        <Pressable onPress={stopAndReview} style={styles.stopBtn} disabled={busy}>
-          <View style={styles.stopSquare} />
-          <Text style={styles.stopText}>{busy ? 'Reviewing…' : 'Stop & review'}</Text>
-        </Pressable>
+        {micBlocked ? (
+          <Pressable onPress={() => void Linking.openSettings()} style={styles.settingsBtn}>
+            <Text style={styles.settingsText}>Open Settings</Text>
+          </Pressable>
+        ) : (
+          <Pressable onPress={stopAndReview} style={styles.stopBtn} disabled={busy}>
+            <View style={styles.stopSquare} />
+            <Text style={styles.stopText}>{busy ? 'Reviewing…' : 'Stop & review'}</Text>
+          </Pressable>
+        )}
         <Text style={styles.hint}>
-          Say the exercise, then weight, reps and sets. Pause between exercises.
+          {micBlocked
+            ? 'Settings › Kratos › Microphone. Everything else in Kratos works without it.'
+            : 'Say the exercise, then weight, reps and sets. Pause between exercises.'}
         </Text>
       </View>
     </View>
@@ -371,6 +398,11 @@ const makeStyles = (color: Theme['color']) =>
       shadowRadius: 40,
       shadowOffset: { width: 0, height: 0 },
     },
+    micDiscOff: {
+      backgroundColor: color.s1,
+      borderColor: color.line2,
+      shadowOpacity: 0,
+    },
     readout: { alignItems: 'center', gap: 14 },
     timer: { fontFamily: font.numMedium, fontSize: 46, letterSpacing: -1, color: color.t1 },
     subtle: { fontFamily: font.numSemibold, fontSize: 9.5, letterSpacing: tracking.wide, color: color.t3, textAlign: 'center', paddingHorizontal: space.lg },
@@ -388,5 +420,15 @@ const makeStyles = (color: Theme['color']) =>
     },
     stopSquare: { width: 15, height: 15, borderRadius: 3, backgroundColor: color.warn },
     stopText: { fontFamily: font.uiSemibold, fontSize: 15, letterSpacing: 0.2, color: color.warn },
+    settingsBtn: {
+      height: 64,
+      borderRadius: 32,
+      backgroundColor: color.ctaBg,
+      borderWidth: 1,
+      borderColor: color.ctaBorder,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    settingsText: { fontFamily: font.uiSemibold, fontSize: 15, letterSpacing: 0.2, color: color.ctaFg },
     hint: { textAlign: 'center', fontFamily: font.ui, fontSize: 11.5, lineHeight: 18, color: color.t3 },
   });

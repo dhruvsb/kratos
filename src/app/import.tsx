@@ -15,6 +15,7 @@ import { useCommitImport } from '@/data/hooks';
 import { buildImportPlan, type ImportPlan, type ImportResult } from '@/data/import';
 import { font, radius, space, tracking, type Theme } from '@/theme/tokens';
 import { useTheme } from '@/theme/ThemeProvider';
+import { userMessage } from '@/lib/errors';
 
 type Stage =
   | { name: 'idle' }
@@ -47,7 +48,7 @@ export default function ImportScreen() {
       const plan = await buildImportPlan(text);
       setStage({ name: 'preview', fileName: asset.name, plan });
     } catch (e) {
-      setStage({ name: 'error', message: e instanceof Error ? e.message : String(e) });
+      setStage({ name: 'error', message: userMessage(e, 'That file couldn’t be read. Export a fresh CSV and try again.') });
     }
   }
 
@@ -56,7 +57,7 @@ export default function ImportScreen() {
       const result = await commit.mutateAsync(plan);
       setStage({ name: 'done', result });
     } catch (e) {
-      setStage({ name: 'error', message: e instanceof Error ? e.message : String(e) });
+      setStage({ name: 'error', message: userMessage(e, 'That file couldn’t be read. Export a fresh CSV and try again.') });
     }
   }
 

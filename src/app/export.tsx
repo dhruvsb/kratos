@@ -12,6 +12,7 @@ import { Btn } from '@/components/ui';
 import { buildHevyExport, type HevyExport } from '@/data/export';
 import { font, radius, space, tracking, type Theme } from '@/theme/tokens';
 import { useTheme } from '@/theme/ThemeProvider';
+import { userMessage } from '@/lib/errors';
 
 type Stage =
   | { name: 'loading' }
@@ -44,7 +45,7 @@ export default function ExportScreen() {
         if (!alive) return;
         setStage(data.workoutCount === 0 ? { name: 'empty' } : { name: 'ready', data });
       })
-      .catch((e) => alive && setStage({ name: 'error', message: e instanceof Error ? e.message : String(e) }));
+      .catch((e) => alive && setStage({ name: 'error', message: userMessage(e, 'Your history couldn’t be prepared. Try again in a moment.') }));
     return () => {
       alive = false;
     };
@@ -67,7 +68,7 @@ export default function ExportScreen() {
         dialogTitle: 'Export Kratos history',
       });
     } catch (e) {
-      setStage({ name: 'error', message: e instanceof Error ? e.message : String(e) });
+      setStage({ name: 'error', message: userMessage(e, 'The export couldn’t be shared. Try again.') });
     } finally {
       setSharing(false);
     }

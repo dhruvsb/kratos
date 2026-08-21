@@ -11,6 +11,7 @@ import { router } from 'expo-router';
 import { Alert } from 'react-native';
 import { buildStartPlan, useActiveWorkout, useStartWorkout } from '@/data/hooks';
 import { useIsOnline } from '@/lib/network';
+import { userMessage } from '@/lib/errors';
 
 export function useStartWorkoutFlow() {
   const qc = useQueryClient();
@@ -37,7 +38,7 @@ export function useStartWorkoutFlow() {
         { routineId, plan },
         {
           onError: (e) => {
-            Alert.alert("Couldn't start workout", e.message);
+            Alert.alert("Couldn't start workout", userMessage(e, 'Something went wrong. Check your connection and try again.'));
             router.dismissTo('/');
           },
         }
@@ -56,7 +57,7 @@ export function useStartWorkoutFlow() {
       { routineId },
       {
         onSuccess: (workout) => router.push(`/workout/${workout.id}`),
-        onError: (e) => Alert.alert("Couldn't start workout", e.message),
+        onError: (e) => Alert.alert("Couldn't start workout", userMessage(e, 'Something went wrong. Check your connection and try again.')),
       }
     );
   }

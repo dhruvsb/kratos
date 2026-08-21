@@ -27,6 +27,8 @@ import {
 import { GOAL_PRESETS, THEME_MODES, useSettings, useUpdateSettings } from '@/data/settings';
 import { useBackups, useRunBackupNow, useWeeklyBackup } from '@/data/backup';
 import { PRIVACY_POLICY_URL } from '@/lib/urls';
+import { userMessage } from '@/lib/errors';
+import { ensureHealthPermission, ensureMicPermission, openHealthAccessSettings } from '@/lib/permissions';
 import { font, radius, space, tracking, type Theme } from '@/theme/tokens';
 import { useTheme, useThemeMode } from '@/theme/ThemeProvider';
 
@@ -142,7 +144,7 @@ export default function SettingsScreen() {
             } catch (e) {
               Alert.alert(
                 'Could not set password',
-                e instanceof Error ? e.message : 'Check your connection and try again.'
+                userMessage(e, 'Check your connection and try again.')
               );
             }
           },
@@ -175,7 +177,7 @@ export default function SettingsScreen() {
       setDeleting(false);
       Alert.alert(
         'Could not delete account',
-        e instanceof Error ? e.message : 'Check your connection and try again.'
+        userMessage(e, 'Check your connection and try again.')
       );
     }
   }
@@ -212,7 +214,7 @@ export default function SettingsScreen() {
       setClearing(false);
       Alert.alert(
         'Could not clear history',
-        e instanceof Error ? e.message : 'Check your connection and try again.'
+        userMessage(e, 'Check your connection and try again.')
       );
     }
   }
@@ -246,25 +248,55 @@ export default function SettingsScreen() {
     );
   }
 
+  // Turning voice logging on here is the user opting in, so it's also the moment
+  // to ask iOS for the microphone: the system alert appears exactly once per
+  // install, and burying it inside the recorder means a user who enables the
+  // feature from Settings never sees it. If access was already refused,
+  // ensureMicPermission offers the trip to iOS Settings instead.
+  async function toggleVoiceLogging(on: boolean) {
+    updateSettings.mutate({ voiceAiConsent: on });
+    if (on) await ensureMicPermission();
+  }
+
   // Apple Health gap-fill (iOS-only). Reads strength sessions from Health and
   // backfills a blank "Strength Training" day for any you forgot to log — the
   // permission sheet is shown by the sync itself on first run.
   async function runHealthSync() {
     setSyncingHealth(true);
     try {
+      // Present the Health permission sheet explicitly, and remember whether it
+      // could still be shown: HealthKit never reports whether *read* access was
+      // granted, so an empty result is ambiguous and the copy below has to say so.
+      const asked = await ensureHealthPermission();
       const { added } = await syncHealth.mutateAsync();
       setSyncingHealth(false);
+      if (added > 0) {
+        Alert.alert(
+          'Synced from Apple Health',
+          `Added ${added} strength ${added === 1 ? 'session' : 'sessions'} you hadn’t logged.`
+        );
+        return;
+      }
+      if (asked === 'already-asked') {
+        Alert.alert(
+          'Nothing new to add',
+          'Every strength session in Apple Health is already on your calendar. Expecting more? Check that Kratos can read Workouts under Health › Sharing › Apps.',
+          [
+            { text: 'OK', style: 'cancel' },
+            { text: 'Open Health', onPress: () => void openHealthAccessSettings() },
+          ]
+        );
+        return;
+      }
       Alert.alert(
-        added > 0 ? 'Synced from Apple Health' : 'Nothing new to add',
-        added > 0
-          ? `Added ${added} strength ${added === 1 ? 'session' : 'sessions'} you hadn't logged.`
-          : 'Every strength session in Apple Health is already on your calendar.'
+        'Nothing new to add',
+        'Every strength session in Apple Health is already on your calendar.'
       );
     } catch (e) {
       setSyncingHealth(false);
       Alert.alert(
         'Could not sync',
-        e instanceof Error ? e.message : 'Check Apple Health access in Settings and try again.'
+        userMessage(e, 'Check Kratos under Health › Sharing › Apps, then try again.')
       );
     }
   }
@@ -283,7 +315,7 @@ export default function SettingsScreen() {
     } catch (e) {
       Alert.alert(
         'Could not back up',
-        e instanceof Error ? e.message : 'Check your connection and try again.'
+        userMessage(e, 'Check your connection and try again.')
       );
     }
   }
@@ -381,7 +413,7 @@ export default function SettingsScreen() {
               label: 'Voice logging (sends audio to OpenAI)',
               toggle: true,
               on: s.voiceAiConsent,
-              onPress: () => updateSettings.mutate({ voiceAiConsent: !s.voiceAiConsent }),
+              onPress: () => void toggleVoiceLogging(!s.voiceAiConsent),
             },
           ],
         },

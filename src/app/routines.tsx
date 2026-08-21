@@ -23,6 +23,7 @@ import { agoLabel } from '@/lib/dates';
 import { haptics } from '@/lib/haptics';
 import { font, radius, space, tracking, type Theme } from '@/theme/tokens';
 import { useTheme } from '@/theme/ThemeProvider';
+import { userMessage } from '@/lib/errors';
 
 export default function RoutinesScreen() {
   const { color, shadow } = useTheme();
@@ -59,7 +60,7 @@ export default function RoutinesScreen() {
       // Land in the editor of the copy — duplicating is always "…and tweak it",
       // and it's instant proof the copy exists (the new row is at the list's end).
       onSuccess: (copy) => router.push(`/routine/${copy.id}`),
-      onError: (e) => Alert.alert("Couldn't duplicate routine", e.message),
+      onError: (e) => Alert.alert("Couldn't duplicate routine", userMessage(e, 'Something went wrong. Check your connection and try again.')),
     });
   }
 
@@ -81,7 +82,7 @@ export default function RoutinesScreen() {
             if (!name || name === r.name) return;
             rename.mutate(
               { id: r.id, name },
-              { onError: (e) => Alert.alert("Couldn't rename routine", e.message) }
+              { onError: (e) => Alert.alert("Couldn't rename routine", userMessage(e, 'Something went wrong. Check your connection and try again.')) }
             );
           },
         },
@@ -104,7 +105,7 @@ export default function RoutinesScreen() {
             { text: 'OK', style: 'cancel' },
           ]);
         },
-        onError: (e) => Alert.alert("Couldn't archive routine", e.message),
+        onError: (e) => Alert.alert("Couldn't archive routine", userMessage(e, 'Something went wrong. Check your connection and try again.')),
       }
     );
   }
@@ -118,7 +119,7 @@ export default function RoutinesScreen() {
 
   function deleteRoutine(r: RoutineWithCount) {
     remove.mutate(r.id, {
-      onError: (e) => Alert.alert("Couldn't delete routine", e.message),
+      onError: (e) => Alert.alert("Couldn't delete routine", userMessage(e, 'Something went wrong. Check your connection and try again.')),
     });
   }
 

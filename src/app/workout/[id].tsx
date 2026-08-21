@@ -44,6 +44,7 @@ import {
 } from '@/lib/units';
 import { font, radius, space, tracking, type Theme } from '@/theme/tokens';
 import { useTheme } from '@/theme/ThemeProvider';
+import { userMessage } from '@/lib/errors';
 
 /** PREV cell: a lone em-dash when there's no matching last-session set (mockup 15),
  *  not "— × —" — no fake number to beat on a lift's first day. The label reads in the
@@ -256,7 +257,9 @@ export default function ActiveWorkoutScreen() {
   if (workout.error != null || !detail) {
     return (
       <View style={styles.center}>
-        <Text style={styles.err}>{workout.error?.message ?? 'Workout not found'}</Text>
+        <Text style={styles.err}>
+          {workout.error ? userMessage(workout.error, 'This workout couldn’t be loaded.') : 'Workout not found'}
+        </Text>
         <Pressable onPress={() => router.dismissTo('/')} style={{ marginTop: space.md }}>
           <Text style={styles.link}>← Home</Text>
         </Pressable>
@@ -426,7 +429,7 @@ export default function ActiveWorkoutScreen() {
           // Warning, not the log tick — a set leaving must not feel like one landing.
           haptics.warn();
           deleteSet.mutate(setId, {
-            onError: (e) => Alert.alert("Couldn't delete set", e.message),
+            onError: (e) => Alert.alert("Couldn't delete set", userMessage(e, 'Something went wrong. Check your connection and try again.')),
           });
         },
       },
@@ -454,7 +457,7 @@ export default function ActiveWorkoutScreen() {
               setActiveExerciseId(remaining[remaining.length - 1]?.exercise_id ?? null);
             }
             removeExercise.mutate(we.id, {
-              onError: (e) => Alert.alert("Couldn't remove exercise", e.message),
+              onError: (e) => Alert.alert("Couldn't remove exercise", userMessage(e, 'Something went wrong. Check your connection and try again.')),
             });
           },
         },
@@ -479,7 +482,7 @@ export default function ActiveWorkoutScreen() {
     haptics.success();
     finish.mutate({
       onError: (e) => {
-        Alert.alert("Couldn't finish workout", e.message);
+        Alert.alert("Couldn't finish workout", userMessage(e, 'Something went wrong. Check your connection and try again.'));
         router.replace(`/workout/${id}`);
       },
     });
@@ -508,7 +511,7 @@ export default function ActiveWorkoutScreen() {
           editedRef.current = false; // delete already reconciles the caches
           deleteWorkout.mutate(undefined, {
             onSuccess: () => router.back(),
-            onError: (e) => Alert.alert("Couldn't delete workout", e.message),
+            onError: (e) => Alert.alert("Couldn't delete workout", userMessage(e, 'Something went wrong. Check your connection and try again.')),
           });
         },
       },
@@ -524,7 +527,7 @@ export default function ActiveWorkoutScreen() {
         onPress: () => {
           haptics.warn();
           discard.mutate({
-            onError: (e) => Alert.alert("Couldn't discard workout", e.message),
+            onError: (e) => Alert.alert("Couldn't discard workout", userMessage(e, 'Something went wrong. Check your connection and try again.')),
           });
           router.dismissTo('/');
         },
@@ -843,7 +846,7 @@ export default function ActiveWorkoutScreen() {
           // patches the cache under presetId), so switch to it immediately.
           addExercise.mutate(
             { exercise, presetId: newUuid() },
-            { onError: (e) => Alert.alert("Couldn't add exercise", e.message) }
+            { onError: (e) => Alert.alert("Couldn't add exercise", userMessage(e, 'Something went wrong. Check your connection and try again.')) }
           );
           setActiveExerciseId(exercise.id);
         }}

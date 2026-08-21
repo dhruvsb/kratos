@@ -7,6 +7,42 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-21 — Native permission prompts where the user opts in + professional error copy
+
+Two hands-on defects, both blocking an App-Store demo video: enabling voice logging in the app's own
+Settings never triggered the iOS microphone alert, and the recorder printed a raw native exception
+("UnexpectedException: The file "recording-…m4a" couldn't be opened … AsyncFunctionDefinition.swift:126")
+as its status line.
+
+- **New `src/lib/permissions.ts`** — the one place that asks iOS for a permission and explains the answer.
+  `ensureMicPermission()` requests when the status is still undetermined (that's the only moment iOS shows
+  its alert), and when it isn't, offers **Open Settings** instead of failing silently. `ensureHealthPermission()`
+  presents the Health sheet and reports whether it *could* be shown (`asked` / `already-asked`), backed by a new
+  `healthAuthorizationRequestStatus()` in `lib/healthkit.ts` (`getRequestStatusForAuthorization`).
+- **Settings → PRIVACY → "Voice logging"** now asks for the mic on opt-in — the toggle is where a user
+  decides, so that's where the system alert belongs (it only ever appears once per install).
+- **Recorder** (`app/voice/record.tsx`): a denied mic gives a real state — header reads MICROPHONE OFF, the
+  disc/meter go quiet, the CTA becomes **Open Settings** — instead of a fake "RECORDING" screen with an
+  exception under the timer. No alert there (`ensureMicPermission(false)`); the screen already says it.
+- **Apple Health**: the sync presents the sheet explicitly; when iOS has stopped asking and nothing was
+  imported, the alert adds "check Kratos under Health › Sharing › Apps" + an **Open Health** button —
+  HealthKit never tells an app whether *read* access was granted, so the copy stops implying it does.
+- **New `src/lib/errors.ts` `userMessage(e, fallback)`** — a message reaches a user only if it already reads
+  like a sentence a person wrote; machine output (native exceptions, source locations, Postgres constraint
+  text, HTTP/JSON noise) falls back to plain English, with translations for the common network/permission/
+  missing-file cases. Swept every user-visible catch: settings, recorder, import, export, routines, workout,
+  history, sign-in, exercise picker, voice previews, `ui.tsx` `ErrorText`.
+- **Verified on the simulator** (iPhone 17 Pro, dev build + Metro, demo account): native mic alert fires from
+  the Settings toggle; declining shows the Settings route; the recorder's blocked state renders clean; with the
+  mic granted, recording runs (timer/meter live, no error); the Health sheet appears on first sync and the
+  second run shows the Open Health variant. `tsc` clean.
+
+**For the App Store permission video:** iOS shows each permission alert once per install — delete the app
+(or `xcrun simctl privacy … reset`) before recording, then Settings → PRIVACY → Voice logging, and
+DATA → Sync from Apple Health.
+
+---
+
 ## 2026-08-20 — Langfuse activated (live) + offline eval → Langfuse experiments
 
 Took the merged-but-dormant Langfuse work (see 2026-08-17) all the way live, and built the

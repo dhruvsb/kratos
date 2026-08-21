@@ -17,6 +17,7 @@ import type { Unit } from '@/types/db';
 import { formatWeight } from '@/lib/units';
 import { font, radius, space, tracking, type Theme } from '@/theme/tokens';
 import { useTheme } from '@/theme/ThemeProvider';
+import { userMessage } from '@/lib/errors';
 
 type LogResult = Extract<VoiceParseResult, { kind: 'log' }>;
 type EditTarget = { exKey: string; setKey: string };
@@ -95,7 +96,7 @@ export function VoiceLogPreview({ result }: { result: LogResult }) {
           setVoiceDraft(null);
           router.replace(`/workout/${workoutId}`);
         },
-        onError: (e) => Alert.alert("Couldn't log workout", e.message),
+        onError: (e) => Alert.alert("Couldn't log workout", userMessage(e, 'Something went wrong. Check your connection and try again.')),
       }
     );
   }

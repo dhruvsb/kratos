@@ -7,6 +7,8 @@
 // here short-circuits off iOS so callers never need a Platform check of their own.
 import { Platform } from 'react-native';
 import {
+  AuthorizationRequestStatus,
+  getRequestStatusForAuthorization,
   isHealthDataAvailable,
   queryWorkoutSamples,
   requestAuthorization,
@@ -42,6 +44,25 @@ export function isHealthAvailable(): boolean {
 export async function requestStrengthPermission(): Promise<boolean> {
   if (!isHealthAvailable()) return false;
   return requestAuthorization({ toRead: [WorkoutTypeIdentifier] });
+}
+
+/** Whether iOS would still present the Health permission sheet for workouts.
+ *  HealthKit never reveals whether *read* access was granted (Apple's privacy
+ *  model), but it does say whether it has already asked — which is what decides
+ *  between "the sheet is about to appear" and "answered on an earlier run, send
+ *  the user to the Health app". */
+export async function healthAuthorizationRequestStatus(): Promise<
+  'should-request' | 'already-asked' | 'unknown'
+> {
+  if (!isHealthAvailable()) return 'unknown';
+  try {
+    const status = await getRequestStatusForAuthorization({ toRead: [WorkoutTypeIdentifier] });
+    if (status === AuthorizationRequestStatus.shouldRequest) return 'should-request';
+    if (status === AuthorizationRequestStatus.unnecessary) return 'already-asked';
+    return 'unknown';
+  } catch {
+    return 'unknown';
+  }
 }
 
 /** Strength sessions from the Health store in the last `sinceDays` days. Filtered

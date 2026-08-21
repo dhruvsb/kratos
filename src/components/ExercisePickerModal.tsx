@@ -36,6 +36,7 @@ import { BODY_REGIONS, type BodyRegion } from '@/lib/muscles';
 import type { Exercise } from '@/types/db';
 import { font, radius, space, tracking, type Theme } from '@/theme/tokens';
 import { useTheme } from '@/theme/ThemeProvider';
+import { userMessage } from '@/lib/errors';
 
 export function ExercisePickerModal({
   visible,
@@ -270,7 +271,9 @@ export function ExercisePickerModal({
                   </Text>
                 </Pressable>
                 {createCustom.error != null && (
-                  <Text style={styles.err}>{(createCustom.error as Error).message}</Text>
+                  <Text style={styles.err}>
+                    {userMessage(createCustom.error, 'That exercise couldn’t be created. Try again.')}
+                  </Text>
                 )}
               </>
             ) : (
