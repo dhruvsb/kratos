@@ -33,6 +33,18 @@ offline-eval → Langfuse bridge so parse quality is trackable in one platform.
 - **Not yet:** a real on-device voice log producing a live `voice.transcribe`+`voice.parse` session
   in Langfuse — blocked on the same pending device walkthrough as the manual loop.
 
+## 2026-08-21 — Reverted the dedicated Progress screen (product decision)
+
+Dhruv decided not to pursue a dedicated top-lifts Progress screen right now. Removed it from the
+app build: deleted `src/app/progress.tsx` (route `/progress`) and `src/data/progression.ts`, dropped
+`useKeyLiftProgress()` from `hooks.ts`, and removed the "KEY LIFTS · PROGRESS" entry row (+ its styles
+and now-unused `radius` import) from Home (`src/app/index.tsx`). **Per-exercise history is untouched** —
+the per-exercise progress screen (`/exercise/[id]`, top-set chart + session history) and Home's inline
+workout history stay exactly as they were. Clean forward removal (no history rewrite — the scaffolding
+commit `c0d2133` is already on GitHub). `tsc` clean; `expo export --platform web` now bundles **18**
+routes (was 19). The design-exploration mockups (published Artifact) and the sim screenshots under
+`docs/screenshots/progress/` are left as-is for whenever this is revisited.
+
 ## 2026-08-20 — Progress screen scaffolding (key-lifts progression board)
 
 New **Progress** page (`src/app/progress.tsx`, route `/progress`) — Phase-3 scaffolding for

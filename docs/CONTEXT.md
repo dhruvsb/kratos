@@ -10,7 +10,12 @@ codebase or a huge prior conversation.
 > issues**) *and* append a dated entry to [`WORK-LOG.md`](./WORK-LOG.md). This file is the
 > snapshot; `WORK-LOG.md` is the full history. Keep this file short.
 
-**Last updated:** 2026-08-20 — **Langfuse LLM observability is now LIVE.** Langfuse Cloud (US)
+**Last updated:** 2026-08-21 — **Reverted the dedicated Progress screen (product decision).** Removed
+`src/app/progress.tsx` (`/progress`), `src/data/progression.ts`, `useKeyLiftProgress()`, and the Home
+"KEY LIFTS · PROGRESS" entry row — no dedicated top-lifts progress screen for now. **Per-exercise history
+(`/exercise/[id]` chart + session list) and Home's inline history are untouched.** Clean forward removal
+(scaffolding commit `c0d2133` stays in history). `tsc` clean; web-export back to 18 routes. Design mockups
+(Artifact) + `docs/screenshots/progress/` kept for later. Prior: **Langfuse LLM observability is now LIVE.** Langfuse Cloud (US)
 project active; all three `LANGFUSE_*` secrets set + both voice edge functions deployed, so every
 live transcribe+parse is a session-linked trace (raw transcript in, parsed sets out, tokens/cost/
 latency). Faithfulness judge ON (every parse). Offline eval bridge added: golden set → Langfuse
