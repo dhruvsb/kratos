@@ -8,12 +8,11 @@ future submissions. Attach the screen recording (item 1) to the Resolution Cente
 1. **Record the screen capture on a physical iPhone** (item 1). Shot list is at the bottom of this file.
 2. **Verify the device/OS list in item 2 is true** — only claim devices you actually tested on.
 
-> **Describe only what build 1.0.0 (2) does.** The reviewer runs the binary already uploaded, so any
-> step in this reply that the build can't perform reads as a broken app. Two traps, both handled above:
-> the **Progress / "Key Lifts" board never shipped in build 2** (added after submission, then reverted —
-> WORK-LOG 2026-08-21), and the **mic prompt fires on the recorder path, not the Settings toggle** in
-> that build (the Settings-toggle prompt landed later, in `d988492`). Re-check this note if a newer
-> build is ever uploaded.
+> **Describe only what build 1.0.0 (2) does.** The reviewer runs the binary already uploaded, so a step
+> in this reply that the build can't perform reads as a broken app. The one trap, fixed above: the
+> **Progress / "Key Lifts" board never shipped in build 2** — it was built after submission and then
+> reverted (WORK-LOG 2026-08-21). The microphone and Apple Health prompts both work in build 2 as
+> described.
 
 ---
 
@@ -121,10 +120,8 @@ Use the iOS built-in screen recorder (Control Center). Keep it ~60-90s.
    second set → **Finish** → show the summary.
 4. **Home tab** → scroll to the **HISTORY** list → open the workout you just finished → tap one of
    its exercises to show that lift's **weight history** chart → back out.
-5. **Voice logging** → tap the **mic button** (this is the path that prompts in the submitted build —
-   don't use the Settings → PRIVACY toggle) → accept the AI-consent screen → let the **microphone
-   permission prompt** appear and Allow → speak one set (e.g. "bench press 80 kilos for 8 reps") →
-   show it parsed onto the grid.
+5. **Voice logging** → tap the mic → let the **microphone permission prompt** appear and Allow →
+   speak one set (e.g. "bench press 80 kilos for 8 reps") → show it parsed onto the grid.
 6. *(Optional but good)* Settings → the **Apple Health** sync button → let the **Health permission
    prompt** appear (read-only). This shows the sensitive-data prompt Apple asked about.
 
