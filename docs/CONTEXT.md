@@ -10,7 +10,16 @@ codebase or a huge prior conversation.
 > issues**) *and* append a dated entry to [`WORK-LOG.md`](./WORK-LOG.md). This file is the
 > snapshot; `WORK-LOG.md` is the full history. Keep this file short.
 
-**Last updated:** 2026-08-21 — **Permission prompts + professional error copy.** The native iOS
+**Last updated:** 2026-08-21 — **🔴 Legal pages were DOWN; restored + repo is now public.** Every
+`dhruvsb.github.io/kratos/**` URL was 404ing — the Pages site died when this repo's original
+(web-uploaded) history was replaced with the app source on 2026-08-20. That broke the in-app Privacy
+Policy link compiled into **build 1.0.0 (2)** (5.1.1 rejection risk) *and* the Support/Marketing URLs
+live in App Store Connect. Fix: `legal/` + `.nojekyll` at the repo root, **`dhruvsb/kratos` made
+PUBLIC**, Pages enabled (source `main`, folder `/`) — same URLs, verified 200, so no new build is
+needed. **⚠️ Consequence: the reviewer demo password is in this now-public repo (7 docs + git
+history) — rotate `appreview@kratos.app`, then update ASC → App Review Information and every doc that
+quotes it.** Rule going forward: `curl` the legal URLs before any submission or review reply.
+Prior: **Permission prompts + professional error copy.** The native iOS
 **microphone** alert now fires where the user opts in — Settings → PRIVACY → "Voice logging" — via a new
 `src/lib/permissions.ts` (`ensureMicPermission`, `ensureHealthPermission`, `openHealthAccessSettings`);
 when iOS won't ask again, a plain alert offers **Open Settings**. The recorder no longer pretends to

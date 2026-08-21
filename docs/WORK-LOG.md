@@ -7,6 +7,32 @@ status table/decisions — don't let the two drift apart.
 
 ---
 
+## 2026-08-21 (later) — Legal pages were 404ing; Pages restored, repo made public
+
+Caught while drafting the Guideline 2.1 reply: the privacy-policy URL quoted in the reply didn't
+resolve. It wasn't one bad path — **every** URL under `dhruvsb.github.io/kratos/` returned 404.
+
+- **Root cause.** `dhruvsb/kratos` was private with no Pages site at all (`GET /repos/.../pages` →
+  404). The Pages site that served these files lived in this repo's *original* history — the web-UI
+  uploads that were force-replaced with the app source on 2026-08-20 (see that day's entry). Pages
+  went with it, and GitHub won't serve Pages from a private repo on a free plan.
+- **Blast radius.** The in-app Privacy Policy link is compiled into **build 1.0.0 (2)**, the binary
+  currently with App Review — a dead link there is a 5.1.1 finding. The Support URL and Marketing URL
+  on the live ASC listing pointed at the same dead host.
+- **Fix (same URLs on purpose).** Copied `docs/legal/{privacy-policy,support}.html` to `legal/` at the
+  repo root, added `.nojekyll`, pushed, made the repo **public** (chosen over the rename-to-`kratos-app`
+  and GitHub-Pro options), and enabled Pages from `main` at `/`. Both URLs verified **200**, policy
+  content re-read (names Supabase + OpenAI, covers mic audio + Apple Health). Same URL = build 2 needs
+  no rebuild.
+- **Open consequence.** The repo is public and `KratosReview2026!` appears in 7 tracked docs *and* in
+  git history, so the reviewer demo credential is published. Rotate it, then update ASC → App Review
+  Information, the 2.1 reply text, and the docs that quote it.
+- **Process lesson.** A URL in a doc is not evidence the site is up. `curl -o /dev/null -w '%{http_code}'`
+  every public URL before a submission or a review reply — I pasted this one from `urls.ts` without
+  fetching it, which is how a dead link nearly went to a reviewer.
+
+---
+
 ## 2026-08-21 — Native permission prompts where the user opts in + professional error copy
 
 Two hands-on defects, both blocking an App-Store demo video: enabling voice logging in the app's own
